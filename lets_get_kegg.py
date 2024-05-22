@@ -191,4 +191,4 @@ if __name__ == "__main__":
     get_kegg_all(target="C")
 
     # Clean the data
-    clean_empty_files("kegg_data_C")
+    clean_empty_folders("kegg_data_C")
