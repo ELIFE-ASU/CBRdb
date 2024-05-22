@@ -133,25 +133,26 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
     return None
 
 
-def clean_empty_files(target_dir):
+def clean_empty_folders(target_dir):
     """
-    This function removes all empty files from a specified directory.
-    It first generates a list of all empty files in the directory, then removes each file in the list.
-    It prints the number of files removed and returns this number.
+    This function removes all empty folders from a specified directory.
+    It first generates a list of all empty folders in the directory,
+    then removes each folder in the list.
+    It prints the number of folders removed and returns this number.
 
     Parameters:
-    target_dir (str): The directory from which empty files are to be removed.
+    target_dir (str): The directory from which empty folders are to be removed.
 
     Returns:
-    int: The number of files removed.
+    int: The number of folders removed.
     """
-    # Make a list of empty files
-    empty_files = [file for file in os.listdir(target_dir) if os.path.getsize(os.path.join(target_dir, file)) == 0]
-    # Remove the empty files
-    for file in empty_files:
-        os.remove(os.path.join(target_dir, file))
-    n_rm = len(empty_files)
-    print(f"Removed {n_rm} empty files")
+    # Make a list of empty folders
+    empty_files = [folder for folder in os.listdir(target_dir) if os.path.getsize(os.path.join(target_dir, folder)) == 0]
+    # Remove the empty folder
+    for folder in empty_folder:
+        os.rmdir(os.path.join(target_dir, folder))
+    n_rm = len(empty_folder)
+    print(f"Removed {n_rm} empty folders")
     return n_rm
 
 
