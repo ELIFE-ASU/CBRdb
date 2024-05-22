@@ -23,10 +23,33 @@ def file_list(mypath=None):
 
 
 def format_mol_id(id_number, prefix="D"):
+    """
+    This function formats a molecule ID by adding a prefix and ensuring the ID number is five digits long.
+
+    Parameters:
+    id_number (int): The ID number of the molecule.
+    prefix (str, optional): The prefix to be added to the ID number. Defaults to "D".
+
+    Returns:
+    str: The formatted molecule ID.
+    """
     return prefix + '{:05}'.format(id_number)
 
 
 def get_mol(id_drug, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.6):
+    """
+    This function downloads a molecule file from the KEGG database and saves it to a specified directory.
+    If the file already exists in the directory, the download is skipped.
+
+    Parameters:
+    id_drug (str): The ID of the drug for which the molecule file is to be downloaded.
+    save_dir (str): The directory where the molecule file is to be saved.
+    kegg_website (str, optional): The base URL of the KEGG database. Defaults to "https://rest.kegg.jp/get/".
+    request_sleep (float, optional): The time to sleep between requests in seconds. Defaults to 0.6.
+
+    Returns:
+    bool: True if the download was successful or the file already exists, False otherwise.
+    """
     # Get the full file path
     full_file = os.path.join(save_dir, f"{id_drug}.mol")
 
@@ -72,6 +95,21 @@ def get_mol(id_drug, save_dir, kegg_website="https://rest.kegg.jp/get/", request
 
 
 def get_kegg(target_dir, prefix="D", max_idx=12897):
+    """
+    This function downloads molecule files from the KEGG database and saves them to a specified directory.
+    It creates a subdirectory for each molecule and downloads the molecule file into that subdirectory.
+    The download is done in a loop, starting from molecule ID 1 and going up to a maximum index.
+    If a molecule file cannot be downloaded, the function prints a message and continues with the next molecule.
+    If the maximum index is reached, the function prints a message and breaks the loop.
+
+    Parameters:
+    target_dir (str): The directory where the molecule files are to be saved.
+    prefix (str, optional): The prefix to be added to the molecule ID. Defaults to "D".
+    max_idx (int, optional): The maximum index of the molecule ID to be downloaded. Defaults to 12897.
+
+    Returns:
+    None
+    """
     # Check path for saving
     os.makedirs(target_dir, exist_ok=True)
     # Start the loop
@@ -96,6 +134,17 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
 
 
 def clean_empty_files(target_dir):
+    """
+    This function removes all empty files from a specified directory.
+    It first generates a list of all empty files in the directory, then removes each file in the list.
+    It prints the number of files removed and returns this number.
+
+    Parameters:
+    target_dir (str): The directory from which empty files are to be removed.
+
+    Returns:
+    int: The number of files removed.
+    """
     # Make a list of empty files
     empty_files = [file for file in os.listdir(target_dir) if os.path.getsize(os.path.join(target_dir, file)) == 0]
     # Remove the empty files
@@ -107,6 +156,22 @@ def clean_empty_files(target_dir):
 
 
 def get_kegg_all(target_dir="kegg_data", target="C"):
+    """
+    This function downloads all molecule files from the KEGG database for a specified target and saves them to a specified directory.
+    The target can be either "D" for drugs or "C" for compounds.
+    The maximum index for the molecule ID to be downloaded is determined based on the target.
+    The function calls the get_kegg function to perform the download.
+
+    Parameters:
+    target_dir (str, optional): The directory where the molecule files are to be saved. Defaults to "kegg_data".
+    target (str, optional): The target for which the molecule files are to be downloaded. Can be either "D" for drugs or "C" for compounds. Defaults to "C".
+
+    Raises:
+    ValueError: If an unknown target is specified.
+
+    Returns:
+    None
+    """
     max_drugs = 12897
     max_compounds = 22919
 
@@ -119,7 +184,6 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
 
     # Get the data
     get_kegg(target_dir + f"_{target}", prefix=target, max_idx=max_idx)
-
 
 if __name__ == "__main__":
     # Get the data
