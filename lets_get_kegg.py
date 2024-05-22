@@ -147,7 +147,7 @@ def clean_empty_folders(target_dir):
     int: The number of folders removed.
     """
     # Make a list of empty folders
-    empty_files = [folder for folder in os.listdir(target_dir) if os.path.getsize(os.path.join(target_dir, folder)) == 0]
+    empty_folder = [folder for folder in os.listdir(target_dir) if os.path.getsize(os.path.join(target_dir, folder)) == 0]
     # Remove the empty folder
     for folder in empty_folder:
         os.rmdir(os.path.join(target_dir, folder))
