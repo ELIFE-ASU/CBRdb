@@ -37,22 +37,14 @@ def format_mol_id(id_number, prefix="D"):
     return prefix + '{:05}'.format(id_number)
 
 
-def get_mol(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.6):
-    """
-    This function downloads a molecule file from the KEGG database and saves it to a specified directory.
-    If the file already exists in the directory, the download is skipped.
-
-    Parameters:
-    id (str): The ID for which the molecule file is to be downloaded.
-    save_dir (str): The directory where the molecule file is to be saved.
-    kegg_website (str, optional): The base URL of the KEGG database. Defaults to "https://rest.kegg.jp/get/".
-    request_sleep (float, optional): The time to sleep between requests in seconds. Defaults to 0.6.
-
-    Returns:
-    bool: True if the download was successful or the file already exists, False otherwise.
-    """
+def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.6):
+    # Get the data type from the id
+    data_type = id[0]
     # Get the full file path
-    full_file = os.path.join(save_dir, f"{id}.mol")
+    if data_type == "R":
+        full_file = os.path.join(save_dir, f"{id}.data")
+    else:
+        full_file = os.path.join(save_dir, f"{id}.mol")
 
     # Make the session
     s = Session()
@@ -73,7 +65,10 @@ def get_mol(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_slee
         # Get the data
         try:
             # Get the response
-            response = s.get(f"{kegg_website}{id}/mol", timeout=10.0)
+            if data_type == "R":
+                response = s.get(f"{kegg_website}{id}", timeout=10.0)
+            else:
+                response = s.get(f"{kegg_website}{id}/mol", timeout=10.0)
         except requests.exceptions.RequestException as e:
             # Some error in the connection
             print(f"Error in ID {id}, connection exception {e}")
@@ -117,7 +112,7 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
     i = 0
     while True:
         i += 1
-        # Get the formatted drug id
+        # Get the formatted id
         id = format_mol_id(i, prefix=prefix)
         # Get the full path
         full_path = os.path.join(target_dir, id)
@@ -125,7 +120,7 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
         os.makedirs(full_path, exist_ok=True)
         print(f"Downloading {id}")
         # Check if the drug is downloaded
-        if not get_mol(id, full_path):
+        if not get_data(id, full_path):
             print(f"Download failed for {id}")
         # Check if the maximum index is reached
         if max_idx is not None and i >= max_idx:
@@ -199,27 +194,12 @@ def get_total_n(database="reaction", kegg_website=r"https://rest.kegg.jp/list/",
 
 
 def get_kegg_all(target_dir="kegg_data", target="C"):
-    """
-    This function downloads all molecule files from the KEGG database for a specified target and saves them to a specified directory.
-    The target can be either "D" for drugs or "C" for compounds.
-    The maximum index for the molecule ID to be downloaded is determined based on the target.
-    The function calls the get_kegg function to perform the download.
-
-    Parameters:
-    target_dir (str, optional): The directory where the molecule files are to be saved. Defaults to "kegg_data".
-    target (str, optional): The target for which the molecule files are to be downloaded. Can be either "D" for drugs or "C" for compounds. Defaults to "C".
-
-    Raises:
-    ValueError: If an unknown target is specified.
-
-    Returns:
-    None
-    """
-
     if target == "D":
         _, max_idx = get_total_n(database="drug")
     elif target == "C":
         _, max_idx = get_total_n(database="compound")
+    elif target == "R":
+        _, max_idx = get_total_n(database="reaction")
     else:
         raise ValueError(f"Unknown target {target}")
 
@@ -228,8 +208,12 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
 
 
 if __name__ == "__main__":
-    # Get the data
-    get_kegg_all(target="C")
+    print("Program started", flush=True)
+    target = "C"
+    target_dir = r"C:\Users\louie\skunkworks\data\kegg_data"
 
+    # Get the data
+    get_kegg_all(target_dir=target_dir, target=target)
     # Clean the data
-    clean_empty_folders("kegg_data_C")
+    clean_empty_folders(f"{target_dir}_{target}")
+    print("Program finished", flush=True)
