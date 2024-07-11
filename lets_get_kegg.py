@@ -129,7 +129,24 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
     return None
 
 
-def clean_empty_folders(target_dir):
+def list_empty_folders(target_dir):
+    """
+    List all empty folders within a specified directory.
+
+    Parameters:
+    target_dir (str): The path to the directory to search in.
+
+    Returns:
+    list: A list of paths to all empty folders within the specified directory.
+    """
+    empty_folders = []
+    for entry in os.listdir(target_dir):
+        entry_path = os.path.join(target_dir, entry)
+        if os.path.isdir(entry_path) and not os.listdir(entry_path):
+            empty_folders.append(entry_path)
+    return empty_folders
+
+def clean_empty_folders(target_dir,size=False):
     """
     This function removes all empty folders from a specified directory.
     It first generates a list of all empty folders in the directory,
@@ -142,13 +159,24 @@ def clean_empty_folders(target_dir):
     Returns:
     int: The number of folders removed.
     """
-    # Make a list of empty folders
-    empty_folder = [folder for folder in os.listdir(target_dir) if
+    # Make a list of empty folders using the size of the folder
+    e1 = [folder for folder in os.listdir(target_dir) if
                     os.path.getsize(os.path.join(target_dir, folder)) == 0]
+    # Make a list of empty folders using the os.listdir function
+    e2 = list_empty_folders(target_dir)
+    # Combine the two lists
+    if size:
+        empty_folder = set(e1 + e2)
+    else:
+        empty_folder = set(e2)
     # Remove the empty folder
+    n_rm = 0
     for folder in empty_folder:
-        os.rmdir(os.path.join(target_dir, folder))
-    n_rm = len(empty_folder)
+        try:
+            os.rmdir(os.path.join(target_dir, folder))
+            n_rm += 1
+        except OSError as e:
+            print(f"Error removing folder {folder}: {e}")
     print(f"Removed {n_rm} empty folders")
     return n_rm
 
@@ -209,11 +237,11 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    target = "C"
+    target = "R"
     target_dir = r"C:\Users\louie\skunkworks\data\kegg_data"
 
     # Get the data
-    get_kegg_all(target_dir=target_dir, target=target)
+    #get_kegg_all(target_dir=target_dir, target=target)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
     print("Program finished", flush=True)
