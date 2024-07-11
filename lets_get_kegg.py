@@ -1,5 +1,6 @@
 import os
 import time
+
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
@@ -147,13 +148,54 @@ def clean_empty_folders(target_dir):
     int: The number of folders removed.
     """
     # Make a list of empty folders
-    empty_folder = [folder for folder in os.listdir(target_dir) if os.path.getsize(os.path.join(target_dir, folder)) == 0]
+    empty_folder = [folder for folder in os.listdir(target_dir) if
+                    os.path.getsize(os.path.join(target_dir, folder)) == 0]
     # Remove the empty folder
     for folder in empty_folder:
         os.rmdir(os.path.join(target_dir, folder))
     n_rm = len(empty_folder)
     print(f"Removed {n_rm} empty folders")
     return n_rm
+
+
+def get_total_n_reactions(database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.6):
+    # Make the session
+    s = Session()
+    # Add retries
+    retries = Retry(
+        total=5,
+        backoff_factor=0.1,
+        status_forcelist=[502, 503, 504],
+        allowed_methods={'POST'},
+    )
+    # Mount the session
+    s.mount('https://', HTTPAdapter(max_retries=retries))
+
+    # Limit the number of requests
+    time.sleep(request_sleep)
+    # Get the data
+    try:
+        # Get the response
+        response = s.get(f"{kegg_website}{database}", timeout=10.0)
+    except requests.exceptions.RequestException as e:
+        # Some error in the connection
+        print(f"Error connection exception {e}")
+        exit()
+    # Check if the response is ok
+    if response.ok:
+        # Strip the last section of the file
+        res = response.text.split("> <ENTRY>")[0]
+        # Split the response into lines
+        lines = res.split("\n")
+        # Count the number of lines
+        n = len(lines)
+        # find the index of the last line
+        idx = int(lines[-2].split()[0][1:])
+        return n, idx
+    else:
+        # Some error in the response
+        print(f"Error response {response.status_code}")
+        exit()
 
 
 def get_kegg_all(target_dir="kegg_data", target="C"):
@@ -173,18 +215,17 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
     Returns:
     None
     """
-    max_drugs = 12897
-    max_compounds = 22919
 
     if target == "D":
-        max_idx = max_drugs
+        _, max_idx = get_total_n_reactions(database="drug")
     elif target == "C":
-        max_idx = max_compounds
+        _, max_idx = get_total_n_reactions(database="compound")
     else:
         raise ValueError(f"Unknown target {target}")
 
     # Get the data
     get_kegg(target_dir + f"_{target}", prefix=target, max_idx=max_idx)
+
 
 if __name__ == "__main__":
     # Get the data
