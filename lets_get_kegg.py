@@ -37,13 +37,13 @@ def format_mol_id(id_number, prefix="D"):
     return prefix + '{:05}'.format(id_number)
 
 
-def get_mol(id_drug, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.6):
+def get_mol(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.6):
     """
     This function downloads a molecule file from the KEGG database and saves it to a specified directory.
     If the file already exists in the directory, the download is skipped.
 
     Parameters:
-    id_drug (str): The ID of the drug for which the molecule file is to be downloaded.
+    id (str): The ID for which the molecule file is to be downloaded.
     save_dir (str): The directory where the molecule file is to be saved.
     kegg_website (str, optional): The base URL of the KEGG database. Defaults to "https://rest.kegg.jp/get/".
     request_sleep (float, optional): The time to sleep between requests in seconds. Defaults to 0.6.
@@ -52,7 +52,7 @@ def get_mol(id_drug, save_dir, kegg_website="https://rest.kegg.jp/get/", request
     bool: True if the download was successful or the file already exists, False otherwise.
     """
     # Get the full file path
-    full_file = os.path.join(save_dir, f"{id_drug}.mol")
+    full_file = os.path.join(save_dir, f"{id}.mol")
 
     # Make the session
     s = Session()
@@ -73,10 +73,10 @@ def get_mol(id_drug, save_dir, kegg_website="https://rest.kegg.jp/get/", request
         # Get the data
         try:
             # Get the response
-            response = s.get(f"{kegg_website}{id_drug}/mol", timeout=10.0)
+            response = s.get(f"{kegg_website}{id}/mol", timeout=10.0)
         except requests.exceptions.RequestException as e:
             # Some error in the connection
-            print(f"Error in drug ID {id_drug}, connection exception {e}")
+            print(f"Error in ID {id}, connection exception {e}")
             return False
         # Check if the response is ok
         if response.ok:
@@ -87,7 +87,7 @@ def get_mol(id_drug, save_dir, kegg_website="https://rest.kegg.jp/get/", request
                 f.write(res)
         else:
             # Some error in the response
-            print(f"Error in drug ID {id_drug}, response {response.status_code}")
+            print(f"Error in ID {id}, response {response.status_code}")
             return False
     else:
         # Skip the download as the file already exists
@@ -118,15 +118,15 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
     while True:
         i += 1
         # Get the formatted drug id
-        id_drug = format_mol_id(i, prefix=prefix)
+        id = format_mol_id(i, prefix=prefix)
         # Get the full path
-        full_path = os.path.join(target_dir, id_drug)
+        full_path = os.path.join(target_dir, id)
         # Make subdirectory
         os.makedirs(full_path, exist_ok=True)
-        print(f"Downloading drug {id_drug}")
+        print(f"Downloading {id}")
         # Check if the drug is downloaded
-        if not get_mol(id_drug, full_path):
-            print(f"Download failed for drug {id_drug}")
+        if not get_mol(id, full_path):
+            print(f"Download failed for {id}")
         # Check if the maximum index is reached
         if max_idx is not None and i >= max_idx:
             print(f"Maximum index reached {max_idx}")
@@ -158,7 +158,7 @@ def clean_empty_folders(target_dir):
     return n_rm
 
 
-def get_total_n_reactions(database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.6):
+def get_total_n(database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.6):
     # Make the session
     s = Session()
     # Add retries
@@ -217,9 +217,9 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
     """
 
     if target == "D":
-        _, max_idx = get_total_n_reactions(database="drug")
+        _, max_idx = get_total_n(database="drug")
     elif target == "C":
-        _, max_idx = get_total_n_reactions(database="compound")
+        _, max_idx = get_total_n(database="compound")
     else:
         raise ValueError(f"Unknown target {target}")
 
