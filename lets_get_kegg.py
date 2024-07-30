@@ -133,7 +133,8 @@ def list_empty_folders(target_dir):
             empty_folders.append(entry_path)
     return empty_folders
 
-def clean_empty_folders(target_dir,size=False):
+
+def clean_empty_folders(target_dir, size=False):
     """
     This function removes all empty folders from a specified directory.
     It first generates a list of all empty folders in the directory,
@@ -148,7 +149,7 @@ def clean_empty_folders(target_dir,size=False):
     """
     # Make a list of empty folders using the size of the folder
     e1 = [folder for folder in os.listdir(target_dir) if
-                    os.path.getsize(os.path.join(target_dir, folder)) == 0]
+          os.path.getsize(os.path.join(target_dir, folder)) == 0]
     # Make a list of empty folders using the os.listdir function
     e2 = list_empty_folders(target_dir)
     # Combine the two lists
