@@ -71,7 +71,7 @@ def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sle
                 response = s.get(f"{kegg_website}{id}/mol", timeout=10.0)
         except requests.exceptions.RequestException as e:
             # Some error in the connection
-            print(f"Error in ID {id}, connection exception {e}")
+            print(f"Error in ID {id}, connection exception {e}", flush=True)
             return False
         # Check if the response is ok
         if response.ok:
@@ -82,11 +82,11 @@ def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sle
                 f.write(res)
         else:
             # Some error in the response
-            print(f"Error in ID {id}, response {response.status_code}")
+            print(f"Error in ID {id}, response {response.status_code}", flush=True)
             return False
     else:
         # Skip the download as the file already exists
-        print(f"File {full_file} already exists")
+        print(f"File {full_file} already exists", flush=True)
     return True
 
 
@@ -105,13 +105,13 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
         full_path = os.path.join(target_dir, id)
         # Make subdirectory
         os.makedirs(full_path, exist_ok=True)
-        print(f"Downloading {id}")
+        print(f"Downloading {id}", flush=True)
         # Check if the drug is downloaded
         if not get_data(id, full_path):
-            print(f"Download failed for {id}")
+            print(f"Download failed for {id}", flush=True)
         # Check if the maximum index is reached
         if max_idx is not None and i >= max_idx:
-            print(f"Maximum index reached {max_idx}")
+            print(f"Maximum index reached {max_idx}", flush=True)
             break
     return None
 
@@ -164,8 +164,8 @@ def clean_empty_folders(target_dir, size=False):
             os.rmdir(os.path.join(target_dir, folder))
             n_rm += 1
         except OSError as e:
-            print(f"Error removing folder {folder}: {e}")
-    print(f"Removed {n_rm} empty folders")
+            print(f"Error removing folder {folder}: {e}", flush=True)
+    print(f"Removed {n_rm} empty folders", flush=True)
     return n_rm
 
 
@@ -190,7 +190,7 @@ def get_total_n(database="reaction", kegg_website=r"https://rest.kegg.jp/list/",
         response = s.get(f"{kegg_website}{database}", timeout=10.0)
     except requests.exceptions.RequestException as e:
         # Some error in the connection
-        print(f"Error connection exception {e}")
+        print(f"Error connection exception {e}", flush=True)
         exit()
     # Check if the response is ok
     if response.ok:
