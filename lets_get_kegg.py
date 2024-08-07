@@ -52,25 +52,13 @@ def format_mol_id(id_number, prefix="D"):
     return prefix + '{:05}'.format(id_number)
 
 
-def get_total_n(database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.2):
-    # Make the session
-    s = Session()
-    # Add retries
-    retries = Retry(
-        total=5,
-        backoff_factor=0.1,
-        status_forcelist=[502, 503, 504],
-        allowed_methods={'POST'},
-    )
-    # Mount the session
-    s.mount('https://', HTTPAdapter(max_retries=retries))
-
-    # Limit the number of requests
-    time.sleep(request_sleep)
+def get_total_n(session, database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.2):
     # Get the data
     try:
         # Get the response
-        response = s.get(f"{kegg_website}{database}", timeout=10.0)
+        response = session.get(f"{kegg_website}{database}", timeout=10.0)
+        # Limit the number of requests
+        time.sleep(request_sleep)
     except requests.exceptions.RequestException as e:
         # Some error in the connection
         print(f"Error connection exception {e}", flush=True)
@@ -92,21 +80,10 @@ def get_total_n(database="reaction", kegg_website=r"https://rest.kegg.jp/list/",
         exit()
 
 
-def check_kegg_valid_id(id, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2):
-    # Make the session
-    s = Session()
-    # Add retries
-    retries = Retry(
-        total=5,
-        backoff_factor=0.1,
-        status_forcelist=[502, 503, 504],
-        allowed_methods={'POST'},
-    )
-    # Mount the session
-    s.mount('https://', HTTPAdapter(max_retries=retries))
+def check_kegg_valid_id(id, session, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2):
     # Get the data
     try:
-        response = s.get(f"{kegg_website}{id}", timeout=10.0)
+        response = session.get(f"{kegg_website}{id}", timeout=10.0)
         # Limit the number of requests
         time.sleep(request_sleep)
     except requests.exceptions.RequestException as e:
@@ -122,7 +99,7 @@ def check_kegg_valid_id(id, kegg_website="https://rest.kegg.jp/get/", request_sl
         return False
 
 
-def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.4, full=False):
+def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.4, full=False):
     # Get the data type from the id
     data_type = id[0]
     # Get the full file path
@@ -131,27 +108,15 @@ def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sle
     else:
         full_file = os.path.join(save_dir, f"{id}.mol")
 
-    # Make the session
-    s = Session()
-    # Add retries
-    retries = Retry(
-        total=5,
-        backoff_factor=0.1,
-        status_forcelist=[502, 503, 504],
-        allowed_methods={'POST'},
-    )
-    # Mount the session
-    s.mount('https://', HTTPAdapter(max_retries=retries))
-
     # Check if the file exists
     if not os.path.exists(full_file):
         # Get the data
         try:
             # Get the response
             if data_type == "R" in save_dir or full:
-                response = s.get(f"{kegg_website}{id}", timeout=10.0)
+                response = session.get(f"{kegg_website}{id}", timeout=10.0)
             else:
-                response = s.get(f"{kegg_website}{id}/mol", timeout=10.0)
+                response = session.get(f"{kegg_website}{id}/mol", timeout=10.0)
             # Limit the number of requests
             time.sleep(request_sleep)
         except requests.exceptions.RequestException as e:
@@ -175,7 +140,7 @@ def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sle
     return True
 
 
-def get_kegg(target_dir, prefix="D", max_idx=12897, molless_file="molless.dat", invalid_file="invalid.dat"):
+def get_kegg(target_dir, session, prefix="D", max_idx=12897, molless_file="molless.dat", invalid_file="invalid.dat"):
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
@@ -209,9 +174,9 @@ def get_kegg(target_dir, prefix="D", max_idx=12897, molless_file="molless.dat", 
         os.makedirs(full_path, exist_ok=True)
         print(f"Downloading {id}", flush=True)
         # Check if the drug is downloaded
-        if not get_data(id, full_path, full=full):
+        if not get_data(id, full_path, session, full=full):
             # check if the id is valid
-            if check_kegg_valid_id(id):
+            if check_kegg_valid_id(id, session):
                 # Write the Mol-less id to file
                 with open(molless_file, "a") as f:
                     f.write(f"{id}\n")
@@ -280,20 +245,22 @@ def clean_empty_folders(target_dir, size=False):
 
 
 def get_kegg_all(target_dir="kegg_data", target="C"):
+    # make the session
+    session = prepare_session()
     # Check if the target is a valid target and get the maximum index
     if target == "D" or target == "D_full":
-        _, max_idx = get_total_n(database="drug")
+        _, max_idx = get_total_n(session, database="drug")
     elif target == "C" or target == "C_full":
-        _, max_idx = get_total_n(database="compound")
+        _, max_idx = get_total_n(session, database="compound")
     elif target == "R":
-        _, max_idx = get_total_n(database="reaction")
+        _, max_idx = get_total_n(session, database="reaction")
     else:
         raise ValueError(f"Unknown target {target}")
 
     print(f"Total number of entries {max_idx}", flush=True)
 
     # Get the data
-    get_kegg(target_dir + f"_{target}", prefix=target, max_idx=max_idx)
+    get_kegg(target_dir + f"_{target}", session, prefix=target, max_idx=max_idx)
 
 
 if __name__ == "__main__":
