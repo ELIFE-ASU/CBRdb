@@ -7,6 +7,21 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 
+def prepare_session():
+    # Make the session
+    s = Session()
+    # Add retries
+    retries = Retry(
+        total=5,
+        backoff_factor=0.1,
+        status_forcelist=[502, 503, 504],
+        allowed_methods={'POST'},
+    )
+    # Mount the session
+    s.mount('https://', HTTPAdapter(max_retries=retries))
+    return s
+
+
 def file_list(mypath=None):
     """
     This function generates a list of all files in a specified directory.
@@ -37,11 +52,81 @@ def format_mol_id(id_number, prefix="D"):
     return prefix + '{:05}'.format(id_number)
 
 
-def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.6):
+def get_total_n(database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.2):
+    # Make the session
+    s = Session()
+    # Add retries
+    retries = Retry(
+        total=5,
+        backoff_factor=0.1,
+        status_forcelist=[502, 503, 504],
+        allowed_methods={'POST'},
+    )
+    # Mount the session
+    s.mount('https://', HTTPAdapter(max_retries=retries))
+
+    # Limit the number of requests
+    time.sleep(request_sleep)
+    # Get the data
+    try:
+        # Get the response
+        response = s.get(f"{kegg_website}{database}", timeout=10.0)
+    except requests.exceptions.RequestException as e:
+        # Some error in the connection
+        print(f"Error connection exception {e}", flush=True)
+        exit()
+    # Check if the response is ok
+    if response.ok:
+        # Strip the last section of the file
+        res = response.text.split("> <ENTRY>")[0]
+        # Split the response into lines
+        lines = res.split("\n")
+        # Count the number of lines
+        n = len(lines)
+        # find the index of the last line
+        idx = int(lines[-2].split()[0][1:])
+        return n, idx
+    else:
+        # Some error in the response
+        print(f"Error response {response.status_code}")
+        exit()
+
+
+def check_kegg_valid_id(id, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2):
+    # Make the session
+    s = Session()
+    # Add retries
+    retries = Retry(
+        total=5,
+        backoff_factor=0.1,
+        status_forcelist=[502, 503, 504],
+        allowed_methods={'POST'},
+    )
+    # Mount the session
+    s.mount('https://', HTTPAdapter(max_retries=retries))
+    # Get the data
+    try:
+        response = s.get(f"{kegg_website}{id}", timeout=10.0)
+        # Limit the number of requests
+        time.sleep(request_sleep)
+    except requests.exceptions.RequestException as e:
+        # Some error in the connection
+        print(f"Error in ID {id}, connection exception {e}", flush=True)
+        return False
+    # Check if the response is ok
+    if response.ok:
+        return True
+    else:
+        # Some error in the response
+        print(f"Error in ID {id}, response {response.status_code}", flush=True)
+        return False
+
+
+def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.4, full=False):
     # Get the data type from the id
     data_type = id[0]
     # Get the full file path
-    if data_type == "R" or "data" in save_dir:
+    if data_type == "R" in save_dir or full:
         full_file = os.path.join(save_dir, f"{id}.data")
     else:
         full_file = os.path.join(save_dir, f"{id}.mol")
@@ -60,15 +145,15 @@ def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sle
 
     # Check if the file exists
     if not os.path.exists(full_file):
-        # Limit the number of requests
-        time.sleep(request_sleep)
         # Get the data
         try:
             # Get the response
-            if data_type == "R" or "data" in save_dir:
+            if data_type == "R" in save_dir or full:
                 response = s.get(f"{kegg_website}{id}", timeout=10.0)
             else:
                 response = s.get(f"{kegg_website}{id}/mol", timeout=10.0)
+            # Limit the number of requests
+            time.sleep(request_sleep)
         except requests.exceptions.RequestException as e:
             # Some error in the connection
             print(f"Error in ID {id}, connection exception {e}", flush=True)
@@ -86,15 +171,32 @@ def get_data(id, save_dir, kegg_website="https://rest.kegg.jp/get/", request_sle
             return False
     else:
         # Skip the download as the file already exists
-        print(f"File {full_file} already exists", flush=True)
+        print(f"{id} already exists", flush=True)
     return True
 
 
-def get_kegg(target_dir, prefix="D", max_idx=12897):
+def get_kegg(target_dir, prefix="D", max_idx=12897, molless_file="molless.dat", invalid_file="invalid.dat"):
+    # Check if the prefix is to download the full data
+    if "_full" in prefix:
+        full = True
+    else:
+        full = False
+    print(f"Downloading {prefix} data to {target_dir}", flush=True)
     # clean up the prefix
-    prefix = prefix.strip("_data").upper()
+    prefix = prefix.strip("_full").upper()
     # Check path for saving
     os.makedirs(target_dir, exist_ok=True)
+    # Check if the molless file exists
+    if not os.path.exists(molless_file):
+        # Write the failed file
+        with open(molless_file, "w") as f:
+            f.write("# Mol-less IDs\n")
+    # Check if the invalid file exists
+    if not os.path.exists(invalid_file):
+        # Write the invalid file
+        with open(invalid_file, "w") as f:
+            f.write("# Invalid IDs\n")
+
     # Start the loop
     i = 0
     while True:
@@ -107,9 +209,17 @@ def get_kegg(target_dir, prefix="D", max_idx=12897):
         os.makedirs(full_path, exist_ok=True)
         print(f"Downloading {id}", flush=True)
         # Check if the drug is downloaded
-        if not get_data(id, full_path):
-            print(f"Download failed for {id}", flush=True)
-        # Check if the maximum index is reached
+        if not get_data(id, full_path, full=full):
+            # check if the id is valid
+            if check_kegg_valid_id(id):
+                # Write the Mol-less id to file
+                with open(molless_file, "a") as f:
+                    f.write(f"{id}\n")
+            else:
+                # Write the invalid id to the invalid file
+                with open(invalid_file, "a") as f:
+                    f.write(f"{id}\n")
+        # Check if the maximum index is reached and break
         if max_idx is not None and i >= max_idx:
             print(f"Maximum index reached {max_idx}", flush=True)
             break
@@ -169,55 +279,18 @@ def clean_empty_folders(target_dir, size=False):
     return n_rm
 
 
-def get_total_n(database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.6):
-    # Make the session
-    s = Session()
-    # Add retries
-    retries = Retry(
-        total=5,
-        backoff_factor=0.1,
-        status_forcelist=[502, 503, 504],
-        allowed_methods={'POST'},
-    )
-    # Mount the session
-    s.mount('https://', HTTPAdapter(max_retries=retries))
-
-    # Limit the number of requests
-    time.sleep(request_sleep)
-    # Get the data
-    try:
-        # Get the response
-        response = s.get(f"{kegg_website}{database}", timeout=10.0)
-    except requests.exceptions.RequestException as e:
-        # Some error in the connection
-        print(f"Error connection exception {e}", flush=True)
-        exit()
-    # Check if the response is ok
-    if response.ok:
-        # Strip the last section of the file
-        res = response.text.split("> <ENTRY>")[0]
-        # Split the response into lines
-        lines = res.split("\n")
-        # Count the number of lines
-        n = len(lines)
-        # find the index of the last line
-        idx = int(lines[-2].split()[0][1:])
-        return n, idx
-    else:
-        # Some error in the response
-        print(f"Error response {response.status_code}")
-        exit()
-
-
 def get_kegg_all(target_dir="kegg_data", target="C"):
-    if target == "D" or target == "D_data":
+    # Check if the target is a valid target and get the maximum index
+    if target == "D" or target == "D_full":
         _, max_idx = get_total_n(database="drug")
-    elif target == "C" or target == "C_data":
+    elif target == "C" or target == "C_full":
         _, max_idx = get_total_n(database="compound")
     elif target == "R":
         _, max_idx = get_total_n(database="reaction")
     else:
         raise ValueError(f"Unknown target {target}")
+
+    print(f"Total number of entries {max_idx}", flush=True)
 
     # Get the data
     get_kegg(target_dir + f"_{target}", prefix=target, max_idx=max_idx)
@@ -225,7 +298,7 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    target = "C_data"
+    target = "C"
     target_dir = r"C:\Users\louie\skunkworks\data\kegg_data"
 
     # Get the data
