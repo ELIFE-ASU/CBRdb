@@ -2,6 +2,7 @@ import os
 import shutil
 
 import numpy as np
+import pandas as pd
 from rdkit.Chem import AllChem as Achem
 from rdkit import Chem as Chem
 
@@ -103,7 +104,9 @@ def embed_mol(mol):
     # Add hydrogens
     mol = Chem.AddHs(mol)
     # Embed the molecule
-    Achem.EmbedMolecule(mol)
+    ps = Achem.ETKDGv2()
+    ps.useRandomCoords = True
+    Achem.EmbedMolecule(mol, ps)
     return mol
 
 
@@ -150,7 +153,7 @@ if __name__ == "__main__":
     # Clean up the files
     delete_files_substring(target_dir, "mod")
     # mostly valence errors
-    bad_list = ["C02202","C00210", "C00462",  "C19040", "C21014", "C22680"]
+    bad_list = ["C01322","C02202","C00210", "C00462",  "C19040", "C21014", "C22680"]
     man_dict = {"C02202":"InChI=1S/C27H26N4O4/c28-29-18-25(32)23(16-20-10-4-1-5-11-20)30-26(33)24(17-21-12-6-2-7-13-21)31-27(34)35-19-22-14-8-3-9-15-22/h1-15,18,23-24H,16-17,19H2,(H,30,33)(H,31,34)/t23-,24-/m0/s1",
                 "C13681":"InChI=1S/C8H10N3.BF4/c1-11(2)8-5-3-7(10-9)4-6-8;2-1(3,4)5/h3-6H,1-2H3;/q+1;-1",
                 "C13932":"InChI=1S/6ClH.14H3N.2O.3Ru/h6*1H;14*1H3;;;;;/q;;;;;;;;;;;;;;;;;;;;;;3*+2/p-6",
@@ -159,56 +162,51 @@ if __name__ == "__main__":
 
     # Filter the files to only include .mol files
     files = [f for f in files if "mod" not in f]
-    n_files = len(files)
-    # Determine the number of
-    #n_files -= len(bad_list)
-
-    arr_inchi = np.zeros(n_files, dtype=str)
+    arr_inchi = np.empty(len(files)-len(bad_list), dtype=str)
+    cids = np.empty(len(files)-len(bad_list), dtype=str)
 
     for i, file in enumerate(files):
         cid = os.path.basename(file).split(".")[0]
         print(f"Processing file {i + 1}/{len(files)}: {cid}", flush=True)
         if cid in bad_list:
-            # print("Skipping file", flush=True)
             continue
         if cid in man_dict:
             mol = Chem.MolFromInchi(man_dict[cid])
         else:
+            # check for R groups
             flag_r = check_for_R_group(file)
             if flag_r:
-                # Make a temporary new file
                 f_load_r = file.split(".")[0] + "_r.mol"
-                # Replace the R groups with Hydrogen
                 replace_r_group(file, f_load_r)
                 file = f_load_r
-
+            # check for problem groups
             flag_p = check_for_problem_group(file)
             if flag_p:
                 f_load_p = file.split(".")[0] + "_p.mol"
                 replace_problem_group(file, f_load_p)
                 file = f_load_p
+            # get the molecule
             mol = Chem.MolFromMolFile(file, removeHs=True, sanitize=True)
-
+        # remove the temporary files
         if flag_r:
             remove(f_load_r)
         if flag_p:
             remove(f_load_p)
-
-        #mol = embed_mol(mol)
+        # standardize the molecule
         nrm = rdMolStandardize.Normalizer()
         nrm.normalizeInPlace(mol)
+        mol = embed_mol(mol)
 
         # mol = Achem.MolFromMolFile(file, removeHs=True, sanitize=False)
         # mol.UpdatePropertyCache(strict=False)
-
         # Chem.SanitizeMol(mol,Chem.SanitizeFlags.SANITIZE_FINDRADICALS|Chem.SanitizeFlags.SANITIZE_KEKULIZE|Chem.SanitizeFlags.SANITIZE_SETAROMATICITY|Chem.SanitizeFlags.SANITIZE_SETCONJUGATION|Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION|Chem.SanitizeFlags.SANITIZE_SYMMRINGS,catchErrors=True)
         # img = Draw.MolToImage(mol)
         # img.show()
 
         arr_inchi[i] = Chem.MolToInchi(mol)
-        # # # print(inchi)
-        # # # convert to smiles
-        # smiles = Chem.MolToSmiles(mol)
-        # print(smiles)
-
+        cids[i] = cid
+    # create a dataframe
+    df = pd.DataFrame(data={"CID": cids, "InChI": arr_inchi})
+    # save the dataframe
+    df.to_csv(f"kegg_inchi_{target}.csv", index=False)
     print("Program finished", flush=True)
