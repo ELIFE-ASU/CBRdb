@@ -38,6 +38,59 @@ def file_list(mypath=None):
             os.path.isfile(os.path.join(mypath, f))]  # Return a list of all files in the directory
 
 
+def list_empty_folders(target_dir):
+    """
+    List all empty folders within a specified directory.
+
+    Parameters:
+    target_dir (str): The path to the directory to search in.
+
+    Returns:
+    list: A list of paths to all empty folders within the specified directory.
+    """
+    empty_folders = []
+    for entry in os.listdir(target_dir):
+        entry_path = os.path.join(target_dir, entry)
+        if os.path.isdir(entry_path) and not os.listdir(entry_path):
+            empty_folders.append(entry_path)
+    return empty_folders
+
+
+def clean_empty_folders(target_dir, size=False):
+    """
+    This function removes all empty folders from a specified directory.
+    It first generates a list of all empty folders in the directory,
+    then removes each folder in the list.
+    It prints the number of folders removed and returns this number.
+
+    Parameters:
+    target_dir (str): The directory from which empty folders are to be removed.
+
+    Returns:
+    int: The number of folders removed.
+    """
+    # Make a list of empty folders using the size of the folder
+    e1 = [folder for folder in os.listdir(target_dir) if
+          os.path.getsize(os.path.join(target_dir, folder)) == 0]
+    # Make a list of empty folders using the os.listdir function
+    e2 = list_empty_folders(target_dir)
+    # Combine the two lists
+    if size:
+        empty_folder = set(e1 + e2)
+    else:
+        empty_folder = set(e2)
+    # Remove the empty folder
+    n_rm = 0
+    for folder in empty_folder:
+        try:
+            os.rmdir(os.path.join(target_dir, folder))
+            n_rm += 1
+        except OSError as e:
+            print(f"Error removing folder {folder}: {e}", flush=True)
+    print(f"Removed {n_rm} empty folders", flush=True)
+    return n_rm
+
+
 def format_mol_id(id_number, prefix="D"):
     """
     This function formats a molecule ID by adding a prefix and ensuring the ID number is five digits long.
@@ -95,7 +148,7 @@ def check_kegg_valid_id(id, session, kegg_website="https://rest.kegg.jp/get/", r
         return True
     else:
         # Some error in the response
-        print(f"Error in ID {id}, response {response.status_code}", flush=True)
+        print(f"Error in ID {id}, not a valid ID", flush=True)
         return False
 
 
@@ -177,11 +230,11 @@ def get_kegg(target_dir, session, prefix="D", max_idx=12897, molless_file="molle
         if not get_data(id, full_path, session, full=full):
             # check if the id is valid
             if check_kegg_valid_id(id, session):
-                # Write the Mol-less id to file
+                # The ID is valid but the data is not downloaded, write the Mol-less id to file
                 with open(molless_file, "a") as f:
                     f.write(f"{id}\n")
             else:
-                # Write the invalid id to the invalid file
+                # The ID is invalid, write the invalid id to file
                 with open(invalid_file, "a") as f:
                     f.write(f"{id}\n")
         # Check if the maximum index is reached and break
@@ -189,59 +242,6 @@ def get_kegg(target_dir, session, prefix="D", max_idx=12897, molless_file="molle
             print(f"Maximum index reached {max_idx}", flush=True)
             break
     return None
-
-
-def list_empty_folders(target_dir):
-    """
-    List all empty folders within a specified directory.
-
-    Parameters:
-    target_dir (str): The path to the directory to search in.
-
-    Returns:
-    list: A list of paths to all empty folders within the specified directory.
-    """
-    empty_folders = []
-    for entry in os.listdir(target_dir):
-        entry_path = os.path.join(target_dir, entry)
-        if os.path.isdir(entry_path) and not os.listdir(entry_path):
-            empty_folders.append(entry_path)
-    return empty_folders
-
-
-def clean_empty_folders(target_dir, size=False):
-    """
-    This function removes all empty folders from a specified directory.
-    It first generates a list of all empty folders in the directory,
-    then removes each folder in the list.
-    It prints the number of folders removed and returns this number.
-
-    Parameters:
-    target_dir (str): The directory from which empty folders are to be removed.
-
-    Returns:
-    int: The number of folders removed.
-    """
-    # Make a list of empty folders using the size of the folder
-    e1 = [folder for folder in os.listdir(target_dir) if
-          os.path.getsize(os.path.join(target_dir, folder)) == 0]
-    # Make a list of empty folders using the os.listdir function
-    e2 = list_empty_folders(target_dir)
-    # Combine the two lists
-    if size:
-        empty_folder = set(e1 + e2)
-    else:
-        empty_folder = set(e2)
-    # Remove the empty folder
-    n_rm = 0
-    for folder in empty_folder:
-        try:
-            os.rmdir(os.path.join(target_dir, folder))
-            n_rm += 1
-        except OSError as e:
-            print(f"Error removing folder {folder}: {e}", flush=True)
-    print(f"Removed {n_rm} empty folders", flush=True)
-    return n_rm
 
 
 def get_kegg_all(target_dir="kegg_data", target="C"):
