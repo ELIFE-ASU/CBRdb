@@ -115,12 +115,15 @@ def standardize_mol(mol):
 
 def remove(path):
     """ param <path> could either be relative or absolute. """
-    if os.path.isfile(path) or os.path.islink(path):
-        os.remove(path)  # remove the file
-    elif os.path.isdir(path):
-        shutil.rmtree(path)  # remove dir and all contains
-    else:
-        raise ValueError("file {} is not a file or dir.".format(path))
+    try:
+        if os.path.isfile(path) or os.path.islink(path):
+            os.remove(path)  # remove the file
+        elif os.path.isdir(path):
+            shutil.rmtree(path)  # remove dir and all contains
+        else:
+            raise ValueError("file {} is not a file or dir.".format(path))
+    except Exception as e:
+        print("Failed to delete", path, e, flush=True)
 
 
 def delete_files_substring(target_dir, substring):
@@ -152,9 +155,11 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_inchi_C.c
     # Get a list of all files in the directory
     files = file_list_all(target_dir)
     # Clean up the files
-    delete_files_substring(target_dir, "mod")
+    delete_files_substring(target_dir, "_r")
+    delete_files_substring(target_dir, "_p")
     # Filter the files to only include .mol files
-    files = [f for f in files if "mod" not in f]
+    files = [f for f in files if "_r" not in f]
+    files = [f for f in files if "_p" not in f]
     # Create arrays to store the InChI and CID
     n_data = len(files)
     arr_inchi = []
@@ -169,7 +174,7 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_inchi_C.c
             continue
         # Check if the CID is in the manual fix dictionary
         if cid in man_dict:
-            mol = Chem.MolFromInchi(man_dict[cid])
+            mol = Chem.MolFromSmiles(man_dict[cid])
         else:
             # check for R groups
             flag_r = check_for_R_group(file)
@@ -191,7 +196,10 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_inchi_C.c
         if flag_p:
             remove(f_load_p)
         # Standardize and embed the molecule
-        mol = standardize_mol(mol)
+        try:
+            mol = standardize_mol(mol)
+        except:
+            print(f"Failed to standardize {cid}", flush=True)
         # Get the InChI
         arr_inchi.append(Chem.MolToInchi(mol))
         arr_cid.append(cid)
@@ -208,13 +216,19 @@ if __name__ == "__main__":
     print("Program started", flush=True)
     target_dir = os.path.abspath(r"C:/Users/louie/skunkworks/data/kegg_data_C")
     # mostly valence errors
-    bad_list = ["C01322", "C02202", "C00210", "C00462", "C19040", "C21014", "C22680", "C01365", "C01706", "C01812",
-                "C01813"]
+    bad_list = ["C00210", "C02202","C13681","C13932","C18368","C19040", "C21014", "C22680"]
     man_dict = {
-        "C02202": "InChI=1S/C27H26N4O4/c28-29-18-25(32)23(16-20-10-4-1-5-11-20)30-26(33)24(17-21-12-6-2-7-13-21)31-27(34)35-19-22-14-8-3-9-15-22/h1-15,18,23-24H,16-17,19H2,(H,30,33)(H,31,34)/t23-,24-/m0/s1",
-        "C13681": "InChI=1S/C8H10N3.BF4/c1-11(2)8-5-3-7(10-9)4-6-8;2-1(3,4)5/h3-6H,1-2H3;/q+1;-1",
-        "C13932": "InChI=1S/6ClH.14H3N.2O.3Ru/h6*1H;14*1H3;;;;;/q;;;;;;;;;;;;;;;;;;;;;;3*+2/p-6",
-        "C18368": "InChI=1S/ClO2/c2-1-3",
-        "C19040": "InChI=1S/F6Si.2Na/c1-7(2,3,4,5)6;;/q-2;2*+1"}
+        "C02202": r"[C@H](Cc1ccccc1)(C(=O)N[C@H](Cc1ccccc1)C[N+]#[NH-])NCc1ccccc1",
+        "C00210": r"[Co+](N1C2[C@@]3(N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C(=C3N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C=C3N=C(C(=C1[C@@]([C@H]2CC(=O)N)(CCC(=O)NC[C@H](OP(=O)(O[C@H]1[C@H]([C@H](O[C@@H]1CO)[*])O)[O-])C)C)C)[C@H](C3(C)C)CCC(=O)N)C)C)[*]",
+        "C00462": r"[*H]",
+        "C19040": r"[Si-2](F)(F)(F)(F)(F)F.[Na+].[Na+]",
+        "C01365": r"c12[nH]cc(c1cccc2)C[C@@H](C(=O)O)N[*]",
+        "C01706": r"C(=C\[*])/[*]",
+        "C01812": r"[*]CC(=O)O",
+        "C01813": r"C(O)([*])[*]",
+        "C13681": r"c1c(ccc(c1)N(C)C)[N+]#N.[B+3]([F-])([F-])([F-])[F-]",
+        "C13932": r"N.N.N.N.[Ru+10]([O-2][Ru])[O-2][Ru].N.N.N.N.N.N.N.N.N.N.[Cl-].[Cl-].[Cl-].[Cl-].[Cl-].[Cl-]",
+        "C18368": r"O=[Cl]=O",
+        "C19040": r"[Si-2](F)(F)(F)(F)(F)F.[Na+].[Na+]"}
     convert_mol_to_inchi(target_dir, bad_list, man_dict)
     print("Program finished", flush=True)
