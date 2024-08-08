@@ -151,7 +151,7 @@ def delete_files_substring(target_dir, substring):
     return count
 
 
-def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_inchi_C.csv"):
+def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.csv.zip"):
     # Get a list of all files in the directory
     files = file_list_all(target_dir)
     # Clean up the files
@@ -209,7 +209,7 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_inchi_C.c
     # Remove any entries with zero
     df = df[df["InChI"] != "0"]
     # Save the dataframe
-    df.to_csv(outfile, index=False)
+    df.to_csv(outfile, compression='zip', encoding='utf-8')
 
 
 if __name__ == "__main__":
