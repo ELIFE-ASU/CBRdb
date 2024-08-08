@@ -106,7 +106,7 @@ def standardize_mol(mol):
     nrm = rdMolStandardize.Normalizer()
     nrm.normalizeInPlace(mol)
     # Embed the molecule
-    # mol = embed_mol(mol)
+    mol = embed_mol(mol)
     return mol
 
 
@@ -148,7 +148,7 @@ def delete_files_substring(target_dir, substring):
     return count
 
 
-def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.csv.zip"):
+def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.csv.zip"):
     # Get a list of all files in the directory
     files = file_list_all(target_dir)
     # Clean up the files
@@ -159,16 +159,17 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.cs
     files = [f for f in files if "_p" not in f]
     # Create arrays to store the InChI and CID
     n_data = len(files)
-    arr_inchi = []
+    arr_smiles = []
     arr_cid = []
     arr_formula = []
     arr_mw = []
     arr_n_heavy = []
+    print(bad_list, flush=True)
     # Loop over the files
     for i, file in enumerate(files):
         # Get the CID
         cid = os.path.basename(file).split(".")[0]
-        # print(f"Processing file {i + 1}/{len(files)}: {cid}", flush=True)
+        print(f"Processing file {i + 1}/{len(files)}: {cid}", flush=True)
         # Check if the CID is in the bad list
         if cid in bad_list:
             print(f"Skipping {cid} due to bad list", flush=True)
@@ -200,12 +201,10 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.cs
         if flag_p:
             remove(f_load_p)
         # Standardize and embed the molecule
-        try:
-            mol = standardize_mol(mol)
-        except:
-            print(f"Failed to standardize {cid}", flush=True)
-        # Get the InChI
-        arr_inchi.append(Chem.MolToInchi(mol))
+        mol = standardize_mol(mol)
+        # Get the smiles
+        smi = Chem.MolToSmiles(mol)
+        arr_smiles.append(smi)
         # Get the formula
         arr_formula.append(rdMolDescriptors.CalcMolFormula(mol))
         # Get the molecular weight
@@ -215,15 +214,17 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.cs
         # Add the ID
         arr_cid.append(cid)
 
+        # ensure the mol can be converted back to mol
+        mol = Chem.MolFromSmiles(smi)
+        standardize_mol(mol)
+
     # Create a dataframe
     df = pd.DataFrame(data={
         "CID": arr_cid,
-        "InChI": arr_inchi,
+        "smiles": arr_smiles,
         "Formula": arr_formula,
         "Molecular Weight": arr_mw,
         "N Heavy": arr_n_heavy})
-    # Remove any entries with zero
-    df = df[df["InChI"] != "0"]
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8')
 
@@ -243,15 +244,8 @@ if __name__ == "__main__":
               "C03122",
               "C13373",
               "C15564"]
-    # mostly valence errors
-    bad_list = ["C00210",
-                "C02202",
-                "C13681",
-                "C13932",
-                "C18368",
-                "C19040",
-                "C21014",
-                "C22680"] + list_x
+    # Mostly valence errors
+    bad_list =["C02202","C13681","C13932","C18368","C19040","C21014","C22680"] + list_x
     man_dict = {
         "C02202": r"[C@H](Cc1ccccc1)(C(=O)N[C@H](Cc1ccccc1)C[N+]#[NH-])NCc1ccccc1",
         "C00210": r"[Co+](N1C2[C@@]3(N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C(=C3N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C=C3N=C(C(=C1[C@@]([C@H]2CC(=O)N)(CCC(=O)NC[C@H](OP(=O)(O[C@H]1[C@H]([C@H](O[C@@H]1CO)[*])O)[O-])C)C)C)[C@H](C3(C)C)CCC(=O)N)C)C)[*]",
@@ -260,5 +254,5 @@ if __name__ == "__main__":
         "C13932": r"N.N.N.N.[Ru+10]([O-2][Ru])[O-2][Ru].N.N.N.N.N.N.N.N.N.N.[Cl-].[Cl-].[Cl-].[Cl-].[Cl-].[Cl-]",
         "C18368": r"O=[Cl]=O",
         "C19040": r"[Si-2](F)(F)(F)(F)(F)F.[Na+].[Na+]"}
-    convert_mol_to_inchi(target_dir, bad_list, man_dict)
+    convert_mol_to_smiles(target_dir, bad_list, man_dict)
     print("Program finished", flush=True)
