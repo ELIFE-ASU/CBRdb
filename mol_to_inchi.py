@@ -168,9 +168,13 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.cs
     for i, file in enumerate(files):
         # Get the CID
         cid = os.path.basename(file).split(".")[0]
-        print(f"Processing file {i + 1}/{len(files)}: {cid}", flush=True)
+        # print(f"Processing file {i + 1}/{len(files)}: {cid}", flush=True)
         # Check if the CID is in the bad list
         if cid in bad_list:
+            print(f"Skipping {cid} due to bad list", flush=True)
+            continue
+        if check_for_X_group(file):
+            print(f"Skipping {cid} due to X group", flush=True)
             continue
         # Check if the CID is in the manual fix dictionary
         if cid in man_dict:
@@ -227,17 +231,31 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.cs
 if __name__ == "__main__":
     print("Program started", flush=True)
     target_dir = os.path.abspath(r"C:/Users/louie/skunkworks/data/kegg_data_C")
+
+    list_x = ["C00462",
+              "C01365",
+              "C01706",
+              "C01812",
+              "C01813",
+              "C01322",
+              "C01872",
+              "C02103",
+              "C03122",
+              "C13373",
+              "C15564"]
     # mostly valence errors
-    bad_list = ["C00210", "C02202", "C13681", "C13932", "C18368", "C19040", "C21014", "C22680"]
+    bad_list = ["C00210",
+                "C02202",
+                "C13681",
+                "C13932",
+                "C18368",
+                "C19040",
+                "C21014",
+                "C22680"] + list_x
     man_dict = {
         "C02202": r"[C@H](Cc1ccccc1)(C(=O)N[C@H](Cc1ccccc1)C[N+]#[NH-])NCc1ccccc1",
         "C00210": r"[Co+](N1C2[C@@]3(N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C(=C3N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C=C3N=C(C(=C1[C@@]([C@H]2CC(=O)N)(CCC(=O)NC[C@H](OP(=O)(O[C@H]1[C@H]([C@H](O[C@@H]1CO)[*])O)[O-])C)C)C)[C@H](C3(C)C)CCC(=O)N)C)C)[*]",
-        "C00462": r"[*H]",
         "C19040": r"[Si-2](F)(F)(F)(F)(F)F.[Na+].[Na+]",
-        "C01365": r"c12[nH]cc(c1cccc2)C[C@@H](C(=O)O)N[*]",
-        "C01706": r"C(=C\[*])/[*]",
-        "C01812": r"[*]CC(=O)O",
-        "C01813": r"C(O)([*])[*]",
         "C13681": r"c1c(ccc(c1)N(C)C)[N+]#N.[B+3]([F-])([F-])([F-])[F-]",
         "C13932": r"N.N.N.N.[Ru+10]([O-2][Ru])[O-2][Ru].N.N.N.N.N.N.N.N.N.N.[Cl-].[Cl-].[Cl-].[Cl-].[Cl-].[Cl-]",
         "C18368": r"O=[Cl]=O",
