@@ -1,15 +1,12 @@
 import os
 import shutil
 
-import numpy as np
 import pandas as pd
-from rdkit.Chem import AllChem as Achem
 from rdkit import Chem as Chem
-
-from rdkit.Chem.MolStandardize import rdMolStandardize
-from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem import Draw
 from rdkit import RDLogger
+from rdkit.Chem import AllChem as Achem
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -164,6 +161,9 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.cs
     n_data = len(files)
     arr_inchi = []
     arr_cid = []
+    arr_formula = []
+    arr_mw = []
+    arr_n_heavy = []
     # Loop over the files
     for i, file in enumerate(files):
         # Get the CID
@@ -202,10 +202,22 @@ def convert_mol_to_inchi(target_dir, bad_list, man_dict, outfile="kegg_data_C.cs
             print(f"Failed to standardize {cid}", flush=True)
         # Get the InChI
         arr_inchi.append(Chem.MolToInchi(mol))
+        # Get the formula
+        arr_formula.append(rdMolDescriptors.CalcMolFormula(mol))
+        # Get the molecular weight
+        arr_mw.append(rdMolDescriptors.CalcExactMolWt(mol))
+        # Get the number of heavy atoms
+        arr_n_heavy.append(mol.GetNumHeavyAtoms())
+        # Add the ID
         arr_cid.append(cid)
 
     # Create a dataframe
-    df = pd.DataFrame(data={"CID": arr_cid, "InChI": arr_inchi})
+    df = pd.DataFrame(data={
+        "CID": arr_cid,
+        "InChI": arr_inchi,
+        "Formula": arr_formula,
+        "Molecular Weight": arr_mw,
+        "N Heavy": arr_n_heavy})
     # Remove any entries with zero
     df = df[df["InChI"] != "0"]
     # Save the dataframe
@@ -216,7 +228,7 @@ if __name__ == "__main__":
     print("Program started", flush=True)
     target_dir = os.path.abspath(r"C:/Users/louie/skunkworks/data/kegg_data_C")
     # mostly valence errors
-    bad_list = ["C00210", "C02202","C13681","C13932","C18368","C19040", "C21014", "C22680"]
+    bad_list = ["C00210", "C02202", "C13681", "C13932", "C18368", "C19040", "C21014", "C22680"]
     man_dict = {
         "C02202": r"[C@H](Cc1ccccc1)(C(=O)N[C@H](Cc1ccccc1)C[N+]#[NH-])NCc1ccccc1",
         "C00210": r"[Co+](N1C2[C@@]3(N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C(=C3N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C=C3N=C(C(=C1[C@@]([C@H]2CC(=O)N)(CCC(=O)NC[C@H](OP(=O)(O[C@H]1[C@H]([C@H](O[C@@H]1CO)[*])O)[O-])C)C)C)[C@H](C3(C)C)CCC(=O)N)C)C)[*]",
