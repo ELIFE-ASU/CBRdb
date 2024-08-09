@@ -11,7 +11,7 @@ file_path = r"C:\Users\louie\skunkworks\data\atlas_reactions.csv"
 data = pd.read_csv(file_path)
 # get the set of the ids
 atlas_ids = sorted(list(set(data["rn"])))
-
+atlas_list = []
 eq_list = []
 # loop over the atlas ids
 for i, atlas_id in enumerate(atlas_ids):
@@ -40,9 +40,12 @@ for i, atlas_id in enumerate(atlas_ids):
     rhs = " + ".join(rhs)
     eq = f"{lhs} <=> {rhs}"
     eq_list.append(eq)
+    atlas_list.append(atlas_id)
+    # if i > 100:
+    #     break
 
 # Write the data to a file
 outfile = r"C:\Users\louie\skunkworks\data\atlas_reactions.csv.zip"
 # make the dataframe from the eq_list and the atlas_ids
-df = pd.DataFrame([atlas_ids, eq_list], columns=["ID", "Reaction"])
+df = pd.DataFrame({'ID': atlas_list, 'Reaction': eq_list})
 df.to_csv(outfile, compression='zip', encoding='utf-8')
