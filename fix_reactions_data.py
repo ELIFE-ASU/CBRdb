@@ -1,12 +1,14 @@
 import os
 import time
 import numpy as np
+import re
 
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from chempy import balance_stoichiometry
+import pandas as pd
 
 """
 things to do
@@ -29,12 +31,7 @@ def check_known_ids(id):
         return False
 
 
-def get_formula(id, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2):
-    # Check if the id is known
-    # known = check_known_ids(id)
-    # if known:
-    #     return known
-
+def prepare_session():
     # Make the session
     s = Session()
     # Add retries
@@ -46,6 +43,11 @@ def get_formula(id, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2)
     )
     # Mount the session
     s.mount('https://', HTTPAdapter(max_retries=retries))
+    return s
+
+
+def get_formula(id, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2):
+    s = prepare_session()
     # Limit the number of requests
     time.sleep(request_sleep)
     # Get the data
@@ -91,16 +93,6 @@ def sub_file_list(mypath, substring):
 
 
 def file_list_all(mypath=None):
-    """
-    This function generates a list of all files in a specified directory and its subdirectories.
-    If no directory is specified, it defaults to the current working directory.
-
-    Parameters:
-    mypath (str, optional): The path to the directory. Defaults to None, which means the current working directory.
-
-    Returns:
-    list: A list of all files in the specified directory and its subdirectories.
-    """
     mypath = mypath or os.getcwd()  # If no path is provided, use the current working directory
     files = []
     # os.walk generates the file names in a directory tree by walking the tree either top-down or bottom-up
@@ -119,90 +111,214 @@ def get_numbers_of_mols(inpt):
     return
 
 
-target_dir = r"C:\Users\louie\skunkworks\data\kegg_data_R"
-paths = file_list_all(target_dir)
+def split_by_letters(input_string):
+    return re.findall(r'[A-Z][^A-Z]*', input_string)
 
-"""
-fucked buckets
-1) Has an n
-2) Missing mol file (no formula)
-3) Equations do not balance
-"""
 
-fucked_n = []
-fucked_eq = []
-fucked_missing_mol = []
-fucked_no_balance = []
+def convert_formula_to_dict(input_string):
+    parts = split_by_letters(input_string)
+    result = {}
+    for part in parts:
+        result[part[0]] = int(part[1:] or '1')
+    return result
 
-for id, path in enumerate(paths):
-    if id > 30:
-        break
-    re_id = os.path.basename(path).split(".")[0]
-    print(f"Processing {id + 1}/{len(paths)} {re_id}")
-    # load the data
-    with open(path, "r") as f:
-        data = f.read()
-    # Split the data by new lines
-    data = data.split("\n")
-    eq_line = [d for d in data if "EQUATION" in d][0]
-    # Get the line which contains the equation
-    eq_line = eq_line.split("EQUATION")[1].strip()
-    print("Equation line:", eq_line)
 
-    # check if the equation has n
-    if "n" in eq_line:
-        print("Warning! Equation has n")
-        fucked_n.append(re_id)
-        continue
+def multiply_dict(input_dict, multiplier):
+    return {key: value * multiplier for key, value in input_dict.items()}
 
-    eq_sides = eq_line.split("<=>")
-    if len(eq_sides) != 2:
-        print("Warning! Equation does not have a reactant and product side")
-        fucked_eq.append(re_id)
-        continue
 
-    tmp1 = eq_sides[0].split("+")
-    print(tmp1)
+def add_dicts(dict1, dict2):
+    result = {}
+    for key in set(dict1) | set(dict2):
+        result[key] = dict1.get(key, 0) + dict2.get(key, 0)
+    return result
 
-    # Get all the numbers in front of the equation line
-    tmp1 = eq_sides[0].split()
-    print(tmp1)
-    # count the number of molecules
-    n_mols = len([i for i in tmp1 if str(i) == "+"]) + 1
-    filtered_array = select_numbers(tmp1)
-    print(filtered_array)
 
-    all_ids = [id for id in eq_sides[0].split(" ") if id.startswith("C")]
-    eq_react = [get_formula(id) for id in all_ids]
-    print("Reactant", eq_react)
-    if "fucked" in eq_react:
-        print("Warning! No formula in reactant")
-        fucked_missing_mol.append(re_id)
-        continue
+def subtract_dicts(dict1, dict2):
+    result = {}
+    for key in set(dict1) | set(dict2):
+        result[key] = dict1.get(key, 0) - dict2.get(key, 0)
+    return result
 
-    all_ids = [id for id in eq_sides[1].split(" ") if id.startswith("C")]
-    eq_prod = [get_formula(id) for id in all_ids]
-    print("Product", eq_prod)
-    if "fucked" in eq_prod:
-        print("Warning! No formula in product")
-        fucked_missing_mol.append(re_id)
-        continue
-    # Trying to find
-    try:
-        reac, prod = balance_stoichiometry(eq_react, eq_prod)
-        print(dict(reac))
-        print(dict(prod))
-    except:
-        print("Could not find stoichiometry")
-        fucked_no_balance.append(re_id)
 
-# print out the bad files
-print(f"fucked n: {fucked_n}")
-print(f"fucked eq: {fucked_eq}")
-print(f"fucked_missing_mol: {fucked_missing_mol}")
-print(f"fucked no balance: {fucked_no_balance}")
-# print out the length of each of the lists
-print(f"len fucked n: {len(fucked_n)}")
-print(f"len fucked eq: {len(fucked_eq)}")
-print(f"len fucked_missing_mol: {len(fucked_missing_mol)}")
-print(f"len fucked no balance: {len(fucked_no_balance)}")
+def compare_dict_keys(dict1, dict2):
+    keys1 = set(dict1.keys())
+    keys2 = set(dict2.keys())
+    missing_in_dict2 = keys1 - keys2
+    missing_in_dict1 = keys2 - keys1
+    return missing_in_dict2, missing_in_dict1
+
+
+# # Example usage
+# dict1 = {'a': 1, 'b': 2, 'c': 3}
+# dict2 = {'b': 3, 'c': 4, 'd': 5}
+# missing_in_dict2, missing_in_dict1 = compare_dict_keys(dict1, dict2)
+# print(f"Keys missing in dict2: {missing_in_dict2}")  # Output: {'a'}
+# print(f"Keys missing in dict1: {missing_in_dict1}")  # Output: {'d'}
+
+def compare_dicts(dict1, dict2):
+    # Check if both dictionaries have the same keys
+    if dict1.keys() != dict2.keys():
+        return False
+
+    # Check if the values for each key are the same
+    for key in dict1:
+        if dict1[key] != dict2[key]:
+            return False
+
+    return True
+
+
+# # Example usage
+# dict1 = {'a': 1, 'b': 2, 'c': 3}
+# dict2 = {'a': 1, 'b': 2, 'c': 3}
+# dict3 = {'a': 1, 'b': 2, 'c': 4}
+# print(compare_dicts(dict1, dict2))  # Output: True
+# print(compare_dicts(dict1, dict3))  # Output: False
+
+
+def compare_dict_values(dict1, dict2):
+    diff_in_dict1 = {}
+    diff_in_dict2 = {}
+
+    for key in set(dict1) | set(dict2):
+        value1 = dict1.get(key)
+        value2 = dict2.get(key)
+        if value1 != value2:
+            diff_in_dict1[key] = value1
+            diff_in_dict2[key] = value2
+
+    return diff_in_dict1, diff_in_dict2
+
+
+# # Example usage
+# dict1 = {'a': 1, 'b': 2, 'c': 3}
+# dict2 = {'a': 1, 'b': 3, 'c': 4, 'd': 5}
+# diff_in_dict1, diff_in_dict2 = compare_dict_values(dict1, dict2)
+# print(f"Differences in dict1: {diff_in_dict1}")
+# print(f"Differences in dict2: {diff_in_dict2}")
+
+def sum_formulas(formulas):
+    total = {}
+    for formula in formulas:
+        formula_dict = convert_formula_to_dict(formula)
+        total = add_dicts(total, formula_dict)
+    return total
+
+
+def get_formulas_from_ids(ids, file_path="kegg_data_C.csv.zip"):
+    data = pd.read_csv(file_path, index_col=0)
+    formulas = data.loc[data["CID"].isin(ids), "Formula"]
+    if formulas.empty:
+        return None
+    elif len(formulas) == 1:
+        return formulas.tolist()[0]
+    else:
+        return formulas.tolist()
+
+
+if __name__ == "__main__":
+    # in1 = "C10H16N5O13P3"
+    # in2 = "C10H15N5O10P2"
+    # out1 = convert_formula_to_dict(in1)
+    # out2 = convert_formula_to_dict(in2)
+    # print(out1)
+    # print(out2)
+    #
+    # print(multiply_dict(out1, 2))
+    #
+    # diff_in_dict1, diff_in_dict2 = compare_dict_values(out1, out2)
+    # print(f"Differences in dict1: {diff_in_dict1}")
+    # print(f"Differences in dict2: {diff_in_dict2}")
+    #
+    # exit()
+
+    target_dir = r"C:\Users\louie\skunkworks\data\kegg_data_R"
+    paths = file_list_all(target_dir)
+
+    """
+    fucked buckets
+    1) Has an n
+    2) Missing mol file (no formula)
+    3) Equations do not balance
+    """
+
+    fucked_n = []
+    fucked_eq = []
+    fucked_missing_mol = []
+    fucked_no_balance = []
+    # Loop over the reactions data
+    for id, path in enumerate(paths):
+        if id < 3:
+            continue
+        # Get the ID
+        re_id = os.path.basename(path).split(".")[0]
+        print(f"Processing {id + 1}/{len(paths)} {re_id}")
+        # Load the data
+        with open(path, "r") as f:
+            data = f.read()
+            # Split the data by new lines
+            data = data.split("\n")
+        # Get the line which contains the equation
+        eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
+        print("Equation line:", eq_line)
+
+        # Check if the equation has n
+        if "n" in eq_line:
+            print("Warning! Equation has n")
+            fucked_n.append(re_id)
+            continue
+        # Check if the equation has reactant and product side
+        eq_sides = eq_line.split("<=>")
+        if len(eq_sides) != 2:
+            print("Warning! Equation does not have a reactant and product side")
+            fucked_eq.append(re_id)
+            continue
+
+        tmp1 = eq_sides[0].split("+")
+        print(tmp1)
+
+        # Get all the numbers in front of the equation line
+        tmp1 = eq_sides[0].split()
+        print(tmp1)
+        # count the number of molecules
+        n_mols = len([i for i in tmp1 if str(i) == "+"]) + 1
+        filtered_array = select_numbers(tmp1)
+        print(filtered_array)
+
+        all_ids = [id for id in eq_sides[0].split(" ") if id.startswith("C")]
+        eq_react = [get_formula(id) for id in all_ids]
+        print("Reactant", eq_react)
+        if "fucked" in eq_react:
+            print("Warning! No formula in reactant")
+            fucked_missing_mol.append(re_id)
+            continue
+
+        all_ids = [id for id in eq_sides[1].split(" ") if id.startswith("C")]
+        eq_prod = [get_formula(id) for id in all_ids]
+        print("Product", eq_prod)
+        if "fucked" in eq_prod:
+            print("Warning! No formula in product")
+            fucked_missing_mol.append(re_id)
+            continue
+        # Trying to find
+        try:
+            reac, prod = balance_stoichiometry(eq_react, eq_prod)
+            print(dict(reac))
+            print(dict(prod))
+        except:
+            print("Could not find stoichiometry")
+            fucked_no_balance.append(re_id)
+
+        exit()
+
+    # print out the bad files
+    print(f"fucked n: {fucked_n}")
+    print(f"fucked eq: {fucked_eq}")
+    print(f"fucked_missing_mol: {fucked_missing_mol}")
+    print(f"fucked no balance: {fucked_no_balance}")
+    # print out the length of each of the lists
+    print(f"len fucked n: {len(fucked_n)}")
+    print(f"len fucked eq: {len(fucked_eq)}")
+    print(f"len fucked_missing_mol: {len(fucked_missing_mol)}")
+    print(f"len fucked no balance: {len(fucked_no_balance)}")
