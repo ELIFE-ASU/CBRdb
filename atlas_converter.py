@@ -13,7 +13,7 @@ def convert_atlas(in_file, out_file):
     for i, atlas_id in enumerate(atlas_ids):
         # print after 100 iterations
         if i % 100 == 0:
-            print(f"Processing {i}/{N} atlas IDs")
+            print(f"Processing {i}/{N} atlas IDs", flush=True)
         all_reactions = data[data['rn'] == atlas_id]
         # Get the forward parts
         f_react = all_reactions[all_reactions['direction'] == "forward"]
@@ -27,7 +27,7 @@ def convert_atlas(in_file, out_file):
             item = r_react.values.tolist()
         # If there are no reverse parts, print an error and exit
         else:
-            print(f"Problem {atlas_id} no forward or reverse IDs!")
+            print(f"Problem {atlas_id} no forward or reverse IDs!", flush=True)
             exit()
         # Get the reactants and products
         lhs = []
@@ -49,6 +49,7 @@ def convert_atlas(in_file, out_file):
     df = pd.DataFrame({'ID': atlas_list, 'Reaction': eq_list})
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8')
+    return None
 
 
 if __name__ == "__main__":

@@ -19,6 +19,35 @@ things to do
 
 """
 
+def preprocess_kegg_r(target_dir, outfile):
+    # Get a list of all files in the directory
+    paths = file_list_all(target_dir)
+    N = len(paths)
+    id_list = []
+    eq_list = []
+
+    # Loop over the reactions data
+    for i, path in enumerate(paths):
+        # Get the ID
+        re_id = os.path.basename(path).split(".")[0]
+        if i % 100 == 0:
+            print(f"Processing {i}/{N} {re_id}",flush=True)
+        # Load the data
+        with open(path, "r") as f:
+            data = f.read()
+            # Split the data by new lines
+            data = data.split("\n")
+        # Get the line which contains the equation
+        eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
+        # Append the id and the equation to the lists
+        id_list.append(re_id)
+        eq_list.append(eq_line)
+    # Make the dataframe for the id and the equation
+    df = pd.DataFrame({'ID': id_list, 'Reaction': eq_list})
+    # Write the data to a file
+    df.to_csv(outfile, compression='zip', encoding='utf-8')
+    return None
+
 
 def check_known_ids(id):
     if id == "C00138":  # Reduced ferredoxin
@@ -232,8 +261,11 @@ if __name__ == "__main__":
     # print(f"Differences in dict2: {diff_in_dict2}")
     #
     # exit()
-
+    f_preprocess = False
     target_dir = r"C:\Users\louie\skunkworks\data\kegg_data_R"
+    if f_preprocess:
+        preprocess_kegg_r(target_dir, "kegg_data_R_eq.csv.zip")
+    exit()
     paths = file_list_all(target_dir)
 
     """
