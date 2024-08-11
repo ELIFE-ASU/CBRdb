@@ -232,6 +232,7 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
 if __name__ == "__main__":
     print("Program started", flush=True)
     target_dir = os.path.abspath(r"C:/Users/louie/skunkworks/data/kegg_data_C")
+    out_file = os.path.abspath(r"Data/kegg_data_C.csv.zip")
 
     list_x = ["C00462",
               "C01365",
@@ -245,7 +246,7 @@ if __name__ == "__main__":
               "C13373",
               "C15564"]
     # Mostly valence errors
-    bad_list =["C02202","C13681","C13932","C18368","C19040","C21014","C22680"] + list_x
+    bad_list = ["C02202", "C13681", "C13932", "C18368", "C19040", "C21014", "C22680"] + list_x
     man_dict = {
         "C02202": r"[C@H](Cc1ccccc1)(C(=O)N[C@H](Cc1ccccc1)C[N+]#[NH-])NCc1ccccc1",
         "C00210": r"[Co+](N1C2[C@@]3(N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C(=C3N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C=C3N=C(C(=C1[C@@]([C@H]2CC(=O)N)(CCC(=O)NC[C@H](OP(=O)(O[C@H]1[C@H]([C@H](O[C@@H]1CO)[*])O)[O-])C)C)C)[C@H](C3(C)C)CCC(=O)N)C)C)[*]",
@@ -254,5 +255,5 @@ if __name__ == "__main__":
         "C13932": r"N.N.N.N.[Ru+10]([O-2][Ru])[O-2][Ru].N.N.N.N.N.N.N.N.N.N.[Cl-].[Cl-].[Cl-].[Cl-].[Cl-].[Cl-]",
         "C18368": r"O=[Cl]=O",
         "C19040": r"[Si-2](F)(F)(F)(F)(F)F.[Na+].[Na+]"}
-    convert_mol_to_smiles(target_dir, bad_list, man_dict)
+    convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
     print("Program finished", flush=True)
