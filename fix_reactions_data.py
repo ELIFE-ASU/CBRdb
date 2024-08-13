@@ -29,6 +29,7 @@ def preprocess_kegg_r(target_dir, outfile):
     N = len(paths)
     id_list = []
     eq_list = []
+    ec_list = []
 
     # Loop over the reactions data
     for i, path in enumerate(paths):
@@ -43,9 +44,15 @@ def preprocess_kegg_r(target_dir, outfile):
             data = data.split("\n")
         # Get the line which contains the equation
         eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
-        # Append the id and the equation to the lists
+        # Get the line which contains the enzyme class
+        try:
+            ec_line = [d for d in data if "ENZYME" in d][0].split("ENZYME")[1].strip()
+        except:
+            ec_line = " "
+        # Append the data to the lists
         id_list.append(re_id)
         eq_list.append(eq_line)
+        ec_list.append(ec_line)
     # Make the dataframe for the id and the equation
     df = pd.DataFrame({'ID': id_list, 'Reaction': eq_list})
     # Write the data to a file
@@ -265,6 +272,7 @@ def get_formulas_from_ids(ids, file_path):
 
 
 if __name__ == "__main__":
+    print("Program started", flush=True)
     # in1 = "C10H16N5O13P3"
     # in2 = "C10H15N5O10P2"
     # out1 = convert_formula_to_dict(in1)
@@ -279,12 +287,15 @@ if __name__ == "__main__":
     # print(f"Differences in dict2: {diff_in_dict2}",flush=True)
     #
     # exit()
-    f_preprocess = False
-    target_dir = r"C:\Users\louie\skunkworks\data\kegg_data_R"
+    f_preprocess = True
+    target_dir = r"..\data\kegg_data_R"
+
     eq_file = "Data/kegg_data_R_eq.csv.zip"
     reac_file = "Data/kegg_data_R_eq.csv.zip"
     if f_preprocess:
         preprocess_kegg_r(target_dir, reac_file)
+        print("Preprocessing done", flush=True)
+    exit()
     # Load the processed data
     data = pd.read_csv(eq_file, index_col=0)
     # Get the IDs and the formulas
