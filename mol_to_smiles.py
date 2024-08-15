@@ -49,7 +49,7 @@ def file_list_all(mypath=None):
     return files
 
 
-def check_for_R_group(target_file, re_target=["R# ", "R ", "* "]):
+def check_for_r_group(target_file, re_target=["R# ", "R ", "* "]):
     with open(target_file, "r") as f:
         lines = [line for line in f if "M  " not in line]
         return any(target in line for line in lines for target in re_target)
@@ -82,7 +82,7 @@ def replace_problem_group(target_file, new_file, re_target=["OH"]):
         nf.write("M  END\n\n")
 
 
-def check_for_X_group(target_file):
+def check_for_x_group(target_file):
     with open(target_file, "r") as f:
         for line in f:
             if "X" in line:
@@ -157,45 +157,49 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
     # Filter the files to only include .mol files
     files = [f for f in files if "_r" not in f]
     files = [f for f in files if "_p" not in f]
-    # Create arrays to store the InChI and CID
-    n_data = len(files)
+    # Create lists to store the outputs
     arr_smiles = []
     arr_cid = []
     arr_formula = []
     arr_mw = []
     arr_n_heavy = []
-    print(bad_list, flush=True)
+    # print(bad_list, flush=True)
     # Loop over the files
     for i, file in enumerate(files):
         # Get the CID
         cid = os.path.basename(file).split(".")[0]
         print(f"Processing file {i + 1}/{len(files)}: {cid}", flush=True)
+        # Init flags
+        flag_r = False
+        flag_p = False
+        f_load_r = None
+        f_load_p = None
         # Check if the CID is in the bad list
         if cid in bad_list:
             print(f"Skipping {cid} due to bad list", flush=True)
             continue
-        if check_for_X_group(file):
+        if check_for_x_group(file):
             print(f"Skipping {cid} due to X group", flush=True)
             continue
         # Check if the CID is in the manual fix dictionary
         if cid in man_dict:
             mol = Chem.MolFromSmiles(man_dict[cid])
         else:
-            # check for R groups
-            flag_r = check_for_R_group(file)
+            # Check for R groups
+            flag_r = check_for_r_group(file)
             if flag_r:
                 f_load_r = file.split(".")[0] + "_r.mol"
                 replace_r_group(file, f_load_r)
                 file = f_load_r
-            # check for problem groups
+            # Check for problem groups
             flag_p = check_for_problem_group(file)
             if flag_p:
                 f_load_p = file.split(".")[0] + "_p.mol"
                 replace_problem_group(file, f_load_p)
                 file = f_load_p
-            # get the molecule
+            # Get the molecule
             mol = Chem.MolFromMolFile(file, removeHs=True, sanitize=True)
-        # remove the temporary files
+        # Remove the temporary files
         if flag_r:
             remove(f_load_r)
         if flag_p:
@@ -204,19 +208,21 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
         mol = standardize_mol(mol)
         # Get the smiles
         smi = Chem.MolToSmiles(mol)
-        arr_smiles.append(smi)
-        # Get the formula
-        arr_formula.append(rdMolDescriptors.CalcMolFormula(mol))
-        # Get the molecular weight
-        arr_mw.append(rdMolDescriptors.CalcExactMolWt(mol))
-        # Get the number of heavy atoms
-        arr_n_heavy.append(mol.GetNumHeavyAtoms())
-        # Add the ID
-        arr_cid.append(cid)
-
-        # ensure the mol can be converted back to mol
-        mol = Chem.MolFromSmiles(smi)
-        standardize_mol(mol)
+        try:
+            # Ensure the mol can be converted back to mol
+            standardize_mol(Chem.MolFromSmiles(smi))
+            # Add the smiles to the array
+            arr_smiles.append(smi)
+            # Get the formula
+            arr_formula.append(rdMolDescriptors.CalcMolFormula(mol))
+            # Get the molecular weight
+            arr_mw.append(rdMolDescriptors.CalcExactMolWt(mol))
+            # Get the number of heavy atoms
+            arr_n_heavy.append(mol.GetNumHeavyAtoms())
+            # Add the ID
+            arr_cid.append(cid)
+        except:
+            print(f"Error in {cid}, could not pass to SIMLES", flush=True)
 
     # Create a dataframe
     df = pd.DataFrame(data={
@@ -246,7 +252,13 @@ if __name__ == "__main__":
               "C13373",
               "C15564"]
     # Mostly valence errors
-    bad_list = ["C02202", "C13681", "C13932", "C18368", "C19040", "C21014", "C22680"] + list_x
+    bad_list = ["C02202",
+                "C13681",
+                "C13932",
+                "C18368",
+                "C19040",
+                "C21014",
+                "C22680"] + list_x
     man_dict = {
         "C02202": r"[C@H](Cc1ccccc1)(C(=O)N[C@H](Cc1ccccc1)C[N+]#[NH-])NCc1ccccc1",
         "C00210": r"[Co+](N1C2[C@@]3(N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C(=C3N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C=C3N=C(C(=C1[C@@]([C@H]2CC(=O)N)(CCC(=O)NC[C@H](OP(=O)(O[C@H]1[C@H]([C@H](O[C@@H]1CO)[*])O)[O-])C)C)C)[C@H](C3(C)C)CCC(=O)N)C)C)[*]",
