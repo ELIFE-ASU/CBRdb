@@ -4,7 +4,6 @@ import shutil
 import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
-from rdkit.Chem import AllChem as Achem
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
@@ -89,24 +88,18 @@ def check_for_x_group(target_file):
                 return True
 
 
-def embed_mol(mol):
-    # Sanitise the molecule
-    Achem.SanitizeMol(mol, catchErrors=True)
-    # Update the properties
-    mol.UpdatePropertyCache()
-    # kekulize the molecule
-    Achem.Kekulize(mol)
-    # Add hydrogens
-    mol = Chem.AddHs(mol)
-    return mol
-
-
 def standardize_mol(mol):
     # Standardize the molecule
-    nrm = rdMolStandardize.Normalizer()
-    nrm.normalizeInPlace(mol)
-    # Embed the molecule
-    mol = embed_mol(mol)
+    mol.UpdatePropertyCache(strict=False)
+    Chem.SetConjugation(mol)
+    Chem.SetHybridization(mol)
+    # Normalize the molecule
+    Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
+    rdMolStandardize.NormalizeInPlace(mol)
+    # kekulize the molecule
+    Chem.Kekulize(mol)
+    # Add hydrogens
+    mol = Chem.AddHs(mol)
     return mol
 
 
@@ -148,7 +141,18 @@ def delete_files_substring(target_dir, substring):
     return count
 
 
-def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.csv.zip"):
+def get_chirality(mol):
+    try:
+        return len(
+            Chem.FindMolChiralCenters(mol,
+                                      useLegacyImplementation=False,
+                                      includeUnassigned=True,
+                                      includeCIP=False))
+    except:
+        return float('NaN')
+
+
+def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True):
     # Get a list of all files in the directory
     files = file_list_all(target_dir)
     # Clean up the files
@@ -157,18 +161,20 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
     # Filter the files to only include .mol files
     files = [f for f in files if "_r" not in f]
     files = [f for f in files if "_p" not in f]
+    N = len(files)
     # Create lists to store the outputs
     arr_smiles = []
     arr_cid = []
     arr_formula = []
     arr_mw = []
     arr_n_heavy = []
-    # print(bad_list, flush=True)
+    arr_nc = []
     # Loop over the files
     for i, file in enumerate(files):
         # Get the CID
         cid = os.path.basename(file).split(".")[0]
-        print(f"Processing file {i + 1}/{len(files)}: {cid}", flush=True)
+        if i % 100 == 0:
+            print(f"Processing file {i}/{N}: {cid}", flush=True)
         # Init flags
         flag_r = False
         flag_p = False
@@ -198,7 +204,7 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
                 replace_problem_group(file, f_load_p)
                 file = f_load_p
             # Get the molecule
-            mol = Chem.MolFromMolFile(file, removeHs=True, sanitize=True)
+            mol = Chem.MolFromMolFile(file, sanitize=False)
         # Remove the temporary files
         if flag_r:
             remove(f_load_r)
@@ -210,27 +216,31 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
         smi = Chem.MolToSmiles(mol)
         try:
             # Ensure the mol can be converted back to mol
-            standardize_mol(Chem.MolFromSmiles(smi))
-            # Add the smiles to the array
-            arr_smiles.append(smi)
-            # Get the formula
-            arr_formula.append(rdMolDescriptors.CalcMolFormula(mol))
-            # Get the molecular weight
-            arr_mw.append(rdMolDescriptors.CalcExactMolWt(mol))
-            # Get the number of heavy atoms
-            arr_n_heavy.append(mol.GetNumHeavyAtoms())
+            standardize_mol(Chem.MolFromSmiles(smi, sanitize=False))
             # Add the ID
             arr_cid.append(cid)
+            # Add the smiles to the array
+            arr_smiles.append(smi)
+            if calc_info:
+                # Get the formula
+                arr_formula.append(rdMolDescriptors.CalcMolFormula(mol))
+                # Get the molecular weight
+                arr_mw.append(rdMolDescriptors.CalcExactMolWt(mol))
+                # Get the number of heavy atoms
+                arr_n_heavy.append(mol.GetNumHeavyAtoms())
+                # Get the chirality
+                arr_nc.append(get_chirality(mol))
         except:
             print(f"Error in {cid}, could not pass to SIMLES", flush=True)
 
     # Create a dataframe
     df = pd.DataFrame(data={
-        "CID": arr_cid,
+        "compound_id": arr_cid,
         "smiles": arr_smiles,
-        "Formula": arr_formula,
-        "Molecular Weight": arr_mw,
-        "N Heavy": arr_n_heavy})
+        "formula": arr_formula,
+        "molecular_weight": arr_mw,
+        "n_heavy_atoms": arr_n_heavy,
+        "n_chiral_centers": arr_nc})
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8')
 
@@ -239,33 +249,7 @@ if __name__ == "__main__":
     print("Program started", flush=True)
     target_dir = os.path.abspath(r"C:/Users/louie/skunkworks/data/kegg_data_C")
     out_file = os.path.abspath(r"Data/kegg_data_C.csv.zip")
-
-    list_x = ["C00462",
-              "C01365",
-              "C01706",
-              "C01812",
-              "C01813",
-              "C01322",
-              "C01872",
-              "C02103",
-              "C03122",
-              "C13373",
-              "C15564"]
-    # Mostly valence errors
-    bad_list = ["C02202",
-                "C13681",
-                "C13932",
-                "C18368",
-                "C19040",
-                "C21014",
-                "C22680"] + list_x
-    man_dict = {
-        "C02202": r"[C@H](Cc1ccccc1)(C(=O)N[C@H](Cc1ccccc1)C[N+]#[NH-])NCc1ccccc1",
-        "C00210": r"[Co+](N1C2[C@@]3(N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C(=C3N=C([C@H]([C@@]3(CC(=O)N)C)CCC(=O)N)C=C3N=C(C(=C1[C@@]([C@H]2CC(=O)N)(CCC(=O)NC[C@H](OP(=O)(O[C@H]1[C@H]([C@H](O[C@@H]1CO)[*])O)[O-])C)C)C)[C@H](C3(C)C)CCC(=O)N)C)C)[*]",
-        "C19040": r"[Si-2](F)(F)(F)(F)(F)F.[Na+].[Na+]",
-        "C13681": r"c1c(ccc(c1)N(C)C)[N+]#N.[B+3]([F-])([F-])([F-])[F-]",
-        "C13932": r"N.N.N.N.[Ru+10]([O-2][Ru])[O-2][Ru].N.N.N.N.N.N.N.N.N.N.[Cl-].[Cl-].[Cl-].[Cl-].[Cl-].[Cl-]",
-        "C18368": r"O=[Cl]=O",
-        "C19040": r"[Si-2](F)(F)(F)(F)(F)F.[Na+].[Na+]"}
+    man_dict = {}
+    bad_list = []
     convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
     print("Program finished", flush=True)
