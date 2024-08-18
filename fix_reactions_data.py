@@ -1,14 +1,13 @@
 import os
-import time
-import numpy as np
 import re
+import time
 
+import pandas as pd
 import requests
+from chempy import balance_stoichiometry
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from chempy import balance_stoichiometry
-import pandas as pd
 
 """
 things to do
@@ -287,7 +286,7 @@ if __name__ == "__main__":
     # print(f"Differences in dict2: {diff_in_dict2}",flush=True)
     #
     # exit()
-    f_preprocess = True
+    f_preprocess = False
     target_dir = r"..\data\kegg_data_R"
 
     eq_file = "Data/kegg_data_R_eq.csv.zip"
@@ -295,7 +294,7 @@ if __name__ == "__main__":
     if f_preprocess:
         preprocess_kegg_r(target_dir, reac_file)
         print("Preprocessing done", flush=True)
-    exit()
+
     # Load the processed data
     data = pd.read_csv(eq_file, index_col=0)
     # Get the IDs and the formulas
@@ -312,19 +311,19 @@ if __name__ == "__main__":
     for i, re_id in enumerate(ids):
         if i < 3:
             continue
-        print(f"Processing {i}/{N} {re_id}", flush=True)
+        print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         eq_line = formulas[i]
         print("Equation line:", eq_line, flush=True)
 
         # Check if the equation has n
         if "n" in eq_line:
-            print("Warning! Equation has n", flush=True)
+            print(f"Warning! Equation has n. Skipping ID: {re_id}", flush=True)
             fucked_n.append(re_id)
             continue
         # Check if the equation has reactant and product side
         eq_sides = eq_line.split("<=>")
         if len(eq_sides) != 2:
-            print("Warning! Equation does not have a reactant and product side", flush=True)
+            print(f"Warning! Equation does not have a reactant and product side. Skipping ID: {re_id}", flush=True)
             fucked_eq.append(re_id)
             continue
 
@@ -354,16 +353,14 @@ if __name__ == "__main__":
             print("Warning! No formula in product")
             fucked_missing_mol.append(re_id)
             continue
-        # Trying to find
+        # Trying to balance_stoichiometry
         try:
-            reac, prod = balance_stoichiometry(eq_react, eq_prod)
+            reac, prod = balance_stoichiometry(eq_react, eq_prod, underdetermined=None)
             print(dict(reac))
             print(dict(prod))
         except:
             print("Could not find stoichiometry")
             fucked_no_balance.append(re_id)
-
-        exit()
 
     # print out the bad files
     print(f"fucked n: {fucked_n}")
