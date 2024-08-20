@@ -96,7 +96,7 @@ def get_formula_from_web(id, kegg_website="https://rest.kegg.jp/get/", request_s
     except requests.exceptions.RequestException as e:
         # Some error in the connection
         print(f"Error in ID {id}, connection exception {e}")
-        return "fucked"
+        return None
     # Check if the response is ok
     if response.ok:
         # Strip the last section of the file
@@ -105,12 +105,12 @@ def get_formula_from_web(id, kegg_website="https://rest.kegg.jp/get/", request_s
         # Get the line which contains the formula
         data = [line for line in data if "FORMULA" in line]
         if len(data) == 0:
-            return "fucked"
+            return None
         return data[0].split("FORMULA")[1].strip()
     else:
         # Some error in the response
         print(f"Error in ID {id}, response {response.status_code}")
-        return "fucked"
+        return None
 
 
 def file_list(mypath=None):
@@ -143,16 +143,7 @@ def select_numbers(arr):
     return [x for x in arr if x.isdigit()]
 
 
-# def split_by_letters(input_string):
-#     return re.findall(r'[A-Z][^A-Z]*', input_string)
 
-# def convert_formula_to_dict(input_string):
-#     parts = split_by_letters(input_string)
-#     result = {}
-#     for part in parts:
-#         print(part)
-#         result[part[0]] = int(part[1:] or '1')
-#     return result
 
 def split_by_letters(input_string):
     return re.findall(r'[A-Z][a-z]*\d*', input_string)
@@ -344,43 +335,87 @@ def convert_form_dict_to_elements(form_dict):
     return elements
 
 
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    # C00900 + C00011 <=> 2 C00022
-    eq = "C01010 + C00001 <=> 2 C00011 + 2 C00014"
-    # eq = "C00900 + C00011 <=> 2 C00022"
-    # eq = "C06033 <=> 2 C00022"
-    # eq = "2 C00027 <=> C00007 + 2 C00001"
-    # eq = "C01083 + C00001 <=> 2 C00031"
-    # eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
+def get_elements_from_eq(eq, verbose=False, web=False, file_path='Data/kegg_data_C.csv.zip'):
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
-    print("Reactants:                   ", reactants)
-    print("Products:                    ", products)
+    if verbose:
+        print("Reactants:                   ", reactants)
+        print("Products:                    ", products)
     # Get the conversion of the ids to formulas
-    react_id_form_key = get_ids_to_formulas(reactants)
-    prod_id_form_key = get_ids_to_formulas(products)
-    print("Reactant key id to formula:  ", react_id_form_key)
-    print("Product key id to formula:   ", prod_id_form_key)
+    react_id_form_key = get_ids_to_formulas(reactants, web=web, file_path=file_path)
+    prod_id_form_key = get_ids_to_formulas(products, web=web, file_path=file_path)
+    if verbose:
+        print("Reactant key id to formula:  ", react_id_form_key)
+        print("Product key id to formula:   ", prod_id_form_key)
 
     # Convert the reactants into formulas
     converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
     converted_products = convert_ids_to_formulas(products, prod_id_form_key)
-    print("Converted reactants:         ", converted_reactants)
-    print("Converted products:          ", converted_products)
+    if verbose:
+        print("Converted reactants:         ", converted_reactants)
+        print("Converted products:          ", converted_products)
     # Convert the formulas into reactants
     react_ele = convert_form_dict_to_elements(converted_reactants)
     prod_ele = convert_form_dict_to_elements(converted_products)
-    print("reactant element dict:       ", react_ele)
-    print("product element dict:        ", prod_ele)
-    # Get the difference in the elements
-    diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-    print("Differences in reactants:    ", diff_ele_react)
-    print("Differences in products:     ", diff_ele_prod)
+    if verbose:
+        print("reactant element dict:       ", react_ele)
+        print("product element dict:        ", prod_ele)
+    return converted_reactants, converted_products, react_ele, prod_ele
 
-    # eq = dicts_to_eq(reactants, products)
-    # print(eq)
-    exit()
+def get_missing_elements(react_ele, prod_ele):
+    missing_in_prod, missing_in_react = compare_dict_keys(react_ele, prod_ele)
+    return list(missing_in_react), list(missing_in_prod)
+
+def check_missing_elements(react_ele, prod_ele):
+    missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
+    if len(missing_in_react+missing_in_prod) > 0:
+        return True
+    else:
+        return False
+
+def check_missing_formulas(eq, web=False, file_path='Data/kegg_data_C.csv.zip'):
+    # Convert the Eq in to the dicts
+    reactants, products = eq_to_dict(eq)
+    ids = list(reactants.keys()) + list(products.keys())
+    if web:
+        formulas = [get_formula_from_web(id) for id in ids]
+    else:
+        formulas = get_formulas_from_ids(ids, file_path)
+
+    if len(formulas) != len(ids):
+        return True
+    else:
+        return False
+
+def check_eq_unbalanced(react_ele, prod_ele):
+    diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+    if len(diff_ele_react) + len(diff_ele_prod) > 0:
+        return True
+    else:
+        return False
+
+
+if __name__ == "__main__":
+    print("Program started", flush=True)
+    # # C00900 + C00011 <=> 2 C00022
+    # eq = "C01010 + C00001 <=> 2 C00011 + 2 C00014"
+    # # eq = "C00900 + C00011 <=> 2 C00022"
+    # # eq = "C06033 <=> 2 C00022"
+    # # eq = "2 C00027 <=> C00007 + 2 C00001"
+    # # eq = "C01083 + C00001 <=> 2 C00031"
+    # eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
+    # react_ele, prod_ele = get_elements_from_eq(eq, verbose=False)
+    #
+    # # Get the difference in the elements
+    # diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+    # print("Differences in reactants:    ", diff_ele_react)
+    # print("Differences in products:     ", diff_ele_prod)
+    # missing_in_react, missing_in_prod = check_missing_elements(react_ele, prod_ele)
+    # print("Missing in reactants:        ", missing_in_react)
+    # print("Missing in products:         ", missing_in_prod)
+    # check_missing_formulas(eq)
+    # exit()
+
 
     f_preprocess = False
     target_dir = r"..\data\kegg_data_R"
@@ -402,11 +437,12 @@ if __name__ == "__main__":
     fucked_n = []
     fucked_eq = []
     fucked_missing_mol = []
+    fucked_missing_ele = []
     fucked_no_balance = []
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        if i < 3:
-            continue
+        # if i < 3:
+        #     continue
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         eq_line = formulas[i]
         print("Equation line:", eq_line, flush=True)
@@ -423,48 +459,47 @@ if __name__ == "__main__":
             fucked_eq.append(re_id)
             continue
 
-        tmp1 = eq_sides[0].split("+")
-        print(tmp1, flush=True)
-
-        # Get all the numbers in front of the equation line
-        tmp1 = eq_sides[0].split()
-        print(tmp1, flush=True)
-        # count the number of molecules
-        n_mols = len([i for i in tmp1 if str(i) == "+"]) + 1
-        filtered_array = select_numbers(tmp1)
-        print(filtered_array, flush=True)
-
-        all_ids = [id for id in eq_sides[0].split(" ") if id.startswith("C")]
-        eq_react = [get_formula_from_web(id) for id in all_ids]
-        print("Reactant", eq_react, flush=True)
-        if "fucked" in eq_react:
-            print("Warning! No formula in reactant")
+        if check_missing_formulas(eq_line, web=False):
+            print("Warning! No formula")
             fucked_missing_mol.append(re_id)
             continue
 
-        all_ids = [id for id in eq_sides[1].split(" ") if id.startswith("C")]
-        eq_prod = [get_formula_from_web(id) for id in all_ids]
-        print("Product", eq_prod, flush=True)
-        if "fucked" in eq_prod:
-            print("Warning! No formula in product")
-            fucked_missing_mol.append(re_id)
+        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+
+        if check_missing_elements(react_ele, prod_ele):
+            print("Warning! Missing elements")
+            missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
+            print("Missing in reactants:        ", missing_in_react)
+            print("Missing in products:         ", missing_in_prod)
+            fucked_missing_ele.append(re_id)
             continue
-        # Trying to balance_stoichiometry
-        try:
-            reac, prod = balance_stoichiometry(eq_react, eq_prod, underdetermined=None)
-            print(dict(reac))
-            print(dict(prod))
-        except:
-            print("Could not find stoichiometry")
-            fucked_no_balance.append(re_id)
+
+        if check_eq_unbalanced(react_ele, prod_ele):
+            print("Warning! unbalanced equation")
+            # Get the difference in the elements
+            diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+            print("Differences in reactants:    ", diff_ele_react)
+            print("Differences in products:     ", diff_ele_prod)
+            # Trying to balance_stoichiometry
+            try:
+                reac, prod = balance_stoichiometry(set(reactants.keys()),
+                                                   set(products.keys()),
+                                                   underdetermined=None)
+                print(dict(reac))
+                print(dict(prod))
+            except:
+                print("Could not find stoichiometry")
+                fucked_no_balance.append(re_id)
 
     # print out the bad files
     print(f"fucked n: {fucked_n}")
     print(f"fucked eq: {fucked_eq}")
     print(f"fucked_missing_mol: {fucked_missing_mol}")
+    print(f"fucked_missing_ele: {fucked_missing_ele}")
     print(f"fucked no balance: {fucked_no_balance}")
     # print out the length of each of the lists
     print(f"len fucked n: {len(fucked_n)}")
     print(f"len fucked eq: {len(fucked_eq)}")
     print(f"len fucked_missing_mol: {len(fucked_missing_mol)}")
+    print(f"len fucked_missing_ele: {len(fucked_missing_ele)}")
     print(f"len fucked no balance: {len(fucked_no_balance)}")
