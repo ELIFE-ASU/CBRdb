@@ -23,7 +23,7 @@ if __name__ == "__main__":
     print(rhs)
 
     # Load the kegg reactions list
-    kegg_data = pd.read_csv("Data/kegg_data_R_eq.csv.zip", index_col=0)
+    kegg_data = pd.read_csv("Data/kegg_data_R.csv.zip", index_col=0)
     # Load the atlas reactions list
     atlas_data = pd.read_csv("Data/atlas_reactions.csv.zip", index_col=0)
     print(kegg_data.head())

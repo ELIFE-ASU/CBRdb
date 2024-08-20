@@ -248,4 +248,10 @@ if __name__ == "__main__":
     man_dict = {}
     bad_list = []
     convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
+
+    # check the data can be loaded back
+    data = pd.read_csv(out_file)
+    # check the data
+    print(data.head())
+    print(data.columns)
     print("Program finished", flush=True)
