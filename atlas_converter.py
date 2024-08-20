@@ -56,7 +56,8 @@ def convert_atlas(in_file, out_file):
 def cleanup_eq_line(eq_line):
     eq_line = eq_line.replace(")", " ")
     eq_line = eq_line.replace("(", "")
-    eq_line = eq_line.replace("<==>", " <==> ")
+    eq_line = eq_line.replace("<=>", " <=> ")
+    eq_line = eq_line.replace("<==>", " <=> ")
     eq_line = eq_line.replace("+", " + ")
     return eq_line
 
@@ -98,6 +99,7 @@ def clean_kegg_atlas(in_file, out_file):
     df = pd.DataFrame({'id': re_id, 'reaction': re_eq, 'chemical_names': re_chem_names, 'ec': re_ec})
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
+    print("Data written to file", flush=True)
     return None
 
 
@@ -131,6 +133,7 @@ def clean_atlas(in_file, out_file):
     df = pd.DataFrame({'id': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
+    print("Data written to file", flush=True)
     return None
 
 
@@ -149,4 +152,6 @@ if __name__ == "__main__":
     clean_atlas(infile, outfile)
     # load the data
     data = pd.read_csv(outfile)
+    print(data.head())
+    print(data.columns)
     print("Program end", flush=True)

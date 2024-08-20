@@ -53,7 +53,7 @@ def preprocess_kegg_r(target_dir, outfile):
         eq_list.append(eq_line)
         ec_list.append(ec_line)
     # Make the dataframe for the id and the equation
-    df = pd.DataFrame({'ID': id_list, 'Reaction': eq_list})
+    df = pd.DataFrame({'id': id_list, 'reaction': eq_list})
     # Write the data to a file
     df.to_csv(outfile, compression='zip', encoding='utf-8')
     return None
@@ -141,8 +141,6 @@ def file_list_all(mypath=None):
 
 def select_numbers(arr):
     return [x for x in arr if x.isdigit()]
-
-
 
 
 def split_by_letters(input_string):
@@ -362,16 +360,19 @@ def get_elements_from_eq(eq, verbose=False, web=False, file_path='Data/kegg_data
         print("product element dict:        ", prod_ele)
     return converted_reactants, converted_products, react_ele, prod_ele
 
+
 def get_missing_elements(react_ele, prod_ele):
     missing_in_prod, missing_in_react = compare_dict_keys(react_ele, prod_ele)
     return list(missing_in_react), list(missing_in_prod)
 
+
 def check_missing_elements(react_ele, prod_ele):
     missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
-    if len(missing_in_react+missing_in_prod) > 0:
+    if len(missing_in_react + missing_in_prod) > 0:
         return True
     else:
         return False
+
 
 def check_missing_formulas(eq, web=False, file_path='Data/kegg_data_C.csv.zip'):
     # Convert the Eq in to the dicts
@@ -387,6 +388,7 @@ def check_missing_formulas(eq, web=False, file_path='Data/kegg_data_C.csv.zip'):
     else:
         return False
 
+
 def check_eq_unbalanced(react_ele, prod_ele):
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
     if len(diff_ele_react) + len(diff_ele_prod) > 0:
@@ -397,40 +399,25 @@ def check_eq_unbalanced(react_ele, prod_ele):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    # # C00900 + C00011 <=> 2 C00022
-    # eq = "C01010 + C00001 <=> 2 C00011 + 2 C00014"
-    # # eq = "C00900 + C00011 <=> 2 C00022"
-    # # eq = "C06033 <=> 2 C00022"
-    # # eq = "2 C00027 <=> C00007 + 2 C00001"
-    # # eq = "C01083 + C00001 <=> 2 C00031"
-    # eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
-    # react_ele, prod_ele = get_elements_from_eq(eq, verbose=False)
-    #
-    # # Get the difference in the elements
-    # diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-    # print("Differences in reactants:    ", diff_ele_react)
-    # print("Differences in products:     ", diff_ele_prod)
-    # missing_in_react, missing_in_prod = check_missing_elements(react_ele, prod_ele)
-    # print("Missing in reactants:        ", missing_in_react)
-    # print("Missing in products:         ", missing_in_prod)
-    # check_missing_formulas(eq)
-    # exit()
-
-
     f_preprocess = False
-    target_dir = r"..\data\kegg_data_R"
-
-    eq_file = "Data/kegg_data_R_eq.csv.zip"
     reac_file = "Data/kegg_data_R_eq.csv.zip"
+    target_dir = r"..\data\kegg_data_R"
     if f_preprocess:
         preprocess_kegg_r(target_dir, reac_file)
         print("Preprocessing done", flush=True)
+    eq_file = "Data/kegg_data_R_eq.csv.zip"
+    eq_file = "Data/atlas_kegg_reactions.csv.zip"
 
     # Load the processed data
-    data = pd.read_csv(eq_file, index_col=0)
+    data = pd.read_csv(eq_file)
+
     # Get the IDs and the formulas
-    ids = data["ID"].tolist()
-    formulas = data["Reaction"].tolist()
+    ids = data["id"].tolist()
+    formulas = data["reaction"].tolist()
+    print("Data loaded", flush=True)
+    print("Data columns", data.columns, flush=True)
+    print("Data shape", data.shape, flush=True)
+
     # Get the size of the data
     N = len(ids)
     print(f"Total number of reactions {N}", flush=True)
@@ -439,6 +426,7 @@ if __name__ == "__main__":
     fucked_missing_mol = []
     fucked_missing_ele = []
     fucked_no_balance = []
+
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
         # if i < 3:
