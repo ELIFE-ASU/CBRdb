@@ -317,10 +317,13 @@ def strip_plus_x(input_string):
 
 def get_ids_to_formulas(compound_dict, web=False, file_path='Data/kegg_data_C.csv.zip'):
     ids = list(compound_dict.keys())
+    # sort the ids
+    ids.sort()
     if web:
         formulas = [get_formula_from_web(id) for id in ids]
     else:
         formulas = get_formulas_from_ids(ids, file_path)
+
     # Remake the dict and strip the plus x from the formulas
     return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
 
@@ -340,15 +343,16 @@ def convert_form_dict_to_elements(form_dict):
         elements = add_dicts(elements, multiply_dict(convert_formula_to_dict(formula), count))
     return elements
 
+
 if __name__ == "__main__":
     print("Program started", flush=True)
     # C00900 + C00011 <=> 2 C00022
     eq = "C01010 + C00001 <=> 2 C00011 + 2 C00014"
-    eq = "C00900 + C00011 <=> 2 C00022"
-    eq = "C06033 <=> 2 C00022"
-    eq = "2 C00027 <=> C00007 + 2 C00001"
-    eq = "C01083 + C00001 <=> 2 C00031"
-    eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
+    # eq = "C00900 + C00011 <=> 2 C00022"
+    # eq = "C06033 <=> 2 C00022"
+    # eq = "2 C00027 <=> C00007 + 2 C00001"
+    # eq = "C01083 + C00001 <=> 2 C00031"
+    # eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
     print("Reactants:                   ", reactants)
@@ -364,12 +368,11 @@ if __name__ == "__main__":
     converted_products = convert_ids_to_formulas(products, prod_id_form_key)
     print("Converted reactants:         ", converted_reactants)
     print("Converted products:          ", converted_products)
+    # Convert the formulas into reactants
     react_ele = convert_form_dict_to_elements(converted_reactants)
     prod_ele = convert_form_dict_to_elements(converted_products)
-
     print("reactant element dict:       ", react_ele)
     print("product element dict:        ", prod_ele)
-
     # Get the difference in the elements
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
     print("Differences in reactants:    ", diff_ele_react)
@@ -379,20 +382,6 @@ if __name__ == "__main__":
     # print(eq)
     exit()
 
-    # in1 = "C10H16N5O13P3"
-    # in2 = "C10H15N5O10P2"
-    # out1 = convert_formula_to_dict(in1)
-    # out2 = convert_formula_to_dict(in2)
-    # print(out1,flush=True)
-    # print(out2,flush=True)
-    #
-    # print(multiply_dict(out1, 2),flush=True)
-    #
-    # diff_in_dict1, diff_in_dict2 = compare_dict_values(out1, out2)
-    # print(f"Differences in dict1: {diff_in_dict1}",flush=True)
-    # print(f"Differences in dict2: {diff_in_dict2}",flush=True)
-    #
-    # exit()
     f_preprocess = False
     target_dir = r"..\data\kegg_data_R"
 
