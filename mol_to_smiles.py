@@ -96,10 +96,6 @@ def standardize_mol(mol):
     # Normalize the molecule
     Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
     rdMolStandardize.NormalizeInPlace(mol)
-    # kekulize the molecule
-    Chem.Kekulize(mol)
-    # Add hydrogens
-    mol = Chem.AddHs(mol)
     return mol
 
 
@@ -204,7 +200,7 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
                 replace_problem_group(file, f_load_p)
                 file = f_load_p
             # Get the molecule
-            mol = Chem.MolFromMolFile(file, sanitize=False)
+            mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
         # Remove the temporary files
         if flag_r:
             remove(f_load_r)
