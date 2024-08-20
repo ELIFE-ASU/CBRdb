@@ -273,14 +273,8 @@ def sum_formulas(formulas):
 
 
 def get_formulas_from_ids(ids, file_path='Data/kegg_data_C.csv.zip'):
-    data = pd.read_csv(file_path, index_col=0)
-    formulas = data.loc[data["compound_id"].isin(ids), "formula"]
-    if formulas.empty:
-        return None
-    elif len(formulas) == 1:
-        return formulas.tolist()[0]
-    else:
-        return formulas.tolist()
+    data = pd.read_csv(file_path)
+    return data.loc[data["compound_id"].isin(ids), "formula"].tolist()
 
 
 def side_to_dict(side):
@@ -314,15 +308,20 @@ def dicts_to_eq(reactants, products):
 
 
 def strip_plus_x(input_string):
-    return re.sub(r'\+\d+', '', input_string).replace('+', '')
+    # Check if the input string has a plus and attempt to remove it
+    if "+" in input_string:
+        return re.sub(r'\+\d+', '', input_string).replace('+', '')
+    else:
+        return input_string
 
 
-def get_ids_to_formulas(compound_dict, web=True, file_path='Data/kegg_data_C.csv.zip'):
+def get_ids_to_formulas(compound_dict, web=False, file_path='Data/kegg_data_C.csv.zip'):
     ids = list(compound_dict.keys())
     if web:
         formulas = [get_formula_from_web(id) for id in ids]
     else:
         formulas = get_formulas_from_ids(ids, file_path)
+    # Remake the dict and strip the plus x from the formulas
     return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
 
 
@@ -342,15 +341,6 @@ def convert_form_dict_to_elements(form_dict):
     return elements
 
 if __name__ == "__main__":
-    # tmp ={'H2O2': 2, 'H': 1, 'Mn': 2}
-    #
-    #
-    # elements = convert_form_dict_to_elements(tmp)
-    # print(elements)
-    # exit()
-
-
-
     print("Program started", flush=True)
     # C00900 + C00011 <=> 2 C00022
     eq = "C01010 + C00001 <=> 2 C00011 + 2 C00014"
@@ -361,26 +351,29 @@ if __name__ == "__main__":
     eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
-    print("Reactants: ", reactants)
-    print("Products: ", products)
+    print("Reactants:                   ", reactants)
+    print("Products:                    ", products)
     # Get the conversion of the ids to formulas
     react_id_form_key = get_ids_to_formulas(reactants)
     prod_id_form_key = get_ids_to_formulas(products)
+    print("Reactant key id to formula:  ", react_id_form_key)
+    print("Product key id to formula:   ", prod_id_form_key)
+
     # Convert the reactants into formulas
     converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
     converted_products = convert_ids_to_formulas(products, prod_id_form_key)
-    print(converted_reactants)
-    print(converted_products)
+    print("Converted reactants:         ", converted_reactants)
+    print("Converted products:          ", converted_products)
     react_ele = convert_form_dict_to_elements(converted_reactants)
     prod_ele = convert_form_dict_to_elements(converted_products)
 
-    print(react_ele)
-    print(prod_ele)
+    print("reactant element dict:       ", react_ele)
+    print("product element dict:        ", prod_ele)
 
     # Get the difference in the elements
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-    print(f"Differences in reactants: {diff_ele_react}")
-    print(f"Differences in products: {diff_ele_prod}")
+    print("Differences in reactants:    ", diff_ele_react)
+    print("Differences in products:     ", diff_ele_prod)
 
     # eq = dicts_to_eq(reactants, products)
     # print(eq)
