@@ -61,6 +61,14 @@ def cleanup_eq_line(eq_line):
     return eq_line
 
 
+def cleanup_ec_line(ec_line):
+    # Select the second to last element and split by the delimiter
+    outline = ec_line[-2].split("/")[-1]
+    # If the outline is empty, use the 4th element
+    if outline == "":
+        outline = ec_line[4]
+    return outline
+
 def clean_kegg_atlas(in_file, out_file):
     # open the file
     with open(in_file, "r") as f:
@@ -117,7 +125,8 @@ def clean_atlas(in_file, out_file):
         # Get the reaction equation
         re_eq.append(cleanup_eq_line(line[3]))
         # Get the reaction EC
-        re_ec.append(line[4].replace("|", ""))
+        # re_ec.append(line[4].replace("|", ""))
+        re_ec.append(cleanup_ec_line(line))
     # Store the data in a dataframe
     df = pd.DataFrame({'id': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
     # Write the data to a file
@@ -138,5 +147,6 @@ if __name__ == "__main__":
     infile = r"C:\Users\louie\Downloads\atlas_reactions.dat"
     outfile = r"Data\atlas_reactions.csv.zip"
     clean_atlas(infile, outfile)
-
+    # load the data
+    data = pd.read_csv(outfile)
     print("Program end", flush=True)
