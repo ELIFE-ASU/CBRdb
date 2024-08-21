@@ -3,9 +3,7 @@ import re
 import time
 
 import pandas as pd
-import numpy as np
 import requests
-from chempy import balance_stoichiometry
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
@@ -398,29 +396,48 @@ def check_eq_unbalanced(react_ele, prod_ele):
         return False
 
 
+def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
+    # Get the left and right side of the equation
+    eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
+
+    # Loop over the missing "elements"
+    for item in missing_r:
+        eq_left += f" + {missing_dict[item]}"
+    for item in missing_p:
+        eq_right += f" + {missing_dict[item]}"
+
+    # Make the new equation
+    return f"{eq_left} <=> {eq_right}"
+
+
 if __name__ == "__main__":
     # Big problem Te, not in KEGG!
     # Br, K, O , S, (S,N), Mg, Cl, N, Se, F, H, P, (P,O)
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
-                    "Fe": "C00023", # C14819 https://www.kegg.jp/entry/C00023
+                    "Fe": "C00023",  # C14819 https://www.kegg.jp/entry/C00023
                     "Na": "C01330",
                     "Ca": "C00076",
                     "Cu": "C00070",
                     "Al": "C06264",
                     "Cl": "C00698",
+                    "Co": "C00175",
+                    "Ni": "C19609",
+                    "Mo": "C00150",
                     "O2": "C00007",
-                    "H3PO4": "C00009", # this is fucked up anything smaller?
+                    "H2Se": "C01528",
+                    "SeO3": "C05684",
+                    "H3PO4": "C00009",  # this is fucked up anything smaller?
                     "CO2": "C00011",
                     "NH3": "C00014",
                     "H2": "C00282",
-                    "Mn": "C19610", # https://www.kegg.jp/entry/C00034
+                    "Mn": "C19610",  # https://www.kegg.jp/entry/C00034
                     "Zn": "C00038",
                     "CH4": "C01438",
                     "NO2": "C00088",
                     "CH2O": "C00067",
                     "SO2": "C09306",
-                    "H2SO4": "C00059", # Sulfate removes the H??
+                    "H2SO4": "C00059",  # Sulfate removes the H??
                     "S": "C00087",
                     "H2S": "C00283",
                     "I": "C00708",
@@ -430,32 +447,8 @@ if __name__ == "__main__":
                     "Mg": "C00305",
                     "F": "C00742",
                     }
-    #
-    # print("Program started", flush=True)
-    # eq_line = "2 C00257 + C00004 + C00080 + C01062 <=> C00003 + C13511"
-    # eq_left = eq_line.split("<=>")[0].strip()
-    # eq_right = eq_line.split("<=>")[1].strip()
-    # print("Left side of the equation:   ", eq_left)
-    # print("Right side of the equation:  ", eq_right)
-    # reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
-    # missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
-    # print("Missing in reactants:        ", missing_in_react)
-    # print("Missing in products:         ", missing_in_prod)
-    # print("Reactants:                   ", reactants)
-    # print("Products:                    ", products)
-    #
-    # for i, item in enumerate(missing_in_react):
-    #     print(f"Item {i}: {item}")
-    #     eq_left += f" + {missing_dict[item]}"
-    # for i, item in enumerate(missing_in_prod):
-    #     print(f"Item {i}: {item}")
-    #     eq_right += f" + {missing_dict[item]}"
-    # print("New equation left side:      ", eq_left)
-    # print("New equation right side:     ", eq_right)
-    # # Make the new equation
-    # new_eq = f"{eq_left} <=> {eq_right}"
-    # exit()
 
+    print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
     # eq_file = "Data/atlas_data_kegg_R.csv.zip"
     eq_file = "Data/atlas_data_R.csv.zip"
@@ -489,22 +482,23 @@ if __name__ == "__main__":
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
         eq_line = formulas[i]
-        # print(f"\nProcessing {i}/{N} {re_id}", flush=True)
-        # print("Equation line:", eq_line, flush=True)
+        print(f"\nProcessing {i}/{N} {re_id}", flush=True)
+        print("Equation line:", eq_line, flush=True)
 
         # Check if the equation has n
         if "n" in eq_line:
             print(f"Warning! Equation has n. Skipping ID: {re_id}", flush=True)
             fucked_n.append(re_id)
             continue
+
         # Check if the equation has reactant and product side
         if len(eq_line.split("<=>")) != 2:
             print(f"Warning! Equation does not have a reactant and product side. Skipping ID: {re_id}", flush=True)
             fucked_eq.append(re_id)
             continue
-
+        # Check if the compound has missing formulas and skip as it will break the rest of the code
         if check_missing_formulas(eq_line, web=False):
-            # print("Warning! No formula")
+            print("Warning! No formula")
             fucked_missing_mol.append(re_id)
             continue
 
