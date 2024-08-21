@@ -399,15 +399,17 @@ def check_eq_unbalanced(react_ele, prod_ele):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    f_preprocess = True
-    reac_file = "Data/kegg_data_R.csv.zip"
+    eq_file = "Data/kegg_data_R.csv.zip"
+    eq_file = "Data/atlas_data_kegg_R.csv.zip"
+    eq_file = "Data/atlas_data_R.csv.zip"
+
+    f_preprocess = False
     target_dir = r"..\data\kegg_data_R"
     if f_preprocess:
-        preprocess_kegg_r(target_dir, reac_file)
+        preprocess_kegg_r(target_dir, eq_file)
         print("Preprocessing done", flush=True)
-    exit()
-    eq_file = "Data/kegg_data_R.csv.zip"
-    eq_file = "Data/atlas_kegg_reactions.csv.zip"
+
+
 
     # Load the processed data
     data = pd.read_csv(eq_file)
