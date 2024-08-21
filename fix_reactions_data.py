@@ -3,6 +3,7 @@ import re
 import time
 
 import pandas as pd
+import numpy as np
 import requests
 from chempy import balance_stoichiometry
 from requests import Session
@@ -398,9 +399,65 @@ def check_eq_unbalanced(react_ele, prod_ele):
 
 
 if __name__ == "__main__":
-    print("Program started", flush=True)
+    # Big problem Te, not in KEGG!
+    # Br, K, O , S, (S,N), Mg, Cl, N, Se, F, H, P, (P,O)
+    missing_dict = {"H2O": "C00001",
+                    "H": "C00080",
+                    "Fe": "C00023", # C14819 https://www.kegg.jp/entry/C00023
+                    "Na": "C01330",
+                    "Ca": "C00076",
+                    "Cu": "C00070",
+                    "Al": "C06264",
+                    "Cl": "C00698",
+                    "O2": "C00007",
+                    "H3PO4": "C00009", # this is fucked up anything smaller?
+                    "CO2": "C00011",
+                    "NH3": "C00014",
+                    "H2": "C00282",
+                    "Mn": "C19610", # https://www.kegg.jp/entry/C00034
+                    "Zn": "C00038",
+                    "CH4": "C01438",
+                    "NO2": "C00088",
+                    "CH2O": "C00067",
+                    "SO2": "C09306",
+                    "H2SO4": "C00059", # Sulfate removes the H??
+                    "S": "C00087",
+                    "H2S": "C00283",
+                    "I": "C00708",
+                    "Br": "C01324",
+                    "Pb": "C06696",
+                    "K": "C00238",
+                    "Mg": "C00305",
+                    "F": "C00742",
+                    }
+    #
+    # print("Program started", flush=True)
+    # eq_line = "2 C00257 + C00004 + C00080 + C01062 <=> C00003 + C13511"
+    # eq_left = eq_line.split("<=>")[0].strip()
+    # eq_right = eq_line.split("<=>")[1].strip()
+    # print("Left side of the equation:   ", eq_left)
+    # print("Right side of the equation:  ", eq_right)
+    # reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+    # missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
+    # print("Missing in reactants:        ", missing_in_react)
+    # print("Missing in products:         ", missing_in_prod)
+    # print("Reactants:                   ", reactants)
+    # print("Products:                    ", products)
+    #
+    # for i, item in enumerate(missing_in_react):
+    #     print(f"Item {i}: {item}")
+    #     eq_left += f" + {missing_dict[item]}"
+    # for i, item in enumerate(missing_in_prod):
+    #     print(f"Item {i}: {item}")
+    #     eq_right += f" + {missing_dict[item]}"
+    # print("New equation left side:      ", eq_left)
+    # print("New equation right side:     ", eq_right)
+    # # Make the new equation
+    # new_eq = f"{eq_left} <=> {eq_right}"
+    # exit()
+
     eq_file = "Data/kegg_data_R.csv.zip"
-    eq_file = "Data/atlas_data_kegg_R.csv.zip"
+    # eq_file = "Data/atlas_data_kegg_R.csv.zip"
     eq_file = "Data/atlas_data_R.csv.zip"
 
     f_preprocess = False
@@ -408,8 +465,6 @@ if __name__ == "__main__":
     if f_preprocess:
         preprocess_kegg_r(target_dir, eq_file)
         print("Preprocessing done", flush=True)
-
-
 
     # Load the processed data
     data = pd.read_csv(eq_file)
@@ -429,14 +484,13 @@ if __name__ == "__main__":
     fucked_missing_mol = []
     fucked_missing_ele = []
     fucked_no_balance = []
+    missing_ele = []
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        # if i < 3:
-        #     continue
-        print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         eq_line = formulas[i]
-        print("Equation line:", eq_line, flush=True)
+        # print(f"\nProcessing {i}/{N} {re_id}", flush=True)
+        # print("Equation line:", eq_line, flush=True)
 
         # Check if the equation has n
         if "n" in eq_line:
@@ -444,43 +498,52 @@ if __name__ == "__main__":
             fucked_n.append(re_id)
             continue
         # Check if the equation has reactant and product side
-        eq_sides = eq_line.split("<=>")
-        if len(eq_sides) != 2:
+        if len(eq_line.split("<=>")) != 2:
             print(f"Warning! Equation does not have a reactant and product side. Skipping ID: {re_id}", flush=True)
             fucked_eq.append(re_id)
             continue
 
         if check_missing_formulas(eq_line, web=False):
-            print("Warning! No formula")
+            # print("Warning! No formula")
             fucked_missing_mol.append(re_id)
             continue
 
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
 
         if check_missing_elements(react_ele, prod_ele):
+            print(f"\nProcessing {i}/{N} {re_id}", flush=True)
+            print("Equation line:", eq_line, flush=True)
             print("Warning! Missing elements")
             missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
             print("Missing in reactants:        ", missing_in_react)
             print("Missing in products:         ", missing_in_prod)
             fucked_missing_ele.append(re_id)
+            for val in missing_in_react:
+                missing_ele.append(val)
+            for val in missing_in_prod:
+                missing_ele.append(val)
+            print(f"missing ele {set(missing_ele)}")
             continue
 
-        if check_eq_unbalanced(react_ele, prod_ele):
-            print("Warning! unbalanced equation")
-            # Get the difference in the elements
-            diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-            print("Differences in reactants:    ", diff_ele_react)
-            print("Differences in products:     ", diff_ele_prod)
-            # Trying to balance_stoichiometry
-            try:
-                reac, prod = balance_stoichiometry(set(reactants.keys()),
-                                                   set(products.keys()),
-                                                   underdetermined=None)
-                print(dict(reac))
-                print(dict(prod))
-            except:
-                print("Could not find stoichiometry")
-                fucked_no_balance.append(re_id)
+        # if check_eq_unbalanced(react_ele, prod_ele):
+        #     print(f"\nProcessing {i}/{N} {re_id}", flush=True)
+        #     print("Equation line:", eq_line, flush=True)
+        #     print("Warning! unbalanced equation")
+        #     # Get the difference in the elements
+        #     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+        #     print("Differences in reactants:    ", diff_ele_react)
+        #     print("Differences in products:     ", diff_ele_prod)
+        #     # Trying to balance_stoichiometry
+        #     try:
+        #         reac, prod = balance_stoichiometry(set(reactants.keys()),
+        #                                            set(products.keys()),
+        #                                            underdetermined=None)
+        #
+        #         print(dict(reac))
+        #         print(dict(prod))
+        #     except:
+        #         print("Could not find stoichiometry")
+        #         fucked_no_balance.append(re_id)
 
     # print out the bad files
     print(f"fucked n: {fucked_n}")
@@ -494,3 +557,4 @@ if __name__ == "__main__":
     print(f"len fucked_missing_mol: {len(fucked_missing_mol)}")
     print(f"len fucked_missing_ele: {len(fucked_missing_ele)}")
     print(f"len fucked no balance: {len(fucked_no_balance)}")
+    print(f"missing ele {set(missing_ele)}")
