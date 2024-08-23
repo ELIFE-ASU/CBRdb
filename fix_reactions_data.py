@@ -8,18 +8,6 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-"""
-things to do
-- check if the equation has n
-- check if the equation has a reactant and product side
-- check if the equation balances
-
-fucked buckets
-1) Has an n
-2) Missing mol file (no formula)
-3) Equations do not balance
-"""
-
 
 def preprocess_kegg_r(target_dir, outfile):
     # Get a list of all files in the directory
@@ -450,8 +438,8 @@ if __name__ == "__main__":
 
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
-    # eq_file = "Data/atlas_data_kegg_R.csv.zip"
-    eq_file = "Data/atlas_data_R.csv.zip"
+    eq_file = "Data/atlas_data_kegg_R.csv.zip"
+    # eq_file = "Data/atlas_data_R.csv.zip"
 
     f_preprocess = False
     target_dir = r"..\data\kegg_data_R"
@@ -498,7 +486,7 @@ if __name__ == "__main__":
             continue
         # Check if the compound has missing formulas and skip as it will break the rest of the code
         if check_missing_formulas(eq_line, web=False):
-            print("Warning! No formula")
+            print("Warning! No formula", flush=True)
             fucked_missing_mol.append(re_id)
             continue
 
@@ -507,59 +495,58 @@ if __name__ == "__main__":
         if check_missing_elements(react_ele, prod_ele):
             print(f"\nProcessing {i}/{N} {re_id}", flush=True)
             print("Equation line:", eq_line, flush=True)
-            print("Warning! Missing elements")
+            print("Warning! Missing elements", flush=True)
             missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
-            print("Missing in reactants:        ", missing_in_react)
-            print("Missing in products:         ", missing_in_prod)
-            print("Attempting to fix missing products!")
+            print("Missing in reactants:        ", missing_in_react, flush=True)
+            print("Missing in products:         ", missing_in_prod, flush=True)
+            print("Attempting to fix missing products!", flush=True)
             eq_line = inject_compounds(eq_line, missing_in_react, missing_in_prod, missing_dict)
             # With the new equation line lets try again
             reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
             if check_missing_elements(react_ele, prod_ele):
                 missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
-                print("Missing in reactants:        ", missing_in_react)
-                print("Missing in products:         ", missing_in_prod)
+                print("Missing in reactants:        ", missing_in_react, flush=True)
+                print("Missing in products:         ", missing_in_prod, flush=True)
                 fucked_missing_ele.append(re_id)
                 for val in missing_in_react:
                     missing_ele.append(val)
                 for val in missing_in_prod:
                     missing_ele.append(val)
-                print("Missing ele:                ", set(missing_ele))
+                print("Missing ele:                ", set(missing_ele), flush=True)
                 exit()
                 continue
             else:
                 print("Fix worked!")
 
-        # if check_eq_unbalanced(react_ele, prod_ele):
-        #     print(f"\nProcessing {i}/{N} {re_id}", flush=True)
-        #     print("Equation line:", eq_line, flush=True)
-        #     print("Warning! unbalanced equation")
-        #     # Get the difference in the elements
-        #     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-        #     print("Differences in reactants:    ", diff_ele_react)
-        #     print("Differences in products:     ", diff_ele_prod)
-        #     # Trying to balance_stoichiometry
-        #     try:
-        #         reac, prod = balance_stoichiometry(set(reactants.keys()),
-        #                                            set(products.keys()),
-        #                                            underdetermined=None)
-        #
-        #         print(dict(reac))
-        #         print(dict(prod))
-        #     except:
-        #         print("Could not find stoichiometry")
-        #         fucked_no_balance.append(re_id)
+        if check_eq_unbalanced(react_ele, prod_ele):
+            print("Warning! unbalanced equation", flush=True)
+            # Get the difference in the elements
+            diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+            print("Differences in reactants:    ", diff_ele_react, flush=True)
+            print("Differences in products:     ", diff_ele_prod, flush=True)
+            # Trying to balance_stoichiometry
+            try:
+                reac, prod = balance_stoichiometry(set(reactants.keys()),
+                                                   set(products.keys()),
+                                                   underdetermined=None)
+
+                print(dict(reac), flush=True)
+                print(dict(prod), flush=True)
+            except:
+                print("Could not find stoichiometry", flush=True)
+                fucked_no_balance.append(re_id)
 
     # print out the bad files
-    print(f"fucked n: {fucked_n}")
-    print(f"fucked eq: {fucked_eq}")
-    print(f"fucked_missing_mol: {fucked_missing_mol}")
-    print(f"fucked_missing_ele: {fucked_missing_ele}")
-    print(f"fucked no balance: {fucked_no_balance}")
+    print(f"fucked n: {fucked_n}", flush=True)
+    print(f"fucked eq: {fucked_eq}", flush=True)
+    print(f"fucked_missing_mol: {fucked_missing_mol}", flush=True)
+    print(f"fucked_missing_ele: {fucked_missing_ele}", flush=True)
+    print(f"fucked no balance: {fucked_no_balance}", flush=True)
     # print out the length of each of the lists
-    print(f"len fucked n: {len(fucked_n)}")
-    print(f"len fucked eq: {len(fucked_eq)}")
-    print(f"len fucked_missing_mol: {len(fucked_missing_mol)}")
-    print(f"len fucked_missing_ele: {len(fucked_missing_ele)}")
-    print(f"len fucked no balance: {len(fucked_no_balance)}")
-    print(f"missing ele {set(missing_ele)}")
+    print(f"len fucked n: {len(fucked_n)}", flush=True)
+    print(f"len fucked eq: {len(fucked_eq)}", flush=True)
+    print(f"len fucked_missing_mol: {len(fucked_missing_mol)}", flush=True)
+    print(f"len fucked_missing_ele: {len(fucked_missing_ele)}", flush=True)
+    print(f"len fucked no balance: {len(fucked_no_balance)}", flush=True)
+    print(f"missing ele {set(missing_ele)}", flush=True)
+    print("Program finished!", flush=True)
