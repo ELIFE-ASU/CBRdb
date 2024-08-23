@@ -511,13 +511,24 @@ if __name__ == "__main__":
             missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
             print("Missing in reactants:        ", missing_in_react)
             print("Missing in products:         ", missing_in_prod)
-            fucked_missing_ele.append(re_id)
-            for val in missing_in_react:
-                missing_ele.append(val)
-            for val in missing_in_prod:
-                missing_ele.append(val)
-            print(f"missing ele {set(missing_ele)}")
-            continue
+            print("Attempting to fix missing products!")
+            eq_line = inject_compounds(eq_line, missing_in_react, missing_in_prod, missing_dict)
+            # With the new equation line lets try again
+            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+            if check_missing_elements(react_ele, prod_ele):
+                missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
+                print("Missing in reactants:        ", missing_in_react)
+                print("Missing in products:         ", missing_in_prod)
+                fucked_missing_ele.append(re_id)
+                for val in missing_in_react:
+                    missing_ele.append(val)
+                for val in missing_in_prod:
+                    missing_ele.append(val)
+                print("Missing ele:                ", set(missing_ele))
+                exit()
+                continue
+            else:
+                print("Fix worked!")
 
         # if check_eq_unbalanced(react_ele, prod_ele):
         #     print(f"\nProcessing {i}/{N} {re_id}", flush=True)
