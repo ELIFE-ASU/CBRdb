@@ -1,7 +1,7 @@
 import os
 import re
 import time
-
+from chempy import balance_stoichiometry
 import pandas as pd
 import requests
 from requests import Session
@@ -441,6 +441,9 @@ if __name__ == "__main__":
     eq_file = "Data/atlas_data_kegg_R.csv.zip"
     # eq_file = "Data/atlas_data_R.csv.zip"
 
+    out_eq_file = "Data/kegg_data_R_processed.csv.zip"
+
+    # Preprocessing
     f_preprocess = False
     target_dir = r"..\data\kegg_data_R"
     if f_preprocess:
@@ -450,9 +453,10 @@ if __name__ == "__main__":
     # Load the processed data
     data = pd.read_csv(eq_file)
 
-    # Get the IDs and the formulas
+    # Get the data from the dataframe
     ids = data["id"].tolist()
-    formulas = data["reaction"].tolist()
+    eq_lines = data["reaction"].tolist()
+    ec = data["ec"].tolist()
     print("Data loaded", flush=True)
     print("Data columns", data.columns, flush=True)
     print("Data shape", data.shape, flush=True)
@@ -460,16 +464,21 @@ if __name__ == "__main__":
     # Get the size of the data
     N = len(ids)
     print(f"Total number of reactions {N}", flush=True)
+    # Init the lists
     fucked_n = []
     fucked_eq = []
     fucked_missing_mol = []
     fucked_missing_ele = []
     fucked_no_balance = []
     missing_ele = []
+    # Define the output file lists
+    out_eq_lines = []
+    out_ids = []
+    out_ec = []
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        eq_line = formulas[i]
+        eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
 
@@ -513,10 +522,9 @@ if __name__ == "__main__":
                 for val in missing_in_prod:
                     missing_ele.append(val)
                 print("Missing ele:                ", set(missing_ele), flush=True)
-                exit()
                 continue
             else:
-                print("Fix worked!")
+                print("Fix worked!", flush=True)
 
         if check_eq_unbalanced(react_ele, prod_ele):
             print("Warning! unbalanced equation", flush=True)
@@ -536,6 +544,16 @@ if __name__ == "__main__":
                 print("Could not find stoichiometry", flush=True)
                 fucked_no_balance.append(re_id)
 
+        # Allocate the result to the lists
+        out_ids.append(re_id)
+        out_eq_lines.append(eq_line)
+        out_ec.append(ec[i])
+
+    # Store the data in a dataframe
+    df = pd.DataFrame({'id': out_ids, 'reaction': out_eq_lines, 'ec': out_ec})
+    # Write the data to a file
+    df.to_csv(out_eq_file, compression='zip', encoding='utf-8', index=False)
+
     # print out the bad files
     print(f"fucked n: {fucked_n}", flush=True)
     print(f"fucked eq: {fucked_eq}", flush=True)
@@ -543,10 +561,10 @@ if __name__ == "__main__":
     print(f"fucked_missing_ele: {fucked_missing_ele}", flush=True)
     print(f"fucked no balance: {fucked_no_balance}", flush=True)
     # print out the length of each of the lists
-    print(f"len fucked n: {len(fucked_n)}", flush=True)
-    print(f"len fucked eq: {len(fucked_eq)}", flush=True)
-    print(f"len fucked_missing_mol: {len(fucked_missing_mol)}", flush=True)
-    print(f"len fucked_missing_ele: {len(fucked_missing_ele)}", flush=True)
-    print(f"len fucked no balance: {len(fucked_no_balance)}", flush=True)
+    print(f"len fucked n: {len(fucked_n)}/{N}", flush=True)
+    print(f"len fucked eq: {len(fucked_eq)}/{N}", flush=True)
+    print(f"len fucked_missing_mol: {len(fucked_missing_mol)}/{N}", flush=True)
+    print(f"len fucked_missing_ele: {len(fucked_missing_ele)}/{N}", flush=True)
+    print(f"len fucked no balance: {len(fucked_no_balance)}/{N}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
     print("Program finished!", flush=True)
