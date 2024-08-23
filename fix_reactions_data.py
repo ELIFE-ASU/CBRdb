@@ -40,7 +40,7 @@ def preprocess_kegg_r(target_dir, outfile):
         eq_list.append(eq_line)
         ec_list.append(ec_line)
     # Make the dataframe for the id and the equation
-    df = pd.DataFrame({'id': id_list, 'reaction': eq_list})
+    df = pd.DataFrame({'id': id_list, 'reaction': eq_list,'ec':ec_line})
     # Write the data to a file
     df.to_csv(outfile, compression='zip', encoding='utf-8')
     return None
@@ -438,13 +438,13 @@ if __name__ == "__main__":
 
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
-    eq_file = "Data/atlas_data_kegg_R.csv.zip"
+    # eq_file = "Data/atlas_data_kegg_R.csv.zip"
     # eq_file = "Data/atlas_data_R.csv.zip"
 
     out_eq_file = "Data/kegg_data_R_processed.csv.zip"
 
     # Preprocessing
-    f_preprocess = False
+    f_preprocess = True
     target_dir = r"..\data\kegg_data_R"
     if f_preprocess:
         preprocess_kegg_r(target_dir, eq_file)
