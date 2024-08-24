@@ -1,9 +1,11 @@
 import os
 import re
 import time
-from chempy import balance_stoichiometry
+
+import numpy as np
 import pandas as pd
 import requests
+from chempy import balance_stoichiometry
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
@@ -40,7 +42,7 @@ def preprocess_kegg_r(target_dir, outfile):
         eq_list.append(eq_line)
         ec_list.append(ec_line)
     # Make the dataframe for the id and the equation
-    df = pd.DataFrame({'id': id_list, 'reaction': eq_list,'ec':ec_line})
+    df = pd.DataFrame({'id': id_list, 'reaction': eq_list, 'ec': ec_line})
     # Write the data to a file
     df.to_csv(outfile, compression='zip', encoding='utf-8')
     return None
@@ -398,6 +400,23 @@ def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
     return f"{eq_left} <=> {eq_right}"
 
 
+def fix_simple_imbalance():
+    """
+    Missing a water
+    Differences in reactants:     {'O': 14, 'H': 88}
+    Differences in products:      {'O': 15, 'H': 90}
+
+    missing a H
+    Equation line: C01402 + C00001 <=> C00060 + C00292
+    Warning! unbalanced equation
+    Differences in reactants:     {'H': 11}
+    Differences in products:      {'H': 10}
+
+    in the case of multiple H
+
+    """
+
+
 if __name__ == "__main__":
     # Big problem Te, not in KEGG!
     # Br, K, O , S, (S,N), Mg, Cl, N, Se, F, H, P, (P,O)
@@ -444,7 +463,7 @@ if __name__ == "__main__":
     out_eq_file = "Data/kegg_data_R_processed.csv.zip"
 
     # Preprocessing
-    f_preprocess = True
+    f_preprocess = False
     target_dir = r"..\data\kegg_data_R"
     if f_preprocess:
         preprocess_kegg_r(target_dir, eq_file)
@@ -478,6 +497,8 @@ if __name__ == "__main__":
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
+        # if i != 2719:
+        #    continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
@@ -502,14 +523,16 @@ if __name__ == "__main__":
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
 
         if check_missing_elements(react_ele, prod_ele):
-            print(f"\nProcessing {i}/{N} {re_id}", flush=True)
-            print("Equation line:", eq_line, flush=True)
             print("Warning! Missing elements", flush=True)
             missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
             print("Missing in reactants:        ", missing_in_react, flush=True)
             print("Missing in products:         ", missing_in_prod, flush=True)
             print("Attempting to fix missing products!", flush=True)
-            eq_line = inject_compounds(eq_line, missing_in_react, missing_in_prod, missing_dict)
+            try:
+                eq_line = inject_compounds(eq_line, missing_in_react, missing_in_prod, missing_dict)
+            except KeyError as e:
+                print("No item in the missing dict that could fix", flush=True)
+                print(e, flush=True)
             # With the new equation line lets try again
             reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
             if check_missing_elements(react_ele, prod_ele):
@@ -532,6 +555,40 @@ if __name__ == "__main__":
             diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
             print("Differences in reactants:    ", diff_ele_react, flush=True)
             print("Differences in products:     ", diff_ele_prod, flush=True)
+
+            # Find the difference in elements
+            diff_ele = []
+            for val in diff_ele_react.keys():
+                diff_ele.append(val)
+            for val in diff_ele_prod.keys():
+                diff_ele.append(val)
+            diff_ele = list(set(diff_ele))
+            # Attempt to fix issue with missing H
+            if len(diff_ele) == 1 and diff_ele[0] == "H":
+                print("replacing H")
+                # Find which side has the lowest H
+                # try add the hydrogen
+                loc = np.argmin([diff_ele_react.items(), diff_ele_prod.items()])
+                print(loc)
+                eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
+                if loc == 0:
+                    # inject on lhs
+                    eq_left += f" + C00080"
+                else:
+                    # inject on rhs
+                    eq_right += f" + C00080"
+                # Make the new eq
+                eq_line = f"{eq_left} <=> {eq_right}"
+                # Update values
+                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+
+            # if the system only has H in the difference
+            # if the difference is only 1 H
+            # inject H to the side with the lowest H count
+            # if the difference is two H
+
+            # if the set of difference elements is
+
             # Trying to balance_stoichiometry
             try:
                 reac, prod = balance_stoichiometry(set(reactants.keys()),
@@ -542,6 +599,9 @@ if __name__ == "__main__":
                 print(dict(prod), flush=True)
             except:
                 print("Could not find stoichiometry", flush=True)
+
+                # try and fix cases
+
                 fucked_no_balance.append(re_id)
 
         # Allocate the result to the lists
