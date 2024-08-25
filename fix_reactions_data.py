@@ -399,8 +399,18 @@ def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
     # Make the new equation
     return f"{eq_left} <=> {eq_right}"
 
+def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
+    # Find which side has the lowest H try add the hydrogen
+    loc = np.argmin([diff_ele_react.items(), diff_ele_prod.items()])
+    eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
+    if loc == 0:
+        eq_left += f" + {inject}"
+    else:
+        eq_right += f" + {inject}"
+    # Update eq_line with the new equation
+    return f"{eq_left} <=> {eq_right}"
 
-def fix_simple_imbalance():
+def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
     """
     Missing a water
     Differences in reactants:     {'O': 14, 'H': 88}
@@ -415,6 +425,26 @@ def fix_simple_imbalance():
     in the case of multiple H
 
     """
+    # Find the difference in elements
+    diff_ele = set(diff_ele_react) | set(diff_ele_prod)
+
+    # Find the difference in values
+    diff_val = abs(sum(diff_ele_react.values()) - sum(diff_ele_prod.values()))
+    print("Difference in values:        ", diff_val)
+
+    # Attempt to fix issue with missing H
+    if diff_ele == {"H"} and diff_val %2 != 0:
+        print("Adding H")
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00080")
+    elif diff_ele == {"H"} and diff_val %2 == 0:
+        print("Adding H2")
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00282")
+    elif diff_ele == {"O", "H"}:
+        print("Adding H2O")
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00001")
+    else:
+        print("Could not fix the imbalance")
+        return eq_line
 
 
 if __name__ == "__main__":
@@ -556,38 +586,10 @@ if __name__ == "__main__":
             print("Differences in reactants:    ", diff_ele_react, flush=True)
             print("Differences in products:     ", diff_ele_prod, flush=True)
 
-            # Find the difference in elements
-            diff_ele = []
-            for val in diff_ele_react.keys():
-                diff_ele.append(val)
-            for val in diff_ele_prod.keys():
-                diff_ele.append(val)
-            diff_ele = list(set(diff_ele))
-            # Attempt to fix issue with missing H
-            if len(diff_ele) == 1 and diff_ele[0] == "H":
-                print("replacing H")
-                # Find which side has the lowest H
-                # try add the hydrogen
-                loc = np.argmin([diff_ele_react.items(), diff_ele_prod.items()])
-                print(loc)
-                eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
-                if loc == 0:
-                    # inject on lhs
-                    eq_left += f" + C00080"
-                else:
-                    # inject on rhs
-                    eq_right += f" + C00080"
-                # Make the new eq
-                eq_line = f"{eq_left} <=> {eq_right}"
-                # Update values
-                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+            eq_line = fix_simple_imbalance(eq_line,diff_ele_react, diff_ele_prod)
 
-            # if the system only has H in the difference
-            # if the difference is only 1 H
-            # inject H to the side with the lowest H count
-            # if the difference is two H
-
-            # if the set of difference elements is
+            # Update values
+            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
 
             # Trying to balance_stoichiometry
             try:
