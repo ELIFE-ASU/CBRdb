@@ -310,7 +310,7 @@ def convert_ids_to_formulas(in_dict, react_id_form):
     return {react_id_form[id]: count for id, count in in_dict.items()}
 
 
-def convert_formulas_to_reactants(formulas_dict, react_id_form):
+def convert_formulas_to_ids(formulas_dict, react_id_form):
     inverse_react_id_form = {v: k for k, v in react_id_form.items()}
     return {inverse_react_id_form[formula]: count for formula, count in formulas_dict.items()}
 
@@ -321,6 +321,26 @@ def convert_form_dict_to_elements(form_dict):
         elements = add_dicts(elements, multiply_dict(convert_formula_to_dict(formula), count))
     return elements
 
+
+def get_eq(old_eq, reactants, products, web=False, file_path='Data/kegg_data_C.csv.zip'):
+    # Convert the Eq in to the dicts
+    lhs, rhs = eq_to_dict(old_eq)
+    # Get the conversion of the ids to formulas
+    l_key = get_ids_to_formulas(lhs, web=web, file_path=file_path)
+    r_key = get_ids_to_formulas(rhs, web=web, file_path=file_path)
+
+    # Convert the dict back into eq form
+    reactants = convert_formulas_to_ids(reactants, l_key)
+    products = convert_formulas_to_ids(products, r_key)
+
+    react_keys = list(reactants.keys())
+    react_vals = list(reactants.values())
+    prod_keys = list(products.keys())
+    prod_vals = list(products.values())
+
+    eq_left = [f"{react_vals[i]} {react_keys[i]}" for i in range(len(react_keys))]
+    eq_right = [f"{prod_vals[i]} {prod_keys[i]}" for i in range(len(prod_keys))]
+    return " + ".join(eq_left) + " <==> " + " + ".join(eq_right)
 
 def get_elements_from_eq(eq, verbose=False, web=False, file_path='Data/kegg_data_C.csv.zip'):
     # Convert the Eq in to the dicts
@@ -399,6 +419,7 @@ def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
     # Make the new equation
     return f"{eq_left} <=> {eq_right}"
 
+
 def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
     # Find which side has the lowest H try add the hydrogen
     loc = np.argmin([diff_ele_react.items(), diff_ele_prod.items()])
@@ -409,6 +430,7 @@ def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
         eq_right += f" + {inject}"
     # Update eq_line with the new equation
     return f"{eq_left} <=> {eq_right}"
+
 
 def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
     """
@@ -433,10 +455,10 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
     print("Difference in values:        ", diff_val)
 
     # Attempt to fix issue with missing H
-    if diff_ele == {"H"} and diff_val %2 != 0:
+    if diff_ele == {"H"} and diff_val % 2 != 0:
         print("Adding H")
         return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00080")
-    elif diff_ele == {"H"} and diff_val %2 == 0:
+    elif diff_ele == {"H"} and diff_val % 2 == 0:
         print("Adding H2")
         return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00282")
     elif diff_ele == {"O", "H"}:
@@ -527,8 +549,8 @@ if __name__ == "__main__":
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        # if i != 2719:
-        #    continue
+        if i != 2719:
+            continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
@@ -585,25 +607,24 @@ if __name__ == "__main__":
             diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
             print("Differences in reactants:    ", diff_ele_react, flush=True)
             print("Differences in products:     ", diff_ele_prod, flush=True)
-
-            eq_line = fix_simple_imbalance(eq_line,diff_ele_react, diff_ele_prod)
+            # Attempt injection
+            eq_line = fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod)
 
             # Update values
             reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
 
-            # Trying to balance_stoichiometry
             try:
-                reac, prod = balance_stoichiometry(set(reactants.keys()),
-                                                   set(products.keys()),
-                                                   underdetermined=None)
+                print("Balancing eq", flush=True)
+                reactants, products = balance_stoichiometry(set(reactants.keys()),
+                                                            set(products.keys()),
+                                                            underdetermined=None)
+                reactants = dict(reactants)
+                products = dict(products)
+                # Convert the dict back into eq form
+                eq_line = get_eq(eq_line, reactants, products)
 
-                print(dict(reac), flush=True)
-                print(dict(prod), flush=True)
             except:
                 print("Could not find stoichiometry", flush=True)
-
-                # try and fix cases
-
                 fucked_no_balance.append(re_id)
 
         # Allocate the result to the lists
