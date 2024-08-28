@@ -342,6 +342,7 @@ def get_eq(old_eq, reactants, products, web=False, file_path='Data/kegg_data_C.c
     eq_right = [f"{prod_vals[i]} {prod_keys[i]}" for i in range(len(prod_keys))]
     return " + ".join(eq_left) + " <==> " + " + ".join(eq_right)
 
+
 def get_elements_from_eq(eq, verbose=False, web=False, file_path='Data/kegg_data_C.csv.zip'):
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
@@ -549,8 +550,8 @@ if __name__ == "__main__":
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        if i != 2719:
-            continue
+        # if i != 2719: # 869 866
+        #     continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
@@ -607,14 +608,9 @@ if __name__ == "__main__":
             diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
             print("Differences in reactants:    ", diff_ele_react, flush=True)
             print("Differences in products:     ", diff_ele_prod, flush=True)
-            # Attempt injection
-            eq_line = fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod)
-
-            # Update values
-            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
 
             try:
-                print("Balancing eq", flush=True)
+                print("Attempt balancing eq x1", flush=True)
                 reactants, products = balance_stoichiometry(set(reactants.keys()),
                                                             set(products.keys()),
                                                             underdetermined=None)
@@ -622,10 +618,32 @@ if __name__ == "__main__":
                 products = dict(products)
                 # Convert the dict back into eq form
                 eq_line = get_eq(eq_line, reactants, products)
+                print("Rebalance success!", flush=True)
 
             except:
-                print("Could not find stoichiometry", flush=True)
-                fucked_no_balance.append(re_id)
+                print("Could not find stoichiometry on first attempt", flush=True)
+                # Attempt a more manual injection to help balance
+                # This simply looks at the pop inbalance
+                eq_line = fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod)
+
+                # Update values
+                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+                try:
+                    print("Attempt balancing eq x2", flush=True)
+                    reactants, products = balance_stoichiometry(set(reactants.keys()),
+                                                                set(products.keys()),
+                                                                underdetermined=None)
+                    reactants = dict(reactants)
+                    products = dict(products)
+                    # Convert the dict back into eq form
+                    eq_line = get_eq(eq_line, reactants, products)
+                    print("Rebalance success!", flush=True)
+
+                except:
+                    print("Could not find stoichiometry after injection!", flush=True)
+                    fucked_no_balance.append(re_id)
+                    # Skip the iteration
+                    continue
 
         # Allocate the result to the lists
         out_ids.append(re_id)
