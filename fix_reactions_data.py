@@ -510,10 +510,10 @@ if __name__ == "__main__":
 
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
-    # eq_file = "Data/atlas_data_kegg_R.csv.zip"
+    eq_file = "Data/atlas_data_kegg_R.csv.zip"
     # eq_file = "Data/atlas_data_R.csv.zip"
 
-    out_eq_file = "Data/kegg_data_R_processed.csv.zip"
+    out_eq_file = "Data/atlas_data_kegg_R_processed.csv.zip"
 
     # Preprocessing
     f_preprocess = False
