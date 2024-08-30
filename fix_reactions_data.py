@@ -510,16 +510,17 @@ if __name__ == "__main__":
 
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
-    eq_file = "Data/atlas_data_kegg_R.csv.zip"
-    # eq_file = "Data/atlas_data_R.csv.zip"
-
-    out_eq_file = "Data/atlas_data_kegg_R_processed.csv.zip"
+    # eq_file = "Data/atlas_data_kegg_R.csv.zip"
+    # eq_file = "Data/atlas_data_R.csv.zip" # fails
+    out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
 
     # Preprocessing
     f_preprocess = False
-    target_dir = r"..\data\kegg_data_R"
+
     if f_preprocess:
-        preprocess_kegg_r(target_dir, eq_file)
+        target_dir = r"..\data\kegg_data_R"
+        outfile = "Data/kegg_data_R.csv.zip"
+        preprocess_kegg_r(target_dir, outfile)
         print("Preprocessing done", flush=True)
 
     # Load the processed data
@@ -532,6 +533,8 @@ if __name__ == "__main__":
     print("Data loaded", flush=True)
     print("Data columns", data.columns, flush=True)
     print("Data shape", data.shape, flush=True)
+    print("Data head", data.head(4).values, flush=True)
+    exit()
 
     # Get the size of the data
     N = len(ids)
@@ -550,7 +553,7 @@ if __name__ == "__main__":
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        # if i != 2719: # 869 866
+        # if i != 2719: # 869 866 703
         #     continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
