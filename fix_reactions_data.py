@@ -2,7 +2,6 @@ import os
 import re
 import time
 
-import numpy as np
 import pandas as pd
 import requests
 from chempy import balance_stoichiometry
@@ -439,12 +438,10 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
     """
     # Find the difference in elements
     diff_ele = set(diff_ele_react) | set(diff_ele_prod)
-    print("Difference in elements: ", diff_ele, flush=True)
     # Find the difference in values
     diff_val = abs(sum(diff_ele_react.values()) - sum(diff_ele_prod.values()))
-    print("Difference in values:        ", diff_val, flush=True)
 
-    # Attempt to fix issue with missing H
+    # Attempt to fix issue with missing
     if diff_ele == {"H"} and diff_val % 2 != 0:
         print("Adding H", flush=True)
         return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00080")
@@ -478,6 +475,18 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
 
 
 if __name__ == "__main__":
+    """
+    todo
+    Try a second injection attempt
+        Problem with the above is that there might be more than one solution
+        Do I need to trail a couple of cases and take the reaction with the 
+        lowest free energy?
+    
+    Seems to be when added water, H2 or O2 needs to be added to rebalance
+    Add a problem list which skips and only attempts to fix if problem
+    
+    """
+
     # Big problem Te, not in KEGG!
     # Br, K, O , S, (S,N), Mg, Cl, N, Se, F, H, P, (P,O)
     missing_dict = {"H2O": "C00001",
@@ -559,8 +568,9 @@ if __name__ == "__main__":
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        if i != 869:  # 869 866 703
-            continue
+        # two injections R04795, R04808
+        # if i != 703:  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
+        #     continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
@@ -576,6 +586,7 @@ if __name__ == "__main__":
             print(f"Warning! Equation does not have a reactant and product side. Skipping ID: {re_id}", flush=True)
             fucked_eq.append(re_id)
             continue
+
         # Check if the compound has missing formulas and skip as it will break the rest of the code
         if check_missing_formulas(eq_line, web=False):
             print("Warning! No formula", flush=True)
@@ -593,8 +604,7 @@ if __name__ == "__main__":
             try:
                 eq_line = inject_compounds(eq_line, missing_in_react, missing_in_prod, missing_dict)
             except KeyError as e:
-                print("No item in the missing dict that could fix", flush=True)
-                print(e, flush=True)
+                print("No item in the missing dict that could fix; ", e, flush=True)
             # With the new equation line lets try again
             reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
             if check_missing_elements(react_ele, prod_ele):
@@ -606,7 +616,7 @@ if __name__ == "__main__":
                     missing_ele.append(val)
                 for val in missing_in_prod:
                     missing_ele.append(val)
-                print("Missing ele:                ", set(missing_ele), flush=True)
+                print("Missing ele set:             ", set(missing_ele), flush=True)
                 continue
             else:
                 print("Fix worked!", flush=True)
@@ -637,7 +647,6 @@ if __name__ == "__main__":
                 # Update values
                 reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
                 diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-                print("Unbalanced?", check_eq_unbalanced(react_ele, prod_ele), flush=True)
                 if check_eq_unbalanced(react_ele, prod_ele):
                     try:
                         print("Attempt balancing eq x2", flush=True)
@@ -657,6 +666,8 @@ if __name__ == "__main__":
                         fucked_no_balance.append(re_id)
                         # Skip the iteration
                         continue
+                else:
+                    print("Rebalance success!", flush=True)
 
         # Allocate the result to the lists
         out_ids.append(re_id)
