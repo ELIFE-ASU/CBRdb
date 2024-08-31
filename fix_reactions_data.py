@@ -435,17 +435,6 @@ def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
 
 def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
     """
-    Missing a water
-    Differences in reactants:     {'O': 14, 'H': 88}
-    Differences in products:      {'O': 15, 'H': 90}
-
-    missing a H
-    Equation line: C01402 + C00001 <=> C00060 + C00292
-    Warning! unbalanced equation
-    Differences in reactants:     {'H': 11}
-    Differences in products:      {'H': 10}
-
-    in the case of multiple H
 
     """
     # Find the difference in elements
@@ -453,20 +442,38 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
 
     # Find the difference in values
     diff_val = abs(sum(diff_ele_react.values()) - sum(diff_ele_prod.values()))
-    print("Difference in values:        ", diff_val)
+    print("Difference in values:        ", diff_val, flush=True)
 
     # Attempt to fix issue with missing H
     if diff_ele == {"H"} and diff_val % 2 != 0:
-        print("Adding H")
+        print("Adding H", flush=True)
         return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00080")
     elif diff_ele == {"H"} and diff_val % 2 == 0:
-        print("Adding H2")
+        print("Adding H2", flush=True)
         return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00282")
     elif diff_ele == {"O", "H"}:
-        print("Adding H2O")
+        print("Adding H2O", flush=True)
         return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00001")
+    elif diff_ele == {"O"}:
+        print("Adding O2", flush=True)
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00007")
+    elif diff_ele == {"C", "O"}:
+        print("Adding CO2", flush=True)
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00011")
+    elif diff_ele == {"N", "H"}:
+        print("Adding NH3", flush=True)
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00014")
+    elif diff_ele == {"C", "H"}:
+        print("Adding CH4", flush=True)
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C01438")
+    elif diff_ele == {"N", "O"}:
+        print("Adding NO2", flush=True)
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00088")
+    elif diff_ele == {"S", "O"}:
+        print("Adding SO2", flush=True)
+        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C09306")
     else:
-        print("Could not fix the imbalance")
+        print("Could not fix the imbalance", flush=True)
         return eq_line
 
 
@@ -479,7 +486,7 @@ if __name__ == "__main__":
                     "Na": "C01330",
                     "Ca": "C00076",
                     "Cu": "C00070",
-                    "Al": "C06264",
+                    # "Al": "C06264", # no mol file
                     "Cl": "C00698",
                     "Co": "C00175",
                     "Ni": "C19609",
@@ -534,7 +541,6 @@ if __name__ == "__main__":
     print("Data columns", data.columns, flush=True)
     print("Data shape", data.shape, flush=True)
     print("Data head", data.head(4).values, flush=True)
-    exit()
 
     # Get the size of the data
     N = len(ids)
@@ -553,8 +559,8 @@ if __name__ == "__main__":
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
-        # if i != 2719: # 869 866 703
-        #     continue
+        if i != 869:  # 869 866 703
+            continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
@@ -625,8 +631,7 @@ if __name__ == "__main__":
 
             except:
                 print("Could not find stoichiometry on first attempt", flush=True)
-                # Attempt a more manual injection to help balance
-                # This simply looks at the pop inbalance
+                # Attempt a more manual injection to help balance, this simply looks at the pop in-balance
                 eq_line = fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod)
 
                 # Update values
