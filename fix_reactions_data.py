@@ -503,7 +503,7 @@ if __name__ == "__main__":
                     "O2": "C00007",
                     "H2Se": "C01528",
                     "SeO3": "C05684",
-                    "H3PO4": "C00009",  # this is fucked up anything smaller?
+                    "H3PO4": "C00009",  # this is bad up anything smaller?
                     "CO2": "C00011",
                     "NH3": "C00014",
                     "H2": "C00282",
@@ -524,11 +524,26 @@ if __name__ == "__main__":
                     "F": "C00742",
                     }
 
+    fix_comp_dict = {"H4P2O7":"C00013", # Pyrophosphate
+                     "C3H7O6P":"C00111", # Glycerone phosphate
+                     "CH3NO" : "C00488", # Formamide
+                     "C2H4": "C06547", # Ethene
+                     "H2O2": "C00027", # Hydrogen peroxide
+                     "HCN": "C01326",  # Hydrogen cyanide
+                     "H2CO3": "C01353",  # Carbonic acid
+                     "": "",
+                     "": "",
+                     "": "",
+                     "": "",
+                     }
+
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
     eq_file = "Data/atlas_data_kegg_R.csv.zip"
     eq_file = "Data/atlas_data_R.csv.zip" # fails
     out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
+
+    bad_file = "Data/bad_list.csv"
 
     # Preprocessing
     f_preprocess = False
@@ -555,11 +570,11 @@ if __name__ == "__main__":
     N = len(ids)
     print(f"Total number of reactions {N}", flush=True)
     # Init the lists
-    fucked_n = []
-    fucked_eq = []
-    fucked_missing_mol = []
-    fucked_missing_ele = []
-    fucked_no_balance = []
+    bad_n = []
+    bad_eq = []
+    bad_missing_mol = []
+    bad_missing_ele = []
+    bad_no_balance = []
     missing_ele = []
     # Define the output file lists
     out_eq_lines = []
@@ -578,19 +593,19 @@ if __name__ == "__main__":
         # Check if the equation has n
         if "n" in eq_line:
             print(f"Warning! Equation has n. Skipping ID: {re_id}", flush=True)
-            fucked_n.append(re_id)
+            bad_n.append(re_id)
             continue
 
         # Check if the equation has reactant and product side
         if len(eq_line.split("<=>")) != 2:
             print(f"Warning! Equation does not have a reactant and product side. Skipping ID: {re_id}", flush=True)
-            fucked_eq.append(re_id)
+            bad_eq.append(re_id)
             continue
 
         # Check if the compound has missing formulas and skip as it will break the rest of the code
         if check_missing_formulas(eq_line, web=False):
             print("Warning! No formula", flush=True)
-            fucked_missing_mol.append(re_id)
+            bad_missing_mol.append(re_id)
             continue
 
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
@@ -611,7 +626,7 @@ if __name__ == "__main__":
                 missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
                 print("Missing in reactants:        ", missing_in_react, flush=True)
                 print("Missing in products:         ", missing_in_prod, flush=True)
-                fucked_missing_ele.append(re_id)
+                bad_missing_ele.append(re_id)
                 for val in missing_in_react:
                     missing_ele.append(val)
                 for val in missing_in_prod:
@@ -663,7 +678,7 @@ if __name__ == "__main__":
 
                     except:
                         print("Could not find stoichiometry after injection!", flush=True)
-                        fucked_no_balance.append(re_id)
+                        bad_no_balance.append(re_id)
                         # Skip the iteration
                         continue
                 else:
@@ -680,16 +695,19 @@ if __name__ == "__main__":
     df.to_csv(out_eq_file, compression='zip', encoding='utf-8', index=False)
 
     # print out the bad files
-    print(f"fucked n: {fucked_n}", flush=True)
-    print(f"fucked eq: {fucked_eq}", flush=True)
-    print(f"fucked_missing_mol: {fucked_missing_mol}", flush=True)
-    print(f"fucked_missing_ele: {fucked_missing_ele}", flush=True)
-    print(f"fucked no balance: {fucked_no_balance}", flush=True)
+    print(f"bad n: {bad_n}", flush=True)
+    print(f"bad eq: {bad_eq}", flush=True)
+    print(f"bad_missing_mol: {bad_missing_mol}", flush=True)
+    print(f"bad_missing_ele: {bad_missing_ele}", flush=True)
+    print(f"bad no balance: {bad_no_balance}", flush=True)
     # print out the length of each of the lists
-    print(f"len fucked n: {len(fucked_n)}/{N}", flush=True)
-    print(f"len fucked eq: {len(fucked_eq)}/{N}", flush=True)
-    print(f"len fucked_missing_mol: {len(fucked_missing_mol)}/{N}", flush=True)
-    print(f"len fucked_missing_ele: {len(fucked_missing_ele)}/{N}", flush=True)
-    print(f"len fucked no balance: {len(fucked_no_balance)}/{N}", flush=True)
+    print(f"len bad n: {len(bad_n)}/{N}", flush=True)
+    print(f"len bad eq: {len(bad_eq)}/{N}", flush=True)
+    print(f"len bad_missing_mol: {len(bad_missing_mol)}/{N}", flush=True)
+    print(f"len bad_missing_ele: {len(bad_missing_ele)}/{N}", flush=True)
+    print(f"len bad no balance: {len(bad_no_balance)}/{N}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
+
+    # save the data to file
+
     print("Program finished!", flush=True)
