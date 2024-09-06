@@ -542,8 +542,7 @@ if __name__ == "__main__":
     eq_file = "Data/atlas_data_kegg_R.csv.zip"
     eq_file = "Data/atlas_data_R.csv.zip" # fails
     out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
-
-    bad_file = "Data/bad_list.csv"
+    bad_file = "Data/bad_list.csv.zip"
 
     # Preprocessing
     f_preprocess = False
@@ -708,6 +707,12 @@ if __name__ == "__main__":
     print(f"len bad no balance: {len(bad_no_balance)}/{N}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
 
-    # save the data to file
+    # Save the data to file
+    bad_df = pd.DataFrame({'bad_n': bad_n,
+                           'bad_eq': bad_eq,
+                           'bad_missing_mol': bad_missing_mol,
+                           'bad_missing_ele': bad_missing_ele,
+                           'bad_no_balance': bad_no_balance})
+    bad_df.to_csv(bad_file, compression='zip', encoding='utf-8', index=False)
 
     print("Program finished!", flush=True)
