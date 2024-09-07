@@ -491,7 +491,7 @@ if __name__ == "__main__":
     # Br, K, O , S, (S,N), Mg, Cl, N, Se, F, H, P, (P,O)
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
-                    "Fe": "C00023",  # C14819 https://www.kegg.jp/entry/C00023
+                    "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
                     "Na": "C01330",
                     "Ca": "C00076",
                     "Cu": "C00070",
@@ -513,7 +513,6 @@ if __name__ == "__main__":
                     "NO2": "C00088",
                     "CH2O": "C00067",
                     "SO2": "C09306",
-                    "H2SO4": "C00059",  # Sulfate removes the H??
                     "S": "C00087",
                     "H2S": "C00283",
                     "I": "C00708",
@@ -524,23 +523,29 @@ if __name__ == "__main__":
                     "F": "C00742",
                     }
 
-    fix_comp_dict = {"H4P2O7":"C00013", # Pyrophosphate
-                     "C3H7O6P":"C00111", # Glycerone phosphate
-                     "CH3NO" : "C00488", # Formamide
-                     "C2H4": "C06547", # Ethene
-                     "H2O2": "C00027", # Hydrogen peroxide
+    fix_comp_dict = {"H2SO4": "C00059",  # Sulfuric acid
+                     "H4P2O7": "C00013",  # Pyrophosphate
+                     "C3H7O6P": "C00111",  # Glycerone phosphate
+                     "CH3NO": "C00488",  # Formamide
+                     "C2H4": "C06547",  # Ethene
+                     "H2O2": "C00027",  # Hydrogen peroxide
                      "HCN": "C01326",  # Hydrogen cyanide
                      "H2CO3": "C01353",  # Carbonic acid
-                     "": "",
-                     "": "",
-                     "": "",
-                     "": "",
+                     "C5H9O9P": "C22278",  # 3-Oxoisoapionate 4-phosphate
+                     "CH2O": "C00067",  # Formaldehyde
+                     "HCl": "C01327",  # Hydrochloric acid
+                     "H5P3O10": "C00536",  # Triphosphate
+                     "CH5O3P": "C20396",  # Methylphosphonate
+                     "SeO3": "C05684",  # Selenite
+                     "WH2O4": "C20679",  # Tungstic acid
+                     "H2MoO4": "C06232",  # Molybdate
+                     "HCO3": "C00288",  # Hydrogencarbonate
                      }
 
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
     eq_file = "Data/atlas_data_kegg_R.csv.zip"
-    eq_file = "Data/atlas_data_R.csv.zip" # fails
+    eq_file = "Data/atlas_data_R.csv.zip"  # fails
     out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
     bad_file = "Data/bad_list.csv.zip"
 
