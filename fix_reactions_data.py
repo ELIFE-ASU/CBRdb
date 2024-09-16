@@ -474,6 +474,12 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
         return eq_line
 
 
+def check_glycan(eq_line):
+    if "G" in eq_line:
+        return True
+    else:
+        return False
+
 if __name__ == "__main__":
     """
     todo
@@ -544,8 +550,8 @@ if __name__ == "__main__":
 
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
-    eq_file = "Data/atlas_data_kegg_R.csv.zip"
-    eq_file = "Data/atlas_data_R.csv.zip"  # fails
+    # eq_file = "Data/atlas_data_kegg_R.csv.zip"
+    #eq_file = "Data/atlas_data_R.csv.zip"  # fails
     out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
     bad_file = "Data/bad_list.csv.zip"
 
@@ -588,7 +594,7 @@ if __name__ == "__main__":
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
         # two injections R04795, R04808
-        # if i != 703:  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
+        # if re_id != "R05923":  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
         #     continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
@@ -603,6 +609,11 @@ if __name__ == "__main__":
         # Check if the equation has reactant and product side
         if len(eq_line.split("<=>")) != 2:
             print(f"Warning! Equation does not have a reactant and product side. Skipping ID: {re_id}", flush=True)
+            bad_eq.append(re_id)
+            continue
+
+        if check_glycan(eq_line):
+            print("Warning! Glycan in the equation", flush=True)
             bad_eq.append(re_id)
             continue
 
