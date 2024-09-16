@@ -594,8 +594,8 @@ if __name__ == "__main__":
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
         # two injections R04795, R04808
-        # if re_id != "R05923":  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
-        #     continue
+        if re_id != "R05923":  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
+            continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
