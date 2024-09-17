@@ -193,7 +193,11 @@ def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", re
     return True
 
 
-def get_kegg(target_dir, session, prefix="D", max_idx=12897, molless_file="molless.dat", invalid_file="invalid.dat"):
+def get_kegg(target_dir, session,
+             prefix="D",
+             max_idx=12897,
+             molless_file="Data/molless.dat",
+             invalid_file="Data/invalid.dat"):
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
@@ -204,14 +208,13 @@ def get_kegg(target_dir, session, prefix="D", max_idx=12897, molless_file="molle
     prefix = prefix.strip("_full").upper()
     # Check path for saving
     os.makedirs(target_dir, exist_ok=True)
+
     # Check if the molless file exists
     if not os.path.exists(molless_file):
-        # Write the failed file
         with open(molless_file, "w") as f:
             f.write("# Mol-less IDs\n")
     # Check if the invalid file exists
     if not os.path.exists(invalid_file):
-        # Write the invalid file
         with open(invalid_file, "w") as f:
             f.write("# Invalid IDs\n")
 
@@ -226,7 +229,7 @@ def get_kegg(target_dir, session, prefix="D", max_idx=12897, molless_file="molle
         # Make subdirectory
         os.makedirs(full_path, exist_ok=True)
         print(f"Downloading {id}", flush=True)
-        # Check if the drug is downloaded
+        # Check if the id is downloaded
         if not get_data(id, full_path, session, full=full):
             # check if the id is valid
             if check_kegg_valid_id(id, session):
@@ -265,7 +268,7 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    target = "C"
+    target = "R"
     target_dir = r"C:\Users\louie\skunkworks\data\kegg_data"
 
     # Get the data
