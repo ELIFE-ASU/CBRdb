@@ -241,6 +241,43 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
     df.to_csv(outfile, compression='zip', encoding='utf-8')
 
 
+def preprocess_kegg_r(target_dir, outfile):
+    # Get a list of all files in the directory
+    paths = file_list_all(target_dir)
+    N = len(paths)
+    id_list = []
+    eq_list = []
+    ec_list = []
+
+    # Loop over the reactions data
+    for i, path in enumerate(paths):
+        # Get the ID
+        re_id = os.path.basename(path).split(".")[0]
+        if i % 100 == 0:
+            print(f"Processing {i}/{N} {re_id}", flush=True)
+        # Load the data
+        with open(path, "r") as f:
+            data = f.read()
+            # Split the data by new lines
+            data = data.split("\n")
+        # Get the line which contains the equation
+        eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
+        # Get the line which contains the enzyme class
+        try:
+            ec_line = [d for d in data if "ENZYME" in d][0].split("ENZYME")[1].strip()
+        except:
+            ec_line = " "
+        # Append the data to the lists
+        id_list.append(re_id)
+        eq_list.append(eq_line)
+        ec_list.append(ec_line)
+    # Make the dataframe for the id and the equation
+    df = pd.DataFrame({'id': id_list, 'reaction': eq_list, 'ec': ec_line})
+    # Write the data to a file
+    df.to_csv(outfile, compression='zip', encoding='utf-8')
+    return None
+
+
 if __name__ == "__main__":
     print("Program started", flush=True)
     target_dir = os.path.abspath(r"C:/Users/louie/skunkworks/data/kegg_data_C")
@@ -254,4 +291,14 @@ if __name__ == "__main__":
     # check the data
     print(data.head())
     print(data.columns)
+
+    # Preprocessing
+    f_preprocess = False
+
+    if f_preprocess:
+        target_dir = r"..\data\kegg_data_R"
+        outfile = "Data/kegg_data_R.csv.zip"
+        preprocess_kegg_r(target_dir, outfile)
+        print("R preprocessing done", flush=True)
+
     print("Program finished", flush=True)

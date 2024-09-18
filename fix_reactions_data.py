@@ -10,43 +10,6 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 
-def preprocess_kegg_r(target_dir, outfile):
-    # Get a list of all files in the directory
-    paths = file_list_all(target_dir)
-    N = len(paths)
-    id_list = []
-    eq_list = []
-    ec_list = []
-
-    # Loop over the reactions data
-    for i, path in enumerate(paths):
-        # Get the ID
-        re_id = os.path.basename(path).split(".")[0]
-        if i % 100 == 0:
-            print(f"Processing {i}/{N} {re_id}", flush=True)
-        # Load the data
-        with open(path, "r") as f:
-            data = f.read()
-            # Split the data by new lines
-            data = data.split("\n")
-        # Get the line which contains the equation
-        eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
-        # Get the line which contains the enzyme class
-        try:
-            ec_line = [d for d in data if "ENZYME" in d][0].split("ENZYME")[1].strip()
-        except:
-            ec_line = " "
-        # Append the data to the lists
-        id_list.append(re_id)
-        eq_list.append(eq_line)
-        ec_list.append(ec_line)
-    # Make the dataframe for the id and the equation
-    df = pd.DataFrame({'id': id_list, 'reaction': eq_list, 'ec': ec_line})
-    # Write the data to a file
-    df.to_csv(outfile, compression='zip', encoding='utf-8')
-    return None
-
-
 def check_known_ids(id):
     if id == "C00138":  # Reduced ferredoxin
         return "Fe2S2"
@@ -480,6 +443,7 @@ def check_glycan(eq_line):
     else:
         return False
 
+
 if __name__ == "__main__":
     """
     todo
@@ -551,18 +515,9 @@ if __name__ == "__main__":
     print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
     # eq_file = "Data/atlas_data_kegg_R.csv.zip"
-    #eq_file = "Data/atlas_data_R.csv.zip"  # fails
+    # eq_file = "Data/atlas_data_R.csv.zip"  # fails
     out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
     bad_file = "Data/bad_list.csv.zip"
-
-    # Preprocessing
-    f_preprocess = False
-
-    if f_preprocess:
-        target_dir = r"..\data\kegg_data_R"
-        outfile = "Data/kegg_data_R.csv.zip"
-        preprocess_kegg_r(target_dir, outfile)
-        print("Preprocessing done", flush=True)
 
     # Load the processed data
     data = pd.read_csv(eq_file)
@@ -594,8 +549,8 @@ if __name__ == "__main__":
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
         # two injections R04795, R04808
-        if re_id != "R05923":  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
-            continue
+        # if re_id != "R05923":  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
+        #     continue
         eq_line = eq_lines[i]
         print(f"\nProcessing {i}/{N} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
