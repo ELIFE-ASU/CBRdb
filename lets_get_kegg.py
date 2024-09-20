@@ -266,13 +266,15 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
     get_kegg(target_dir + f"_{target}", session, prefix=target, max_idx=max_idx)
 
 
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    target = "R"
-    target_dir = r"C:\Users\louie\skunkworks\data\kegg_data"
-
+def main(target="R", target_dir=r"..\data\kegg_data"):
     # Get the data
     get_kegg_all(target_dir=target_dir, target=target)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
+
+
+if __name__ == "__main__":
+    print("Program started", flush=True)
+    main(target="C")
+    main(target="R")
     print("Program finished", flush=True)

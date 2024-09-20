@@ -278,27 +278,21 @@ def preprocess_kegg_r(target_dir, outfile):
     return None
 
 
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    target_dir = os.path.abspath(r"C:/Users/louie/skunkworks/data/kegg_data_C")
-    out_file = os.path.abspath(r"Data/kegg_data_C.csv.zip")
-    man_dict = {}
-    bad_list = []
-    convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
-
-    # check the data can be loaded back
-    data = pd.read_csv(out_file)
-    # check the data
-    print(data.head())
-    print(data.columns)
-
-    # Preprocessing
-    f_preprocess = False
-
-    if f_preprocess:
-        target_dir = r"..\data\kegg_data_R"
-        outfile = "Data/kegg_data_R.csv.zip"
-        preprocess_kegg_r(target_dir, outfile)
+def main(target="R", target_dir=r"..\data\kegg_data"):
+    target_dir = os.path.abspath(target_dir + f"_{target}")
+    out_file = os.path.abspath(f"Data/kegg_data_{target}.csv.zip")
+    if target == "C":
+        man_dict = {}
+        bad_list = []
+        convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
+        print("C preprocessing done", flush=True)
+    elif target == "R":
+        preprocess_kegg_r(target_dir, out_file)
         print("R preprocessing done", flush=True)
 
+
+if __name__ == "__main__":
+    print("Program started", flush=True)
+    main(target="C")
+    main(target="R")
     print("Program finished", flush=True)

@@ -444,21 +444,8 @@ def check_glycan(eq_line):
         return False
 
 
-if __name__ == "__main__":
-    """
-    todo
-    Try a second injection attempt
-        Problem with the above is that there might be more than one solution
-        Do I need to trail a couple of cases and take the reaction with the 
-        lowest free energy?
-    
-    Seems to be when added water, H2 or O2 needs to be added to rebalance
-    Add a problem list which skips and only attempts to fix if problem
-    
-    """
-
+def main():
     # Big problem Te, not in KEGG!
-    # Br, K, O , S, (S,N), Mg, Cl, N, Se, F, H, P, (P,O)
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
                     "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
@@ -511,8 +498,6 @@ if __name__ == "__main__":
                      "H2MoO4": "C06232",  # Molybdate
                      "HCO3": "C00288",  # Hydrogencarbonate
                      }
-
-    print("Program started", flush=True)
     eq_file = "Data/kegg_data_R.csv.zip"
     # eq_file = "Data/atlas_data_kegg_R.csv.zip"
     # eq_file = "Data/atlas_data_R.csv.zip"  # fails
@@ -686,4 +671,8 @@ if __name__ == "__main__":
                            'bad_no_balance': bad_no_balance})
     bad_df.to_csv(bad_file, compression='zip', encoding='utf-8', index=False)
 
+
+if __name__ == "__main__":
+    print("Program started", flush=True)
+    main()
     print("Program finished!", flush=True)

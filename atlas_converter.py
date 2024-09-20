@@ -86,18 +86,18 @@ def clean_atlas(in_file, out_file):
     return None
 
 
-if __name__ == "__main__":
-    print("Program start", flush=True)
-
-    infile = r"C:\Users\louie\Downloads\atlas_kegg_reactions.dat"
+def main():
+    infile = r"..\data\atlas_kegg_reactions.dat"
     outfile = r"Data\atlas_data_kegg_R.csv.zip"
     clean_kegg_atlas(infile, outfile)
 
-    infile = r"C:\Users\louie\Downloads\atlas_reactions.dat"
+    infile = r"..\data\atlas_reactions.dat"
     outfile = r"Data\atlas_data_R.csv.zip"
     clean_atlas(infile, outfile)
-    # load the data
-    data = pd.read_csv(outfile)
-    print(data.head())
-    print(data.columns)
+    return None
+
+
+if __name__ == "__main__":
+    print("Program start", flush=True)
+    main()
     print("Program end", flush=True)
