@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 
 
@@ -20,6 +21,7 @@ def cleanup_ec_line(ec_line):
 
 
 def clean_kegg_atlas(in_file, out_file):
+    in_file = os.path.abspath(in_file)
     # open the file
     with open(in_file, "r") as f:
         # read the data
@@ -53,6 +55,7 @@ def clean_kegg_atlas(in_file, out_file):
 
 
 def clean_atlas(in_file, out_file):
+    in_file = os.path.abspath(in_file)
     # Open the file
     with open(in_file, "r") as f:
         # Read the data

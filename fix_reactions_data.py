@@ -497,6 +497,7 @@ def main():
                      "WH2O4": "C20679",  # Tungstic acid
                      "H2MoO4": "C06232",  # Molybdate
                      "HCO3": "C00288",  # Hydrogencarbonate
+                     "H2Se": "C01528",  # Selenous acid
                      }
     eq_file = "Data/kegg_data_R.csv.zip"
     # eq_file = "Data/atlas_data_kegg_R.csv.zip"

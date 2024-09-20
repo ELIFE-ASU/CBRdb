@@ -263,7 +263,7 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
     print(f"Total number of entries {max_idx}", flush=True)
 
     # Get the data
-    get_kegg(target_dir + f"_{target}", session, prefix=target, max_idx=max_idx)
+    get_kegg(os.path.abspath(target_dir + f"_{target}"), session, prefix=target, max_idx=max_idx)
 
 
 def main(target="R", target_dir=r"..\data\kegg_data"):
@@ -276,5 +276,5 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
 if __name__ == "__main__":
     print("Program started", flush=True)
     main(target="C")
-    main(target="R")
+    # main(target="R")
     print("Program finished", flush=True)
