@@ -275,6 +275,7 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    main(target="C")
+    # main(target="C")
     # main(target="R")
+    main(target="C_full")
     print("Program finished", flush=True)
