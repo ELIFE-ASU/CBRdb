@@ -23,7 +23,7 @@ def make_lists_printable(df):
 
 def scan_for_terms(s):
     for j in OK:
-        if (j in s) or s.startswith('R1') or s.startswith('R0'):
+        if j in s or s.startswith('R1') or s.startswith('R0'):
             return s
     else:
         return None
@@ -31,7 +31,7 @@ def scan_for_terms(s):
 
 def remove_terms(s):
     for j in OK:
-        if (j in s) or s.startswith('R1') or s.startswith('R0'):
+        if j in s or s.startswith('R1') or s.startswith('R0'):
             return None
     else:
         return s
@@ -45,21 +45,21 @@ def flag_missing_reactions(x):
     else:
         return a
 
-
-prefix = 'kegg_data_R/'
+# this needs to point to the directory where the KEGG reaction data files are stored.
+prefix = '../data/kegg_data_R/'
 a = os.listdir(prefix)
-reactions = dict()
+reactions = {}
 for i in a:
     try:
-        f = open(prefix + i + '/' + i + '.data', 'r')
-        entries = dict()
-        for line in f.readlines()[:-1]:
-            if not line.startswith(' '):
-                field = line.split(' ')[0]
-                entries[field] = line.lstrip(field).lstrip().rstrip('\n')
-            else:
-                entries[field] += '; ' + line.lstrip().rstrip('\n')
-        reactions[i] = entries
+        with open(f"{prefix}{i}/{i}.data", 'r') as f:
+            entries = {}
+            for line in f.readlines()[:-1]:
+                if not line.startswith(' '):
+                    field = line.split(' ')[0]
+                    entries[field] = line.lstrip(field).lstrip().rstrip('\n')
+                else:
+                    entries[field] += '; ' + line.lstrip().rstrip('\n')
+            reactions[i] = entries
     except:
         pass
 
