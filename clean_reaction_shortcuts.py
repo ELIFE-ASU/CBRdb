@@ -1,9 +1,5 @@
 # Input: An unzipped, locally-downloaded folder of raw KEGG reaction data files.
 # Output: CSVs with relevant reaction info, e.g. ties to other databases and flags for possible removal.
-# %% [markdown]
-# ### Import packages and raw data.
-
-# %%
 import os
 
 import pandas as pd
@@ -27,16 +23,15 @@ def make_lists_printable(df):
 
 def scan_for_terms(s):
     for j in OK:
-        if (j in s) or (s.startswith('R1')) or (s.startswith('R0')):
+        if (j in s) or s.startswith('R1') or s.startswith('R0'):
             return s
     else:
         return None
 
 
 def remove_terms(s):
-    eliminated = False
     for j in OK:
-        if (j in s) or (s.startswith('R1')) or (s.startswith('R0')):
+        if (j in s) or s.startswith('R1') or s.startswith('R0'):
             return None
     else:
         return s
@@ -46,7 +41,7 @@ def remove_terms(s):
 def flag_missing_reactions(x):
     a = [i for i in x if i not in reactions.index]
     if len(a) == 0:
-        return (float('Nan'))
+        return float('Nan')
     else:
         return a
 
@@ -70,11 +65,9 @@ for i in a:
 
 reactions = pd.DataFrame(reactions).fillna('').T
 
-# %% [markdown]
-# ### Parse each reaction's ties to other databases.
-# ### Flag reactions with glycan participants and "overall" reactions (see [this table](https://www.kegg.jp/kegg/tables/br08210.html) for info).
+# Parse each reaction's ties to other databases.
+# Flag reactions with glycan participants and "overall" reactions (see [this table](https://www.kegg.jp/kegg/tables/br08210.html) for info).
 
-# %%
 reactions = reactions.assign(
     OVERALL_FLAG=reactions['ENTRY'].str.contains('Overall', case=False),
     GLYCAN_FLAG=reactions['EQUATION'].str.contains('G'),
@@ -97,10 +90,8 @@ rclass_db = r_rclass.reset_index(names='REACTION').groupby(by=['RC', 'CPAIR'])['
     list).to_frame()
 make_lists_printable(rclass_db).to_csv('../RCLASS_DB.csv')
 
-# %% [markdown]
-# ### Use comments to identify multi-step reactions - i.e., artificial shortcuts compressing multiple existing reaction IDs into a single net reaction.
+# Use comments to identify multi-step reactions - i.e., artificial shortcuts compressing multiple existing reaction IDs into a single net reaction.
 
-# %%
 to_replace = {'MULTISTEP': 'MULTI-STEP', '3STEP': '3-STEP', '; SEE R': ' (SEE R', 'REACTION;': 'REACTION '}
 dm = reactions['COMMENT'].replace('', float('NaN')).dropna().str.upper().reset_index()
 dm['ORIGINAL_COMMENT'] = dm['COMMENT'].copy(deep=True)
@@ -165,10 +156,9 @@ dm['step_group'] = dm['steps_shown'].apply('+'.join)
 # dm.tail()
 
 
-# %% [markdown]
-# ### Check: do all step counts match (where provided)?
+# Check: do all step counts match (where provided)?
 
-# %%
+
 # individual_reactions = dm.drop_duplicates(subset='index')
 # print(individual_reactions['n_steps_shown'].value_counts().sort_index())
 # print(((individual_reactions['n_steps_shown']-individual_reactions['n_steps_cited']).dropna()).value_counts())
@@ -178,10 +168,9 @@ dm['step_group'] = dm['steps_shown'].apply('+'.join)
 # print('Step count distribution:\n', (a['n_steps_cited'].unique().explode()).value_counts())
 
 
-# %% [markdown]
-# ### Flag these multistep "shortcuts" in the dataset, then generate data files.
+# Flag these multistep "shortcuts" in the dataset, then generate data files.
 
-# %%
+
 reactions['MULTISTEP_FLAG'] = reactions.index.isin(dm['index'].unique())
 reactions['STEP_ENTRIES'] = dm.groupby(by='index')['step_group'].apply(list)
 reactions['STEP_ENTRIES'] = reactions['STEP_ENTRIES'].fillna('')
