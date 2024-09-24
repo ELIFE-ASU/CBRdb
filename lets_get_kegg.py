@@ -180,6 +180,8 @@ def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", re
         if response.ok:
             # Strip the last section of the file
             res = response.text.split("> <ENTRY>")[0]
+            # Make subdirectory
+            os.makedirs(save_dir, exist_ok=True)
             # Save the file
             with open(full_file, "w") as f:
                 f.write(res)
@@ -196,15 +198,17 @@ def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", re
 def get_kegg(target_dir, session,
              prefix="D",
              max_idx=12897,
-             molless_file="Data/molless.dat",
-             invalid_file="Data/invalid.dat"):
+             molless_file="Data/molless",
+             invalid_file="Data/invalid"):
+    molless_file = os.path.abspath(f"{molless_file}_{prefix}.dat")
+    invalid_file = os.path.abspath(f"{invalid_file}_{prefix}.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
     else:
         full = False
     print(f"Downloading {prefix} data to {target_dir}", flush=True)
-    # clean up the prefix
+    # Clean up the prefix
     prefix = prefix.strip("_full").upper()
     # Check path for saving
     os.makedirs(target_dir, exist_ok=True)
@@ -213,10 +217,25 @@ def get_kegg(target_dir, session,
     if not os.path.exists(molless_file):
         with open(molless_file, "w") as f:
             f.write("# Mol-less IDs\n")
+        molless_ids = []
+    else:
+        # load the molless file and get the ids
+        with open(molless_file, "r") as f:
+            molless_ids = f.readlines()
+        molless_ids = [x.strip() for x in molless_ids][1:]
+        print(f"Loaded {len(molless_ids)} Mol-less IDs", flush=True)
+
     # Check if the invalid file exists
     if not os.path.exists(invalid_file):
         with open(invalid_file, "w") as f:
             f.write("# Invalid IDs\n")
+        invalid_ids = []
+    else:
+        # load the invalid file and get the ids
+        with open(invalid_file, "r") as f:
+            invalid_ids = f.readlines()
+        invalid_ids = [x.strip() for x in invalid_ids][1:]
+        print(f"Loaded {len(invalid_ids)} invalid IDs", flush=True)
 
     # Start the loop
     i = 0
@@ -226,19 +245,28 @@ def get_kegg(target_dir, session,
         id = format_mol_id(i, prefix=prefix)
         # Get the full path
         full_path = os.path.join(target_dir, id)
-        # Make subdirectory
-        os.makedirs(full_path, exist_ok=True)
         print(f"Downloading {id}", flush=True)
+        # Check if the ID is in the invalid list
+        if id in invalid_ids:
+            print(f"Skipping {id} as it is invalid", flush=True)
+            continue
+        # Check if the ID is in the Mol-less list
+        if id in molless_ids:
+            print(f"Skipping {id} as it is Mol-less", flush=True)
+            continue
+
         # Check if the id is downloaded
         if not get_data(id, full_path, session, full=full):
             # check if the id is valid
             if check_kegg_valid_id(id, session):
                 # The ID is valid but the data is not downloaded, write the Mol-less id to file
                 with open(molless_file, "a") as f:
+                    print(f"{id} is Mol-less, written to file", flush=True)
                     f.write(f"{id}\n")
             else:
                 # The ID is invalid, write the invalid id to file
                 with open(invalid_file, "a") as f:
+                    print(f"{id} is invalid, written to file", flush=True)
                     f.write(f"{id}\n")
         # Check if the maximum index is reached and break
         if max_idx is not None and i >= max_idx:
@@ -267,6 +295,9 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
 
 
 def main(target="R", target_dir=r"..\data\kegg_data"):
+    target_dir = os.path.abspath(target_dir)
+    # Clean the data
+    clean_empty_folders(f"{target_dir}_{target}")
     # Get the data
     get_kegg_all(target_dir=target_dir, target=target)
     # Clean the data
@@ -275,7 +306,7 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    # main(target="C")
+    main(target="C")
     # main(target="R")
-    main(target="C_full")
+    # main(target="C_full")
     print("Program finished", flush=True)
