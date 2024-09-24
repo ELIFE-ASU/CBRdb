@@ -157,6 +157,7 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
     # Filter the files to only include .mol files
     files = [f for f in files if "_r" not in f]
     files = [f for f in files if "_p" not in f]
+    # Get the number of files
     N = len(files)
     # Create lists to store the outputs
     arr_smiles = []
@@ -282,7 +283,9 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
     target_dir = os.path.abspath(target_dir + f"_{target}")
     out_file = os.path.abspath(f"Data/kegg_data_{target}.csv.zip")
     if target == "C":
+        # Defines a dictionary of manual fixes
         man_dict = {}
+        # Defines a list of bad CIDs to skip
         bad_list = []
         convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)

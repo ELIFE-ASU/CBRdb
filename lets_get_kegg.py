@@ -200,8 +200,8 @@ def get_kegg(target_dir, session,
              max_idx=12897,
              molless_file="Data/molless",
              invalid_file="Data/invalid"):
-    molless_file = os.path.abspath(f"{molless_file}_{prefix}.dat")
-    invalid_file = os.path.abspath(f"{invalid_file}_{prefix}.dat")
+    molless_file = os.path.abspath(f"{molless_file}_{prefix.replace("_full","")}.dat")
+    invalid_file = os.path.abspath(f"{invalid_file}_{prefix.replace("_full","")}.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
@@ -306,7 +306,7 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    main(target="C")
-    # main(target="R")
+    # main(target="C")
+    main(target="R")
     # main(target="C_full")
     print("Program finished", flush=True)
