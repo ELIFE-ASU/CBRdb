@@ -452,7 +452,7 @@ def main():
                     "Na": "C01330",
                     "Ca": "C00076",
                     "Cu": "C00070",
-                    # "Al": "C06264", # no mol file
+                    "Al": "C06264", # no mol file
                     "Cl": "C00698",
                     "Co": "C00175",
                     "Ni": "C19609",

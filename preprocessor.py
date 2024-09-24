@@ -1,3 +1,4 @@
+import csv
 import os
 import shutil
 
@@ -9,6 +10,17 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
+
+
+def load_csv_to_dict(file_path):
+    result_dict = {}
+    with open(file_path, mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if len(row) >= 2:  # Ensure there are at least two columns
+                key, value = row[0].strip(), row[1].strip()
+                result_dict[key] = value
+    return result_dict
 
 
 def file_list(mypath=None):
@@ -184,24 +196,21 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
         if check_for_x_group(file):
             print(f"Skipping {cid} due to X group", flush=True)
             continue
-        # Check if the CID is in the manual fix dictionary
-        if cid in man_dict:
-            mol = Chem.MolFromSmiles(man_dict[cid])
-        else:
-            # Check for R groups
-            flag_r = check_for_r_group(file)
-            if flag_r:
-                f_load_r = file.split(".")[0] + "_r.mol"
-                replace_r_group(file, f_load_r)
-                file = f_load_r
-            # Check for problem groups
-            flag_p = check_for_problem_group(file)
-            if flag_p:
-                f_load_p = file.split(".")[0] + "_p.mol"
-                replace_problem_group(file, f_load_p)
-                file = f_load_p
-            # Get the molecule
-            mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
+
+        # Check for R groups
+        flag_r = check_for_r_group(file)
+        if flag_r:
+            f_load_r = file.split(".")[0] + "_r.mol"
+            replace_r_group(file, f_load_r)
+            file = f_load_r
+        # Check for problem groups
+        flag_p = check_for_problem_group(file)
+        if flag_p:
+            f_load_p = file.split(".")[0] + "_p.mol"
+            replace_problem_group(file, f_load_p)
+            file = f_load_p
+        # Get the molecule
+        mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
         # Remove the temporary files
         if flag_r:
             remove(f_load_r)
@@ -230,6 +239,28 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
         except:
             print(f"Error in {cid}, could not pass to SIMLES", flush=True)
 
+    # Loop over the manual fixes and add them to the list
+    for cid, smiles in man_dict.items():
+        # Check if the CID is not already in the list
+        if cid not in arr_cid:
+            print(f"Adding manual fix for {cid}", flush=True)
+            # Add the ID
+            arr_cid.append(cid)
+            mol = Chem.MolFromSmiles(smiles)
+            # Standardize and embed the molecule
+            mol = standardize_mol(mol)
+            # Add the smiles to the array
+            arr_smiles.append(Chem.MolToSmiles(mol))
+            if calc_info:
+                # Get the formula
+                arr_formula.append(rdMolDescriptors.CalcMolFormula(Chem.MolFromSmiles(smiles)))
+                # Get the molecular weight
+                arr_mw.append(rdMolDescriptors.CalcExactMolWt(Chem.MolFromSmiles(smiles)))
+                # Get the number of heavy atoms
+                arr_n_heavy.append(Chem.MolFromSmiles(smiles).GetNumHeavyAtoms())
+                # Get the chirality
+                arr_nc.append(get_chirality(Chem.MolFromSmiles(smiles)))
+
     # Create a dataframe
     df = pd.DataFrame(data={
         "compound_id": arr_cid,
@@ -238,6 +269,8 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
         "molecular_weight": arr_mw,
         "n_heavy_atoms": arr_n_heavy,
         "n_chiral_centers": arr_nc})
+    # Sort the dataframe by the compound ID
+    df = df.sort_values(by="compound_id")
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8')
 
@@ -285,6 +318,7 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
     if target == "C":
         # Defines a dictionary of manual fixes
         man_dict = {}
+        man_dict = load_csv_to_dict("Data/manual_cids.dat")
         # Defines a list of bad CIDs to skip
         bad_list = []
         convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
@@ -297,5 +331,5 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
 if __name__ == "__main__":
     print("Program started", flush=True)
     main(target="C")
-    main(target="R")
+    # main(target="R")
     print("Program finished", flush=True)
