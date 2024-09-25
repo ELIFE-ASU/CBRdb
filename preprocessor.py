@@ -66,7 +66,7 @@ def check_for_r_group(target_file, re_target=["R# ", "R ", "* "]):
         return any(target in line for line in lines for target in re_target)
 
 
-def replace_r_group(target_file, new_file, re_atom="C", re_target=["R# ", "R ", "* "]):
+def replace_r_group(target_file, new_file, re_atom="H", re_target=["R# ", "R ", "* "]):
     with open(target_file, "r") as f, open(new_file, "w") as nf:
         lines = [line for line in f if "M  " not in line]
         for target in re_target:
@@ -158,6 +158,15 @@ def get_chirality(mol):
                                       includeCIP=False))
     except:
         return float('NaN')
+
+
+def rd_replacer(smi):
+    mol = Chem.MolFromSmiles(smi)
+    smi = Chem.MolToSmiles(Chem.ReplaceSubstructs(mol,
+                                                  Chem.MolFromSmiles('*'),
+                                                  Chem.MolFromSmiles('[H]'),
+                                                  replaceAll=True)[0])
+    return smi
 
 
 def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True):
@@ -260,6 +269,8 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
                 arr_n_heavy.append(Chem.MolFromSmiles(smiles).GetNumHeavyAtoms())
                 # Get the chirality
                 arr_nc.append(get_chirality(Chem.MolFromSmiles(smiles)))
+
+    # arr_smi = [s for s in arr_smiles]
 
     # Create a dataframe
     df = pd.DataFrame(data={

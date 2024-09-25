@@ -444,7 +444,7 @@ def check_glycan(eq_line):
         return False
 
 
-def main():
+def main(eq_file="Data/kegg_data_R.csv.zip"):
     # Big problem Te, not in KEGG!
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
@@ -452,7 +452,7 @@ def main():
                     "Na": "C01330",
                     "Ca": "C00076",
                     "Cu": "C00070",
-                    "Al": "C06264", # no mol file
+                    "Al": "C06264",  # no mol file
                     "Cl": "C00698",
                     "Co": "C00175",
                     "Ni": "C19609",
@@ -478,6 +478,7 @@ def main():
                     "K": "C00238",
                     "Mg": "C00305",
                     "F": "C00742",
+                    "Te": "C99999",
                     }
 
     fix_comp_dict = {"H2SO4": "C00059",  # Sulfuric acid
@@ -499,9 +500,7 @@ def main():
                      "HCO3": "C00288",  # Hydrogencarbonate
                      "H2Se": "C01528",  # Selenous acid
                      }
-    eq_file = "Data/kegg_data_R.csv.zip"
-    # eq_file = "Data/atlas_data_kegg_R.csv.zip"
-    # eq_file = "Data/atlas_data_R.csv.zip"  # fails
+
     out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
     bad_file = "Data/bad_list.csv.zip"
 
@@ -675,5 +674,7 @@ def main():
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    main()
+    main(eq_file="Data/kegg_data_R.csv.zip")
+    main(eq_file="Data/atlas_data_kegg_R.csv.zip")
+    main(eq_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)

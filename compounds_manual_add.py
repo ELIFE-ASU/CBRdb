@@ -3,11 +3,6 @@ import os
 import pandas as pd
 
 
-def get_formulas_from_ids(ids, file_path='Data/kegg_data_C.csv.zip'):
-    data = pd.read_csv(file_path)
-    return data.loc[data["compound_id"].isin(ids), "formula"].tolist()
-
-
 def file_list(mypath=None):
     """
     This function generates a list of all files in a specified directory.
@@ -77,18 +72,7 @@ def clean_empty_folders(target_dir, size=False):
     return n_rm
 
 
-if __name__ == "__main__":
-    # ['Unnamed: 0', 'compound_id', 'smiles', 'formula', 'molecular_weight',
-    #        'n_heavy_atoms', 'n_chiral_centers']
-    # print("Program started", flush=True)
-    # file_path = 'Data/kegg_data_C.csv.zip'
-    # data = pd.read_csv(file_path)
-    # print("Data loaded", flush=True)
-    # print("Data columns", data.columns, flush=True)
-    # print("Data shape", data.shape, flush=True)
-    # print("Data head", data.head(4).values, flush=True)
-
-    print("Program started", flush=True)
+def main():
     molless_path = 'Data/molless_C.dat'
     data = pd.read_csv(molless_path, sep='\t').values.flatten()
     print("Data loaded", flush=True)
@@ -181,10 +165,13 @@ if __name__ == "__main__":
     print(f"Good list: {good_list}", flush=True)
     print(f"Good list length: {len(good_list)}", flush=True)
     # Save the good list
-    # Check if the molless file exists
     with open(good_file, "w") as f:
         f.write("# good IDs to follow up on\n")
         for id in good_list:
             f.write(f"{id}\n")
 
+
+if __name__ == "__main__":
+    print("Program started", flush=True)
+    main()
     print("Program finished", flush=True)
