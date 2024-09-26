@@ -1,9 +1,9 @@
 import atlas_converter
+import clean_reaction_shortcuts
 import compounds_manual_add
 import fix_reactions_data
 import lets_get_kegg
 import preprocessor
-import clean_reaction_shortcuts
 
 if __name__ == "__main__":
     print("Program started", flush=True)
@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # Manually adding the compounds
     if f_man:
         print("Manually adding the compounds", flush=True)
-        compounds_manual_add.main() # provides the C_IDs_good.dat file
+        compounds_manual_add.main()  # provides the C_IDs_good.dat file
         # Add this point you need to manually add the reactions in C_IDs_good.dat and the compounds in C_IDs_manual.dat
 
     # Converting mol into smiles and cleaning up the data
@@ -39,14 +39,11 @@ if __name__ == "__main__":
     fix_reactions_data.main(eq_file="Data/atlas_data_R.csv.zip")
     # Provides the processed R files
 
-
     # Merge the data from the atlas and the kegg data
-
 
     # To do
     # Log the data which was removed in the cleaning process of the reactions
     # Address problem with halogens
     # Get the clean reaction shortcuts working
-
 
     print("Program finished", flush=True)
