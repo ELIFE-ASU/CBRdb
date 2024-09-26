@@ -37,9 +37,9 @@ if __name__ == "__main__":
 
     # Fix the reactions data
     print("Fixing the reactions data", flush=True)
-    fix_reactions_data.main(eq_file="Data/kegg_data_R.csv.zip")
-    fix_reactions_data.main(eq_file="Data/atlas_data_kegg_R.csv.zip")
-    fix_reactions_data.main(eq_file="Data/atlas_data_R.csv.zip")
+    fix_reactions_data.main(r_file="Data/kegg_data_R.csv.zip")
+    fix_reactions_data.main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    fix_reactions_data.main(r_file="Data/atlas_data_R.csv.zip")
     # Provides the processed R files
 
     # Merge the data from the atlas and the kegg data
