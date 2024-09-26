@@ -73,7 +73,7 @@ def clean_empty_folders(target_dir, size=False):
 
 
 def main():
-    molless_path = 'Data/molless_C.dat'
+    molless_path = 'Data/C_IDs_molless.dat'
     data = pd.read_csv(molless_path, sep='\t').values.flatten()
     print("Data loaded", flush=True)
     print("Data shape", data.shape, flush=True)
@@ -89,7 +89,7 @@ def main():
     print(f"Files in the target directory: {files}", flush=True)
 
     # Good files to follow-up on
-    good_file = "Data/good_cids.dat"
+    good_file = "Data/C_IDs_good.dat"
     r_list = []
     good_list = []
     # loop over the data
@@ -166,7 +166,7 @@ def main():
     print(f"Good list length: {len(good_list)}", flush=True)
     # Save the good list
     with open(good_file, "w") as f:
-        f.write("# good IDs to follow up on\n")
+        f.write("# Good compound IDs to follow up on\n")
         for id in good_list:
             f.write(f"{id}\n")
 

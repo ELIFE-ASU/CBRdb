@@ -197,11 +197,9 @@ def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", re
 
 def get_kegg(target_dir, session,
              prefix="D",
-             max_idx=12897,
-             molless_file="Data/molless",
-             invalid_file="Data/invalid"):
-    molless_file = os.path.abspath(f"{molless_file}_{prefix.replace("_full","")}.dat")
-    invalid_file = os.path.abspath(f"{invalid_file}_{prefix.replace("_full","")}.dat")
+             max_idx=12897):
+    molless_file = os.path.abspath(f"Data/{prefix.replace("_full","")}_IDs_molless.dat")
+    invalid_file = os.path.abspath(f"Data/{prefix.replace("_full","")}_IDs_invalid.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True

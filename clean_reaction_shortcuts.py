@@ -237,10 +237,11 @@ def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
     print('Reactions with glycan participants:', len(reactions_glycan), flush=True)
     reactions_overall_glycan = pd.concat([reactions_overall, reactions_glycan])
     bad_list = reactions_overall_glycan['ENTRY'].to_list()
-    bad_list = [i.split()[0].strip() for i in bad_list]
+    bad_list = list(set([i.split()[0].strip() for i in bad_list]))
+    bad_list.sort()
     # Save the bad_list
-    with open(os.path.join(data_dir, 'bad_list.dat'), 'w') as f:
-        f.write("# Bad reactions\n")
+    with open(os.path.join(data_dir, 'R_IDs_bad.dat'), 'w') as f:
+        f.write("# Bad reactions that are a shortcut or contain glycans\n")
         for i in bad_list:
             f.write(f"{i}\n")
 

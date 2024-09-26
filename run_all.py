@@ -16,8 +16,8 @@ if __name__ == "__main__":
     # Manually adding the compounds
     if f_man:
         print("Manually adding the compounds", flush=True)
-        compounds_manual_add.main() # provides the good_cids.dat file
-        # Add this point you need to manually add the reactions in good_cids.dat and the compounds in manual_cids.dat
+        compounds_manual_add.main() # provides the C_IDs_good.dat file
+        # Add this point you need to manually add the reactions in C_IDs_good.dat and the compounds in C_IDs_manual.dat
 
     # Converting mol into smiles and cleaning up the data
     print("Converting mol into smiles and cleaning up the data", flush=True)

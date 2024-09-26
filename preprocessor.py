@@ -328,8 +328,7 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
     out_file = os.path.abspath(f"Data/kegg_data_{target}.csv.zip")
     if target == "C":
         # Defines a dictionary of manual fixes
-        man_dict = {}
-        man_dict = load_csv_to_dict("Data/manual_cids.dat")
+        man_dict = load_csv_to_dict("Data/C_IDs_manual.dat")
         # Defines a list of bad CIDs to skip
         bad_list = []
         convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
