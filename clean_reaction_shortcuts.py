@@ -10,43 +10,36 @@ pd.options.mode.chained_assignment = None
 
 def scan_for_kegg_pattern(s, prefix):
     if prefix in s:
-        as_list = s.replace(';', ' ').replace('[', ' ').replace(']', ' ').split(' ')
-        return [i for i in as_list if i.startswith(prefix) and len(i) == len(prefix) + 5]
-    else:
-        return []
+        return [i for i in s.replace(';', ' ').replace('[', ' ').replace(']', ' ').split()
+                if i.startswith(prefix) and len(i) == len(prefix) + 5]
+    return []
 
 
 def make_lists_printable(df):
-    list_like_cols = df.loc[:, df.iloc[0].apply(type).apply(lambda x: x in [set, list])]
-    printable_cols = list_like_cols.map(' '.join)
+    list_like_cols = df.loc[:, df.iloc[0].apply(lambda x: isinstance(x, (set, list)))]
     printable_df = df.copy(deep=True)
-    printable_df.loc[:, printable_cols.columns] = printable_cols
+    printable_df[list_like_cols.columns] = list_like_cols.map(' '.join)
     return printable_df
 
 
 def scan_for_terms(s):
     for j in OK:
-        if j in s or s.startswith('R1') or s.startswith('R0'):
+        if j in s or s.startswith(('R1', 'R0')):
             return s
-    else:
-        return None
+    return None
 
 
 def remove_terms(s):
     for j in OK:
-        if j in s or s.startswith('R1') or s.startswith('R0'):
+        if j in s or s.startswith(('R1', 'R0')):
             return None
-    else:
-        return s
+    return s
 
 
 # remove reactions for which - for all step-sequences available - not all steps shown are actually present in our dataset.
 def flag_missing_reactions(x):
-    a = [i for i in x if i not in reactions.index]
-    if len(a) == 0:
-        return float('Nan')
-    else:
-        return a
+    missing_reactions = [i for i in x if i not in reactions.index]
+    return float('NaN') if not missing_reactions else missing_reactions
 
 
 def load_reactions_data(target_dir):
@@ -87,13 +80,16 @@ def main():
         EQUATION_ENTRIES=reactions['EQUATION'].str.findall(r'C\d{5}|G\d{5}'),
         ENZYME_ENTRIES=reactions['ENZYME'].str.replace(';', ' ').str.split(),
         DBLINKS_RHEA_ENTRIES=reactions['DBLINKS'].str.lstrip('RHEA: ').str.split())
-    prefixes = {'RCLASS': r'RC\d{5}',
-                'BRITE': r'br\d{5}',
-                'PATHWAY': r'rn\d{5}',
-                'MODULE': r'M\d{5}',
-                'ORTHOLOGY': r'K\d{5}'}
-    for col, prefix in prefixes.items():
-        reactions[col + '_ENTRIES'] = reactions[col].str.findall(prefix)
+    prefixes = {
+        'RCLASS': r'RC\d{5}',
+        'BRITE': r'br\d{5}',
+        'PATHWAY': r'rn\d{5}',
+        'MODULE': r'M\d{5}',
+        'ORTHOLOGY': r'K\d{5}'
+    }
+
+    for col, pattern in prefixes.items():
+        reactions[f'{col}_ENTRIES'] = reactions[col].str.findall(pattern)
 
     # KEGG no longer maintains the RCLASS database, BUT some edges in KEGG pathways
     # are still tagged with RCLASS entries instead of their constituent reactions.
@@ -122,68 +118,102 @@ def main():
     s1 = r'COMMENT.str.contains("STEP REACTION")'
     s2 = r'COMMENT.str.contains(r"R\d{5}\+|R\d{5} \+|R\d{5} \,")'
     s3 = r'COMMENT.str.contains("STEP OF|PART OF|THE LAST|THE FIRST|THE FORMER|THE LATTER|POSSIBLY|PROBABLY IDENTICAL")'
-    dm = dm.explode('COMMENT').reset_index(drop=True).query(s1 + ' and ' + s2 + ' and not ' + s3)
-    to_replace = {'TWO': '2',
-                  'THREE': '3',
-                  'FOUR': '4',
-                  'MULTI': 'N',
-                  ' + ': '+'}
+    dm = dm.explode('COMMENT').reset_index(drop=True).query(f'{s1} and {s2} and not {s3}')
+
+    to_replace = {
+        'TWO': '2',
+        'THREE': '3',
+        'FOUR': '4',
+        'MULTI': 'N',
+        ' + ': '+'
+    }
+
     for k, v in to_replace.items():
         dm['COMMENT'] = dm['COMMENT'].str.replace(k, v).str.strip()
+
     dm = dm.sort_values('COMMENT')
 
-    format_to_remove = r'SIMILAR TO' + r' R\d{5}, R\d{5}\+R\d{5}'
-    for nstep in range(2, 15):
+    # Simplified version of the selected code
+    format_to_remove = r'SIMILAR TO R\d{5}, R\d{5}\+R\d{5}'
+    for _ in range(2, 15):
         to_remove = dm['COMMENT'].str.findall(format_to_remove + r'\)').explode().dropna()
         for i, str_to_remove in to_remove.items():
             dm.loc[i, 'COMMENT'] = dm.loc[i, 'COMMENT'].replace(str_to_remove, '')
         format_to_remove += r'\+R\d{5}'
-    format_to_remove = r'SIMILAR TO' + r' R\d{5}\+R\d{5}'
-    for nstep in range(2, 15):
+
+    format_to_remove = r'SIMILAR TO R\d{5}\+R\d{5}'
+    for _ in range(2, 15):
         to_remove = dm['COMMENT'].str.findall(format_to_remove + r'\)').explode().dropna()
         for i, str_to_remove in to_remove.items():
             dm.loc[i, 'COMMENT'] = dm.loc[i, 'COMMENT'].replace(str_to_remove, '')
         format_to_remove += r'\+R\d{5}'
+
     reaction_string_format = r'R\d{5}'
-    dm = dm.loc[dm['COMMENT'].str.contains(reaction_string_format)]
+    dm = dm[dm['COMMENT'].str.contains(reaction_string_format)]
 
     OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
-    dm['COMMENT_FILTERED'] = dm['COMMENT'].str.replace(' OR ', ', ').str.split().explode().apply(
-        scan_for_terms).dropna().groupby(level=0).apply(' '.join)
-    dm['OTHER_COMMENTS'] = dm['COMMENT'].str.split().explode().apply(remove_terms).dropna().groupby(level=0).apply(
-        ' '.join)
+    dm['COMMENT_FILTERED'] = (
+        dm['COMMENT']
+        .str.replace(' OR ', ', ')
+        .str.split()
+        .explode()
+        .apply(scan_for_terms)
+        .dropna()
+        .groupby(level=0)
+        .apply(' '.join)
+    )
+    dm['OTHER_COMMENTS'] = (
+        dm['COMMENT']
+        .str.split()
+        .explode()
+        .apply(remove_terms)
+        .dropna()
+        .groupby(level=0)
+        .apply(' '.join)
+    )
     dm = dm.query('~COMMENT_FILTERED.str.contains("SIMILAR TO")')
 
     to_remove = ['SEE ', '(', ')', 'REACTION ', '-STEP']
     dm['info'] = dm['COMMENT_FILTERED'].copy()
     for i in to_remove:
-        dm['info'] = dm['info'].str.replace(i, '').str.lstrip().str.rstrip(', ')
-    dm['n_steps_cited'] = dm['info'].apply(lambda x: x[0]).replace('N', float('nan')).astype(float)
-    removed = dict()
+        dm['info'] = dm['info'].str.replace(i, '').str.strip(', ')
+
+    dm['n_steps_cited'] = dm['info'].str[0].replace('N', float('nan')).astype(float)
+
+    removed = {}
     for i in dm.index:
-        noself = dm.loc[i, 'info'][1:].replace(dm.loc[i, 'index'] + '+', '').replace('+' + dm.loc[i, 'index'],
-                                                                                     '').replace(
-            dm.loc[i, 'index'], '')
+        noself = (
+            dm.loc[i, 'info'][1:]
+            .replace(dm.loc[i, 'index'] + '+', '')
+            .replace('+' + dm.loc[i, 'index'], '')
+            .replace(dm.loc[i, 'index'], '')
+        )
         if '+' in noself:
             removed[i] = [j.strip() for j in noself.split(',')]
+
     dm['steps_shown'] = removed
-    dm = dm.explode('steps_shown').dropna(subset=['steps_shown']).sort_index().reset_index(drop=True)
+    dm = (
+        dm.explode('steps_shown')
+        .dropna(subset=['steps_shown'])
+        .sort_index()
+        .reset_index(drop=True)
+    )
     dm['steps_shown'] = dm['steps_shown'].str.split('+')
     dm['n_steps_shown'] = dm['steps_shown'].apply(len)
 
-    has_rns_missing = dm.loc[dm['steps_shown'].apply(flag_missing_reactions).dropna().index]['index'].to_list()
-    # the below looks weird - it's written so we don't remove reactions with multiple N-step sequences shown, at least one of which is complete.
-    incomplete_multistep = dm.loc[dm['index'].isin(has_rns_missing)]['index'].unique()
+    # Identify reactions with incomplete multistep shortcuts
+    has_rns_missing = dm.loc[dm['steps_shown'].apply(flag_missing_reactions).dropna().index, 'index'].to_list()
+    incomplete_multistep = dm.loc[dm['index'].isin(has_rns_missing), 'index'].unique()
     print('Reactions with incomplete multistep shortcuts:', len(incomplete_multistep), flush=True)
     print(incomplete_multistep, flush=True)
 
+    # Filter out incomplete multistep reactions
     dm = dm.query('index not in @incomplete_multistep')
     dm['step_group'] = dm['steps_shown'].apply('+'.join)
 
-    # Flag these multistep "shortcuts" in the dataset, then generate data files.
+    # Flag multistep shortcuts and generate data files
     reactions['MULTISTEP_FLAG'] = reactions.index.isin(dm['index'].unique())
-    reactions['STEP_ENTRIES'] = dm.groupby(by='index')['step_group'].apply(list)
-    reactions['STEP_ENTRIES'] = reactions['STEP_ENTRIES'].fillna('')
+    reactions['STEP_ENTRIES'] = dm.groupby('index')['step_group'].apply(list).fillna('')
     reactions_printable = make_lists_printable(reactions)
     if f_save_files:
         make_lists_printable(dm).to_csv('../reactions_multistep_intermediate_processing.csv.zip', compression='zip',
