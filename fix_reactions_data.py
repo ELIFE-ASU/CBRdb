@@ -162,8 +162,7 @@ def compare_dict_values(dict1, dict2):
     return diff_in_dict1, diff_in_dict2
 
 
-def get_formulas_from_ids(ids, file_path='Data/kegg_data_C.csv.zip'):
-    data = pd.read_csv(file_path)
+def get_formulas_from_ids(ids, data):
     return data.loc[data["compound_id"].isin(ids), "formula"].tolist()
 
 
@@ -205,11 +204,11 @@ def strip_plus_x(input_string):
         return input_string
 
 
-def get_ids_to_formulas(compound_dict, file_path='Data/kegg_data_C.csv.zip'):
+def get_ids_to_formulas(compound_dict, data):
     ids = list(compound_dict.keys())
     # sort the ids
     ids.sort()
-    formulas = get_formulas_from_ids(ids, file_path)
+    formulas = get_formulas_from_ids(ids, data)
 
     # Remake the dict and strip the plus x from the formulas
     return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
@@ -231,12 +230,12 @@ def convert_form_dict_to_elements(form_dict):
     return elements
 
 
-def get_eq(old_eq, reactants, products, file_path='Data/kegg_data_C.csv.zip'):
+def get_eq(old_eq, reactants, products, data):
     # Convert the Eq in to the dicts
     lhs, rhs = eq_to_dict(old_eq)
     # Get the conversion of the ids to formulas
-    l_key = get_ids_to_formulas(lhs, file_path=file_path)
-    r_key = get_ids_to_formulas(rhs, file_path=file_path)
+    l_key = get_ids_to_formulas(lhs, data)
+    r_key = get_ids_to_formulas(rhs, data)
 
     # Convert the dict back into eq form
     reactants = convert_formulas_to_ids(reactants, l_key)
@@ -252,15 +251,15 @@ def get_eq(old_eq, reactants, products, file_path='Data/kegg_data_C.csv.zip'):
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
-def get_elements_from_eq(eq, verbose=False, file_path='Data/kegg_data_C.csv.zip'):
+def get_elements_from_eq(eq, data, verbose=False):
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
     if verbose:
         print("Reactants:                   ", reactants)
         print("Products:                    ", products)
     # Get the conversion of the ids to formulas
-    react_id_form_key = get_ids_to_formulas(reactants, file_path=file_path)
-    prod_id_form_key = get_ids_to_formulas(products, file_path=file_path)
+    react_id_form_key = get_ids_to_formulas(reactants, data)
+    prod_id_form_key = get_ids_to_formulas(products, data)
     if verbose:
         print("Reactant key id to formula:  ", react_id_form_key)
         print("Product key id to formula:   ", prod_id_form_key)
@@ -293,11 +292,11 @@ def check_missing_elements(react_ele, prod_ele):
         return False
 
 
-def check_missing_formulas(eq, file_path='Data/kegg_data_C.csv.zip'):
+def check_missing_formulas(eq, data):
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
     ids = list(reactants.keys()) + list(products.keys())
-    formulas = get_formulas_from_ids(ids, file_path)
+    formulas = get_formulas_from_ids(ids, data)
 
     if len(formulas) != len(ids):
         return True
@@ -388,7 +387,7 @@ def check_glycan(eq_line):
         return False
 
 
-def main(eq_file="Data/kegg_data_R.csv.zip"):
+def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", bad_file = "Data/R_IDs_bad.dat"):
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
                     "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
@@ -444,28 +443,31 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
                      "H2Se": "C01528",  # Selenous acid
                      }
 
-    out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
-    bad_file = "Data/R_IDs_bad.dat"
+    out_eq_file = f"{r_file.split(".")[0]}_processed.csv.zip"
+
     # read the bad file
     with open(bad_file, "r") as f:
         bad_data = f.read()
     bad_ids = bad_data.split("\n")[1:]
 
+    # Load the C data
+    data_c = pd.read_csv(c_file)
+
     # Load the processed data
-    data = pd.read_csv(eq_file)
+    data_r = pd.read_csv(r_file)
 
     # Filter out the bad ids
     print("Filtering out bad ids", flush=True)
-    data = data.loc[~data["id"].isin(bad_ids)]
+    data_r = data_r.loc[~data_r["id"].isin(bad_ids)]
 
     # Get the data from the dataframe
-    ids = data["id"].tolist()
-    eq_lines = data["reaction"].tolist()
-    ec = data["ec"].tolist()
+    ids = data_r["id"].tolist()
+    eq_lines = data_r["reaction"].tolist()
+    ec = data_r["ec"].tolist()
     print("Data loaded", flush=True)
-    print("Data columns", data.columns, flush=True)
-    print("Data shape", data.shape, flush=True)
-    print("Data head", data.head(4).values, flush=True)
+    print("Data columns", data_r.columns, flush=True)
+    print("Data shape", data_r.shape, flush=True)
+    print("Data head", data_r.head(4).values, flush=True)
 
     # Get the size of the data
     n_ids = len(ids)
@@ -509,12 +511,12 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
             continue
 
         # Check if the compound has missing formulas and skip as it will break the rest of the code
-        if check_missing_formulas(eq_line):
+        if check_missing_formulas(eq_line, data_c):
             print("Warning! No formula", flush=True)
             bad_missing_mol.append(re_id)
             continue
 
-        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False)
+        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c, verbose=False)
 
         if check_missing_elements(react_ele, prod_ele):
             print("Warning! Missing elements", flush=True)
@@ -527,7 +529,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
             except KeyError as e:
                 print("No item in the missing dict that could fix; ", e, flush=True)
             # With the new equation line lets try again
-            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False)
+            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c, verbose=False)
             if check_missing_elements(react_ele, prod_ele):
                 missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
                 print("Missing in reactants:        ", missing_in_react, flush=True)
@@ -557,7 +559,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
                 reactants = dict(reactants)
                 products = dict(products)
                 # Convert the dict back into eq form
-                eq_line = get_eq(eq_line, reactants, products)
+                eq_line = get_eq(eq_line, reactants, products, data_c)
                 print("Rebalance success!", flush=True)
 
             except:
@@ -566,7 +568,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
                 eq_line = fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod)
                 print("New eq line:", eq_line, flush=True)
                 # Update values
-                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False)
+                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c, verbose=False)
                 diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
                 if check_eq_unbalanced(react_ele, prod_ele):
                     try:
@@ -579,7 +581,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
                         reactants = dict(reactants)
                         products = dict(products)
                         # Convert the dict back into eq form
-                        eq_line = get_eq(eq_line, reactants, products)
+                        eq_line = get_eq(eq_line, reactants, products, data_c)
                         print("Rebalance success!", flush=True)
                         print("New eq line:", eq_line, flush=True)
 
@@ -630,7 +632,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    # main(eq_file="Data/kegg_data_R.csv.zip")
-    main(eq_file="Data/atlas_data_kegg_R.csv.zip")
-    # main(eq_file="Data/atlas_data_R.csv.zip")
+    # main(r_file="Data/kegg_data_R.csv.zip")
+    main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    # main(r_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)
