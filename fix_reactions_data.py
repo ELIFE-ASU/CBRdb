@@ -1,4 +1,3 @@
-import os
 import re
 import time
 
@@ -8,17 +7,6 @@ from chempy import balance_stoichiometry
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-
-
-def check_known_ids(id):
-    if id == "C00138":  # Reduced ferredoxin
-        return "Fe2S2"
-    elif id == "C00139":  # Oxidized ferredoxin
-        return "Fe2S2"
-    elif id == "C05359":  # electron
-        return " "
-    else:
-        return False
 
 
 def prepare_session():
@@ -62,36 +50,6 @@ def get_formula_from_web(id, kegg_website="https://rest.kegg.jp/get/", request_s
         # Some error in the response
         print(f"Error in ID {id}, response {response.status_code}")
         return None
-
-
-def file_list(mypath=None):
-    mypath = mypath or os.getcwd()  # If no path is provided, use the current working directory
-    return [f for f in os.listdir(mypath) if
-            os.path.isfile(os.path.join(mypath, f))]  # Return a list of all files in the directory
-
-
-def filter_files(file_paths, substring):
-    return list(filter(lambda file_path: substring in os.path.basename(file_path), file_paths))
-
-
-def sub_file_list(mypath, substring):
-    paths = file_list(mypath)
-    return filter_files(paths, substring)
-
-
-def file_list_all(mypath=None):
-    mypath = mypath or os.getcwd()  # If no path is provided, use the current working directory
-    files = []
-    # os.walk generates the file names in a directory tree by walking the tree either top-down or bottom-up
-    for dirpath, dirnames, filenames in os.walk(mypath):
-        for filename in filenames:
-            # os.path.join joins one or more path components intelligently
-            files.append(os.path.join(dirpath, filename))
-    return files
-
-
-def select_numbers(arr):
-    return [x for x in arr if x.isdigit()]
 
 
 def split_by_letters(input_string):
@@ -204,14 +162,6 @@ def compare_dict_values(dict1, dict2):
     return diff_in_dict1, diff_in_dict2
 
 
-def sum_formulas(formulas):
-    total = {}
-    for formula in formulas:
-        formula_dict = convert_formula_to_dict(formula)
-        total = add_dicts(total, formula_dict)
-    return total
-
-
 def get_formulas_from_ids(ids, file_path='Data/kegg_data_C.csv.zip'):
     data = pd.read_csv(file_path)
     return data.loc[data["compound_id"].isin(ids), "formula"].tolist()
@@ -255,14 +205,11 @@ def strip_plus_x(input_string):
         return input_string
 
 
-def get_ids_to_formulas(compound_dict, web=False, file_path='Data/kegg_data_C.csv.zip'):
+def get_ids_to_formulas(compound_dict, file_path='Data/kegg_data_C.csv.zip'):
     ids = list(compound_dict.keys())
     # sort the ids
     ids.sort()
-    if web:
-        formulas = [get_formula_from_web(id) for id in ids]
-    else:
-        formulas = get_formulas_from_ids(ids, file_path)
+    formulas = get_formulas_from_ids(ids, file_path)
 
     # Remake the dict and strip the plus x from the formulas
     return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
@@ -284,12 +231,12 @@ def convert_form_dict_to_elements(form_dict):
     return elements
 
 
-def get_eq(old_eq, reactants, products, web=False, file_path='Data/kegg_data_C.csv.zip'):
+def get_eq(old_eq, reactants, products, file_path='Data/kegg_data_C.csv.zip'):
     # Convert the Eq in to the dicts
     lhs, rhs = eq_to_dict(old_eq)
     # Get the conversion of the ids to formulas
-    l_key = get_ids_to_formulas(lhs, web=web, file_path=file_path)
-    r_key = get_ids_to_formulas(rhs, web=web, file_path=file_path)
+    l_key = get_ids_to_formulas(lhs, file_path=file_path)
+    r_key = get_ids_to_formulas(rhs, file_path=file_path)
 
     # Convert the dict back into eq form
     reactants = convert_formulas_to_ids(reactants, l_key)
@@ -305,15 +252,15 @@ def get_eq(old_eq, reactants, products, web=False, file_path='Data/kegg_data_C.c
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
-def get_elements_from_eq(eq, verbose=False, web=False, file_path='Data/kegg_data_C.csv.zip'):
+def get_elements_from_eq(eq, verbose=False, file_path='Data/kegg_data_C.csv.zip'):
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
     if verbose:
         print("Reactants:                   ", reactants)
         print("Products:                    ", products)
     # Get the conversion of the ids to formulas
-    react_id_form_key = get_ids_to_formulas(reactants, web=web, file_path=file_path)
-    prod_id_form_key = get_ids_to_formulas(products, web=web, file_path=file_path)
+    react_id_form_key = get_ids_to_formulas(reactants, file_path=file_path)
+    prod_id_form_key = get_ids_to_formulas(products, file_path=file_path)
     if verbose:
         print("Reactant key id to formula:  ", react_id_form_key)
         print("Product key id to formula:   ", prod_id_form_key)
@@ -346,14 +293,11 @@ def check_missing_elements(react_ele, prod_ele):
         return False
 
 
-def check_missing_formulas(eq, web=False, file_path='Data/kegg_data_C.csv.zip'):
+def check_missing_formulas(eq, file_path='Data/kegg_data_C.csv.zip'):
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
     ids = list(reactants.keys()) + list(products.keys())
-    if web:
-        formulas = [get_formula_from_web(id) for id in ids]
-    else:
-        formulas = get_formulas_from_ids(ids, file_path)
+    formulas = get_formulas_from_ids(ids, file_path)
 
     if len(formulas) != len(ids):
         return True
@@ -565,12 +509,12 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
             continue
 
         # Check if the compound has missing formulas and skip as it will break the rest of the code
-        if check_missing_formulas(eq_line, web=False):
+        if check_missing_formulas(eq_line):
             print("Warning! No formula", flush=True)
             bad_missing_mol.append(re_id)
             continue
 
-        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False)
 
         if check_missing_elements(react_ele, prod_ele):
             print("Warning! Missing elements", flush=True)
@@ -583,7 +527,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
             except KeyError as e:
                 print("No item in the missing dict that could fix; ", e, flush=True)
             # With the new equation line lets try again
-            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False)
             if check_missing_elements(react_ele, prod_ele):
                 missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
                 print("Missing in reactants:        ", missing_in_react, flush=True)
@@ -622,7 +566,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
                 eq_line = fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod)
                 print("New eq line:", eq_line, flush=True)
                 # Update values
-                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False, web=False)
+                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, verbose=False)
                 diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
                 if check_eq_unbalanced(react_ele, prod_ele):
                     try:
@@ -637,6 +581,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
                         # Convert the dict back into eq form
                         eq_line = get_eq(eq_line, reactants, products)
                         print("Rebalance success!", flush=True)
+                        print("New eq line:", eq_line, flush=True)
 
                     except:
                         print("Could not find stoichiometry after injection!", flush=True)
@@ -685,7 +630,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    main(eq_file="Data/kegg_data_R.csv.zip")
+    # main(eq_file="Data/kegg_data_R.csv.zip")
     main(eq_file="Data/atlas_data_kegg_R.csv.zip")
-    main(eq_file="Data/atlas_data_R.csv.zip")
+    # main(eq_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)
