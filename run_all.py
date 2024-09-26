@@ -26,14 +26,17 @@ if __name__ == "__main__":
     # Provides the kegg_data_C.csv.zip and kegg_data_R.csv.zip files
 
     # Convert the atlas files into a more readable format
+    print("Converting atlas files", flush=True)
     atlas_converter.main()
     # Provides the atlas_data_kegg_R.csv.zip and atlas_data_R.csv.zip files
 
     # Clean up the data and remove the shortcut reactions
+    print("Getting shortcut and glycan reactions", flush=True)
     clean_reaction_shortcuts.main()
     # Provides R_IDs_bad.dat
 
     # Fix the reactions data
+    print("Fixing the reactions data", flush=True)
     fix_reactions_data.main(eq_file="Data/kegg_data_R.csv.zip")
     fix_reactions_data.main(eq_file="Data/atlas_data_kegg_R.csv.zip")
     fix_reactions_data.main(eq_file="Data/atlas_data_R.csv.zip")
@@ -42,8 +45,6 @@ if __name__ == "__main__":
     # Merge the data from the atlas and the kegg data
 
     # To do
-    # Log the data which was removed in the cleaning process of the reactions
     # Address problem with halogens
-    # Get the clean reaction shortcuts working
 
     print("Program finished", flush=True)

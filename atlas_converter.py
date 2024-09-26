@@ -2,6 +2,8 @@ import os
 
 import pandas as pd
 
+def format_id(number):
+    return f"A{int(number):06d}"
 
 def cleanup_eq_line(eq_line):
     eq_line = eq_line.replace(")", " ")
@@ -74,7 +76,7 @@ def clean_atlas(in_file, out_file):
         # split the line by the delimiter
         line = line.split(";")
         # Get the reaction id
-        re_id.append(line[0])
+        re_id.append(format_id(line[0]))
         # Get the KEGG reaction id
         re_kegg_id.append(line[1])
         # Get the reaction equation
