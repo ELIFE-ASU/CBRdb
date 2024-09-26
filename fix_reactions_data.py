@@ -445,14 +445,13 @@ def check_glycan(eq_line):
 
 
 def main(eq_file="Data/kegg_data_R.csv.zip"):
-    # Big problem Te, not in KEGG!
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
                     "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
                     "Na": "C01330",
                     "Ca": "C00076",
                     "Cu": "C00070",
-                    "Al": "C06264",  # no mol file
+                    "Al": "C06264",
                     "Cl": "C00698",
                     "Co": "C00175",
                     "Ni": "C19609",
@@ -502,10 +501,18 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
                      }
 
     out_eq_file = f"{eq_file.split(".")[0]}_processed.csv.zip"
-    bad_file = "Data/bad_list.csv.zip"
+    bad_file = "Data/R_IDs_bad.dat"
+    # read the bad file
+    with open(bad_file, "r") as f:
+        bad_data = f.read()
+    bad_ids = bad_data.split("\n")[1:]
 
     # Load the processed data
     data = pd.read_csv(eq_file)
+
+    # Filter out the bad ids
+    print("Filtering out bad ids", flush=True)
+    data = data.loc[~data["id"].isin(bad_ids)]
 
     # Get the data from the dataframe
     ids = data["id"].tolist()
@@ -517,8 +524,8 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
     print("Data head", data.head(4).values, flush=True)
 
     # Get the size of the data
-    N = len(ids)
-    print(f"Total number of reactions {N}", flush=True)
+    n_ids = len(ids)
+    print(f"Total number of reactions {n_ids}", flush=True)
     # Init the lists
     bad_n = []
     bad_eq = []
@@ -537,7 +544,7 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
         # if re_id != "R05923":  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
         #     continue
         eq_line = eq_lines[i]
-        print(f"\nProcessing {i}/{N} {re_id}", flush=True)
+        print(f"\nProcessing {i}/{n_ids} {re_id}", flush=True)
         print("Equation line:", eq_line, flush=True)
 
         # Check if the equation has n
@@ -656,11 +663,11 @@ def main(eq_file="Data/kegg_data_R.csv.zip"):
     print(f"bad_missing_ele: {bad_missing_ele}", flush=True)
     print(f"bad no balance: {bad_no_balance}", flush=True)
     # print out the length of each of the lists
-    print(f"len bad n: {len(bad_n)}/{N}", flush=True)
-    print(f"len bad eq: {len(bad_eq)}/{N}", flush=True)
-    print(f"len bad_missing_mol: {len(bad_missing_mol)}/{N}", flush=True)
-    print(f"len bad_missing_ele: {len(bad_missing_ele)}/{N}", flush=True)
-    print(f"len bad no balance: {len(bad_no_balance)}/{N}", flush=True)
+    print(f"len bad n: {len(bad_n)}/{n_ids}", flush=True)
+    print(f"len bad eq: {len(bad_eq)}/{n_ids}", flush=True)
+    print(f"len bad_missing_mol: {len(bad_missing_mol)}/{n_ids}", flush=True)
+    print(f"len bad_missing_ele: {len(bad_missing_ele)}/{n_ids}", flush=True)
+    print(f"len bad no balance: {len(bad_no_balance)}/{n_ids}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
 
     # # Save the data to file

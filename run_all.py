@@ -23,18 +23,22 @@ if __name__ == "__main__":
     print("Converting mol into smiles and cleaning up the data", flush=True)
     preprocessor.main(target="C")
     preprocessor.main(target="R")
-    # provides the kegg_data_C.csv.zip and kegg_data_R.csv.zip files
+    # Provides the kegg_data_C.csv.zip and kegg_data_R.csv.zip files
 
     # Convert the atlas files into a more readable format
     atlas_converter.main()
+    # Provides the atlas_data_kegg_R.csv.zip and atlas_data_R.csv.zip files
+
+    # Clean up the data and remove the shortcut reactions
+    clean_reaction_shortcuts.main()
+    # Provides R_IDs_bad.dat
 
     # Fix the reactions data
     fix_reactions_data.main(eq_file="Data/kegg_data_R.csv.zip")
     fix_reactions_data.main(eq_file="Data/atlas_data_kegg_R.csv.zip")
     fix_reactions_data.main(eq_file="Data/atlas_data_R.csv.zip")
+    # Provides the processed R files
 
-    # Clean up the data and remove the shortcut reactions
-    clean_reaction_shortcuts.main()
 
     # Merge the data from the atlas and the kegg data
 
