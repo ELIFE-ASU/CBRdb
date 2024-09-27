@@ -1,55 +1,7 @@
 import re
-import time
 
 import pandas as pd
-import requests
 from chempy import balance_stoichiometry
-from requests import Session
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
-
-
-def prepare_session():
-    # Make the session
-    s = Session()
-    # Add retries
-    retries = Retry(
-        total=5,
-        backoff_factor=0.1,
-        status_forcelist=[502, 503, 504],
-        allowed_methods={'POST'},
-    )
-    # Mount the session
-    s.mount('https://', HTTPAdapter(max_retries=retries))
-    return s
-
-
-def get_formula_from_web(id, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2):
-    # Prepare the session
-    s = prepare_session()
-    # Get the data
-    try:
-        response = s.get(f"{kegg_website}{id}", timeout=10.0)
-        # Limit the number of requests
-        time.sleep(request_sleep)
-    except requests.exceptions.RequestException as e:
-        # Some error in the connection
-        print(f"Error in ID {id}, connection exception {e}")
-        return None
-    # Check if the response is ok
-    if response.ok:
-        # Strip the last section of the file
-        res = response.text.split("> <ENTRY>")[0]
-        data = res.split("\n")
-        # Get the line which contains the formula
-        data = [line for line in data if "FORMULA" in line]
-        if len(data) == 0:
-            return None
-        return data[0].split("FORMULA")[1].strip()
-    else:
-        # Some error in the response
-        print(f"Error in ID {id}, response {response.status_code}")
-        return None
 
 
 def split_by_letters(input_string):
@@ -380,14 +332,7 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
         return eq_line
 
 
-def check_glycan(eq_line):
-    if "G" in eq_line:
-        return True
-    else:
-        return False
-
-
-def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", bad_file = "Data/R_IDs_bad.dat"):
+def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", bad_file="Data/R_IDs_bad.dat"):
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
                     "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
@@ -502,11 +447,6 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
         # Check if the equation has reactant and product side
         if len(eq_line.split("<=>")) != 2:
             print(f"Warning! Equation does not have a reactant and product side. Skipping ID: {re_id}", flush=True)
-            bad_eq.append(re_id)
-            continue
-
-        if check_glycan(eq_line):
-            print("Warning! Glycan in the equation", flush=True)
             bad_eq.append(re_id)
             continue
 
@@ -633,6 +573,6 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
 if __name__ == "__main__":
     print("Program started", flush=True)
     # main(r_file="Data/kegg_data_R.csv.zip")
-    main(r_file="Data/atlas_data_kegg_R.csv.zip")
-    # main(r_file="Data/atlas_data_R.csv.zip")
+    # main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    main(r_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)
