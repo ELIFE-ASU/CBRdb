@@ -13,8 +13,7 @@ def convert_formula_to_dict(input_string):
     result = {}
     for part in parts:
         element = re.match(r'[A-Za-z]+', part).group()
-        count = re.search(r'\d+', part)
-        count = int(count.group()) if count else 1
+        count = int(re.search(r'\d+', part).group()) if re.search(r'\d+', part) else 1
         result[element] = count
     return result
 
@@ -24,93 +23,26 @@ def multiply_dict(input_dict, multiplier):
 
 
 def add_dicts(dict1, dict2):
-    result = {}
-    for key in set(dict1) | set(dict2):
-        result[key] = dict1.get(key, 0) + dict2.get(key, 0)
-    return result
+    return {key: dict1.get(key, 0) + dict2.get(key, 0) for key in set(dict1) | set(dict2)}
 
 
 def subtract_dicts(dict1, dict2):
-    result = {}
-    for key in set(dict1) | set(dict2):
-        result[key] = dict1.get(key, 0) - dict2.get(key, 0)
-    return result
+    return {key: dict1.get(key, 0) - dict2.get(key, 0) for key in set(dict1) | set(dict2)}
 
 
 def compare_dict_keys(dict1, dict2):
-    """
-    # Example usage
-    dict1 = {'a': 1, 'b': 2, 'c': 3}
-    dict2 = {'b': 3, 'c': 4, 'd': 5}
-    missing_in_dict2, missing_in_dict1 = compare_dict_keys(dict1, dict2)
-    print(f"Keys missing in dict2: {missing_in_dict2}")  # Output: {'a'}
-    print(f"Keys missing in dict1: {missing_in_dict1}")  # Output: {'d'}
-    Args:
-        dict1:
-        dict2:
-
-    Returns:
-
-    """
-    keys1 = set(dict1.keys())
-    keys2 = set(dict2.keys())
-    missing_in_dict2 = keys1 - keys2
-    missing_in_dict1 = keys2 - keys1
+    missing_in_dict2 = set(dict1) - set(dict2)
+    missing_in_dict1 = set(dict2) - set(dict1)
     return missing_in_dict2, missing_in_dict1
 
 
 def compare_dicts(dict1, dict2):
-    """
-    # Example usage
-    dict1 = {'a': 1, 'b': 2, 'c': 3}
-    dict2 = {'a': 1, 'b': 2, 'c': 3}
-    dict3 = {'a': 1, 'b': 2, 'c': 4}
-    print(compare_dicts(dict1, dict2))  # Output: True
-    print(compare_dicts(dict1, dict3))  # Output: False
-    Args:
-        dict1:
-        dict2:
-
-    Returns:
-
-    """
-    # Check if both dictionaries have the same keys
-    if dict1.keys() != dict2.keys():
-        return False
-
-    # Check if the values for each key are the same
-    for key in dict1:
-        if dict1[key] != dict2[key]:
-            return False
-
-    return True
+    return dict1.keys() == dict2.keys() and all(dict1[key] == dict2[key] for key in dict1)
 
 
 def compare_dict_values(dict1, dict2):
-    """
-    # Example usage
-    dict1 = {'a': 1, 'b': 2, 'c': 3}
-    dict2 = {'a': 1, 'b': 3, 'c': 4, 'd': 5}
-    diff_in_dict1, diff_in_dict2 = compare_dict_values(dict1, dict2)
-    print(f"Differences in dict1: {diff_in_dict1}")
-    print(f"Differences in dict2: {diff_in_dict2}")
-    Args:
-        dict1:
-        dict2:
-
-    Returns:
-
-    """
-    diff_in_dict1 = {}
-    diff_in_dict2 = {}
-
-    for key in set(dict1) | set(dict2):
-        value1 = dict1.get(key)
-        value2 = dict2.get(key)
-        if value1 != value2:
-            diff_in_dict1[key] = value1
-            diff_in_dict2[key] = value2
-
+    diff_in_dict1 = {key: dict1.get(key) for key in set(dict1) | set(dict2) if dict1.get(key) != dict2.get(key)}
+    diff_in_dict2 = {key: dict2.get(key) for key in set(dict1) | set(dict2) if dict1.get(key) != dict2.get(key)}
     return diff_in_dict1, diff_in_dict2
 
 
@@ -119,10 +51,8 @@ def get_formulas_from_ids(ids, data):
 
 
 def side_to_dict(side):
-    components = side.split('+')
     result = {}
-    for component in components:
-        component = component.strip()
+    for component in map(str.strip, side.split('+')):
         match = re.match(r'(\d*)\s*(C\d+)', component)
         if match:
             count = int(match.group(1)) if match.group(1) else 1
@@ -132,37 +62,24 @@ def side_to_dict(side):
 
 
 def eq_to_dict(eq):
-    reactants_side, products_side = eq.split('<=>')
-    reactants = side_to_dict(reactants_side)
-    products = side_to_dict(products_side)
-    return reactants, products
+    return map(side_to_dict, eq.split('<=>'))
 
 
 def dict_to_side(d):
-    return ' + '.join([f"{v} {k}" for k, v in d.items()])
+    return ' + '.join(f"{v} {k}" for k, v in d.items())
 
 
 def dicts_to_eq(reactants, products):
-    reactants_str = dict_to_side(reactants)
-    products_str = dict_to_side(products)
-    return f"{reactants_str} <=> {products_str}"
+    return f"{dict_to_side(reactants)} <=> {dict_to_side(products)}"
 
 
 def strip_plus_x(input_string):
-    # Check if the input string has a plus and attempt to remove it
-    if "+" in input_string:
-        return re.sub(r'\+\d+', '', input_string).replace('+', '')
-    else:
-        return input_string
+    return re.sub(r'\+\d+', '', input_string).replace('+', '') if '+' in input_string else input_string
 
 
 def get_ids_to_formulas(compound_dict, data):
-    ids = list(compound_dict.keys())
-    # sort the ids
-    ids.sort()
+    ids = sorted(compound_dict.keys())
     formulas = get_formulas_from_ids(ids, data)
-
-    # Remake the dict and strip the plus x from the formulas
     return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
 
 
@@ -183,51 +100,33 @@ def convert_form_dict_to_elements(form_dict):
 
 
 def get_eq(old_eq, reactants, products, data):
-    # Convert the Eq in to the dicts
     lhs, rhs = eq_to_dict(old_eq)
-    # Get the conversion of the ids to formulas
     l_key = get_ids_to_formulas(lhs, data)
     r_key = get_ids_to_formulas(rhs, data)
 
-    # Convert the dict back into eq form
     reactants = convert_formulas_to_ids(reactants, l_key)
     products = convert_formulas_to_ids(products, r_key)
 
-    react_keys = list(reactants.keys())
-    react_vals = list(reactants.values())
-    prod_keys = list(products.keys())
-    prod_vals = list(products.values())
-
-    eq_left = [f"{react_vals[i]} {react_keys[i]}" for i in range(len(react_keys))]
-    eq_right = [f"{prod_vals[i]} {prod_keys[i]}" for i in range(len(prod_keys))]
+    eq_left = [f"{v} {k}" for k, v in reactants.items()]
+    eq_right = [f"{v} {k}" for k, v in products.items()]
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
-def get_elements_from_eq(eq, data, verbose=False):
+def get_elements_from_eq(eq, data):
     # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
-    if verbose:
-        print("Reactants:                   ", reactants)
-        print("Products:                    ", products)
     # Get the conversion of the ids to formulas
     react_id_form_key = get_ids_to_formulas(reactants, data)
     prod_id_form_key = get_ids_to_formulas(products, data)
-    if verbose:
-        print("Reactant key id to formula:  ", react_id_form_key)
-        print("Product key id to formula:   ", prod_id_form_key)
 
     # Convert the reactants into formulas
     converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
     converted_products = convert_ids_to_formulas(products, prod_id_form_key)
-    if verbose:
-        print("Converted reactants:         ", converted_reactants)
-        print("Converted products:          ", converted_products)
+
     # Convert the formulas into reactants
     react_ele = convert_form_dict_to_elements(converted_reactants)
     prod_ele = convert_form_dict_to_elements(converted_products)
-    if verbose:
-        print("reactant element dict:       ", react_ele)
-        print("product element dict:        ", prod_ele)
+
     return converted_reactants, converted_products, react_ele, prod_ele
 
 
@@ -245,15 +144,10 @@ def check_missing_elements(react_ele, prod_ele):
 
 
 def check_missing_formulas(eq, data):
-    # Convert the Eq in to the dicts
     reactants, products = eq_to_dict(eq)
     ids = list(reactants.keys()) + list(products.keys())
     formulas = get_formulas_from_ids(ids, data)
-
-    if len(formulas) != len(ids):
-        return True
-    else:
-        return False
+    return len(formulas) != len(ids)
 
 
 def check_eq_unbalanced(react_ele, prod_ele):
@@ -265,16 +159,9 @@ def check_eq_unbalanced(react_ele, prod_ele):
 
 
 def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
-    # Get the left and right side of the equation
     eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
-
-    # Loop over the missing "elements"
-    for item in missing_r:
-        eq_left += f" + {missing_dict[item]}"
-    for item in missing_p:
-        eq_right += f" + {missing_dict[item]}"
-
-    # Make the new equation
+    eq_left += ''.join(f" + {missing_dict[item]}" for item in missing_r)
+    eq_right += ''.join(f" + {missing_dict[item]}" for item in missing_p)
     return f"{eq_left} <=> {eq_right}"
 
 
@@ -291,9 +178,6 @@ def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
 
 
 def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
-    """
-
-    """
     # Find the difference in elements
     diff_ele = set(diff_ele_react) | set(diff_ele_prod)
     # Find the difference in values
@@ -456,7 +340,7 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
             bad_missing_mol.append(re_id)
             continue
 
-        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c, verbose=False)
+        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
 
         if check_missing_elements(react_ele, prod_ele):
             print("Warning! Missing elements", flush=True)
@@ -469,7 +353,7 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
             except KeyError as e:
                 print("No item in the missing dict that could fix; ", e, flush=True)
             # With the new equation line lets try again
-            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c, verbose=False)
+            reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
             if check_missing_elements(react_ele, prod_ele):
                 missing_in_react, missing_in_prod = get_missing_elements(react_ele, prod_ele)
                 print("Missing in reactants:        ", missing_in_react, flush=True)
@@ -508,7 +392,7 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
                 eq_line = fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod)
                 print("New eq line:", eq_line, flush=True)
                 # Update values
-                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c, verbose=False)
+                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
                 diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
                 if check_eq_unbalanced(react_ele, prod_ele):
                     try:
@@ -572,7 +456,7 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    # main(r_file="Data/kegg_data_R.csv.zip")
-    # main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    main(r_file="Data/kegg_data_R.csv.zip")
+    main(r_file="Data/atlas_data_kegg_R.csv.zip")
     main(r_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)
