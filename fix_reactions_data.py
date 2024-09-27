@@ -442,16 +442,16 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
     print(f"missing ele {set(missing_ele)}", flush=True)
 
     # Save the data to file
-    bad_df = pd.DataFrame({'bad_n': bad_n,
-                           'bad_eq': bad_eq,
-                           'bad_missing_mol': bad_missing_mol,
-                           'bad_missing_ele': bad_missing_ele,
-                           'bad_no_balance': bad_no_balance})
+    # bad_df = pd.DataFrame({'bad_n': bad_n,
+    #                        'bad_eq': bad_eq,
+    #                        'bad_missing_mol': bad_missing_mol,
+    #                        'bad_missing_ele': bad_missing_ele,
+    #                        'bad_no_balance': bad_no_balance})
 
     # fill the missing values with empty strings
-    bad_df = bad_df.fillna('')
+    # bad_df = bad_df.fillna('')
     # Save the data to file
-    bad_df.to_csv(bad_file, compression='zip', encoding='utf-8', index=False)
+    # bad_df.to_csv(bad_file, compression='zip', encoding='utf-8', index=False)
 
 
 if __name__ == "__main__":
