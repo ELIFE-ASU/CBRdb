@@ -3,6 +3,7 @@ import clean_reaction_shortcuts
 import compounds_manual_add
 import fix_reactions_data
 import lets_get_kegg
+import merge_data_sets
 import preprocessor
 
 if __name__ == "__main__":
@@ -42,9 +43,12 @@ if __name__ == "__main__":
     fix_reactions_data.main(r_file="Data/atlas_data_R.csv.zip")
     # Provides the processed R files
 
-    # Merge the data from the atlas and the kegg data
+    # Fix the problems with the reactions with the halogens
+    # ADD CODE HERE
 
-    # To do
-    # Address problem with halogens
+    # Merge the data from the atlas and the kegg data
+    merge_data_sets.main(kegg_file="Data/kegg_data_R_processed.csv.zip",
+                         atlas_file="Data/atlas_data_R_processed.csv.zip")
+    # Provides the full_processed_merged.csv.zip file
 
     print("Program finished", flush=True)
