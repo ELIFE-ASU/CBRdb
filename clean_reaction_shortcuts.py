@@ -231,19 +231,24 @@ def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
                                    encoding='utf-8')
 
     # Select only the reactions that are overall_flagged or glycan_flagged
-    reactions_overall = reactions_printable.query('OVERALL_FLAG == True')
+    reactions_shortcut = reactions_printable.query('OVERALL_FLAG == True')
+    print('Reactions that are shortcuts:', len(reactions_shortcut), flush=True)
+    reactions_shortcut = reactions_shortcut['ENTRY'].to_list()
+    reactions_shortcut = list(set([i.split()[0].strip() for i in reactions_shortcut]))
+    reactions_shortcut.sort()
+
     reactions_glycan = reactions_printable.query('GLYCAN_FLAG == True')
-    print('Reactions with "overall" flag:', len(reactions_overall), flush=True)
     print('Reactions with glycan participants:', len(reactions_glycan), flush=True)
-    reactions_overall_glycan = pd.concat([reactions_overall, reactions_glycan])
-    bad_list = reactions_overall_glycan['ENTRY'].to_list()
-    bad_list = list(set([i.split()[0].strip() for i in bad_list]))
-    bad_list.sort()
+    reactions_glycan = reactions_glycan['ENTRY'].to_list()
+    reactions_glycan = list(set([i.split()[0].strip() for i in reactions_glycan]))
+    reactions_glycan.sort()
+
     # Save the bad_list
-    with open(os.path.join(data_dir, 'R_IDs_bad.dat'), 'w') as f:
-        f.write("# Bad reactions that are a shortcut or contain glycans\n")
-        for i in bad_list:
-            f.write(f"{i}\n")
+    with open(os.path.join(data_dir, 'R_IDs_bad.dat'), 'a') as f:
+        for i in reactions_shortcut:
+            f.write(f"{i}, shortcut\n")
+        for i in reactions_glycan:
+            f.write(f"{i}, glycan\n")
 
 
 if __name__ == "__main__":

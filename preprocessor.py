@@ -169,7 +169,7 @@ def rd_replacer(smi):
     return smi
 
 
-def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True):
+def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True):
     # Get a list of all files in the directory
     files = file_list_all(target_dir)
     # Clean up the files
@@ -178,8 +178,13 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
     # Filter the files to only include .mol files
     files = [f for f in files if "_r" not in f]
     files = [f for f in files if "_p" not in f]
+
+    # X group files
+    ids_x = []
+    ids_similes_fail = []
+
     # Get the number of files
-    N = len(files)
+    n = len(files)
     # Create lists to store the outputs
     arr_smiles = []
     arr_cid = []
@@ -192,18 +197,13 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
         # Get the CID
         cid = os.path.basename(file).split(".")[0]
         if i % 100 == 0:
-            print(f"Processing file {i}/{N}: {cid}", flush=True)
+            print(f"Processing file {i}/{n}: {cid}", flush=True)
         # Init flags
-        flag_r = False
-        flag_p = False
         f_load_r = None
         f_load_p = None
-        # Check if the CID is in the bad list
-        if cid in bad_list:
-            print(f"Skipping {cid} due to bad list", flush=True)
-            continue
         if check_for_x_group(file):
             print(f"Skipping {cid} due to X group", flush=True)
+            ids_x.append(cid)
             continue
 
         # Check for R groups
@@ -212,12 +212,14 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
             f_load_r = file.split(".")[0] + "_r.mol"
             replace_r_group(file, f_load_r)
             file = f_load_r
+
         # Check for problem groups
         flag_p = check_for_problem_group(file)
         if flag_p:
             f_load_p = file.split(".")[0] + "_p.mol"
             replace_problem_group(file, f_load_p)
             file = f_load_p
+
         # Get the molecule
         mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
         # Remove the temporary files
@@ -246,7 +248,8 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
                 # Get the chirality
                 arr_nc.append(get_chirality(mol))
         except:
-            print(f"Error in {cid}, could not pass to SIMLES", flush=True)
+            print(f"Error in {cid}, could not pass to SIMILES", flush=True)
+            ids_similes_fail.append(cid)
 
     # Loop over the manual fixes and add them to the list
     for cid, smiles in man_dict.items():
@@ -283,11 +286,18 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8')
 
+    # Save the problematic CIDs
+    with open("Data/C_IDs_bad.dat", "a") as f:
+        for cid in ids_x:
+            f.write(f"{cid}, X group\n")
+        for cid in ids_similes_fail:
+            f.write(f"{cid}, SIMILES fail\n")
+
 
 def preprocess_kegg_r(target_dir, outfile):
     # Get a list of all files in the directory
     paths = file_list_all(target_dir)
-    N = len(paths)
+    n = len(paths)
     id_list = []
     eq_list = []
     ec_list = []
@@ -297,7 +307,7 @@ def preprocess_kegg_r(target_dir, outfile):
         # Get the ID
         re_id = os.path.basename(path).split(".")[0]
         if i % 100 == 0:
-            print(f"Processing {i}/{N} {re_id}", flush=True)
+            print(f"Processing {i}/{n} {re_id}", flush=True)
         # Load the data
         with open(path, "r") as f:
             data = f.read()
@@ -328,8 +338,7 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
         # Defines a dictionary of manual fixes
         man_dict = load_csv_to_dict("Data/C_IDs_manual.dat")
         # Defines a list of bad CIDs to skip
-        bad_list = []
-        convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile=out_file)
+        convert_mol_to_smiles(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)
     elif target == "R":
         preprocess_kegg_r(target_dir, out_file)
@@ -339,5 +348,5 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
 if __name__ == "__main__":
     print("Program started", flush=True)
     main(target="C")
-    # main(target="R")
+    main(target="R")
     print("Program finished", flush=True)
