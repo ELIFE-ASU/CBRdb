@@ -6,7 +6,7 @@ def merge_and_keep_duplicates_from_df1(df1, df2, column_name):
     return pd.concat([df1, df2_unique], ignore_index=True)
 
 
-def main(kegg_file="Data/kegg_data_R_processed.csv.zip", atlas_file="Data/atlas_data_R_processed..csv.zip"):
+def main(kegg_file="Data/kegg_data_R_processed.csv.zip", atlas_file="Data/atlas_data_R_processed.csv.zip"):
     print("Merging the KEGG and ATLAS data sets", flush=True)
     print(f"KEGG file: {kegg_file}", flush=True)
     print(f"ATLAS file: {atlas_file}", flush=True)
@@ -17,7 +17,8 @@ def main(kegg_file="Data/kegg_data_R_processed.csv.zip", atlas_file="Data/atlas_
     # Load the atlas reactions list
     atlas_data = pd.read_csv(atlas_file, index_col=0)
     # Drop the kegg id column
-    atlas_data = atlas_data.drop(columns=['kegg_id'])
+    if 'kegg_id' in atlas_data.columns:
+        atlas_data = atlas_data.drop(columns=['kegg_id'])
     n_atlas = atlas_data.shape[0]
     # Merge the two databases
     merged_database = merge_and_keep_duplicates_from_df1(kegg_data, atlas_data, 'reaction')
