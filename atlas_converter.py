@@ -87,7 +87,7 @@ def clean_atlas(in_file, out_file):
     # Store the data in a dataframe
     df = pd.DataFrame({'id': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
     # Write the data to a file
-    df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(out_file, compression='zip', encoding='utf-8')
     print("Data written to file", flush=True)
     return None
 
