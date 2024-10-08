@@ -270,8 +270,6 @@ def convert_mol_to_smiles(target_dir, bad_list, man_dict, outfile="kegg_data_C.c
                 # Get the chirality
                 arr_nc.append(get_chirality(Chem.MolFromSmiles(smiles)))
 
-    # arr_smi = [s for s in arr_smiles]
-
     # Create a dataframe
     df = pd.DataFrame(data={
         "compound_id": arr_cid,

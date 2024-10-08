@@ -7,6 +7,10 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 
+def load_molless_entries(bad_file, target_str="molless"):
+    with open(bad_file, 'r') as file:
+        return [line.split(',')[0].strip() for line in file if target_str in line]
+
 def prepare_session():
     # Make the session
     s = Session()
@@ -200,6 +204,7 @@ def get_kegg(target_dir, session,
              max_idx=12897):
     molless_file = os.path.abspath(f"Data/{prefix.replace("_full","")}_IDs_molless.dat")
     invalid_file = os.path.abspath(f"Data/{prefix.replace("_full","")}_IDs_invalid.dat")
+    bad_file = os.path.abspath(f"Data/{prefix.replace("_full","")}_IDs_bad.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
@@ -211,29 +216,14 @@ def get_kegg(target_dir, session,
     # Check path for saving
     os.makedirs(target_dir, exist_ok=True)
 
-    # Check if the molless file exists
-    if not os.path.exists(molless_file):
-        with open(molless_file, "w") as f:
-            f.write("# Mol-less IDs\n")
-        molless_ids = []
-    else:
-        # load the molless file and get the ids
-        with open(molless_file, "r") as f:
-            molless_ids = f.readlines()
-        molless_ids = [x.strip() for x in molless_ids][1:]
+    if os.path.exists(bad_file):
+        molless_ids = load_molless_entries(bad_file, target_str="molless")
         print(f"Loaded {len(molless_ids)} Mol-less IDs", flush=True)
-
-    # Check if the invalid file exists
-    if not os.path.exists(invalid_file):
-        with open(invalid_file, "w") as f:
-            f.write("# Invalid IDs\n")
-        invalid_ids = []
-    else:
-        # load the invalid file and get the ids
-        with open(invalid_file, "r") as f:
-            invalid_ids = f.readlines()
-        invalid_ids = [x.strip() for x in invalid_ids][1:]
+        invalid_ids = load_molless_entries(bad_file, target_str="invalid")
         print(f"Loaded {len(invalid_ids)} invalid IDs", flush=True)
+    else:
+        molless_ids = []
+        invalid_ids = []
 
     # Start the loop
     i = 0
@@ -258,18 +248,25 @@ def get_kegg(target_dir, session,
             # check if the id is valid
             if check_kegg_valid_id(id, session):
                 # The ID is valid but the data is not downloaded, write the Mol-less id to file
-                with open(molless_file, "a") as f:
-                    print(f"{id} is Mol-less, written to file", flush=True)
-                    f.write(f"{id}\n")
+                print(f"{id} is Mol-less, written to file", flush=True)
+                molless_ids.append(id)
             else:
                 # The ID is invalid, write the invalid id to file
-                with open(invalid_file, "a") as f:
-                    print(f"{id} is invalid, written to file", flush=True)
-                    f.write(f"{id}\n")
+                print(f"{id} is invalid, written to file", flush=True)
+                invalid_ids.append(id)
         # Check if the maximum index is reached and break
         if max_idx is not None and i >= max_idx:
             print(f"Maximum index reached {max_idx}", flush=True)
             break
+
+    # Write a log file
+    with open(bad_file, "w") as f:
+        f.write("# Bad IDs, reason\n")
+        for id in molless_ids:
+            f.write(f"{id}, molless\n")
+        for id in invalid_ids:
+            f.write(f"{id}, invalid\n")
+
     return None
 
 
@@ -305,6 +302,6 @@ def main(target="R", target_dir=r"..\data\kegg_data"):
 if __name__ == "__main__":
     print("Program started", flush=True)
     main(target="C")
-    main(target="R")
-    main(target="C_full")
+    # main(target="R")
+    # main(target="C_full")
     print("Program finished", flush=True)
