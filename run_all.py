@@ -55,8 +55,11 @@ if __name__ == "__main__":
     # ADD CODE HERE
 
     # Merge the data from the atlas and the kegg data
-    merge_data_sets.main(kegg_file="Data/kegg_data_R_processed.csv.zip",
-                         atlas_file="Data/atlas_data_R_processed.csv.zip")
+    merge_data_sets.merge_data(merge_col='reaction',
+                               f_keep='first',
+                               kegg_file="Data/kegg_data_R_processed.csv.zip",
+                               atlas_file="Data/atlas_data_R_processed.csv.zip",
+                               out_file="Data/full_processed_merged.csv.zip")
     # Provides the full_processed_merged.csv.zip file
     print("Done! \n", flush=True)
 

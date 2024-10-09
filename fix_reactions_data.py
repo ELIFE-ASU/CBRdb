@@ -298,7 +298,6 @@ def main(r_file="Data/kegg_data_R.csv.zip",
     print("Data loaded", flush=True)
     print("Data columns", data_r.columns, flush=True)
     print("Data shape", data_r.shape, flush=True)
-    print("Data head", data_r.head(4).values, flush=True)
 
     # Init the lists
     bad_n = []
@@ -499,6 +498,7 @@ def main(r_file="Data/kegg_data_R.csv.zip",
 if __name__ == "__main__":
     print("Program started", flush=True)
     # main(r_file="Data/kegg_data_R.csv.zip")
-    main(r_file="Data/atlas_data_kegg_R.csv.zip")
-    # main(r_file="Data/atlas_data_R.csv.zip")
+    #main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    #main(r_file="Data/atlas_data_R.csv.zip")
+    main(r_file="Data/kegg_data_R_merged.csv.zip")
     print("Program finished!", flush=True)

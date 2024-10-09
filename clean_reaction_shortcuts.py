@@ -256,7 +256,7 @@ def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
             reactions_incomplete)
     }
     data = pd.DataFrame(data)
-    # sort the data
+    # Sort the data
     data = data.sort_values(by=['Reaction'])
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
 
