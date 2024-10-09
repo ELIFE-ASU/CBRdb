@@ -1,6 +1,13 @@
 import os
+import re
 
 import pandas as pd
+from rdkit import Chem as Chem
+from rdkit import RDLogger
+from rdkit.Chem.MolStandardize import rdMolStandardize
+
+lg = RDLogger.logger()
+lg.setLevel(RDLogger.CRITICAL)
 
 # suppress SettingWithCopyWarning
 pd.options.mode.chained_assignment = None
@@ -58,9 +65,9 @@ def load_reactions_data(target_dir):
     return pd.DataFrame(reactions).fillna('').T
 
 
-def get_incomplete_reaction_ids(reactions):
+def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     incomplete_reaction_ids = reactions[
-        reactions['COMMENT'].str.contains("incomplete reaction", case=False, na=False)].index.tolist()
+        reactions['COMMENT'].str.contains(substr, case=False, na=False)].index.tolist()
     return incomplete_reaction_ids
 
 
@@ -247,13 +254,18 @@ def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
     reactions_glycan = reactions_glycan['ENTRY'].to_list()
     reactions_glycan = list(set([i.split()[0].strip() for i in reactions_glycan]))
 
-    reactions_incomplete = get_incomplete_reaction_ids(reactions)
+    reactions_incomplete = get_reaction_ids_substr(reactions, substr="incomplete reaction")
     print('Reactions with incomplete data:', len(reactions_incomplete), flush=True)
 
+    reactions_general = get_reaction_ids_substr(reactions, substr="general reaction")
+    print('General reactions:', len(reactions_general), flush=True)
+
     data = {
-        'Reaction': reactions_shortcut + reactions_glycan + reactions_incomplete,
-        'Type': ['shortcut'] * len(reactions_shortcut) + ['glycan'] * len(reactions_glycan) + ['incomplete'] * len(
-            reactions_incomplete)
+        'Reaction': reactions_shortcut + reactions_glycan + reactions_incomplete + reactions_general,
+        'Type': ['shortcut'] * len(reactions_shortcut)
+                + ['glycan'] * len(reactions_glycan)
+                + ['incomplete'] * len(reactions_incomplete)
+                + ['general'] * len(reactions_general)
     }
     data = pd.DataFrame(data)
     # Sort the data
@@ -261,7 +273,171 @@ def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
 
 
+def load_bad_entries(bad_file, target_str="molless"):
+    with open(bad_file, 'r') as file:
+        return [line.split(',')[0].strip() for line in file if target_str in line]
+
+
+def get_reactions_with_substring(reactions_df, substring):
+    return reactions_df[reactions_df['reaction'].str.contains(substring, case=False, na=False)]
+
+
+def standardize_mol(mol):
+    # Standardize the molecule
+    mol.UpdatePropertyCache(strict=False)
+    Chem.SetConjugation(mol)
+    Chem.SetHybridization(mol)
+    # Normalize the molecule
+    Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
+    rdMolStandardize.NormalizeInPlace(mol)
+    # kekulize the molecule
+    # Chem.Kekulize(mol)
+    # Update the properties
+    mol.UpdatePropertyCache(strict=False)
+    return mol
+
+def side_to_dict(side):
+    result = {}
+    for component in map(str.strip, side.split('+')):
+        match = re.match(r'(\d*)\s*(C\d+)', component)
+        if match:
+            count = int(match.group(1)) if match.group(1) else 1
+            molecule = match.group(2)
+            result[molecule] = count
+    return result
+
+
+def eq_to_dict(eq):
+    return map(side_to_dict, eq.split('<=>'))
+
+
+def fix_halogen_cid(data):
+    target_dir = r"..\data\kegg_data_C"
+    target_dir = os.path.abspath(target_dir)
+    hal_exp = ['F', 'Cl', 'Br', 'I']
+    # remove C13373
+    # data.remove("C13373")  # Xe is not a halogen
+    n_data = len(data)
+    n_hal = len(hal_exp)
+    n_comb = n_data * n_hal
+    num_range = range(n_comb)
+    # Reshape num_range to a 2D array
+    num_range = [num_range[i:i + n_hal] for i in range(0, n_comb, n_hal)]
+    cids = []
+    smis = []
+    smis_dict = {}
+    cids_dict = {}
+    for i in range(n_data):
+        tmp_file = os.path.join(target_dir, data[i], data[i] + ".mol")
+        with open(tmp_file, 'r') as f:
+            file_data = f.read()
+        # Initialize the list for the current data[i]
+        cids_dict[data[i]] = []
+        smis_dict[data[i]] = []
+        # replace the X with the halogen
+        for j, hal in enumerate(hal_exp):
+            idx = num_range[i][j]
+            mol = Chem.MolFromMolBlock(file_data.replace("X", hal))
+            mol = standardize_mol(mol)
+            smi = Chem.MolToSmiles(mol, allHsExplicit=True)
+            # Determine the compound id
+            cid = {
+                "C00462": {"F": "C16487", "Cl": "C01327", "Br": "C13645", "I": "C05590"},
+                "C01812": {"F": "C06108", "Cl": "C06755"}
+            }.get(data[i], {}).get(hal)
+
+            # Generate the compound id if not found
+            if cid is None:
+                cid = f"C{int(99000 + idx):05d}"
+            # print(f"Compound {data[i]} with halogen {hal}, idx {idx} -> {cid}")
+            cids_dict[data[i]].append(cid)
+            smis_dict[data[i]].append(smi)
+    return cids_dict, smis_dict
+
+
+def fix_halogen_reactions():
+    c_id_file = "Data/kegg_data_C.csv.zip"
+    r_id_file = "Data/kegg_data_R.csv.zip"
+    r_id_file = "Data/atlas_data_kegg_R.csv.zip"
+    # r_id_file = "Data/atlas_data_R.csv.zip"
+    hal_exp = ['F', 'Cl', 'Br', 'I']
+
+    c_id_bad_file = "Data/C_IDs_bad.dat"
+    # Load the data
+    data = load_bad_entries(c_id_bad_file, target_str="X group")
+    # remove C13373
+    data.remove("C13373")
+    print(f"bad files {data}")
+    cids_dict, smis_dict = fix_halogen_cid(data)
+
+    # load the compounds data
+    compounds = pd.read_csv(c_id_file, compression='zip')
+    # # Get the compounds with the halogens
+    # compounds = compounds[compounds['compound_id'].isin(data)]
+    # print(compounds['compound_id'].values)
+    target_dir = r"..\data\kegg_data_C"
+    target_dir = os.path.abspath(target_dir)
+    # Load the data
+    reactions = pd.read_csv(r_id_file, compression='zip')
+    re_set = set()
+    for i in range(len(data)):
+        # Get the equations
+        equations = get_reactions_with_substring(reactions, data[i])
+        re_set.update(equations['id'].values)
+    re_set = list(re_set)
+    print(f"Reactions with the halogens {re_set}")
+    print(cids_dict)
+    # loop over the reactions
+    for i in range(len(re_set)):
+        # Get the reaction
+        reaction = reactions[reactions['id'] == re_set[i]]
+        eq = reaction['reaction'].values
+        # for each key value in the dictionary of cid
+        print(eq)
+        # break the eq
+        lhs, rhs = eq_to_dict(eq[0])
+        print(lhs, rhs)
+        keys_list = list(lhs.keys())
+        values_list = list(lhs.values())
+
+        for i, key in enumerate(keys_list):
+            if key in data:
+                for j, val in enumerate(cids_dict[key]):
+                    # # Get the index of the key
+                    # idx = data.index(key)
+                    # # Get the new value
+                    new_value = cids_dict[key][j]
+                    print(f"Replacing {key} with {new_value}")
+                    # construct the new equation
+                    lhs[new_value] = lhs.pop(key)
+        #         print(f"Replacing {key} with {new_value}")
+        #         # Update the lhs
+        #         lhs[new_value] = lhs.pop(key)
+
+        # # loop over the lhs
+        # for key, value in lhs.items():
+        #     for j, hal in enumerate(hal_exp):
+        #         if key in data:
+        #             # Get the index of the key
+        #             idx = data.index(key)
+        #             # Get the new value
+        #             new_value = cids_dict[key][j]
+        #             print(f"Replacing {key} with {new_value}")
+        #             # Update the lhs
+        #             lhs[new_value] = lhs.pop(key)
+        #             # # Update the lhs
+        #             # lhs[new_value] = lhs.pop(key)
+        #     # if key in data:
+        #     #     # Get the index of the key
+        #     #     idx = data.index(key)
+        #     #     # Get the new value
+        #     #     new_value = cids_dict[key][hal_exp.index(value)]
+        #     #     # Update the lhs
+        #     #     lhs[new_value] = lhs.pop(key)
+
+
 if __name__ == "__main__":
     print("Program started", flush=True)
-    main()
+    # main()
+    fix_halogen_reactions()
     print("Program finished", flush=True)
