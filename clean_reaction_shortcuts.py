@@ -58,6 +58,12 @@ def load_reactions_data(target_dir):
     return pd.DataFrame(reactions).fillna('').T
 
 
+def get_incomplete_reaction_ids(reactions):
+    incomplete_reaction_ids = reactions[
+        reactions['COMMENT'].str.contains("incomplete reaction", case=False, na=False)].index.tolist()
+    return incomplete_reaction_ids
+
+
 def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
     print("Input: An unzipped, locally-downloaded folder of raw KEGG reaction data files.", flush=True)
     print("Output: CSVs with relevant reaction info, ties to other databases and flags for removal.", flush=True)
@@ -235,20 +241,24 @@ def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
     print('Reactions that are shortcuts:', len(reactions_shortcut), flush=True)
     reactions_shortcut = reactions_shortcut['ENTRY'].to_list()
     reactions_shortcut = list(set([i.split()[0].strip() for i in reactions_shortcut]))
-    reactions_shortcut.sort()
 
     reactions_glycan = reactions_printable.query('GLYCAN_FLAG == True')
     print('Reactions with glycan participants:', len(reactions_glycan), flush=True)
     reactions_glycan = reactions_glycan['ENTRY'].to_list()
     reactions_glycan = list(set([i.split()[0].strip() for i in reactions_glycan]))
-    reactions_glycan.sort()
 
-    # Save the bad_list
-    with open(os.path.join(data_dir, 'R_IDs_bad.dat'), 'a') as f:
-        for i in reactions_shortcut:
-            f.write(f"{i}, shortcut\n")
-        for i in reactions_glycan:
-            f.write(f"{i}, glycan\n")
+    reactions_incomplete = get_incomplete_reaction_ids(reactions)
+    print('Reactions with incomplete data:', len(reactions_incomplete), flush=True)
+
+    data = {
+        'Reaction': reactions_shortcut + reactions_glycan + reactions_incomplete,
+        'Type': ['shortcut'] * len(reactions_shortcut) + ['glycan'] * len(reactions_glycan) + ['incomplete'] * len(
+            reactions_incomplete)
+    }
+    data = pd.DataFrame(data)
+    # sort the data
+    data = data.sort_values(by=['Reaction'])
+    data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
 
 
 if __name__ == "__main__":

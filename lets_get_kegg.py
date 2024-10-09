@@ -7,9 +7,10 @@ from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
 
-def load_molless_entries(bad_file, target_str="molless"):
+def load_bad_entries(bad_file, target_str="molless"):
     with open(bad_file, 'r') as file:
         return [line.split(',')[0].strip() for line in file if target_str in line]
+
 
 def prepare_session():
     # Make the session
@@ -202,7 +203,7 @@ def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", re
 def get_kegg(target_dir, session,
              prefix="D",
              max_idx=12897):
-    bad_file = os.path.abspath(f"Data/{prefix.replace("_full","")}_IDs_bad.dat")
+    bad_file = os.path.abspath(f"Data/{prefix.replace("_full", "")}_IDs_bad.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
@@ -215,9 +216,9 @@ def get_kegg(target_dir, session,
     os.makedirs(target_dir, exist_ok=True)
 
     if os.path.exists(bad_file):
-        molless_ids = load_molless_entries(bad_file, target_str="molless")
+        molless_ids = load_bad_entries(bad_file, target_str="molless")
         print(f"Loaded {len(molless_ids)} Mol-less IDs", flush=True)
-        invalid_ids = load_molless_entries(bad_file, target_str="invalid")
+        invalid_ids = load_bad_entries(bad_file, target_str="invalid")
         print(f"Loaded {len(invalid_ids)} invalid IDs", flush=True)
     else:
         molless_ids = []
@@ -252,6 +253,7 @@ def get_kegg(target_dir, session,
                 # The ID is invalid, write the invalid id to file
                 print(f"{id} is invalid, written to file", flush=True)
                 invalid_ids.append(id)
+
         # Check if the maximum index is reached and break
         if max_idx is not None and i >= max_idx:
             print(f"Maximum index reached {max_idx}", flush=True)

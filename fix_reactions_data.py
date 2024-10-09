@@ -78,7 +78,7 @@ def strip_plus_x(input_string):
 
 
 def get_ids_to_formulas(compound_dict, data):
-    ids = sorted(compound_dict.keys())
+    ids = list(set(sorted(compound_dict.keys())))
     formulas = get_formulas_from_ids(ids, data)
     return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
 
@@ -216,7 +216,10 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
         return eq_line
 
 
-def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", bad_file="Data/R_IDs_bad.dat"):
+def main(r_file="Data/kegg_data_R.csv.zip",
+         c_file="Data/kegg_data_C.csv.zip",
+         bad_file="Data/R_IDs_bad.dat",
+         f_fresh=False):
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
                     "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
@@ -277,8 +280,7 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
     # read the bad file
     with open(bad_file, "r") as f:
         bad_data = f.read()
-    bad_ids = bad_data.split("\n")[1:]
-
+    bad_ids = [line.split(',')[0].strip() for line in bad_data.split("\n")[1:]]
     # Load the C data
     data_c = pd.read_csv(c_file)
 
@@ -298,9 +300,6 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
     print("Data shape", data_r.shape, flush=True)
     print("Data head", data_r.head(4).values, flush=True)
 
-    # Get the size of the data
-    n_ids = len(ids)
-    print(f"Total number of reactions {n_ids}", flush=True)
     # Init the lists
     bad_n = []
     bad_eq = []
@@ -308,13 +307,31 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
     bad_missing_ele = []
     bad_no_balance = []
     missing_ele = []
-    # Define the output file lists
-    out_eq_lines = []
-    out_ids = []
-    out_ec = []
+
+    # Checks if you want to start fresh or not
+    if not f_fresh:
+        # Load the data from the file
+        df = pd.read_csv(out_eq_file)
+        out_ids = df["id"].tolist()
+        out_eq_lines = df["reaction"].tolist()
+        out_ec = df["ec"].tolist()
+        print("Data loaded", flush=True)
+    else:
+        # Define the output file lists
+        out_eq_lines = []
+        out_ids = []
+        out_ec = []
+
+    # Get the size of the data
+    n_ids = len(ids)
+    print(f"Total number of reactions {n_ids}", flush=True)
 
     # Loop over the reactions data
     for i, re_id in enumerate(ids):
+        # Skip the reactions that have already been processed
+        if re_id in out_ids:
+            continue
+
         # two injections R04795, R04808
         # if re_id != "R05923":  # R00538, R00634, R00915, R00916, R01317, R01350, R01409
         #     continue
@@ -341,6 +358,8 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
             continue
 
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
+        print("Reactants: ", reactants, flush=True)
+        print("Products:  ", products, flush=True)
 
         if check_missing_elements(react_ele, prod_ele):
             print("Warning! Missing elements", flush=True)
@@ -363,7 +382,6 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
                     missing_ele.append(val)
                 for val in missing_in_prod:
                     missing_ele.append(val)
-                print("Missing ele set:             ", set(missing_ele), flush=True)
                 continue
             else:
                 print("Fix worked!", flush=True)
@@ -374,6 +392,24 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
             diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
             print("Differences in reactants:    ", diff_ele_react, flush=True)
             print("Differences in products:     ", diff_ele_prod, flush=True)
+
+            # Find the difference in elements
+            diff_ele = set(diff_ele_react) | set(diff_ele_prod)
+            # Find the difference in values
+            diff_val = abs(sum(diff_ele_react.values()) - sum(diff_ele_prod.values()))
+            # Try injecting a H to help balance
+            if diff_ele == {"H"} and diff_val == 1:
+                print("Adding H", flush=True)
+                eq_line = fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00080")
+                reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
+                if check_eq_unbalanced(react_ele, prod_ele):
+                    diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+                else:
+                    # Allocate the result to the lists
+                    out_ids.append(re_id)
+                    out_eq_lines.append(eq_line)
+                    out_ec.append(ec[i])
+                    continue
 
             try:
                 print("Attempt balancing eq x1", flush=True)
@@ -424,7 +460,23 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
 
     # Store the data in a dataframe
     df = pd.DataFrame({'id': out_ids, 'reaction': out_eq_lines, 'ec': out_ec})
+
+    # check if the data is fresh
+    if not f_fresh:
+        # Load the data from the file
+        df_old = pd.read_csv(out_eq_file)
+        # Append the data
+        df = pd.concat([df_old, df])
+        # Drop the duplicates
+        df = df.drop_duplicates(subset="id", keep="last")
+        # # Reset the index
+        # df = df.reset_index(drop=True)
+        # sort the data
+        df = df.sort_values(by="id")
+
     # Write the data to a file
+    # get the shape of the data
+    print("Data shape", df.shape, flush=True)
     df.to_csv(out_eq_file, compression='zip', encoding='utf-8', index=False)
 
     # print out the bad files
@@ -434,6 +486,8 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
     print(f"bad_missing_ele: {bad_missing_ele}", flush=True)
     print(f"bad no balance: {bad_no_balance}", flush=True)
     # print out the length of each of the lists
+    n_fail = len(bad_n) + len(bad_eq) + len(bad_missing_mol) + len(bad_missing_ele) + len(bad_no_balance)
+    print(f"Total failed reactions: {n_fail}/{n_ids}", flush=True)
     print(f"len bad n: {len(bad_n)}/{n_ids}", flush=True)
     print(f"len bad eq: {len(bad_eq)}/{n_ids}", flush=True)
     print(f"len bad_missing_mol: {len(bad_missing_mol)}/{n_ids}", flush=True)
@@ -441,22 +495,10 @@ def main(r_file="Data/kegg_data_R.csv.zip", c_file="Data/kegg_data_C.csv.zip", b
     print(f"len bad no balance: {len(bad_no_balance)}/{n_ids}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
 
-    # Save the data to file
-    # bad_df = pd.DataFrame({'bad_n': bad_n,
-    #                        'bad_eq': bad_eq,
-    #                        'bad_missing_mol': bad_missing_mol,
-    #                        'bad_missing_ele': bad_missing_ele,
-    #                        'bad_no_balance': bad_no_balance})
-
-    # fill the missing values with empty strings
-    # bad_df = bad_df.fillna('')
-    # Save the data to file
-    # bad_df.to_csv(bad_file, compression='zip', encoding='utf-8', index=False)
-
 
 if __name__ == "__main__":
     print("Program started", flush=True)
     main(r_file="Data/kegg_data_R.csv.zip")
-    main(r_file="Data/atlas_data_kegg_R.csv.zip")
-    main(r_file="Data/atlas_data_R.csv.zip")
+    # main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    # main(r_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)
