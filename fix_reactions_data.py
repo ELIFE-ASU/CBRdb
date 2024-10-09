@@ -219,7 +219,7 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
 def main(r_file="Data/kegg_data_R.csv.zip",
          c_file="Data/kegg_data_C.csv.zip",
          bad_file="Data/R_IDs_bad.dat",
-         f_fresh=False):
+         f_fresh=True):
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
                     "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
@@ -498,7 +498,7 @@ def main(r_file="Data/kegg_data_R.csv.zip",
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    main(r_file="Data/kegg_data_R.csv.zip")
-    # main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    # main(r_file="Data/kegg_data_R.csv.zip")
+    main(r_file="Data/atlas_data_kegg_R.csv.zip")
     # main(r_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)
