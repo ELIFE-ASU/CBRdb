@@ -66,6 +66,9 @@ if __name__ == "__main__":
                                kegg_file="Data/kegg_data_R_processed.csv.zip",
                                atlas_file="Data/atlas_data_R_processed.csv.zip",
                                out_file="Data/kegg_atlas_processed_merged.csv.zip")
+    # Fix the EC ids
+    merge_data_sets.fix_ec_ids(input_file="Data/atlas_kegg_processed_merged.csv.zip")
+    merge_data_sets.fix_ec_ids(input_file="Data/kegg_atlas_processed_merged.csv.zip")
     # Provides the full_processed_merged.csv.zip file
     print("Done! \n", flush=True)
 

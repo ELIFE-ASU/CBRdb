@@ -41,7 +41,7 @@ def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction
         # Split each string by the tab character and create a list of lists
         split_data = [item.split('\t') for item in lines]
         # Create a DataFrame from the list of lists
-        df = pd.DataFrame(split_data, columns=['Reaction', 'Enzyme'])
+        df = pd.DataFrame(split_data, columns=['id', 'ec'])
         return df
 
     else:
@@ -50,28 +50,45 @@ def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction
         exit()
 
 
+def replace_entries(df1, df2):
+    """
+    Replaces entries in df1 with corresponding entries from df2.
+
+    Parameters:
+    df1 (pd.DataFrame): The first DataFrame to be updated.
+    df2 (pd.DataFrame): The second DataFrame with replacement values.
+
+    Returns:
+    pd.DataFrame: The updated DataFrame.
+    """
+    # Ensure the indices and columns match
+    df1.update(df2)
+    return df1
+
+
 def fix_ec_ids(file_ec_ids="Data/ec_ids.csv.zip",
-               input_file="Data/full_processed_merged.csv.zip",
-               output_file="Data/full_processed_merged.csv.zip"):
+               input_file="Data/kegg_atlas_processed_merged.csv.zip",
+               output_file=None):
+    # Check if the output file is specified
+    if output_file is None:
+        output_file = input_file
+    # Grab the EC data from the KEGG website
     if not os.path.exists(file_ec_ids):
+        print("Getting the EC data from the KEGG website", flush=True)
         session = prepare_session()
         data = get_ec_ids(session)
-        # write the data to a file
+        # Write the data to a file
         data.to_csv(file_ec_ids, compression='zip', encoding='utf-8')
-
+        print("EC data saved! \n", flush=True)
     # Read the data from the file
-    data = pd.read_csv(file_ec_ids, compression='zip')
-    print(f"Data: {data}", flush=True)
-
-    # read the merged data
-
-    data_merged = pd.read_csv(input_file, compression='zip')
-
-    # # Merge the two DataFrames
-    # merged_df = pd.concat([data, data_ec_ids], ignore_index=True)
-    # # Drop duplicates, keeping the first occurrence (from df1)
-    # unique_df = merged_df.drop_duplicates(subset=['Reaction'], keep='first')
-    # return unique_df
+    data_ec = pd.read_csv(file_ec_ids, compression='zip')
+    # Read the reaction data
+    data_reactions = pd.read_csv(input_file, compression='zip')
+    # Replace the entries in the reaction data
+    print("Replacing the EC entries in the reaction data", flush=True)
+    updated_df = replace_entries(data_reactions, data_ec)
+    updated_df.to_csv(output_file, compression='zip', encoding='utf-8')
+    print("EC data replaced! \n", flush=True)
 
 
 def merge_and_create_unique_db(df1, df2, column_name, f_keep='first'):
@@ -147,5 +164,7 @@ if __name__ == "__main__":
                kegg_file="Data/kegg_data_R_processed.csv.zip",
                atlas_file="Data/atlas_data_R_processed.csv.zip",
                out_file="Data/kegg_atlas_processed_merged.csv.zip")
-    # fix_ec_ids()
+    # Fix the EC ids
+    fix_ec_ids(input_file="Data/atlas_kegg_processed_merged.csv.zip")
+    fix_ec_ids(input_file="Data/kegg_atlas_processed_merged.csv.zip")
     print("Program ended", flush=True)
