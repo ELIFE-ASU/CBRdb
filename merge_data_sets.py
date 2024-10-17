@@ -124,22 +124,28 @@ def merge_data(merge_col='id',
 
     tmp = get_nonunique_entries(kegg_data, atlas_data, merge_col)
     if tmp.shape[0] > 0:
-        print("Non-unique entries:")
+        print("Non-unique entries that were removed:")
         print(tmp)
 
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    merge_data(merge_col='id',
-               f_keep='last',
-               kegg_file="Data/kegg_data_R.csv.zip",
-               atlas_file="Data/atlas_data_kegg_R.csv.zip",
-               out_file="Data/kegg_data_R_merged.csv.zip")
+    # merge_data(merge_col='id',
+    #            f_keep='last',
+    #            kegg_file="Data/kegg_data_R.csv.zip",
+    #            atlas_file="Data/atlas_data_kegg_R.csv.zip",
+    #            out_file="Data/kegg_data_R_merged.csv.zip")
+
+    merge_data(merge_col='reaction',
+               f_keep='first',
+               kegg_file="Data/atlas_data_kegg_R_processed.csv.zip",
+               atlas_file="Data/atlas_data_R_processed.csv.zip",
+               out_file="Data/atlas_kegg_processed_merged.csv.zip")
 
     merge_data(merge_col='reaction',
                f_keep='first',
                kegg_file="Data/kegg_data_R_processed.csv.zip",
                atlas_file="Data/atlas_data_R_processed.csv.zip",
-               out_file="Data/full_processed_merged.csv.zip")
-    fix_ec_ids()
+               out_file="Data/kegg_atlas_processed_merged.csv.zip")
+    # fix_ec_ids()
     print("Program ended", flush=True)
