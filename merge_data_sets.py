@@ -42,6 +42,7 @@ def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction
         split_data = [item.split('\t') for item in lines]
         # Create a DataFrame from the list of lists
         df = pd.DataFrame(split_data, columns=['id', 'ec'])
+        df = df.groupby(by='id')['ec'].apply(list).apply(lambda x: '|'.join(x)).to_frame()
         return df
 
     else:
