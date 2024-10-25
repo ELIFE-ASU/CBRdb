@@ -2,8 +2,10 @@ import os
 
 import pandas as pd
 
+
 def format_id(number):
     return f"A{int(number):06d}"
+
 
 def cleanup_eq_line(eq_line):
     eq_line = eq_line.replace(")", " ")

@@ -501,8 +501,7 @@ def main(r_file="Data/kegg_data_R.csv.zip",
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    # main(r_file="Data/kegg_data_R.csv.zip")
+    main(r_file="Data/kegg_data_R.csv.zip")
     main(r_file="Data/atlas_data_kegg_R.csv.zip")
-    # main(r_file="Data/atlas_data_R.csv.zip")
-    # main(r_file="Data/kegg_data_R_merged.csv.zip")
+    main(r_file="Data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)

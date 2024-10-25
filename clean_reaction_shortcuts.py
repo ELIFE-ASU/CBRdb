@@ -296,6 +296,7 @@ def standardize_mol(mol):
     mol.UpdatePropertyCache(strict=False)
     return mol
 
+
 def side_to_dict(side):
     result = {}
     for component in map(str.strip, side.split('+')):

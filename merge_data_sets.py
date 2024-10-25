@@ -110,11 +110,11 @@ def get_nonunique_entries(df1, df2, column_name):
     return non_unique_df
 
 
-def merge_data(merge_col='id',
-               f_keep='last',
-               kegg_file="Data/kegg_data_R.csv.zip",
-               atlas_file="Data/atlas_data_kegg_R.csv.zip",
-               out_file="Data/kegg_data_R_merged.csv.zip"):
+def merge_data(merge_col='reaction',
+               f_keep='first',
+               kegg_file="Data/kegg_data_R_processed.csv.zip",
+               atlas_file="Data/atlas_data_R_processed.csv.zip",
+               out_file="Data/kegg_atlas_processed_merged.csv.zip"):
     print("Merging the KEGG and ATLAS data sets", flush=True)
     print(f"KEGG file: {kegg_file}", flush=True)
     print(f"ATLAS file: {atlas_file}", flush=True)

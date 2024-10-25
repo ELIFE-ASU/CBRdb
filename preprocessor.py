@@ -1,7 +1,7 @@
 import csv
 import os
-import shutil
 import re
+import shutil
 
 import pandas as pd
 from rdkit import Chem as Chem
@@ -93,9 +93,11 @@ def replace_problem_group(target_file, new_file, re_target=["OH"]):
             nf.write(line)
         nf.write("M  END\n\n")
 
+
 def contains_x_not_xe(s):
     # Use a regular expression to find "X" not followed by "e"
     return bool(re.search(r'X(?!e)', s))
+
 
 def check_for_x_group(target_file):
     with open(target_file, "r") as f:
