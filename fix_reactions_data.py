@@ -151,11 +151,15 @@ def check_missing_formulas(eq, data):
 
 
 def check_eq_unbalanced(react_ele, prod_ele):
+    # Check if all values in the dictionaries are positive and non-zero
+    all_positive_react = all(value > 0 for value in react_ele.values())
+    all_positive_prod = all(value > 0 for value in prod_ele.values())
+
+    # Check if the dictionaries are unbalanced
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-    if len(diff_ele_react) + len(diff_ele_prod) > 0:
-        return True
-    else:
-        return False
+    unbalanced = len(diff_ele_react) + len(diff_ele_prod) > 0
+
+    return not all_positive_react or not all_positive_prod or unbalanced
 
 
 def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
@@ -498,7 +502,7 @@ def main(r_file="Data/kegg_data_R.csv.zip",
 if __name__ == "__main__":
     print("Program started", flush=True)
     # main(r_file="Data/kegg_data_R.csv.zip")
-    #main(r_file="Data/atlas_data_kegg_R.csv.zip")
-    #main(r_file="Data/atlas_data_R.csv.zip")
-    main(r_file="Data/kegg_data_R_merged.csv.zip")
+    main(r_file="Data/atlas_data_kegg_R.csv.zip")
+    # main(r_file="Data/atlas_data_R.csv.zip")
+    # main(r_file="Data/kegg_data_R_merged.csv.zip")
     print("Program finished!", flush=True)
