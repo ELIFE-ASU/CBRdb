@@ -6,7 +6,7 @@ import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-
+from io import StringIO
 
 def prepare_session():
     # Make the session
@@ -36,13 +36,11 @@ def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction
         exit()
     # Check if the response is ok
     if response.ok:
-        # Split the response into lines
-        lines = response.text.replace("rn:", "").replace("ec:", "").split("\n")[:-1]
-        # Split each string by the tab character and create a list of lists
-        split_data = [item.split('\t') for item in lines]
-        # Create a DataFrame from the list of lists
-        df = pd.DataFrame(split_data, columns=['id', 'ec'])
-        df = df.groupby(by='id')['ec'].apply(list).apply(lambda x: '|'.join(x)).to_frame()
+        # Get all enzyme-reaction pairs from KEGG
+        df = (pd.read_table(StringIO(response.text), header=None, index_col=None, names=['id', 'ec'])
+              .applymap(lambda x: x.split(':')[1])) 
+        # Make enzyme list for each reaction
+        df = df.groupby(by='id')['ec'].apply(lambda x: '|'.join(list(x))).to_frame()
         return df
 
     else:
