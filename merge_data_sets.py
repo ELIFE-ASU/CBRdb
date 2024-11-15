@@ -117,11 +117,11 @@ def merge_data(merge_col='reaction',
     print(f"KEGG file: {kegg_file}", flush=True)
     print(f"ATLAS file: {atlas_file}", flush=True)
     # Load the kegg reactions list
-    kegg_data = pd.read_csv(kegg_file)
+    kegg_data = pd.read_csv(kegg_file, index_col=0)
     n_kegg = kegg_data.shape[0]
 
     # Load the atlas reactions list
-    atlas_data = pd.read_csv(atlas_file)
+    atlas_data = pd.read_csv(atlas_file, index_col=0)
     # Drop the kegg id column
     if 'kegg_id' in atlas_data.columns:
         atlas_data = atlas_data.drop(columns=['kegg_id'])
@@ -142,6 +142,48 @@ def merge_data(merge_col='reaction',
     if tmp.shape[0] > 0:
         print("Non-unique entries that were removed:")
         print(tmp)
+
+
+def merge_data_retain_sources(kegg_file="Data/kegg_data_R_processed.csv.zip",
+               atlas_file="Data/atlas_data_R_processed.csv.zip",
+               out_file="Data/atlas_kegg_processed_merged_deduped.csv.zip"):
+    print("Merging the KEGG and ATLAS data sets", flush=True)
+    print(f"KEGG file: {kegg_file}", flush=True)
+    print(f"ATLAS file: {atlas_file}", flush=True)
+    # Load the kegg reactions list
+    kegg_data = pd.read_csv(kegg_file, index_col=0)
+    # Load the atlas reactions list
+    atlas_data = pd.read_csv(atlas_file, index_col=0)
+    
+    print('Adding coefficients where missing, then standardizing compound order')
+    add_ones_and_sort_compounds = lambda x: ' + '.join(
+        sorted(['1 '+i if i[0]=='C' else i for i in x.split(' + ')]))
+    atlas_data['reaction_sorted'] = atlas_data['reaction'].str.split(' <=> ').apply(
+        lambda x: ' <=> '.join(sorted([add_ones_and_sort_compounds(i) for i in x])))
+    kegg_data['reaction_sorted'] = kegg_data['reaction'].str.split(' <=> ').apply(
+        lambda x: ' <=> '.join(sorted([add_ones_and_sort_compounds(i) for i in x])))
+    
+    print('Standardizing EC# rules between datasets')
+    single_sep = lambda x: x.strip().replace(' ','|').replace(',','|') # standardizes separators
+    extract_ec_serial_numbers = lambda x: '|'.join(sorted(list(set(
+                [i for i in single_sep(x).replace('(rev)','').split('|')
+                if '-' not in i and i.count('.')==3 and i.split('.')[-1].isnumeric()])))) # some end in e.g. B##
+    atlas_data['ec'] = atlas_data['ec'].apply(extract_ec_serial_numbers)
+    kegg_ecs = pd.read_csv('Data/ec_ids.csv.zip', compression='zip', index_col=0)['ec']
+    kegg_data['ec'] = kegg_data.index.map(kegg_ecs).fillna('') # until kegg_data_R_processed.csv.zip is fixed
+
+    print('Combining the datasets and preserving EC# sources')
+    concat_db = pd.concat([kegg_data, atlas_data], axis=0).reset_index()
+    concat_db['ec'] = concat_db['ec'].str.split('|') 
+    concat_db = concat_db.drop(columns='reaction').set_index('reaction_sorted').explode('ec')
+    concat_db['id2ec'] = (concat_db['id']+':'+concat_db['ec'])*(concat_db['ec']!='')
+
+    print('Merging the data')
+    merged_db = (concat_db.applymap(lambda x: [x]).groupby(level=0).sum()
+                 .applymap(lambda x: '|'.join(sorted(list(set(x)))[::-1])).reset_index()
+                 .rename(columns={'reaction_sorted':'reaction'}).set_index('id'))
+    merged_db.to_csv(out_file, compression='zip', encoding='utf-8')
+    print("Merged data saved! \n", flush=True)
 
 
 if __name__ == "__main__":
