@@ -55,7 +55,7 @@ def clean_kegg_atlas(in_file, out_file):
     df = pd.DataFrame({'id': re_id, 'reaction': re_eq, 'chemical_names': re_chem_names, 'ec': re_ec})
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
-    print("Data written to file", flush=True)
+    print("data written to file", flush=True)
     return None
 
 
@@ -90,17 +90,17 @@ def clean_atlas(in_file, out_file):
     df = pd.DataFrame({'id': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8')
-    print("Data written to file", flush=True)
+    print("data written to file", flush=True)
     return None
 
 
 def main():
     infile = r"..\data\atlas_kegg_reactions.dat"
-    outfile = r"Data\atlas_data_kegg_R.csv.zip"
+    outfile = r"data\atlas_data_kegg_R.csv.zip"
     clean_kegg_atlas(infile, outfile)
 
     infile = r"..\data\atlas_reactions.dat"
-    outfile = r"Data\atlas_data_R.csv.zip"
+    outfile = r"data\atlas_data_R.csv.zip"
     clean_atlas(infile, outfile)
     return None
 

@@ -293,7 +293,7 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
     df.to_csv(outfile, compression='zip', encoding='utf-8')
 
     # Save the problematic CIDs
-    with open("Data/C_IDs_bad.dat", "a") as f:
+    with open("data/C_IDs_bad.dat", "a") as f:
         for cid in ids_x:
             f.write(f"{cid}, X group\n")
         for cid in ids_similes_fail:
@@ -339,10 +339,10 @@ def preprocess_kegg_r(target_dir, outfile):
 
 def main(target="R", target_dir=r"..\data\kegg_data"):
     target_dir = os.path.abspath(target_dir + f"_{target}")
-    out_file = os.path.abspath(f"Data/kegg_data_{target}.csv.zip")
+    out_file = os.path.abspath(f"data/kegg_data_{target}.csv.zip")
     if target == "C":
         # Defines a dictionary of manual fixes
-        man_dict = load_csv_to_dict("Data/C_IDs_manual.dat")
+        man_dict = load_csv_to_dict("data/C_IDs_manual.dat")
         # Defines a list of bad CIDs to skip
         convert_mol_to_smiles(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)

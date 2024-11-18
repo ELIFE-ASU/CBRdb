@@ -220,9 +220,9 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
         return eq_line
 
 
-def main(r_file="Data/kegg_data_R.csv.zip",
-         c_file="Data/kegg_data_C.csv.zip",
-         bad_file="Data/R_IDs_bad.dat",
+def main(r_file="data/kegg_data_R.csv.zip",
+         c_file="data/kegg_data_C.csv.zip",
+         bad_file="data/R_IDs_bad.dat",
          f_fresh=True):
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
@@ -299,9 +299,9 @@ def main(r_file="Data/kegg_data_R.csv.zip",
     ids = data_r["id"].tolist()
     eq_lines = data_r["reaction"].tolist()
     ec = data_r["ec"].tolist()
-    print("Data loaded", flush=True)
-    print("Data columns", data_r.columns, flush=True)
-    print("Data shape", data_r.shape, flush=True)
+    print("data loaded", flush=True)
+    print("data columns", data_r.columns, flush=True)
+    print("data shape", data_r.shape, flush=True)
 
     # Init the lists
     bad_n = []
@@ -318,7 +318,7 @@ def main(r_file="Data/kegg_data_R.csv.zip",
         out_ids = df["id"].tolist()
         out_eq_lines = df["reaction"].tolist()
         out_ec = df["ec"].tolist()
-        print("Data loaded", flush=True)
+        print("data loaded", flush=True)
     else:
         # Define the output file lists
         out_eq_lines = []
@@ -479,7 +479,7 @@ def main(r_file="Data/kegg_data_R.csv.zip",
 
     # Write the data to a file
     # get the shape of the data
-    print("Data shape", df.shape, flush=True)
+    print("data shape", df.shape, flush=True)
     df.to_csv(out_eq_file, compression='zip', encoding='utf-8', index=False)
 
     # print out the bad files
@@ -501,7 +501,7 @@ def main(r_file="Data/kegg_data_R.csv.zip",
 
 if __name__ == "__main__":
     print("Program started", flush=True)
-    main(r_file="Data/kegg_data_R.csv.zip")
-    main(r_file="Data/atlas_data_kegg_R.csv.zip")
-    main(r_file="Data/atlas_data_R.csv.zip")
+    main(r_file="data/kegg_data_R.csv.zip")
+    main(r_file="data/atlas_data_kegg_R.csv.zip")
+    main(r_file="data/atlas_data_R.csv.zip")
     print("Program finished!", flush=True)

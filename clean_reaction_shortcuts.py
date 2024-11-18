@@ -71,7 +71,7 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     return incomplete_reaction_ids
 
 
-def main(target_dir='../data/kegg_data_R/', data_dir="Data/"):
+def main(target_dir='../data/kegg_data_R/', data_dir="data/"):
     print("Input: An unzipped, locally-downloaded folder of raw KEGG reaction data files.", flush=True)
     print("Output: CSVs with relevant reaction info, ties to other databases and flags for removal.", flush=True)
     global reactions, OK
@@ -357,13 +357,13 @@ def fix_halogen_cid(data):
 
 
 def fix_halogen_reactions():
-    c_id_file = "Data/kegg_data_C.csv.zip"
-    r_id_file = "Data/kegg_data_R.csv.zip"
-    r_id_file = "Data/atlas_data_kegg_R.csv.zip"
-    # r_id_file = "Data/atlas_data_R.csv.zip"
+    c_id_file = "data/kegg_data_C.csv.zip"
+    r_id_file = "data/kegg_data_R.csv.zip"
+    r_id_file = "data/atlas_data_kegg_R.csv.zip"
+    # r_id_file = "data/atlas_data_R.csv.zip"
     hal_exp = ['F', 'Cl', 'Br', 'I']
 
-    c_id_bad_file = "Data/C_IDs_bad.dat"
+    c_id_bad_file = "data/C_IDs_bad.dat"
     # Load the data
     data = load_bad_entries(c_id_bad_file, target_str="X group")
     # remove C13373

@@ -73,11 +73,11 @@ def clean_empty_folders(target_dir, size=False):
 
 
 def main():
-    molless_path = 'Data/C_IDs_molless.dat'
+    molless_path = 'data/C_IDs_molless.dat'
     data = pd.read_csv(molless_path, sep='\t').values.flatten()
-    print("Data loaded", flush=True)
-    print("Data shape", data.shape, flush=True)
-    print("Data head", data[:4], flush=True)
+    print("data loaded", flush=True)
+    print("data shape", data.shape, flush=True)
+    print("data head", data[:4], flush=True)
 
     # Target directory
     target_dir = os.path.abspath('../data/kegg_data_C_full')
@@ -89,7 +89,7 @@ def main():
     print(f"Files in the target directory: {files}", flush=True)
 
     # Good files to follow-up on
-    good_file = "Data/C_IDs_good.dat"
+    good_file = "data/C_IDs_good.dat"
     r_list = []
     good_list = []
     # loop over the data

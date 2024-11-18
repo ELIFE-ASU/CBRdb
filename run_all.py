@@ -48,27 +48,27 @@ if __name__ == "__main__":
 
     # Fix the reactions data
     print("Fixing the reactions data", flush=True)
-    fix_reactions_data.main(r_file="Data/kegg_data_R.csv.zip")
-    fix_reactions_data.main(r_file="Data/atlas_data_kegg_R.csv.zip")
-    fix_reactions_data.main(r_file="Data/atlas_data_R.csv.zip")
+    fix_reactions_data.main(r_file="data/kegg_data_R.csv.zip")
+    fix_reactions_data.main(r_file="data/atlas_data_kegg_R.csv.zip")
+    fix_reactions_data.main(r_file="data/atlas_data_R.csv.zip")
     # Provides the processed R files
     print("Done! \n", flush=True)
 
     # Merge the data from the atlas and the kegg data
     merge_data_sets.merge_data(merge_col='reaction',
                                f_keep='first',
-                               kegg_file="Data/atlas_data_kegg_R_processed.csv.zip",
-                               atlas_file="Data/atlas_data_R_processed.csv.zip",
-                               out_file="Data/atlas_kegg_processed_merged.csv.zip")
+                               kegg_file="data/atlas_data_kegg_R_processed.csv.zip",
+                               atlas_file="data/atlas_data_R_processed.csv.zip",
+                               out_file="data/atlas_kegg_processed_merged.csv.zip")
 
     merge_data_sets.merge_data(merge_col='reaction',
                                f_keep='first',
-                               kegg_file="Data/kegg_data_R_processed.csv.zip",
-                               atlas_file="Data/atlas_data_R_processed.csv.zip",
-                               out_file="Data/kegg_atlas_processed_merged.csv.zip")
+                               kegg_file="data/kegg_data_R_processed.csv.zip",
+                               atlas_file="data/atlas_data_R_processed.csv.zip",
+                               out_file="data/kegg_atlas_processed_merged.csv.zip")
     # Fix the EC ids
-    merge_data_sets.fix_ec_ids(input_file="Data/atlas_kegg_processed_merged.csv.zip")
-    merge_data_sets.fix_ec_ids(input_file="Data/kegg_atlas_processed_merged.csv.zip")
+    merge_data_sets.fix_ec_ids(input_file="data/atlas_kegg_processed_merged.csv.zip")
+    merge_data_sets.fix_ec_ids(input_file="data/kegg_atlas_processed_merged.csv.zip")
     # Provides the full_processed_merged.csv.zip file
     print("Done! \n", flush=True)
 
