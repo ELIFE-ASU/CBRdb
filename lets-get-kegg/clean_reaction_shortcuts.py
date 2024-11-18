@@ -313,7 +313,7 @@ def eq_to_dict(eq):
 
 
 def fix_halogen_cid(data):
-    target_dir = r"..\data\kegg_data_C"
+    target_dir = r"../../data/kegg_data_C"
     target_dir = os.path.abspath(target_dir)
     hal_exp = ['F', 'Cl', 'Br', 'I']
     # remove C13373
@@ -357,13 +357,13 @@ def fix_halogen_cid(data):
 
 
 def fix_halogen_reactions():
-    c_id_file = "data/kegg_data_C.csv.zip"
-    r_id_file = "data/kegg_data_R.csv.zip"
-    r_id_file = "data/atlas_data_kegg_R.csv.zip"
+    c_id_file = "../data/kegg_data_C.csv.zip"
+    r_id_file = "../data/kegg_data_R.csv.zip"
+    r_id_file = "../data/atlas_data_kegg_R.csv.zip"
     # r_id_file = "data/atlas_data_R.csv.zip"
     hal_exp = ['F', 'Cl', 'Br', 'I']
 
-    c_id_bad_file = "data/C_IDs_bad.dat"
+    c_id_bad_file = "../data/C_IDs_bad.dat"
     # Load the data
     data = load_bad_entries(c_id_bad_file, target_str="X group")
     # remove C13373
@@ -376,7 +376,7 @@ def fix_halogen_reactions():
     # # Get the compounds with the halogens
     # compounds = compounds[compounds['compound_id'].isin(data)]
     # print(compounds['compound_id'].values)
-    target_dir = r"..\data\kegg_data_C"
+    target_dir = r"../../data/kegg_data_C"
     target_dir = os.path.abspath(target_dir)
     # Load the data
     reactions = pd.read_csv(r_id_file, compression='zip')

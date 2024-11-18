@@ -169,7 +169,7 @@ def merge_data_retain_sources(kegg_file="data/kegg_data_R_processed.csv.zip",
                 [i for i in single_sep(x).replace('(rev)','').split('|')
                 if '-' not in i and i.count('.')==3 and i.split('.')[-1].isnumeric()])))) # some end in e.g. B##
     atlas_data['ec'] = atlas_data['ec'].apply(extract_ec_serial_numbers)
-    kegg_ecs = pd.read_csv('data/ec_ids.csv.zip', compression='zip', index_col=0)['ec']
+    kegg_ecs = pd.read_csv('../data/ec_ids.csv.zip', compression='zip', index_col=0)['ec']
     kegg_data['ec'] = kegg_data.index.map(kegg_ecs).fillna('') # until kegg_data_R_processed.csv.zip is fixed
 
     print('Combining the datasets and preserving EC# sources')
@@ -196,16 +196,16 @@ if __name__ == "__main__":
 
     merge_data(merge_col='reaction',
                f_keep='first',
-               kegg_file="data/atlas_data_kegg_R_processed.csv.zip",
-               atlas_file="data/atlas_data_R_processed.csv.zip",
-               out_file="data/atlas_kegg_processed_merged.csv.zip")
+               kegg_file="../data/atlas_data_kegg_R_processed.csv.zip",
+               atlas_file="../data/atlas_data_R_processed.csv.zip",
+               out_file="../data/atlas_kegg_processed_merged.csv.zip")
 
     merge_data(merge_col='reaction',
                f_keep='first',
-               kegg_file="data/kegg_data_R_processed.csv.zip",
-               atlas_file="data/atlas_data_R_processed.csv.zip",
-               out_file="data/kegg_atlas_processed_merged.csv.zip")
+               kegg_file="../data/kegg_data_R_processed.csv.zip",
+               atlas_file="../data/atlas_data_R_processed.csv.zip",
+               out_file="../data/kegg_atlas_processed_merged.csv.zip")
     # Fix the EC ids
-    fix_ec_ids(input_file="data/atlas_kegg_processed_merged.csv.zip")
-    fix_ec_ids(input_file="data/kegg_atlas_processed_merged.csv.zip")
+    fix_ec_ids(input_file="../data/atlas_kegg_processed_merged.csv.zip")
+    fix_ec_ids(input_file="../data/kegg_atlas_processed_merged.csv.zip")
     print("Program ended", flush=True)
