@@ -7,7 +7,7 @@ from rdkit import RDLogger
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from tools_mols import standardize_mol
+from tools_mols import standardize_mol, get_mol_descriptors
 from tools_eq import eq_to_dict
 
 
@@ -22,13 +22,14 @@ def get_reactions_with_substring(reactions_df, substring):
 
 def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
                           target_dir_c=r"../../data/kegg_data_C",
+                          hal_exp=None,
                           ):
+    # Prepare the halogen list to expand over
+    if hal_exp is None:
+        hal_exp = ['F', 'Cl', 'Br', 'I']
     # Load the bad compound IDs
     data_bad_id = load_bad_entries(os.path.abspath(c_id_bad_file), target_str="X group")
-    print(f"bad files ID with halogens: {data_bad_id}")
-
-    # Prepare the halogen list to expand over
-    hal_exp = ['F', 'Cl', 'Br', 'I']
+    print(f"bad files ID with halogens: {data_bad_id}", flush=True)
 
     # Make the combinations of the data and the halogens
     n_data = len(data_bad_id)
@@ -74,10 +75,58 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
             # Generate the compound id if not found
             if cid is None:
                 cid = f"C{int(99000 + idx):05d}"
-            print(f"Compound {data_bad_id[i]} with halogen {hal}, idx {idx} -> {cid}", flush=True)
             cids_dict[data_bad_id[i]].append(cid)
             smis_dict[data_bad_id[i]].append(smi)
     return cids_dict, smis_dict
+
+
+def merge_halogen_compounds(cids_dict, smis_dict, c_id_file="../data/kegg_data_C.csv.zip"):
+    # Convert the cids_dict and smis_dict to a list
+    cids_list = []
+    smis_list = []
+    for key in cids_dict.keys():
+        cids_list.extend(cids_dict[key])
+        smis_list.extend(smis_dict[key])
+
+    # Loop over the cids_list
+    arr_formula = []
+    arr_mw = []
+    arr_n_heavy = []
+    arr_nc = []
+    for i in range(len(cids_list)):
+        # Load the molecule
+        mol = Chem.MolFromSmiles(smis_list[i])
+        # Standardize the molecule
+        mol = standardize_mol(mol)
+        # Get the formula, molecular weight, number of heavy atoms, and the number of chiral centers
+        formula, mw, n_heavy, nc = get_mol_descriptors(mol)
+        # Add the data to the arrays
+        arr_formula.append(formula)
+        arr_mw.append(mw)
+        arr_n_heavy.append(n_heavy)
+        arr_nc.append(nc)
+
+    # Create a dataframe
+    df = pd.DataFrame(data={
+        "compound_id": cids_list,
+        "smiles": smis_list,
+        "formula": arr_formula,
+        "molecular_weight": arr_mw,
+        "n_heavy_atoms": arr_n_heavy,
+        "n_chiral_centers": arr_nc})
+
+    # Load the compounds data
+    df_old = pd.read_csv(c_id_file, compression='zip')
+
+    # Merge the dataframes
+    df = pd.concat([df_old, df], ignore_index=True)
+    # Drop the duplicates
+    df = df.drop_duplicates(subset="compound_id")
+    # Sort the dataframe by the compound ID
+    df = df.sort_values(by="compound_id")
+    # Save the dataframe
+    df.to_csv("../data/kegg_data_C_tmp.csv.zip", compression='zip', encoding='utf-8')
+    return None
 
 
 def fix_halogen_reactions(cids_dict, smis_dict):
