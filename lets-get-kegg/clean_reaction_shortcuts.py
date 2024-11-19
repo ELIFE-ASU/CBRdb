@@ -316,8 +316,11 @@ def fix_halogen_cid(data):
     target_dir = r"../../data/kegg_data_C"
     target_dir = os.path.abspath(target_dir)
     hal_exp = ['F', 'Cl', 'Br', 'I']
-    # remove C13373
-    # data.remove("C13373")  # Xe is not a halogen
+    # Xe is not a halogen this ID is not a halogen and should be removed
+    try:
+        data.remove("C13373")
+    except ValueError:
+        pass
     n_data = len(data)
     n_hal = len(hal_exp)
     n_comb = n_data * n_hal
@@ -341,7 +344,7 @@ def fix_halogen_cid(data):
             mol = Chem.MolFromMolBlock(file_data.replace("X", hal))
             mol = standardize_mol(mol)
             smi = Chem.MolToSmiles(mol, allHsExplicit=True)
-            # Determine the compound id
+            # Determine the compound id from the ones already given
             cid = {
                 "C00462": {"F": "C16487", "Cl": "C01327", "Br": "C13645", "I": "C05590"},
                 "C01812": {"F": "C06108", "Cl": "C06755"}
@@ -366,11 +369,11 @@ def fix_halogen_reactions():
     c_id_bad_file = "../data/C_IDs_bad.dat"
     # Load the data
     data = load_bad_entries(c_id_bad_file, target_str="X group")
-    # remove C13373
-    data.remove("C13373")
-    print(f"bad files {data}")
+    print(f"bad files ID: {data}")
     cids_dict, smis_dict = fix_halogen_cid(data)
-
+    print(f"cids_dict {cids_dict}")
+    print(f"smis_dict {smis_dict}")
+    exit(0)
     # load the compounds data
     compounds = pd.read_csv(c_id_file, compression='zip')
     # # Get the compounds with the halogens
