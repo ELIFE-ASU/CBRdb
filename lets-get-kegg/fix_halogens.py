@@ -7,8 +7,8 @@ from rdkit import RDLogger
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from .tools_mols import standardize_mol
-from .tools_eq import eq_to_dict
+from tools_mols import standardize_mol
+from tools_eq import eq_to_dict
 
 
 def load_bad_entries(bad_file, target_str="molless"):
@@ -151,5 +151,5 @@ def fix_halogen_reactions():
 if __name__ == "__main__":
     print("Program started", flush=True)
     fix_halogen_compounds()
-    fix_halogen_reactions()
+    # fix_halogen_reactions()
     print("Program finished", flush=True)

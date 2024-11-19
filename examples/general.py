@@ -13,4 +13,9 @@ if __name__ == "__main__":
     # get the entry with the id R04254
     print(data[data["id"] == "R04254"], flush=True)
 
+
+    # load to compound data
+    data_c = pd.read_csv("../data/kegg_data_C.csv.zip")
+    print("data columns", data_c.columns, flush=True)
+    print(data_c[data_c["compound_id"] == "C06143"].values, flush=True)
     print("Program end", flush=True)

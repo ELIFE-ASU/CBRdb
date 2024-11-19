@@ -1,8 +1,13 @@
 import pandas as pd
 from chempy import balance_stoichiometry
 
-from .tools_eq import get_eq, get_elements_from_eq, compare_dict_values, check_missing_formulas, check_missing_elements, \
-    check_eq_unbalanced, get_missing_elements
+from tools_eq import (get_eq,
+                      get_elements_from_eq,
+                      compare_dict_values,
+                      check_missing_formulas,
+                      check_missing_elements,
+                      check_eq_unbalanced,
+                      get_missing_elements)
 
 
 def inject_compounds(eq_line, missing_r, missing_p, missing_dict):

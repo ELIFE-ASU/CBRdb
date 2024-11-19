@@ -6,7 +6,7 @@ import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 
-from .tools_mols import standardize_mol, get_mol_descriptors
+from tools_mols import standardize_mol, get_mol_descriptors
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
