@@ -5,9 +5,8 @@ import re
 import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
-from rdkit.Chem import rdMolDescriptors
 
-from .tools_mols import standardize_mol, get_chirality
+from .tools_mols import standardize_mol, get_mol_descriptors
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -77,15 +76,6 @@ def check_for_x_group(target_file):
         for line in f:
             if contains_x_not_xe(line):
                 return True
-
-
-def rd_replacer(smi):
-    mol = Chem.MolFromSmiles(smi)
-    smi = Chem.MolToSmiles(Chem.ReplaceSubstructs(mol,
-                                                  Chem.MolFromSmiles('*'),
-                                                  Chem.MolFromSmiles('[H]'),
-                                                  replaceAll=True)[0])
-    return smi
 
 
 def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True):
@@ -158,14 +148,15 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
             # Add the smiles to the array
             arr_smiles.append(smi)
             if calc_info:
+                formula, mw, n_heavy, nc = get_mol_descriptors(mol)
                 # Get the formula
-                arr_formula.append(rdMolDescriptors.CalcMolFormula(mol))
+                arr_formula.append(formula)
                 # Get the molecular weight
-                arr_mw.append(rdMolDescriptors.CalcExactMolWt(mol))
+                arr_mw.append(mw)
                 # Get the number of heavy atoms
-                arr_n_heavy.append(mol.GetNumHeavyAtoms())
+                arr_n_heavy.append(n_heavy)
                 # Get the chirality
-                arr_nc.append(get_chirality(mol))
+                arr_nc.append(nc)
         except:
             print(f"Error in {cid}, could not pass to SIMILES", flush=True)
             ids_similes_fail.append(cid)
@@ -183,14 +174,15 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
             # Add the smiles to the array
             arr_smiles.append(Chem.MolToSmiles(mol))
             if calc_info:
+                formula, mw, n_heavy, nc = get_mol_descriptors(mol)
                 # Get the formula
-                arr_formula.append(rdMolDescriptors.CalcMolFormula(Chem.MolFromSmiles(smiles)))
+                arr_formula.append(formula)
                 # Get the molecular weight
-                arr_mw.append(rdMolDescriptors.CalcExactMolWt(Chem.MolFromSmiles(smiles)))
+                arr_mw.append(mw)
                 # Get the number of heavy atoms
-                arr_n_heavy.append(Chem.MolFromSmiles(smiles).GetNumHeavyAtoms())
+                arr_n_heavy.append(n_heavy)
                 # Get the chirality
-                arr_nc.append(get_chirality(Chem.MolFromSmiles(smiles)))
+                arr_nc.append(nc)
 
     # Create a dataframe
     df = pd.DataFrame(data={
@@ -220,6 +212,7 @@ def preprocess_kegg_r(target_dir, outfile):
     id_list = []
     eq_list = []
     ec_list = []
+    ec_line = None
 
     # Loop over the reactions data
     for i, path in enumerate(paths):
