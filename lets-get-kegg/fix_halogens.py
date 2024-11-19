@@ -21,7 +21,7 @@ def get_reactions_with_substring(reactions_df, substring):
 
 
 def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
-                          target_dir_C=r"../../data/kegg_data_C",
+                          target_dir_c=r"../../data/kegg_data_C",
                           ):
     # Load the bad compound IDs
     data_bad_id = load_bad_entries(os.path.abspath(c_id_bad_file), target_str="X group")
@@ -30,11 +30,7 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
     # Prepare the halogen list to expand over
     hal_exp = ['F', 'Cl', 'Br', 'I']
 
-    # Xe is not a halogen this ID is not a halogen and should be removed
-    try:
-        data_bad_id.remove("C13373")
-    except ValueError:
-        pass
+    # Make the combinations of the data and the halogens
     n_data = len(data_bad_id)
     n_hal = len(hal_exp)
     n_comb = n_data * n_hal
@@ -45,16 +41,18 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
     cids_dict = {}
     for i in range(n_data):
         # Get the full path of the file
-        tmp_file = os.path.join(os.path.abspath(target_dir_C), data_bad_id[i], data_bad_id[i] + ".mol")
+        tmp_file = os.path.join(os.path.abspath(target_dir_c), data_bad_id[i], data_bad_id[i] + ".mol")
         with open(os.path.abspath(tmp_file), 'r') as f:
             file_data = f.read()
         # Initialize the list for the current data[i]
         cids_dict[data_bad_id[i]] = []
         smis_dict[data_bad_id[i]] = []
-        # replace the X with the halogen
+        # Replace the X with the halogen
         for j, hal in enumerate(hal_exp):
             idx = num_range[i][j]
+            # Load the molecule
             mol = Chem.MolFromMolBlock(file_data.replace("X", hal))
+            # Standardize the molecule
             mol = standardize_mol(mol)
             smi = Chem.MolToSmiles(mol, allHsExplicit=True)
             # Determine the compound id from the ones already given

@@ -26,13 +26,17 @@ def load_csv_to_dict(file_path):
     return result_dict
 
 
-def check_for_r_group(target_file, re_target=["R# ", "R ", "* "]):
+def check_for_r_group(target_file, re_target=None):
+    if re_target is None:
+        re_target = ["R# ", "R ", "* "]
     with open(target_file, "r") as f:
         lines = [line for line in f if "M  " not in line]
         return any(target in line for line in lines for target in re_target)
 
 
-def replace_r_group(target_file, new_file, re_atom="H", re_target=["R# ", "R ", "* "]):
+def replace_r_group(target_file, new_file, re_atom="H", re_target=None):
+    if re_target is None:
+        re_target = ["R# ", "R ", "* "]
     with open(target_file, "r") as f, open(new_file, "w") as nf:
         lines = [line for line in f if "M  " not in line]
         for target in re_target:
@@ -42,13 +46,17 @@ def replace_r_group(target_file, new_file, re_atom="H", re_target=["R# ", "R ", 
         nf.write("M  END\n\n")
 
 
-def check_for_problem_group(target_file, re_target=["OH"]):
+def check_for_problem_group(target_file, re_target=None):
+    if re_target is None:
+        re_target = ["OH"]
     with open(target_file, "r") as f:
         lines = [line for line in f if "M  " not in line]
         return any(target in line for line in lines for target in re_target)
 
 
-def replace_problem_group(target_file, new_file, re_target=["OH"]):
+def replace_problem_group(target_file, new_file, re_target=None):
+    if re_target is None:
+        re_target = ["OH"]
     with open(target_file, "r") as f, open(new_file, "w") as nf:
         lines = [line for line in f if "M  " not in line]
         for target in re_target:
