@@ -1,7 +1,6 @@
 import csv
 import os
 import re
-import shutil
 
 import pandas as pd
 from rdkit import Chem as Chem
@@ -11,6 +10,8 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
+
+from .tools_files import file_list_all, remove_filepath, delete_files_substring
 
 
 def load_csv_to_dict(file_path):
@@ -22,43 +23,6 @@ def load_csv_to_dict(file_path):
                 key, value = row[0].strip(), row[1].strip()
                 result_dict[key] = value
     return result_dict
-
-
-def file_list(mypath=None):
-    """
-    This function generates a list of all files in a specified directory.
-    If no directory is specified, it defaults to the current working directory.
-
-    Parameters:
-    mypath (str, optional): The path to the directory. Defaults to None, which means the current working directory.
-
-    Returns:
-    list: A list of all files in the specified directory.
-    """
-    mypath = mypath or os.getcwd()  # If no path is provided, use the current working directory
-    return [f for f in os.listdir(mypath) if
-            os.path.isfile(os.path.join(mypath, f))]  # Return a list of all files in the directory
-
-
-def file_list_all(mypath=None):
-    """
-    This function generates a list of all files in a specified directory and its subdirectories.
-    If no directory is specified, it defaults to the current working directory.
-
-    Parameters:
-    mypath (str, optional): The path to the directory. Defaults to None, which means the current working directory.
-
-    Returns:
-    list: A list of all files in the specified directory and its subdirectories.
-    """
-    mypath = mypath or os.getcwd()  # If no path is provided, use the current working directory
-    files = []
-    # os.walk generates the file names in a directory tree by walking the tree either top-down or bottom-up
-    for dirpath, dirnames, filenames in os.walk(mypath):
-        for filename in filenames:
-            # os.path.join joins one or more path components intelligently
-            files.append(os.path.join(dirpath, filename))
-    return files
 
 
 def check_for_r_group(target_file, re_target=["R# ", "R ", "* "]):
@@ -115,44 +79,6 @@ def standardize_mol(mol):
     Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
     rdMolStandardize.NormalizeInPlace(mol)
     return mol
-
-
-def remove(path):
-    """ param <path> could either be relative or absolute. """
-    try:
-        if os.path.isfile(path) or os.path.islink(path):
-            os.remove(path)  # remove the file
-        elif os.path.isdir(path):
-            shutil.rmtree(path)  # remove dir and all contains
-        else:
-            raise ValueError("file {} is not a file or dir.".format(path))
-    except Exception as e:
-        print("Failed to delete", path, e, flush=True)
-
-
-def delete_files_substring(target_dir, substring):
-    """
-    This function deletes all files in a directory and its subdirectories that contain a specified substring.
-
-    Parameters:
-    target_dir (str): The path to the directory to be searched.
-    substring (str): The substring to be searched for in the file names.
-
-    Returns:
-    None
-    """
-    # Get a list of all files in the directory and its subdirectories
-    files = file_list_all(target_dir)
-    # Iterate through the files
-    count = 0
-    for file in files:
-        # Check if the substring is in the file name
-        if substring in file:
-            # Delete the file
-            remove(file)
-            count += 1
-    print(f"Deleted {count} files", flush=True)
-    return count
 
 
 def get_chirality(mol):
@@ -230,9 +156,9 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
         mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
         # Remove the temporary files
         if flag_r:
-            remove(f_load_r)
+            remove_filepath(f_load_r)
         if flag_p:
-            remove(f_load_p)
+            remove_filepath(f_load_p)
         # Standardize and embed the molecule
         mol = standardize_mol(mol)
         # Get the smiles
