@@ -14,6 +14,10 @@ def standardize_mol(mol):
     # Normalize the molecule
     Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
     rdMolStandardize.NormalizeInPlace(mol)
+    # kekulize the molecule
+    # Chem.Kekulize(mol)
+    # Update the properties
+    mol.UpdatePropertyCache(strict=False)
     return mol
 
 
