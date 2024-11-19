@@ -2,9 +2,7 @@ import os
 import re
 
 import pandas as pd
-from rdkit import Chem as Chem
 from rdkit import RDLogger
-from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -271,36 +269,6 @@ def main(target_dir='../data/kegg_data_R/', data_dir="data/"):
     # Sort the data
     data = data.sort_values(by=['Reaction'])
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
-
-
-def standardize_mol(mol):
-    # Standardize the molecule
-    mol.UpdatePropertyCache(strict=False)
-    Chem.SetConjugation(mol)
-    Chem.SetHybridization(mol)
-    # Normalize the molecule
-    Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
-    rdMolStandardize.NormalizeInPlace(mol)
-    # kekulize the molecule
-    # Chem.Kekulize(mol)
-    # Update the properties
-    mol.UpdatePropertyCache(strict=False)
-    return mol
-
-
-def side_to_dict(side):
-    result = {}
-    for component in map(str.strip, side.split('+')):
-        match = re.match(r'(\d*)\s*(C\d+)', component)
-        if match:
-            count = int(match.group(1)) if match.group(1) else 1
-            molecule = match.group(2)
-            result[molecule] = count
-    return result
-
-
-def eq_to_dict(eq):
-    return map(side_to_dict, eq.split('<=>'))
 
 
 if __name__ == "__main__":

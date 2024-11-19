@@ -8,6 +8,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_mols import standardize_mol
+from .tools_eq import eq_to_dict
 
 
 def load_bad_entries(bad_file, target_str="molless"):
