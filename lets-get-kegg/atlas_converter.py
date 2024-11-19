@@ -25,8 +25,11 @@ def cleanup_ec_line(ec_line):
     return outline
 
 
-def clean_kegg_atlas(in_file, out_file):
+def clean_kegg_atlas(in_file="../data/atlas_kegg_reactions.dat", out_file="../data/atlas_data_kegg_R.csv.zip"):
+    # Get the absolute paths
     in_file = os.path.abspath(in_file)
+    out_file = os.path.abspath(out_file)
+
     # open the file
     with open(in_file, "r") as f:
         # read the data
@@ -59,8 +62,10 @@ def clean_kegg_atlas(in_file, out_file):
     return None
 
 
-def clean_atlas(in_file, out_file):
+def clean_atlas(in_file="../data/atlas_reactions.dat", out_file="../data/atlas_data_R.csv.zip"):
+    # Get the absolute paths
     in_file = os.path.abspath(in_file)
+    out_file = os.path.abspath(out_file)
     # Open the file
     with open(in_file, "r") as f:
         # Read the data
@@ -94,18 +99,8 @@ def clean_atlas(in_file, out_file):
     return None
 
 
-def main():
-    infile = r"..\data\atlas_kegg_reactions.dat"
-    outfile = r"data\atlas_data_kegg_R.csv.zip"
-    clean_kegg_atlas(infile, outfile)
-
-    infile = r"..\data\atlas_reactions.dat"
-    outfile = r"data\atlas_data_R.csv.zip"
-    clean_atlas(infile, outfile)
-    return None
-
-
 if __name__ == "__main__":
     print("Program start", flush=True)
-    main()
+    clean_kegg_atlas()
+    clean_atlas()
     print("Program end", flush=True)

@@ -136,7 +136,7 @@ def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", re
 def get_kegg(target_dir, session,
              prefix="D",
              max_idx=12897):
-    bad_file = os.path.abspath(f"data/{prefix.replace("_full", "")}_IDs_bad.dat")
+    bad_file = os.path.abspath(f"../data/{prefix.replace("_full", "")}_IDs_bad.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
@@ -222,7 +222,7 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
     get_kegg(os.path.abspath(target_dir + f"_{target}"), session, prefix=target, max_idx=max_idx)
 
 
-def main(target="R", target_dir=r"..\data\kegg_data"):
+def main(target="R", target_dir=r"../../data/kegg_data"):
     target_dir = os.path.abspath(target_dir)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")

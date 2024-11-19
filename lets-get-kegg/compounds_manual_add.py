@@ -6,7 +6,7 @@ from tools_files import file_list, clean_empty_folders
 
 
 def main():
-    molless_path = 'data/C_IDs_molless.dat'
+    molless_path = '../data/C_IDs_molless.dat'
     data = pd.read_csv(molless_path, sep='\t').values.flatten()
     print("data loaded", flush=True)
     print("data shape", data.shape, flush=True)

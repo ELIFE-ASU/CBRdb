@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from chempy import balance_stoichiometry
 
@@ -68,10 +70,15 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
         return eq_line
 
 
-def main(r_file="data/kegg_data_R.csv.zip",
-         c_file="data/kegg_data_C.csv.zip",
-         bad_file="data/R_IDs_bad.dat",
+def main(r_file="../data/kegg_data_R.csv.zip",
+         c_file="../data/kegg_data_C.csv.zip",
+         bad_file="../data/R_IDs_bad.dat",
          f_fresh=True):
+    # Get the absolute paths
+    r_file = os.path.abspath(r_file)
+    c_file = os.path.abspath(c_file)
+    bad_file = os.path.abspath(bad_file)
+
     missing_dict = {"H2O": "C00001",
                     "H": "C00080",
                     "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023

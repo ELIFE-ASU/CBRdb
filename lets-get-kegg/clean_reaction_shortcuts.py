@@ -68,7 +68,11 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     return incomplete_reaction_ids
 
 
-def main(target_dir='../data/kegg_data_R/', data_dir="data/"):
+def main(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
+    # Prepare the full path of the files
+    target_dir = os.path.abspath(target_dir)
+    data_dir = os.path.abspath(data_dir)
+
     print("Input: An unzipped, locally-downloaded folder of raw KEGG reaction data files.", flush=True)
     print("Output: CSVs with relevant reaction info, ties to other databases and flags for removal.", flush=True)
     global reactions, OK
@@ -224,7 +228,7 @@ def main(target_dir='../data/kegg_data_R/', data_dir="data/"):
     reactions['STEP_ENTRIES'] = dm.groupby('index')['step_group'].apply(list).fillna('')
     reactions_printable = make_lists_printable(reactions)
     if f_save_files:
-        make_lists_printable(dm).to_csv('../reactions_multistep_intermediate_processing.csv.zip',
+        make_lists_printable(dm).to_csv(os.path.join(data_dir, 'reactions_multistep_intermediate_processing.csv.zip'),
                                         compression='zip',
                                         encoding='utf-8')
         reactions_printable.to_csv(os.path.join(data_dir, 'reactions_processed_full.csv.zip'),

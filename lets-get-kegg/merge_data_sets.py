@@ -65,8 +65,8 @@ def replace_entries(df1, df2):
     return df1
 
 
-def fix_ec_ids(file_ec_ids="data/ec_ids.csv.zip",
-               input_file="data/kegg_atlas_processed_merged.csv.zip",
+def fix_ec_ids(file_ec_ids="../data/ec_ids.csv.zip",
+               input_file="../data/kegg_atlas_processed_merged.csv.zip",
                output_file=None):
     # Check if the output file is specified
     if output_file is None:
@@ -110,9 +110,9 @@ def get_nonunique_entries(df1, df2, column_name):
 
 def merge_data(merge_col='reaction',
                f_keep='first',
-               kegg_file="data/kegg_data_R_processed.csv.zip",
-               atlas_file="data/atlas_data_R_processed.csv.zip",
-               out_file="data/kegg_atlas_processed_merged.csv.zip"):
+               kegg_file="../data/kegg_data_R_processed.csv.zip",
+               atlas_file="../data/atlas_data_R_processed.csv.zip",
+               out_file="../data/kegg_atlas_processed_merged.csv.zip"):
     print("Merging the KEGG and ATLAS data sets", flush=True)
     print(f"KEGG file: {kegg_file}", flush=True)
     print(f"ATLAS file: {atlas_file}", flush=True)
@@ -144,9 +144,9 @@ def merge_data(merge_col='reaction',
         print(tmp)
 
 
-def merge_data_retain_sources(kegg_file="data/kegg_data_R_processed.csv.zip",
-               atlas_file="data/atlas_data_R_processed.csv.zip",
-               out_file="data/atlas_kegg_processed_merged_deduped.csv.zip"):
+def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
+               atlas_file="../data/atlas_data_R_processed.csv.zip",
+               out_file="../data/atlas_kegg_processed_merged_deduped.csv.zip"):
     print("Merging the KEGG and ATLAS data sets", flush=True)
     print(f"KEGG file: {kegg_file}", flush=True)
     print(f"ATLAS file: {atlas_file}", flush=True)
@@ -190,9 +190,9 @@ if __name__ == "__main__":
     print("Program started", flush=True)
     # merge_data(merge_col='id',
     #            f_keep='last',
-    #            kegg_file="data/kegg_data_R.csv.zip",
-    #            atlas_file="data/atlas_data_kegg_R.csv.zip",
-    #            out_file="data/kegg_data_R_merged.csv.zip")
+    #            kegg_file="../data/kegg_data_R.csv.zip",
+    #            atlas_file="../data/atlas_data_kegg_R.csv.zip",
+    #            out_file="../data/kegg_data_R_merged.csv.zip")
 
     merge_data(merge_col='reaction',
                f_keep='first',

@@ -34,7 +34,8 @@ if __name__ == "__main__":
 
     # Convert the atlas files into a more readable format
     print("Converting atlas files", flush=True)
-    atlas_converter.main()
+    atlas_converter.clean_kegg_atlas()
+    atlas_converter.clean_atlas()
     # Provides the atlas_data_kegg_R.csv.zip and atlas_data_R.csv.zip files
     print("Done! \n", flush=True)
 

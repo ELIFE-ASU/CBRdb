@@ -243,9 +243,9 @@ def preprocess_kegg_r(target_dir, outfile):
     return None
 
 
-def main(target="R", target_dir=r"..\data\kegg_data"):
+def main(target="R", target_dir=r"../../data/kegg_data"):
     target_dir = os.path.abspath(target_dir + f"_{target}")
-    out_file = os.path.abspath(f"data/kegg_data_{target}.csv.zip")
+    out_file = os.path.abspath(f"../data/kegg_data_{target}.csv.zip")
     if target == "C":
         # Defines a dictionary of manual fixes
         man_dict = load_csv_to_dict("../data/C_IDs_manual.dat")

@@ -24,11 +24,14 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
                           target_dir_c=r"../../data/kegg_data_C",
                           hal_exp=None,
                           ):
+    # Prepare the full path of the files
+    c_id_bad_file = os.path.abspath(c_id_bad_file)
+    target_dir_c = os.path.abspath(target_dir_c)
     # Prepare the halogen list to expand over
     if hal_exp is None:
         hal_exp = ['F', 'Cl', 'Br', 'I']
     # Load the bad compound IDs
-    data_bad_id = load_bad_entries(os.path.abspath(c_id_bad_file), target_str="X group")
+    data_bad_id = load_bad_entries(c_id_bad_file, target_str="X group")
     print(f"bad files ID with halogens: {data_bad_id}", flush=True)
 
     # Make the combinations of the data and the halogens
@@ -42,8 +45,8 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
     cids_dict = {}
     for i in range(n_data):
         # Get the full path of the file
-        tmp_file = os.path.join(os.path.abspath(target_dir_c), data_bad_id[i], data_bad_id[i] + ".mol")
-        with open(os.path.abspath(tmp_file), 'r') as f:
+        tmp_file = os.path.join(target_dir_c, data_bad_id[i], data_bad_id[i] + ".mol")
+        with open(tmp_file, 'r') as f:
             file_data = f.read()
         # Initialize the list for the current data[i]
         cids_dict[data_bad_id[i]] = []
@@ -83,6 +86,8 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
 def merge_halogen_compounds(cids_dict, smis_dict, c_id_file="../data/kegg_data_C.csv.zip", out_file=None):
     if out_file is None:
         out_file = c_id_file
+    # Prepare the full path of the files
+    c_id_file = os.path.abspath(c_id_file)
 
     # Convert the cids_dict and smis_dict to a list
     cids_list = []
@@ -132,9 +137,9 @@ def merge_halogen_compounds(cids_dict, smis_dict, c_id_file="../data/kegg_data_C
     return None
 
 
-def fix_halogen_reactions(cids_dict, smis_dict):
-    r_id_file = "../data/kegg_data_R.csv.zip"
-    r_id_file = "../data/atlas_data_kegg_R.csv.zip"
+def fix_halogen_reactions(cids_dict, smis_dict, r_id_file = "../data/kegg_data_R.csv.zip"):
+    # Prepare the full path of the files
+    r_id_file = os.path.abspath(r_id_file)
 
     print(f"cids_dict {cids_dict}")
     print(f"smis_dict {smis_dict}")
