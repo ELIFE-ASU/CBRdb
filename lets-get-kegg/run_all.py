@@ -1,6 +1,7 @@
 import atlas_converter
 import clean_reaction_shortcuts
 import compounds_manual_add
+import fix_halogens
 import fix_reactions_data
 import lets_get_kegg
 import merge_data_sets
@@ -44,7 +45,8 @@ if __name__ == "__main__":
     print("Done! \n", flush=True)
 
     # Fix the problems with the reactions with the halogens
-    # clean_reaction_shortcuts.fix_halogen_reactions()
+    fix_halogens.fix_halogen_compounds()
+    fix_halogens.fix_halogen_reactions()
 
     # Fix the reactions data
     print("Fixing the reactions data", flush=True)
@@ -53,6 +55,8 @@ if __name__ == "__main__":
     fix_reactions_data.main(r_file="../data/atlas_data_R.csv.zip")
     # Provides the processed R files
     print("Done! \n", flush=True)
+
+    # Fix the reactions data with a n
 
     # Merge the data from the atlas and the kegg data
     merge_data_sets.merge_data(merge_col='reaction',
