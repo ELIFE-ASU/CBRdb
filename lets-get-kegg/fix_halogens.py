@@ -80,7 +80,10 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
     return cids_dict, smis_dict
 
 
-def merge_halogen_compounds(cids_dict, smis_dict, c_id_file="../data/kegg_data_C.csv.zip"):
+def merge_halogen_compounds(cids_dict, smis_dict, c_id_file="../data/kegg_data_C.csv.zip", out_file=None):
+    if out_file is None:
+        out_file = c_id_file
+
     # Convert the cids_dict and smis_dict to a list
     cids_list = []
     smis_list = []
@@ -116,7 +119,7 @@ def merge_halogen_compounds(cids_dict, smis_dict, c_id_file="../data/kegg_data_C
         "n_chiral_centers": arr_nc})
 
     # Load the compounds data
-    df_old = pd.read_csv(c_id_file, compression='zip')
+    df_old = pd.read_csv(c_id_file, compression='zip', index_col=0)
 
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)
@@ -125,12 +128,11 @@ def merge_halogen_compounds(cids_dict, smis_dict, c_id_file="../data/kegg_data_C
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id")
     # Save the dataframe
-    df.to_csv("../data/kegg_data_C_tmp.csv.zip", compression='zip', encoding='utf-8')
+    df.to_csv(out_file, compression='zip', encoding='utf-8')
     return None
 
 
 def fix_halogen_reactions(cids_dict, smis_dict):
-    c_id_file = "../data/kegg_data_C.csv.zip"
     r_id_file = "../data/kegg_data_R.csv.zip"
     r_id_file = "../data/atlas_data_kegg_R.csv.zip"
 
@@ -139,14 +141,6 @@ def fix_halogen_reactions(cids_dict, smis_dict):
 
     # Load the bad compound IDs
     data_bad_id = list(cids_dict.keys())
-
-    # load the compounds data
-    compounds = pd.read_csv(c_id_file, compression='zip')
-    # # Get the compounds with the halogens
-    # compounds = compounds[compounds['compound_id'].isin(data)]
-    # print(compounds['compound_id'].values)
-    target_dir = r"../../data/kegg_data_C"
-    target_dir = os.path.abspath(target_dir)
 
     # Load the reactions data
     reactions = pd.read_csv(r_id_file, compression='zip')
@@ -158,31 +152,32 @@ def fix_halogen_reactions(cids_dict, smis_dict):
         equations = get_reactions_with_substring(reactions, data_bad_id[i])
         re_set.update(equations['id'].values)
     re_set = list(re_set)
-    print(f"Reactions with the halogens {re_set}")
+    print(f"Reactions with the halogens {re_set}", flush=True)
 
     # loop over the reactions
     for i in range(len(re_set)):
-        print(f"Reaction {re_set[i]}")
+        print(f"Reaction {re_set[i]}", flush=True)
         # Get the reaction
         reaction = reactions[reactions['id'] == re_set[i]]
         eq = reaction['reaction'].values[0]
         eq_re = eq
         # for each key value in the dictionary of cid
-        print(f"input eq:       {eq}")
+        print(f"input eq:       {eq}", flush=True)
         # break the eq
         lhs, rhs = eq_to_dict(eq)
         # print(lhs, rhs)
         # Loop over the data_bad_id items
         for val in data_bad_id:
-            print(f"Replacing {val}")
+            print(f"Replacing {val}", flush=True)
             for j in range(len(cids_dict[val])):
-                print(f"Replacing {val} with {cids_dict[val][j]}")
+                print(f"Replacing {val} with {cids_dict[val][j]}", flush=True)
                 eq_re = eq_re.replace(val, cids_dict[val][j])
-                print(f"output eq_re:   {eq_re}")
+                print(f"output eq_re:   {eq_re}", flush=True)
 
 
 if __name__ == "__main__":
     print("Program started", flush=True)
     cids_dict, smis_dict = fix_halogen_compounds()
-    fix_halogen_reactions(cids_dict, smis_dict)
+    merge_halogen_compounds(cids_dict, smis_dict)
+    # fix_halogen_reactions(cids_dict, smis_dict)
     print("Program finished", flush=True)
