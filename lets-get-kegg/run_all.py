@@ -45,8 +45,11 @@ if __name__ == "__main__":
     print("Done! \n", flush=True)
 
     # Fix the problems with the reactions with the halogens
+    print("Fixing the halogen compounds and reactions", flush=True)
     fix_halogens.fix_halogen_compounds()
     fix_halogens.fix_halogen_reactions()
+    # merge the data back in??
+    print("Done! \n", flush=True)
 
     # Fix the reactions data
     print("Fixing the reactions data", flush=True)

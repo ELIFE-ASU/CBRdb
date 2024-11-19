@@ -151,5 +151,5 @@ def fix_halogen_reactions():
 if __name__ == "__main__":
     print("Program started", flush=True)
     fix_halogen_compounds()
-    # fix_halogen_reactions()
+    fix_halogen_reactions()
     print("Program finished", flush=True)
