@@ -8,7 +8,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from tools_mols import standardize_mol
-from tools_eq import eq_to_dict, dicts_to_eq
+from tools_eq import eq_to_dict
 
 
 def load_bad_entries(bad_file, target_str="molless"):
@@ -125,31 +125,11 @@ def fix_halogen_reactions(cids_dict, smis_dict):
         # print(lhs, rhs)
         # Loop over the data_bad_id items
         for val in data_bad_id:
-            eq_re = eq_re.replace(val, cids_dict[val][0])
-            # Get the index of the key
-            idx = lhs.get(val)
-            if idx is not None:
-                # Get the new value
-                new_value = cids_dict[val][0]
-                # print(f"Replacing LHS {val} with {new_value}")
-                # construct the new equation
-                lhs[new_value] = lhs.pop(val)
-            # do the same for the rhs
-            idx = rhs.get(val)
-            if idx is not None:
-                # Get the new value
-                new_value = cids_dict[val][0]
-                # print(f"Replacing RHS {val} with {new_value}")
-                # construct the new equation
-                rhs[new_value] = rhs.pop(val)
-        # print(lhs, rhs)
-        # reassemble the equation
-        eq_new = dicts_to_eq(lhs, rhs)
-        print(f"output eq:      {eq_new}")
-
-        # for val in data_bad_id:
-        #     eq = eq.replace(val, cids_dict[val][0])
-        print(f"output eq_re:   {eq_re}")
+            print(f"Replacing {val}")
+            for j in range(len(cids_dict[val])):
+                print(f"Replacing {val} with {cids_dict[val][j]}")
+                eq_re = eq_re.replace(val, cids_dict[val][j])
+                print(f"output eq_re:   {eq_re}")
 
 
 if __name__ == "__main__":
