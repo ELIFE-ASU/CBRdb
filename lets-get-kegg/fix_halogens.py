@@ -1,18 +1,22 @@
 import os
-import re
 
 import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
-from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
+
+from .tools_mols import standardize_mol
 
 
 def load_bad_entries(bad_file, target_str="molless"):
     with open(bad_file, 'r') as file:
         return [line.split(',')[0].strip() for line in file if target_str in line]
+
+
+def get_reactions_with_substring(reactions_df, substring):
+    return reactions_df[reactions_df['reaction'].str.contains(substring, case=False, na=False)]
 
 
 def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
@@ -77,7 +81,7 @@ def fix_halogen_reactions():
     print(f"smis_dict {smis_dict}")
 
     # Load the bad compound IDs
-    #data_bad_id = load_bad_entries(os.path.abspath(c_id_bad_file), target_str="X group")
+    # data_bad_id = load_bad_entries(os.path.abspath(c_id_bad_file), target_str="X group")
 
     # load the compounds data
     compounds = pd.read_csv(c_id_file, compression='zip')

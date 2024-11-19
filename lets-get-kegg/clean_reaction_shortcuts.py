@@ -273,10 +273,6 @@ def main(target_dir='../data/kegg_data_R/', data_dir="data/"):
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
 
 
-def get_reactions_with_substring(reactions_df, substring):
-    return reactions_df[reactions_df['reaction'].str.contains(substring, case=False, na=False)]
-
-
 def standardize_mol(mol):
     # Standardize the molecule
     mol.UpdatePropertyCache(strict=False)
