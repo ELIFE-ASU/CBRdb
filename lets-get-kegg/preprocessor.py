@@ -6,7 +6,8 @@ import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem.MolStandardize import rdMolStandardize
+
+from .tools_mols import standardize_mol, get_chirality
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -68,28 +69,6 @@ def check_for_x_group(target_file):
         for line in f:
             if contains_x_not_xe(line):
                 return True
-
-
-def standardize_mol(mol):
-    # Standardize the molecule
-    mol.UpdatePropertyCache(strict=False)
-    Chem.SetConjugation(mol)
-    Chem.SetHybridization(mol)
-    # Normalize the molecule
-    Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
-    rdMolStandardize.NormalizeInPlace(mol)
-    return mol
-
-
-def get_chirality(mol):
-    try:
-        return len(
-            Chem.FindMolChiralCenters(mol,
-                                      useLegacyImplementation=False,
-                                      includeUnassigned=True,
-                                      includeCIP=False))
-    except:
-        return float('NaN')
 
 
 def rd_replacer(smi):
