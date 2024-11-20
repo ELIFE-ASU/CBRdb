@@ -6,12 +6,12 @@ import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 
-from tools_mols import standardize_mol, get_mol_descriptors, fix_r_group
+from .tools_mols import standardize_mol, get_mol_descriptors, fix_r_group
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from tools_files import file_list_all, remove_filepath, delete_files_substring
+from .tools_files import file_list_all, remove_filepath, delete_files_substring
 
 
 def load_csv_to_dict(file_path):

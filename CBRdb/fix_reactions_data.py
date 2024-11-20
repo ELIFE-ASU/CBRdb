@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from chempy import balance_stoichiometry
 
-from tools_eq import (get_eq,
+from .tools_eq import (get_eq,
                       get_elements_from_eq,
                       compare_dict_values,
                       check_missing_formulas,

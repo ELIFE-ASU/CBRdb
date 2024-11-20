@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from tools_files import file_list, clean_empty_folders
+from .tools_files import file_list, clean_empty_folders
 
 
 def compounds_manual_add(molless_path = '../data/C_IDs_molless.dat',

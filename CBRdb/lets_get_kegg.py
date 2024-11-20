@@ -6,7 +6,7 @@ from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from tools_files import clean_empty_folders
+from .tools_files import clean_empty_folders
 
 
 def load_bad_entries(bad_file, target_str="molless"):

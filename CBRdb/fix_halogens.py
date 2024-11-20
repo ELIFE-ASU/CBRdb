@@ -7,7 +7,7 @@ from rdkit import RDLogger
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from tools_mols import standardize_mol, get_mol_descriptors
+from .tools_mols import standardize_mol, get_mol_descriptors
 
 
 def make_custom_id(idx, prefix="C"):
