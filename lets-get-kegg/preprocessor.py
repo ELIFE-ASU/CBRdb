@@ -6,7 +6,7 @@ import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 
-from tools_mols import standardize_mol, get_mol_descriptors
+from tools_mols import standardize_mol, get_mol_descriptors, fix_r_group
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -78,7 +78,7 @@ def check_for_x_group(target_file):
                 return True
 
 
-def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True):
+def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True, n_print=100):
     # Get a list of all files in the directory
     files = file_list_all(target_dir)
     # Clean up the files
@@ -105,7 +105,7 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
     for i, file in enumerate(files):
         # Get the CID
         cid = os.path.basename(file).split(".")[0]
-        if i % 100 == 0:
+        if i % n_print == 0:
             print(f"Processing file {i}/{n}: {cid}", flush=True)
         # Init flags
         f_load_r = None
@@ -136,13 +136,14 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
             remove_filepath(f_load_r)
         if flag_p:
             remove_filepath(f_load_p)
-        # Standardize and embed the molecule
-        mol = standardize_mol(mol)
-        # Get the smiles
-        smi = Chem.MolToSmiles(mol)
+
         try:
-            # Ensure the mol can be converted back to mol
-            standardize_mol(Chem.MolFromSmiles(smi, sanitize=False))
+            # Standardize and embed the molecule
+            mol = standardize_mol(mol)
+            # Fix the fix_r_group
+            mol = fix_r_group(mol)
+            # Convert the molecule to smiles
+            smi = Chem.MolToSmiles(mol)
             # Add the ID
             arr_cid.append(cid)
             # Add the smiles to the array
