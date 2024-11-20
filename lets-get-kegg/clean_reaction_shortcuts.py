@@ -44,11 +44,12 @@ def flag_missing_reactions(x):
 
 
 def load_reactions_data(target_dir):
-    a = os.listdir(os.path.abspath(target_dir))
+    a = os.listdir(target_dir)
     reactions = {}
     for i in a:
+        file = os.path.abspath(f"{target_dir}/{i}/{i}.data")
         try:
-            with open(f"{target_dir}{i}/{i}.data", 'r') as f:
+            with open(file, 'r') as f:
                 entries = {}
                 for line in f.readlines()[:-1]:
                     if not line.startswith(' '):
@@ -58,7 +59,8 @@ def load_reactions_data(target_dir):
                         entries[field] += '; ' + line.lstrip().rstrip('\n')
                 reactions[i] = entries
         except:
-            pass
+            print(f"Error reading {i}.data", flush=True)
+            raise FileExistsError
     return pd.DataFrame(reactions).fillna('').T
 
 
@@ -91,6 +93,7 @@ def main(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
 
     # This needs to point to the directory where the KEGG reaction data files are stored.
     reactions = load_reactions_data(target_dir)
+    print(reactions)
 
     # Parse each reaction's ties to other databases.
     # Flag reactions with glycan participants and "overall" reactions
