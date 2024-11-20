@@ -81,6 +81,7 @@ def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
             if f_print:
                 print(f"Compound {data_bad_id[i]} with halogen {hal}, idx {idx} -> {smi}", flush=True)
             # Determine the compound id from the ones already given
+            # If not found, generate a new one
             cid = {
                 "C00462": {"F": "C16487", "Cl": "C01327", "Br": "C13645", "I": "C05590"},
                 "C01322": {},  # full expansion required!
@@ -167,11 +168,11 @@ def merge_halogen_compounds(cids_dict,
 
 
 def fix_halogen_reactions(cids_dict,
-                          smis_dict,
                           r_id_file="../data/atlas_data_R.csv.zip",
                           int_file=None,
                           out_file=None,
-                          ):  # kegg_data_R
+                          f_print=False,
+                          ):
     if out_file is None:
         out_file = r_id_file
     # Prepare the full path of the files
@@ -181,26 +182,26 @@ def fix_halogen_reactions(cids_dict,
     out_file = os.path.abspath(out_file)
     idx_base = 99000
     prefix = "R"
-    if "atlas" in r_id_file:
+    if "atlas" in r_id_file and "kegg" not in r_id_file:
         idx_base = 990000
         prefix = "A"
 
     # Prepare the full path of the files
     r_id_file = os.path.abspath(r_id_file)
-
-    print(f"cids_dict {cids_dict}", flush=True)
-    print(f"smis_dict {smis_dict}", flush=True)
+    if f_print:
+        print(f"cids_dict {cids_dict}", flush=True)
 
     # Load the bad compound IDs
     data_bad_id = list(cids_dict.keys())
     n_compounds = len(data_bad_id)
-    print(f"{n_compounds} bad compound files ID with halogens: {data_bad_id}", flush=True)
+    if f_print:
+        print(f"{n_compounds} bad compound files ID with halogens: {data_bad_id}", flush=True)
 
     # Load the reactions data
     reactions = pd.read_csv(r_id_file, compression='zip', index_col=0)
-
-    # print the reactions columns
-    print(reactions.columns, flush=True)
+    if f_print:
+        print(reactions.columns, flush=True)
+        print(reactions.head(), flush=True)
 
     # Find the reactions with the halogens
     reactions_set = set()
@@ -210,16 +211,13 @@ def fix_halogen_reactions(cids_dict,
         reactions_set.update(equations['id'].values)
     reactions_set = list(reactions_set)
     n_reactions = len(reactions_set)
-    print(f"{n_reactions} Reactions with the halogens {reactions_set}", flush=True)
-
-    n_hal = len(cids_dict[data_bad_id[0]])
-    print(f"n_hal {n_hal}", flush=True)
-    n_comb = n_reactions * n_compounds * n_hal
-    print(f"n_comb {n_comb}", flush=True)
+    if f_print:
+        print(f"{n_reactions} Reactions with the halogens {reactions_set}", flush=True)
 
     # Get the EC numbers of the reactions_set
     ec_numbers = reactions[reactions['id'].isin(reactions_set)]['ec'].values
-    print(f"EC numbers {ec_numbers}", flush=True)
+    if f_print:
+        print(f"EC numbers {ec_numbers}", flush=True)
 
     id_list = []
     reaction_list = []
@@ -227,24 +225,28 @@ def fix_halogen_reactions(cids_dict,
     idx = 0
     # loop over the reactions
     for i in range(n_reactions):
-        print(f"{i}: Reaction {reactions_set[i]}", flush=True)
+        if f_print:
+            print(f"{i}: Reaction {reactions_set[i]}", flush=True)
         # Get the reaction
         reaction = reactions[reactions['id'] == reactions_set[i]]
         eq = reaction['reaction'].values[0]
         eq_re = eq
         # for each key value in the dictionary of cid
-        print(f"input eq:       {eq}", flush=True)
+        if f_print:
+            print(f"input eq:       {eq}", flush=True)
         # Loop over the data_bad_id items
         for k in range(n_compounds):
             val = data_bad_id[k]
             if val in eq:
-                print(f"{k} Replacing compound {val}", flush=True)
+                if f_print:
+                    print(f"{k} Replacing compound {val}", flush=True)
                 for j in range(len(cids_dict[val])):
-                    print(f"{j}: Replacing Halogen {val} with {cids_dict[val][j]}", flush=True)
                     eq_re = eq_re.replace(val, cids_dict[val][j])
-                    print(f"output eq_re:   {eq_re}", flush=True)
                     new_id = make_custom_id(idx_base + idx, prefix=prefix)
-                    print(f"New ID {new_id}", flush=True)
+                    if f_print:
+                        print(f"{j}: Replacing Halogen {val} with {cids_dict[val][j]}", flush=True)
+                        print(f"output eq_re:   {eq_re}", flush=True)
+                        print(f"New ID {new_id}", flush=True)
                     idx += 1
                     # # Create an entry for the reaction id
                     id_list.append(new_id)
@@ -272,7 +274,12 @@ def fix_halogen_reactions(cids_dict,
 
 if __name__ == "__main__":
     print("Program started", flush=True)
+    # Fix the halogen compounds in the C data
     cids_dict, smis_dict = fix_halogen_compounds()
+    # Merge the halogen compounds into the C data
     merge_halogen_compounds(cids_dict, smis_dict)
-    fix_halogen_reactions(cids_dict, smis_dict)
+    # Fix the halogen reactions in the R data
+    fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_R.csv.zip", f_print=True)
+    fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_kegg_R.csv.zip", f_print=True)
+    fix_halogen_reactions(cids_dict, r_id_file="../data/kegg_data_R.csv.zip", f_print=True)
     print("Program finished", flush=True)
