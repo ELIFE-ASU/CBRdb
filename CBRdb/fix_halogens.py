@@ -11,19 +11,30 @@ from tools_mols import standardize_mol, get_mol_descriptors
 
 
 def make_custom_id(idx, prefix="C"):
+    """
+    Generates a custom compound ID with a given prefix and index.
+
+    Parameters:
+    idx (int): The index to be included in the compound ID.
+    prefix (str): The prefix to be used in the compound ID. Default is "C".
+
+    Returns:
+    str: A custom compound ID in the format 'prefix' followed by a zero-padded index.
+    """
     return f"{prefix}{int(idx):05d}"
 
 
 def make_id_range(data, hal_exp):
-    n_data = len(data)
-    n_hal = len(hal_exp)
-    n_comb = n_data * n_hal
-    num_range = range(n_comb)
-    # Reshape num_range to a 2D array
-    return [num_range[i:i + n_hal] for i in range(0, n_comb, n_hal)]
+    """
+    Creates a range of IDs for combinations of data and halogen expansions.
 
+    Parameters:
+    data (list): A list of data entries.
+    hal_exp (list): A list of halogen expansions.
 
-def make_id_range(data, hal_exp):
+    Returns:
+    list: A list of ranges, each representing a combination of data and halogen expansions.
+    """
     n_data = len(data)
     n_hal = len(hal_exp)
     n_comb = n_data * n_hal
@@ -33,11 +44,31 @@ def make_id_range(data, hal_exp):
 
 
 def load_bad_entries(bad_file, target_str="molless"):
+    """
+    Loads bad entries from a file that contain a specific target string.
+
+    Parameters:
+    bad_file (str): The path to the file containing bad entries.
+    target_str (str): The target string to search for in the file. Default is "molless".
+
+    Returns:
+    list: A list of bad entries that contain the target string.
+    """
     with open(bad_file, 'r') as file:
         return [line.split(',')[0].strip() for line in file if target_str in line]
 
 
 def get_reactions_with_substring(reactions_df, substring):
+    """
+    Filters reactions in a DataFrame that contain a specific substring.
+
+    Parameters:
+    reactions_df (DataFrame): A pandas DataFrame containing reaction data.
+    substring (str): The substring to search for in the reaction data.
+
+    Returns:
+    DataFrame: A DataFrame containing reactions that match the substring.
+    """
     return reactions_df[reactions_df['reaction'].str.contains(substring, case=False, na=False)]
 
 
