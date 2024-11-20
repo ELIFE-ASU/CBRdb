@@ -15,6 +15,15 @@ from tools_files import file_list_all, remove_filepath, delete_files_substring
 
 
 def load_csv_to_dict(file_path):
+    """
+    Loads a CSV file and converts it to a dictionary.
+
+    Parameters:
+    file_path (str): The path to the CSV file.
+
+    Returns:
+    dict: A dictionary where the keys are the first column values and the values are the second column values.
+    """
     result_dict = {}
     with open(file_path, mode='r', encoding='utf-8') as file:
         reader = csv.reader(file)
@@ -26,6 +35,16 @@ def load_csv_to_dict(file_path):
 
 
 def check_for_r_group(target_file, re_target=None):
+    """
+    Checks if a target file contains any R groups.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    re_target (list, optional): A list of R group patterns to search for. Default is ["R# ", "R ", "* "].
+
+    Returns:
+    bool: True if any R group pattern is found in the file, False otherwise.
+    """
     if re_target is None:
         re_target = ["R# ", "R ", "* "]
     with open(target_file, "r") as f:
@@ -34,6 +53,18 @@ def check_for_r_group(target_file, re_target=None):
 
 
 def replace_r_group(target_file, new_file, re_atom="H", re_target=None):
+    """
+    Replaces R groups in a target file with a specified replacement atom and writes the result to a new file.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    new_file (str): The path to the new file where the result will be written.
+    re_atom (str): The replacement atom to use for R groups. Default is "H".
+    re_target (list, optional): A list of R group patterns to search for. Default is ["R# ", "R ", "* "].
+
+    Returns:
+    None
+    """
     if re_target is None:
         re_target = ["R# ", "R ", "* "]
     with open(target_file, "r") as f, open(new_file, "w") as nf:
@@ -46,6 +77,16 @@ def replace_r_group(target_file, new_file, re_atom="H", re_target=None):
 
 
 def check_for_problem_group(target_file, re_target=None):
+    """
+    Checks if a target file contains any problem groups.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    re_target (list, optional): A list of problem group patterns to search for. Default is ["OH"].
+
+    Returns:
+    bool: True if any problem group pattern is found in the file, False otherwise.
+    """
     if re_target is None:
         re_target = ["OH"]
     with open(target_file, "r") as f:
@@ -54,6 +95,17 @@ def check_for_problem_group(target_file, re_target=None):
 
 
 def replace_problem_group(target_file, new_file, re_target=None):
+    """
+    Replaces problem groups in a target file with a specified replacement atom and writes the result to a new file.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    new_file (str): The path to the new file where the result will be written.
+    re_target (list, optional): A list of problem group patterns to search for. Default is ["OH"].
+
+    Returns:
+    None
+    """
     if re_target is None:
         re_target = ["OH"]
     with open(target_file, "r") as f, open(new_file, "w") as nf:
@@ -67,11 +119,29 @@ def replace_problem_group(target_file, new_file, re_target=None):
 
 
 def contains_x_not_xe(s):
+    """
+    Checks if a string contains the character 'X' not followed by 'e'.
+
+    Parameters:
+    s (str): The input string to search.
+
+    Returns:
+    bool: True if 'X' not followed by 'e' is found, False otherwise.
+    """
     # Use a regular expression to find "X" not followed by "e"
     return bool(re.search(r'X(?!e)', s))
 
 
 def check_for_x_group(target_file):
+    """
+    Checks if a target file contains any 'X' groups.
+
+    Parameters:
+    target_file (str): The path to the target file.
+
+    Returns:
+    bool: True if any 'X' group is found in the file, False otherwise.
+    """
     with open(target_file, "r") as f:
         for line in f:
             if contains_x_not_xe(line):
@@ -206,7 +276,7 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
             f.write(f"{cid}, SIMILES fail\n")
 
 
-def preprocess_kegg_r(target_dir, outfile):
+def preprocess_kegg_r(target_dir, outfile, n_print=100):
     # Get a list of all files in the directory
     paths = file_list_all(target_dir)
     n = len(paths)
@@ -219,7 +289,7 @@ def preprocess_kegg_r(target_dir, outfile):
     for i, path in enumerate(paths):
         # Get the ID
         re_id = os.path.basename(path).split(".")[0]
-        if i % 100 == 0:
+        if i % n_print == 0:
             print(f"Processing {i}/{n} {re_id}", flush=True)
         # Load the data
         with open(path, "r") as f:
@@ -244,12 +314,17 @@ def preprocess_kegg_r(target_dir, outfile):
     return None
 
 
-def preprocess(target="R", target_dir=r"../../data/kegg_data"):
+def preprocess(target="R",
+               target_dir=r"../../data/kegg_data",
+               out_file=r"../data/kegg_data",
+               cid_manual_file=r"../data/C_IDs_manual.dat"):
+    # Set absolute paths
     target_dir = os.path.abspath(target_dir + f"_{target}")
-    out_file = os.path.abspath(f"../data/kegg_data_{target}.csv.zip")
+    out_file = os.path.abspath(f"{out_file}_{target}.csv.zip")
+    cid_manual_file = os.path.abspath(cid_manual_file)
     if target == "C":
         # Defines a dictionary of manual fixes
-        man_dict = load_csv_to_dict("../data/C_IDs_manual.dat")
+        man_dict = load_csv_to_dict(cid_manual_file)
         # Defines a list of bad CIDs to skip
         convert_mol_to_smiles(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)
