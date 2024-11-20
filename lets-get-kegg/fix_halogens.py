@@ -151,10 +151,10 @@ def merge_halogen_compounds(cids_dict,
         "n_heavy_atoms": arr_n_heavy,
         "n_chiral_centers": arr_nc})
     if int_file is not None:
-        df.to_csv(int_file, compression='zip', encoding='utf-8')
+        df.to_csv(int_file, compression='zip', encoding='utf-8', index=False)
 
     # Load the compounds data
-    df_old = pd.read_csv(c_id_file, compression='zip', index_col=0)
+    df_old = pd.read_csv(c_id_file, compression='zip')
 
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)
@@ -198,7 +198,7 @@ def fix_halogen_reactions(cids_dict,
         print(f"{n_compounds} bad compound files ID with halogens: {data_bad_id}", flush=True)
 
     # Load the reactions data
-    reactions = pd.read_csv(r_id_file, compression='zip', index_col=0)
+    reactions = pd.read_csv(r_id_file, compression='zip')
     if f_print:
         print(reactions.columns, flush=True)
         print(reactions.head(), flush=True)
@@ -258,9 +258,9 @@ def fix_halogen_reactions(cids_dict,
         "reaction": reaction_list,
         "ec": ec_list})
     if int_file is not None:
-        df.to_csv(int_file, compression='zip', encoding='utf-8')
+        df.to_csv(int_file, compression='zip', encoding='utf-8', index=False)
     # Load the reactions data
-    df_old = pd.read_csv(r_id_file, compression='zip', index_col=0)
+    df_old = pd.read_csv(r_id_file, compression='zip')
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)
     # Drop the duplicates

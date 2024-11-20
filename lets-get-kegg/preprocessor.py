@@ -195,7 +195,7 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id")
     # Save the dataframe
-    df.to_csv(outfile, compression='zip', encoding='utf-8')
+    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
 
     # Save the problematic CIDs
     with open("../data/C_IDs_bad.dat", "a") as f:
@@ -239,7 +239,7 @@ def preprocess_kegg_r(target_dir, outfile):
     # Make the dataframe for the id and the equation
     df = pd.DataFrame({'id': id_list, 'reaction': eq_list, 'ec': ec_line})
     # Write the data to a file
-    df.to_csv(outfile, compression='zip', encoding='utf-8')
+    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     return None
 
 

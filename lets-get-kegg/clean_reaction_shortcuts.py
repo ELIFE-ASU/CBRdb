@@ -116,7 +116,7 @@ def main(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
     if f_save_files:
         rclass_db = r_rclass.reset_index(names='REACTION').groupby(by=['RC', 'CPAIR'])['REACTION'].apply(set).apply(
             list).to_frame()
-        make_lists_printable(rclass_db).to_csv(os.path.join(data_dir, 'rclass_db.csv'))
+        make_lists_printable(rclass_db).to_csv(os.path.join(data_dir, 'rclass_db.csv'), encoding='utf-8', index=False)
 
     # Use comments to identify multi-step reactions
     # artificial shortcuts compressing multiple existing reaction IDs into a single net reaction.
@@ -230,10 +230,10 @@ def main(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
     if f_save_files:
         make_lists_printable(dm).to_csv(os.path.join(data_dir, 'reactions_multistep_intermediate_processing.csv.zip'),
                                         compression='zip',
-                                        encoding='utf-8')
+                                        encoding='utf-8', index=False)
         reactions_printable.to_csv(os.path.join(data_dir, 'reactions_processed_full.csv.zip'),
                                    compression='zip',
-                                   encoding='utf-8')
+                                   encoding='utf-8', index=False)
 
     reactions_processed = pd.concat(
         [reactions_printable.filter(like='FLAG'),
@@ -242,7 +242,7 @@ def main(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
     if f_save_files:
         reactions_processed.to_csv(os.path.join(data_dir, 'reactions_processed_basic.csv.zip'),
                                    compression='zip',
-                                   encoding='utf-8')
+                                   encoding='utf-8', index=False)
 
     # Select only the reactions that are overall_flagged or glycan_flagged
     reactions_shortcut = reactions_printable.query('OVERALL_FLAG == True')
