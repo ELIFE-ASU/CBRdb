@@ -1,12 +1,13 @@
 import os
 import time
+from io import StringIO
 
 import pandas as pd
 import requests
 from requests import Session
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from io import StringIO
+
 
 def prepare_session():
     # Make the session
@@ -38,7 +39,7 @@ def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction
     if response.ok:
         # Get all enzyme-reaction pairs from KEGG
         df = (pd.read_table(StringIO(response.text), header=None, index_col=None, names=['id', 'ec'])
-              .applymap(lambda x: x.split(':')[1])) 
+              .applymap(lambda x: x.split(':')[1]))
         # Make enzyme list for each reaction
         df = df.groupby(by='id')['ec'].apply(lambda x: '|'.join(list(x))).to_frame()
         return df
@@ -71,6 +72,11 @@ def fix_ec_ids(file_ec_ids="../data/ec_ids.csv.zip",
     # Check if the output file is specified
     if output_file is None:
         output_file = input_file
+    # Convert the file paths to absolute paths
+    file_ec_ids = os.path.abspath(file_ec_ids)
+    input_file = os.path.abspath(input_file)
+    output_file = os.path.abspath(output_file)
+
     # Grab the EC data from the KEGG website
     if not os.path.exists(file_ec_ids):
         print("Getting the EC data from the KEGG website", flush=True)
@@ -113,6 +119,11 @@ def merge_data(merge_col='reaction',
                kegg_file="../data/kegg_data_R_processed.csv.zip",
                atlas_file="../data/atlas_data_R_processed.csv.zip",
                out_file="../data/kegg_atlas_processed_merged.csv.zip"):
+    # Convert the file paths to absolute paths
+    kegg_file = os.path.abspath(kegg_file)
+    atlas_file = os.path.abspath(atlas_file)
+    out_file = os.path.abspath(out_file)
+
     print("Merging the KEGG and ATLAS data sets", flush=True)
     print(f"KEGG file: {kegg_file}", flush=True)
     print(f"ATLAS file: {atlas_file}", flush=True)
@@ -145,8 +156,15 @@ def merge_data(merge_col='reaction',
 
 
 def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
-               atlas_file="../data/atlas_data_R_processed.csv.zip",
-               out_file="../data/atlas_kegg_processed_merged_deduped.csv.zip"):
+                              atlas_file="../data/atlas_data_R_processed.csv.zip",
+                              out_file="../data/atlas_kegg_processed_merged_deduped.csv.zip",
+                              ec_file="../data/ec_ids.csv.zip"):
+    # Convert the file paths to absolute paths
+    kegg_file = os.path.abspath(kegg_file)
+    atlas_file = os.path.abspath(atlas_file)
+    out_file = os.path.abspath(out_file)
+    ec_file = os.path.abspath(ec_file)
+
     print("Merging the KEGG and ATLAS data sets", flush=True)
     print(f"KEGG file: {kegg_file}", flush=True)
     print(f"ATLAS file: {atlas_file}", flush=True)
@@ -154,34 +172,34 @@ def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
     kegg_data = pd.read_csv(kegg_file, index_col=0)
     # Load the atlas reactions list
     atlas_data = pd.read_csv(atlas_file, index_col=0)
-    
-    print('Adding coefficients where missing, then standardizing compound order')
+
+    print('Adding coefficients where missing, then standardizing compound order', flush=True)
     add_ones_and_sort_compounds = lambda x: ' + '.join(
-        sorted(['1 '+i if i[0]=='C' else i for i in x.split(' + ')]))
+        sorted(['1 ' + i if i[0] == 'C' else i for i in x.split(' + ')]))
     atlas_data['reaction_sorted'] = atlas_data['reaction'].str.split(' <=> ').apply(
         lambda x: ' <=> '.join(sorted([add_ones_and_sort_compounds(i) for i in x])))
     kegg_data['reaction_sorted'] = kegg_data['reaction'].str.split(' <=> ').apply(
         lambda x: ' <=> '.join(sorted([add_ones_and_sort_compounds(i) for i in x])))
-    
-    print('Standardizing EC# rules between datasets')
-    single_sep = lambda x: x.strip().replace(' ','|').replace(',','|') # standardizes separators
+
+    print('Standardizing EC# rules between datasets', flush=True)
+    single_sep = lambda x: x.strip().replace(' ', '|').replace(',', '|')  # standardizes separators
     extract_ec_serial_numbers = lambda x: '|'.join(sorted(list(set(
-                [i for i in single_sep(x).replace('(rev)','').split('|')
-                if '-' not in i and i.count('.')==3 and i.split('.')[-1].isnumeric()])))) # some end in e.g. B##
+        [i for i in single_sep(x).replace('(rev)', '').split('|')
+         if '-' not in i and i.count('.') == 3 and i.split('.')[-1].isnumeric()]))))  # some end in e.g. B##
     atlas_data['ec'] = atlas_data['ec'].apply(extract_ec_serial_numbers)
-    kegg_ecs = pd.read_csv('../data/ec_ids.csv.zip', compression='zip', index_col=0)['ec']
-    kegg_data['ec'] = kegg_data.index.map(kegg_ecs).fillna('') # until kegg_data_R_processed.csv.zip is fixed
+    kegg_ecs = pd.read_csv(ec_file, compression='zip', index_col=0)['ec']
+    kegg_data['ec'] = kegg_data.index.map(kegg_ecs).fillna('')  # until kegg_data_R_processed.csv.zip is fixed
 
-    print('Combining the datasets and preserving EC# sources')
+    print('Combining the datasets and preserving EC# sources', flush=True)
     concat_db = pd.concat([kegg_data, atlas_data], axis=0).reset_index()
-    concat_db['ec'] = concat_db['ec'].str.split('|') 
+    concat_db['ec'] = concat_db['ec'].str.split('|')
     concat_db = concat_db.drop(columns='reaction').set_index('reaction_sorted').explode('ec')
-    concat_db['id2ec'] = (concat_db['id']+':'+concat_db['ec'])*(concat_db['ec']!='')
+    concat_db['id2ec'] = (concat_db['id'] + ':' + concat_db['ec']) * (concat_db['ec'] != '')
 
-    print('Merging the data')
+    print('Merging the data', flush=True)
     merged_db = (concat_db.applymap(lambda x: [x]).groupby(level=0).sum()
                  .applymap(lambda x: '|'.join(sorted(list(set(x)))[::-1])).reset_index()
-                 .rename(columns={'reaction_sorted':'reaction'}).set_index('id'))
+                 .rename(columns={'reaction_sorted': 'reaction'}).set_index('id'))
     merged_db.to_csv(out_file, compression='zip', encoding='utf-8')
     print("Merged data saved! \n", flush=True)
 
