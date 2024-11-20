@@ -25,10 +25,17 @@ def cleanup_ec_line(ec_line):
     return outline
 
 
-def clean_kegg_atlas(in_file="../data/atlas_kegg_reactions.dat", out_file="../data/atlas_data_kegg_R.csv.zip"):
+def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat", out_file="../data/atlas_data_kegg_R.csv.zip"):
     # Get the absolute paths
     in_file = os.path.abspath(in_file)
     out_file = os.path.abspath(out_file)
+
+    # check if the file exists
+    if not os.path.exists(in_file):
+        print("File does not exist", flush=True)
+        print("You need to put the atlas data here", flush=True)
+        print(in_file, flush=True)
+        raise FileNotFoundError
 
     # open the file
     with open(in_file, "r") as f:
@@ -57,15 +64,23 @@ def clean_kegg_atlas(in_file="../data/atlas_kegg_reactions.dat", out_file="../da
     # Store the data in a dataframe
     df = pd.DataFrame({'id': re_id, 'reaction': re_eq, 'chemical_names': re_chem_names, 'ec': re_ec})
     # Write the data to a file
-    df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(out_file, compression='zip', encoding='utf-8')
     print("data written to file", flush=True)
     return None
 
 
-def clean_atlas(in_file="../data/atlas_reactions.dat", out_file="../data/atlas_data_R.csv.zip"):
+def clean_atlas(in_file="../../data/atlas_reactions.dat", out_file="../data/atlas_data_R.csv.zip"):
     # Get the absolute paths
     in_file = os.path.abspath(in_file)
     out_file = os.path.abspath(out_file)
+
+    # check if the file exists
+    if not os.path.exists(in_file):
+        print("File does not exist", flush=True)
+        print("You need to put the atlas data here", flush=True)
+        print(in_file, flush=True)
+        raise FileNotFoundError
+
     # Open the file
     with open(in_file, "r") as f:
         # Read the data
