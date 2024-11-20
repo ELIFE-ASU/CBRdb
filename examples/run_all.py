@@ -10,6 +10,7 @@ import preprocessor
 if __name__ == "__main__":
     print("Program started", flush=True)
     f_man = False
+
     # Downloading all the data, the mol files and the (full) web pages
     print("Downloading all the data, the mol files and the (full) web pages", flush=True)
     lets_get_kegg.main(target="C")
@@ -55,8 +56,6 @@ if __name__ == "__main__":
     fix_halogens.fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_R.csv.zip")
     fix_halogens.fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_kegg_R.csv.zip")
     fix_halogens.fix_halogen_reactions(cids_dict, r_id_file="../data/kegg_data_R.csv.zip")
-
-    # merge the data back in??
     print("Done! \n", flush=True)
 
     # Fix the reactions data
