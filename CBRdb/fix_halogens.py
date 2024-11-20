@@ -270,16 +270,3 @@ def fix_halogen_reactions(cids_dict,
     # Save the dataframe
     df.to_csv(out_file, compression='zip', encoding='utf-8')
     return None
-
-
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    # Fix the halogen compounds in the C data
-    cids_dict, smis_dict = fix_halogen_compounds()
-    # Merge the halogen compounds into the C data
-    merge_halogen_compounds(cids_dict, smis_dict)
-    # Fix the halogen reactions in the R data
-    fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_R.csv.zip", f_print=True)
-    fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_kegg_R.csv.zip", f_print=True)
-    fix_halogen_reactions(cids_dict, r_id_file="../data/kegg_data_R.csv.zip", f_print=True)
-    print("Program finished", flush=True)

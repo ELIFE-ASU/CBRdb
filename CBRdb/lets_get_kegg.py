@@ -222,7 +222,7 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
     get_kegg(os.path.abspath(target_dir + f"_{target}"), session, prefix=target, max_idx=max_idx)
 
 
-def main(target="R", target_dir=r"../../data/kegg_data"):
+def download_data(target="R", target_dir=r"../../data/kegg_data"):
     target_dir = os.path.abspath(target_dir)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
@@ -230,11 +230,3 @@ def main(target="R", target_dir=r"../../data/kegg_data"):
     get_kegg_all(target_dir=target_dir, target=target)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
-
-
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    main(target="C")
-    main(target="R")
-    main(target="C_full")
-    print("Program finished", flush=True)

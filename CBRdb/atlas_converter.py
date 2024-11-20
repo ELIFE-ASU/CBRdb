@@ -112,10 +112,3 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat", out_file="../data/atla
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
     print("data written to file", flush=True)
     return None
-
-
-if __name__ == "__main__":
-    print("Program start", flush=True)
-    clean_kegg_atlas()
-    clean_atlas()
-    print("Program end", flush=True)

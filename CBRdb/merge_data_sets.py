@@ -202,28 +202,3 @@ def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
                  .rename(columns={'reaction_sorted': 'reaction'}).set_index('id'))
     merged_db.to_csv(out_file, compression='zip', encoding='utf-8')
     print("Merged data saved! \n", flush=True)
-
-
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    # merge_data(merge_col='id',
-    #            f_keep='last',
-    #            kegg_file="../data/kegg_data_R.csv.zip",
-    #            atlas_file="../data/atlas_data_kegg_R.csv.zip",
-    #            out_file="../data/kegg_data_R_merged.csv.zip")
-
-    merge_data(merge_col='reaction',
-               f_keep='first',
-               kegg_file="../data/atlas_data_kegg_R_processed.csv.zip",
-               atlas_file="../data/atlas_data_R_processed.csv.zip",
-               out_file="../data/atlas_kegg_processed_merged.csv.zip")
-
-    merge_data(merge_col='reaction',
-               f_keep='first',
-               kegg_file="../data/kegg_data_R_processed.csv.zip",
-               atlas_file="../data/atlas_data_R_processed.csv.zip",
-               out_file="../data/kegg_atlas_processed_merged.csv.zip")
-    # Fix the EC ids
-    fix_ec_ids(input_file="../data/atlas_kegg_processed_merged.csv.zip")
-    fix_ec_ids(input_file="../data/kegg_atlas_processed_merged.csv.zip")
-    print("Program ended", flush=True)

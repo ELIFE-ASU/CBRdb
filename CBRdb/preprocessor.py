@@ -244,7 +244,7 @@ def preprocess_kegg_r(target_dir, outfile):
     return None
 
 
-def main(target="R", target_dir=r"../../data/kegg_data"):
+def preprocess(target="R", target_dir=r"../../data/kegg_data"):
     target_dir = os.path.abspath(target_dir + f"_{target}")
     out_file = os.path.abspath(f"../data/kegg_data_{target}.csv.zip")
     if target == "C":
@@ -256,10 +256,3 @@ def main(target="R", target_dir=r"../../data/kegg_data"):
     elif target == "R":
         preprocess_kegg_r(target_dir, out_file)
         print("R preprocessing done", flush=True)
-
-
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    main(target="C")
-    main(target="R")
-    print("Program finished", flush=True)

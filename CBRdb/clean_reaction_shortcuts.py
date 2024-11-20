@@ -70,7 +70,7 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     return incomplete_reaction_ids
 
 
-def main(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
+def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
     # Prepare the full path of the files
     target_dir = os.path.abspath(target_dir)
     data_dir = os.path.abspath(data_dir)
@@ -275,9 +275,3 @@ def main(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
     # Sort the data
     data = data.sort_values(by=['Reaction'])
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
-
-
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    main()
-    print("Program finished", flush=True)

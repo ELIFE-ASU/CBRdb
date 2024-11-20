@@ -5,15 +5,20 @@ import pandas as pd
 from tools_files import file_list, clean_empty_folders
 
 
-def main():
-    molless_path = '../data/C_IDs_molless.dat'
+def compounds_manual_add(molless_path = '../data/C_IDs_molless.dat',
+                         target_dir = '../../data/kegg_data_C_full',
+                         good_file="../data/C_IDs_good.dat"
+                         ):
+
+    # Set the absolute path
+    molless_path = os.path.abspath(molless_path)
+    target_dir = os.path.abspath(target_dir)
+    good_file = os.path.abspath(good_file)
+
     data = pd.read_csv(molless_path, sep='\t').values.flatten()
     print("data loaded", flush=True)
     print("data shape", data.shape, flush=True)
     print("data head", data[:4], flush=True)
-
-    # Target directory
-    target_dir = os.path.abspath('../../data/kegg_data_C_full')
 
     # Remove empty folders
     clean_empty_folders(target_dir)
@@ -22,7 +27,7 @@ def main():
     print(f"Files in the target directory: {files}", flush=True)
 
     # Good files to follow-up on
-    good_file = "../data/C_IDs_good.dat"
+
     r_list = []
     good_list = []
     # loop over the data
@@ -102,9 +107,3 @@ def main():
         f.write("# Good compound IDs to follow up on\n")
         for id in good_list:
             f.write(f"{id}\n")
-
-
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    main()
-    print("Program finished", flush=True)

@@ -70,10 +70,10 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
         return eq_line
 
 
-def main(r_file="../data/kegg_data_R.csv.zip",
-         c_file="../data/kegg_data_C.csv.zip",
-         bad_file="../data/R_IDs_bad.dat",
-         f_fresh=True):
+def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
+                       c_file="../data/kegg_data_C.csv.zip",
+                       bad_file="../data/R_IDs_bad.dat",
+                       f_fresh=True):
     # Get the absolute paths
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)
@@ -352,11 +352,3 @@ def main(r_file="../data/kegg_data_R.csv.zip",
     print(f"len bad_missing_ele: {len(bad_missing_ele)}/{n_ids}", flush=True)
     print(f"len bad no balance: {len(bad_no_balance)}/{n_ids}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
-
-
-if __name__ == "__main__":
-    print("Program started", flush=True)
-    main(r_file="../data/kegg_data_R.csv.zip")
-    main(r_file="../data/atlas_data_kegg_R.csv.zip")
-    main(r_file="../data/atlas_data_R.csv.zip")
-    print("Program finished!", flush=True)
