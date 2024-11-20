@@ -47,8 +47,15 @@ if __name__ == "__main__":
 
     # Fix the problems with the reactions with the halogens
     print("Fixing the halogen compounds and reactions", flush=True)
-    fix_halogens.fix_halogen_compounds()
-    fix_halogens.fix_halogen_reactions()
+    # Fix the halogen compounds in the C data
+    cids_dict, smis_dict = fix_halogens.fix_halogen_compounds()
+    # Merge the halogen compounds into the C data
+    fix_halogens.merge_halogen_compounds(cids_dict, smis_dict)
+    # Fix the halogen reactions in the R data
+    fix_halogens.fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_R.csv.zip")
+    fix_halogens.fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_kegg_R.csv.zip")
+    fix_halogens.fix_halogen_reactions(cids_dict, r_id_file="../data/kegg_data_R.csv.zip")
+
     # merge the data back in??
     print("Done! \n", flush=True)
 
