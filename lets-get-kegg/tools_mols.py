@@ -1,7 +1,7 @@
 from rdkit import Chem as Chem
 from rdkit import RDLogger
-from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -16,10 +16,21 @@ def standardize_mol(mol):
     Chem.SanitizeMol(mol, sanitizeOps=(Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES))
     rdMolStandardize.NormalizeInPlace(mol)
     # kekulize the molecule
-    # Chem.Kekulize(mol)
+    Chem.Kekulize(mol)
     # Update the properties
     mol.UpdatePropertyCache(strict=False)
     return mol
+
+
+def fix_r_group(smi, target="[H:0]", re="*"):
+    # replace all occurrences of [H:0] with *
+    smi = smi.replace(target, re)
+    # Get the molecule
+    mol = Chem.MolFromSmiles(smi, sanitize=False)
+    # Standardize the molecule
+    mol = standardize_mol(mol)
+    # Return the smiles
+    return Chem.MolToSmiles(mol)
 
 
 def get_chirality(mol):
