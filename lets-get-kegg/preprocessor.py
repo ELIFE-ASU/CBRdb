@@ -11,7 +11,7 @@ from tools_mols import standardize_mol, get_mol_descriptors
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from .tools_files import file_list_all, remove_filepath, delete_files_substring
+from tools_files import file_list_all, remove_filepath, delete_files_substring
 
 
 def load_csv_to_dict(file_path):
