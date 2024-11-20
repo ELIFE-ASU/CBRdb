@@ -4,14 +4,15 @@ import shutil
 
 def file_list(mypath=None):
     """
-    This function generates a list of all files in a specified directory.
-    If no directory is specified, it defaults to the current working directory.
+    Returns a list of all files in the specified directory.
+
+    If no directory path is provided, the current working directory is used.
 
     Parameters:
-    mypath (str, optional): The path to the directory. Defaults to None, which means the current working directory.
+    mypath (str): The path to the directory. Defaults to None.
 
     Returns:
-    list: A list of all files in the specified directory.
+    list: A list of file names in the specified directory.
     """
     mypath = mypath or os.getcwd()  # If no path is provided, use the current working directory
     return [f for f in os.listdir(mypath) if
@@ -20,14 +21,15 @@ def file_list(mypath=None):
 
 def file_list_all(mypath=None):
     """
-    This function generates a list of all files in a specified directory and its subdirectories.
-    If no directory is specified, it defaults to the current working directory.
+    Returns a list of all files in the specified directory and its subdirectories.
+
+    If no directory path is provided, the current working directory is used.
 
     Parameters:
-    mypath (str, optional): The path to the directory. Defaults to None, which means the current working directory.
+    mypath (str): The path to the directory. Defaults to None.
 
     Returns:
-    list: A list of all files in the specified directory and its subdirectories.
+    list: A list of file paths in the specified directory and its subdirectories.
     """
     mypath = mypath or os.getcwd()  # If no path is provided, use the current working directory
     files = []
@@ -41,13 +43,13 @@ def file_list_all(mypath=None):
 
 def list_empty_folders(target_dir):
     """
-    List all empty folders within a specified directory.
+    Returns a list of empty folders in the specified directory.
 
     Parameters:
-    target_dir (str): The path to the directory to search in.
+    target_dir (str): The path to the target directory.
 
     Returns:
-    list: A list of paths to all empty folders within the specified directory.
+    list: A list of paths to empty folders in the specified directory.
     """
     empty_folders = []
     for entry in os.listdir(target_dir):
@@ -59,16 +61,14 @@ def list_empty_folders(target_dir):
 
 def clean_empty_folders(target_dir, size=False):
     """
-    This function removes all empty folders from a specified directory.
-    It first generates a list of all empty folders in the directory,
-    then removes each folder in the list.
-    It prints the number of folders removed and returns this number.
+    Removes empty folders in the specified directory.
 
     Parameters:
-    target_dir (str): The directory from which empty folders are to be removed.
+    target_dir (str): The path to the target directory.
+    size (bool): If True, also considers folders with size 0 as empty. Defaults to False.
 
     Returns:
-    int: The number of folders removed.
+    int: The number of empty folders removed.
     """
     # Make a list of empty folders using the size of the folder
     e1 = [folder for folder in os.listdir(target_dir) if
@@ -93,7 +93,16 @@ def clean_empty_folders(target_dir, size=False):
 
 
 def remove_filepath(path):
-    """ param <path> could either be relative or absolute. """
+    """
+    Removes a file or directory at the specified path.
+
+    Parameters:
+    path (str): The path to the file or directory to be removed.
+
+    Raises:
+    ValueError: If the specified path is neither a file nor a directory.
+    Exception: If there is an error during the removal process.
+    """
     try:
         if os.path.isfile(path) or os.path.islink(path):
             os.remove(path)  # remove the file
@@ -107,14 +116,14 @@ def remove_filepath(path):
 
 def delete_files_substring(target_dir, substring):
     """
-    This function deletes all files in a directory and its subdirectories that contain a specified substring.
+    Deletes files in the specified directory and its subdirectories that contain the given substring in their names.
 
     Parameters:
-    target_dir (str): The path to the directory to be searched.
-    substring (str): The substring to be searched for in the file names.
+    target_dir (str): The path to the target directory.
+    substring (str): The substring to search for in file names.
 
     Returns:
-    None
+    int: The number of files deleted.
     """
     # Get a list of all files in the directory and its subdirectories
     files = file_list_all(target_dir)
