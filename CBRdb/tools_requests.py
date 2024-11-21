@@ -4,6 +4,12 @@ from urllib3.util import Retry
 
 
 def prepare_session():
+    """
+    Prepares a requests session with retry logic.
+
+    Returns:
+    requests.Session: A configured session object with retry logic.
+    """
     # Make the session
     s = Session()
     # Add retries

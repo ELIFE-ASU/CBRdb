@@ -320,10 +320,23 @@ def preprocess(target="R",
                target_dir=r"../../data/kegg_data",
                out_file=r"../data/kegg_data",
                cid_manual_file=r"../data/C_IDs_manual.dat"):
+    """
+    Preprocesses KEGG data based on the specified target type.
+
+    Parameters:
+    target (str, optional): The target type to preprocess ('C' for compounds, 'R' for reactions). Defaults to 'R'.
+    target_dir (str, optional): The directory containing the KEGG data. Defaults to "../../data/kegg_data".
+    out_file (str, optional): The output file path for the preprocessed data. Defaults to "../data/kegg_data".
+    cid_manual_file (str, optional): The file path for manual CID fixes. Defaults to "../data/C_IDs_manual.dat".
+
+    Returns:
+    None
+    """
     # Set absolute paths
     target_dir = os.path.abspath(target_dir + f"_{target}")
     out_file = os.path.abspath(f"{out_file}_{target}.csv.zip")
     cid_manual_file = os.path.abspath(cid_manual_file)
+
     if target == "C":
         # Defines a dictionary of manual fixes
         man_dict = load_csv_to_dict(cid_manual_file)
