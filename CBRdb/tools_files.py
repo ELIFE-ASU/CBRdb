@@ -137,3 +137,18 @@ def delete_files_substring(target_dir, substring):
             count += 1
     print(f"Deleted {count} files", flush=True)
     return count
+
+
+def make_custom_id(idx, prefix="C", digits=5):
+    """
+    Generates a custom ID with a specified prefix and number of digits.
+
+    Parameters:
+    idx (int): The index to be included in the ID.
+    prefix (str): The prefix for the ID. Default is "C".
+    digits (int): The number of digits for the ID. Default is 5.
+
+    Returns:
+    str: The generated custom ID.
+    """
+    return f"{prefix}{int(idx):0{digits}d}"

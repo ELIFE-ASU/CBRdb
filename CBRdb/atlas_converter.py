@@ -2,6 +2,8 @@ import os
 
 import pandas as pd
 
+from .tools_files import make_custom_id
+
 
 def format_id(number):
     return f"A{int(number):06d}"
@@ -100,7 +102,7 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     for i, line in enumerate(data):
         # split the line by the delimiter
         line = line.split(";")
-        id = format_id(line[0])
+        id = make_custom_id(line[0], prefix="A", digits=6)
         kegg_id = line[1]
         eq = cleanup_eq_line(line[3])
         ec = cleanup_ec_line(line)

@@ -8,20 +8,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_mols import standardize_mol, get_mol_descriptors
-
-
-def make_custom_id(idx, prefix="C"):
-    """
-    Generates a custom compound ID with a given prefix and index.
-
-    Parameters:
-    idx (int): The index to be included in the compound ID.
-    prefix (str): The prefix to be used in the compound ID. Default is "C".
-
-    Returns:
-    str: A custom compound ID in the format 'prefix' followed by a zero-padded index.
-    """
-    return f"{prefix}{int(idx):05d}"
+from .tools_files import make_custom_id
 
 
 def make_id_range(data, hal_exp):
