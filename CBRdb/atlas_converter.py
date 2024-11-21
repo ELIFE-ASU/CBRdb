@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 
+from .tools_eq import standardise_eq
 from .tools_files import make_custom_id
 
 
@@ -58,8 +59,12 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
         line = line.split(";")
         # Get the reaction id
         re_id.append(line[0])
+        # Cleanup the equation line
+        eq_line = cleanup_eq_line(line[1])
+        # Standardise the equation
+        eq_line = standardise_eq(eq_line)
         # Get the reaction equation
-        re_eq.append(cleanup_eq_line(line[1]))
+        re_eq.append(eq_line)
         # Get the reaction name
         re_chem_names.append(line[2].replace("|", ""))
         # Get the reaction EC
@@ -98,21 +103,26 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     re_eq = []
     re_ec = []
 
-    # loop over the data
+    # Loop over the data
     for i, line in enumerate(data):
-        # split the line by the delimiter
+        # Split the line by the delimiter
         line = line.split(";")
+        # Get the reaction id
         id = make_custom_id(line[0], prefix="A", digits=6)
+        # Get the reaction KEGG id
         kegg_id = line[1]
-        eq = cleanup_eq_line(line[3])
+        # Cleanup the equation line
+        eq_line = cleanup_eq_line(line[3])
+        # Standardise the equation
+        eq_line = standardise_eq(eq_line)
+        # Get the reaction EC
         ec = cleanup_ec_line(line)
-
         # Get the reaction id
         re_id.append(id)
         # Get the KEGG reaction id
         re_kegg_id.append(kegg_id)
         # Get the reaction equation
-        re_eq.append(eq)
+        re_eq.append(eq_line)
         # Get the reaction EC
         re_ec.append(ec)
 

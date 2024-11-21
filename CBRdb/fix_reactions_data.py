@@ -9,7 +9,8 @@ from .tools_eq import (get_eq,
                        check_missing_formulas,
                        check_missing_elements,
                        check_eq_unbalanced,
-                       get_missing_elements)
+                       get_missing_elements,
+                       standardise_eq)
 
 
 def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
@@ -310,6 +311,9 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                         continue
                 else:
                     print("Rebalance success!", flush=True)
+
+        # Standardise the equation
+        eq_line = standardise_eq(eq_line)
 
         # Allocate the result to the lists
         out_ids.append(re_id)
