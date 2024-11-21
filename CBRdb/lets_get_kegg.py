@@ -54,7 +54,8 @@ def get_total_n(session,
         lines = response.text.split("\n")
         n = len(lines)
         idx = int(lines[-2].split()[0][1:])
-        return n, idx
+        valid_ids = [line.split()[0] for line in lines[:-1]]
+        return n, idx, valid_ids
     else:
         print(f"Error response {response.status_code}")
         raise ConnectionError
@@ -142,7 +143,8 @@ def get_data(id,
 def get_kegg(target_dir,
              session,
              prefix="D",
-             max_idx=12897):
+             max_idx=12897,
+             valid_ids=False):
     bad_file = os.path.abspath(f"../data/{prefix.replace('_full', '')}_IDs_bad.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
@@ -167,9 +169,13 @@ def get_kegg(target_dir,
     # Start the loop
     i = 0
     while True:
-        i += 1
         # Get the formatted id
-        id = make_custom_id(i, prefix=prefix)
+        if not valid_ids:
+            i += 1
+            id = make_custom_id(i, prefix=prefix)
+        else:
+            id = valid_ids[i]
+            i += 1
         # Get the full path
         full_path = os.path.join(target_dir, id)
         print(f"Downloading {id}", flush=True)
@@ -216,11 +222,11 @@ def get_kegg_all(target_dir="kegg_data",
     session = prepare_session()
     # Check if the target is a valid target and get the maximum index
     if target == "D" or target == "D_full":
-        _, max_idx = get_total_n(session, database="drug")
+        _, max_idx, valid_ids = get_total_n(session, database="drug")
     elif target == "C" or target == "C_full":
-        _, max_idx = get_total_n(session, database="compound")
+        _, max_idx, valid_ids = get_total_n(session, database="compound")
     elif target == "R":
-        _, max_idx = get_total_n(session, database="reaction")
+        _, max_idx, valid_ids = get_total_n(session, database="reaction")
     else:
         raise ValueError(f"Unknown target {target}")
 
@@ -230,7 +236,8 @@ def get_kegg_all(target_dir="kegg_data",
     get_kegg(os.path.abspath(target_dir + f"_{target}"),
              session,
              prefix=target,
-             max_idx=max_idx)
+             max_idx=max_idx,
+             valid_ids=valid_ids)
 
 
 def download_data(target="R",
