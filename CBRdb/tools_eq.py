@@ -143,10 +143,19 @@ def get_formulas_from_ids(ids, c_data):
 
 
 def side_to_dict(s):
-    pattern = r'([+-]?[^\s]+)\s+(C\d+)'
+    """
+    Converts a side of a chemical equation into a dictionary with molecules as keys and their counts as values.
+
+    Parameters:
+    side (str): A string representing one side of a chemical equation, with components separated by '+'.
+
+    Returns:
+    dict: A dictionary where keys are molecule identifiers and values are their counts.
+    """
+    pattern = r'([+-]?[^\s]*?)\s*(C\d+)'
     matches = re.findall(pattern, s)
-    result = {code: int(coefficient) if coefficient.lstrip('+-').isdigit() else coefficient for coefficient, code in
-              matches}
+    result = {code: int(coefficient) if coefficient.lstrip('+-').isdigit() else coefficient or 1 for coefficient, code
+              in matches}
     return result
 
 
