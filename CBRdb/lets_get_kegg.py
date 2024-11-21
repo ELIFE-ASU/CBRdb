@@ -3,7 +3,7 @@ import time
 
 import requests
 
-from .tools_files import clean_empty_folders
+from .tools_files import clean_empty_folders, make_custom_id
 from .tools_requests import prepare_session
 
 
@@ -20,20 +20,6 @@ def load_bad_entries(bad_file, target_str="molless"):
     """
     with open(bad_file, 'r') as file:
         return [line.split(',')[0].strip() for line in file if target_str in line]
-
-
-def format_mol_id(id_number, prefix="D"):
-    """
-    This function formats a molecule ID by adding a prefix and ensuring the ID number is five digits long.
-
-    Parameters:
-    id_number (int): The ID number of the molecule.
-    prefix (str, optional): The prefix to be added to the ID number. Defaults to "D".
-
-    Returns:
-    str: The formatted molecule ID.
-    """
-    return prefix + '{:05}'.format(id_number)
 
 
 def get_total_n(session,
@@ -183,7 +169,7 @@ def get_kegg(target_dir,
     while True:
         i += 1
         # Get the formatted id
-        id = format_mol_id(i, prefix=prefix)
+        id = make_custom_id(i, prefix=prefix)
         # Get the full path
         full_path = os.path.join(target_dir, id)
         print(f"Downloading {id}", flush=True)
