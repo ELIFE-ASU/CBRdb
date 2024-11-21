@@ -6,20 +6,36 @@ from .tools_eq import standardise_eq
 from .tools_files import make_custom_id
 
 
-def format_id(number):
-    return f"A{int(number):06d}"
-
-
 def cleanup_eq_line(eq_line):
-    eq_line = eq_line.replace(")", " ")
-    eq_line = eq_line.replace("(", "")
-    eq_line = eq_line.replace("<=>", " <=> ")
-    eq_line = eq_line.replace("<==>", " <=> ")
-    eq_line = eq_line.replace("+", " + ")
+    """
+    Cleans up the equation line by replacing specific characters and patterns.
+
+    Parameters:
+    eq_line (str): The equation line to be cleaned.
+
+    Returns:
+    str: The cleaned equation line.
+    """
+    replacements = {")": " ",
+                    "(": "",
+                    "<=>": " <=> ",
+                    "<==>": " <=> ",
+                    "+": " + "}
+    for old, new in replacements.items():
+        eq_line = eq_line.replace(old, new)
     return eq_line
 
 
 def cleanup_ec_line(ec_line):
+    """
+    Cleans up the EC line by selecting the appropriate element based on specific conditions.
+
+    Parameters:
+    ec_line (list): A list of strings representing the EC line components.
+
+    Returns:
+    str: The cleaned EC line.
+    """
     # Select the second to last element and split by the delimiter
     outline = ec_line[-2].split("/")[-1]
     # If the outline is empty, use the 4th element

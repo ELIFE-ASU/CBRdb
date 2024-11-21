@@ -11,6 +11,16 @@ pd.options.mode.chained_assignment = None
 
 
 def scan_for_kegg_pattern(s, prefix):
+    """
+    Scans a string for KEGG patterns with a specific prefix.
+
+    Parameters:
+    s (str): The string to scan for KEGG patterns.
+    prefix (str): The prefix to look for in the KEGG patterns.
+
+    Returns:
+    list: A list of KEGG patterns that match the specified prefix.
+    """
     if prefix in s:
         return [i for i in s.replace(';', ' ').replace('[', ' ').replace(']', ' ').split()
                 if i.startswith(prefix) and len(i) == len(prefix) + 5]
@@ -18,6 +28,15 @@ def scan_for_kegg_pattern(s, prefix):
 
 
 def make_lists_printable(df):
+    """
+    Converts list-like columns in a DataFrame to printable strings.
+
+    Parameters:
+    df (DataFrame): The pandas DataFrame to be processed.
+
+    Returns:
+    DataFrame: A copy of the DataFrame with list-like columns converted to strings.
+    """
     list_like_cols = df.loc[:, df.iloc[0].apply(lambda x: isinstance(x, (set, list)))]
     printable_df = df.copy(deep=True)
     printable_df[list_like_cols.columns] = list_like_cols.map(' '.join)
@@ -25,6 +44,15 @@ def make_lists_printable(df):
 
 
 def scan_for_terms(s):
+    """
+    Scans a string for specific terms defined in the global variable OK.
+
+    Parameters:
+    s (str): The string to scan for terms.
+
+    Returns:
+    str or None: The original string if any term from OK is found or if the string starts with 'R1' or 'R0', otherwise None.
+    """
     for j in OK:
         if j in s or s.startswith(('R1', 'R0')):
             return s
@@ -32,6 +60,15 @@ def scan_for_terms(s):
 
 
 def remove_terms(s):
+    """
+    Removes specific terms defined in the global variable OK from the string.
+
+    Parameters:
+    s (str): The string to remove terms from.
+
+    Returns:
+    str or None: None if any term from OK is found or if the string starts with 'R1' or 'R0', otherwise the original string.
+    """
     for j in OK:
         if j in s or s.startswith(('R1', 'R0')):
             return None
@@ -39,11 +76,29 @@ def remove_terms(s):
 
 
 def flag_missing_reactions(x):
+    """
+    Identifies missing reactions from a given list.
+
+    Parameters:
+    x (list): A list of reaction identifiers to check.
+
+    Returns:
+    float or list: NaN if no reactions are missing, otherwise a list of missing reactions.
+    """
     missing_reactions = [i for i in x if i not in reactions.index]
     return float('NaN') if not missing_reactions else missing_reactions
 
 
 def load_reactions_data(target_dir):
+    """
+    Loads reaction data from a specified directory.
+
+    Parameters:
+    target_dir (str): The directory containing the reaction data files.
+
+    Returns:
+    DataFrame: A pandas DataFrame containing the loaded reaction data.
+    """
     a = os.listdir(target_dir)
     reactions = {}
     for i in a:
@@ -65,6 +120,16 @@ def load_reactions_data(target_dir):
 
 
 def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
+    """
+    Retrieves reaction IDs from a DataFrame where the 'COMMENT' column contains a specific substring.
+
+    Parameters:
+    reactions (DataFrame): The pandas DataFrame containing reaction data.
+    substr (str): The substring to search for within the 'COMMENT' column. Default is "incomplete reaction".
+
+    Returns:
+    list: A list of reaction IDs where the 'COMMENT' column contains the specified substring.
+    """
     incomplete_reaction_ids = reactions[
         reactions['COMMENT'].str.contains(substr, case=False, na=False)].index.tolist()
     return incomplete_reaction_ids
