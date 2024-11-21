@@ -20,6 +20,8 @@ from .tools_eq import (eq_to_dict,
                        get_ids_to_formulas,
                        sort_dict_by_keys,
                        standardise_eq,
+                       check_eq_unbalanced,
+                       get_elements_from_eq,
                        )
 from .tools_files import (file_list,
                           file_list_all,
