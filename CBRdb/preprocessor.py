@@ -12,7 +12,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_files import file_list_all, remove_filepath, delete_files_substring
-
+from .tools_eq import standardise_eq
 
 def load_csv_to_dict(file_path):
     """
@@ -298,6 +298,8 @@ def preprocess_kegg_r(target_dir, outfile, n_print=100):
             data = data.split("\n")
         # Get the line which contains the equation
         eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
+        # Standardise the equation
+        eq_line = standardise_eq(eq_line)
         # Get the line which contains the enzyme class
         try:
             ec_line = [d for d in data if "ENZYME" in d][0].split("ENZYME")[1].strip()
