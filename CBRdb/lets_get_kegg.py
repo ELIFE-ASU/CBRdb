@@ -236,6 +236,8 @@ def get_kegg_all(target_dir="kegg_data",
 def download_data(target="R",
                   target_dir=r"../../data/kegg_data"):
     target_dir = os.path.abspath(target_dir)
+    if not os.path.exists(f"{target_dir}_{target}"):
+        os.makedirs(f"{target_dir}_{target}")
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
     # Get the data
