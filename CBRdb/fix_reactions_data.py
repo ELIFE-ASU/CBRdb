@@ -135,7 +135,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                      "H2Se": "C01528",  # Selenous acid
                      }
 
-    out_eq_file = f"{r_file.split(".")[0]}_processed.csv.zip"
+    out_eq_file = f"{r_file.split('.')[0]}_processed.csv.zip"
 
     # read the bad file
     with open(bad_file, "r") as f:
