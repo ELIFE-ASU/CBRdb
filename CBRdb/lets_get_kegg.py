@@ -8,6 +8,16 @@ from .tools_requests import prepare_session
 
 
 def load_bad_entries(bad_file, target_str="molless"):
+    """
+    Loads entries from a file that contain a specific target string.
+
+    Parameters:
+    bad_file (str): The path to the file containing the entries.
+    target_str (str, optional): The target string to search for in each line of the file. Defaults to "molless".
+
+    Returns:
+    list: A list of entries from the file that contain the target string.
+    """
     with open(bad_file, 'r') as file:
         return [line.split(',')[0].strip() for line in file if target_str in line]
 
@@ -26,97 +36,125 @@ def format_mol_id(id_number, prefix="D"):
     return prefix + '{:05}'.format(id_number)
 
 
-def get_total_n(session, database="reaction", kegg_website=r"https://rest.kegg.jp/list/", request_sleep=0.2):
-    # Get the data
+def get_total_n(session,
+                database="reaction",
+                kegg_website="https://rest.kegg.jp/list/",
+                request_sleep=0.2,
+                timeout=10.0):
+    """
+    Retrieves the total number of entries and the index of the last entry from the KEGG database.
+
+    Parameters:
+    session (requests.Session): The session object to use for making requests.
+    database (str): The name of the KEGG database to query. Defaults to "reaction".
+    kegg_website (str): The base URL of the KEGG REST API. Defaults to "https://rest.kegg.jp/list/".
+    request_sleep (float): The time to sleep between requests to avoid overloading the server. Defaults to 0.2 seconds.
+    timeout (float): The timeout for the request in seconds. Defaults to 10.0 seconds.
+
+    Returns:
+    tuple: A tuple containing the total number of entries (n) and the index of the last entry (idx).
+
+    Raises:
+    ConnectionError: If there is an issue with the connection or the response is not OK.
+    """
     try:
-        # Get the response
-        response = session.get(f"{kegg_website}{database}", timeout=10.0)
-        # Limit the number of requests
+        response = session.get(f"{kegg_website}{database}", timeout=timeout)
         time.sleep(request_sleep)
     except requests.exceptions.RequestException as e:
-        # Some error in the connection
         print(f"Error connection exception {e}", flush=True)
-        exit()
-    # Check if the response is ok
+        raise ConnectionError
+
     if response.ok:
-        # Strip the last section of the file
-        res = response.text.split("> <ENTRY>")[0]
-        # Split the response into lines
-        lines = res.split("\n")
-        # Count the number of lines
+        lines = response.text.split("\n")
         n = len(lines)
-        # find the index of the last line
         idx = int(lines[-2].split()[0][1:])
         return n, idx
     else:
-        # Some error in the response
         print(f"Error response {response.status_code}")
-        exit()
+        raise ConnectionError
 
 
-def check_kegg_valid_id(id, session, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.2):
-    # Get the data
+def check_kegg_valid_id(id,
+                        session,
+                        kegg_website="https://rest.kegg.jp/get/",
+                        request_sleep=0.2,
+                        timeout=10.0):
+    """
+    Checks if a given KEGG ID is valid by making a request to the KEGG REST API.
+
+    Parameters:
+    id (str): The KEGG ID to be checked.
+    session (requests.Session): The session object to use for making requests.
+    kegg_website (str, optional): The base URL of the KEGG REST API. Defaults to "https://rest.kegg.jp/get/".
+    request_sleep (float, optional): The time to sleep between requests to avoid overloading the server. Defaults to 0.2 seconds.
+    timeout (float, optional): The timeout for the request in seconds. Defaults to 10.0 seconds.
+
+    Returns:
+    bool: True if the KEGG ID is valid, False otherwise.
+    """
     try:
-        response = session.get(f"{kegg_website}{id}", timeout=10.0)
-        # Limit the number of requests
+        response = session.get(f"{kegg_website}{id}", timeout=timeout)
         time.sleep(request_sleep)
     except requests.exceptions.RequestException as e:
-        # Some error in the connection
         print(f"Error in ID {id}, connection exception {e}", flush=True)
         return False
-    # Check if the response is ok
+
     if response.ok:
         return True
     else:
-        # Some error in the response
         print(f"Error in ID {id}, not a valid ID", flush=True)
         return False
 
 
-def get_data(id, save_dir, session, kegg_website="https://rest.kegg.jp/get/", request_sleep=0.4, full=False):
-    # Get the data type from the id
-    data_type = id[0]
-    # Get the full file path
-    if data_type == "R" in save_dir or full:
-        full_file = os.path.join(save_dir, f"{id}.data")
-    else:
-        full_file = os.path.join(save_dir, f"{id}.mol")
+def get_data(id,
+             save_dir,
+             session,
+             kegg_website="https://rest.kegg.jp/get/",
+             request_sleep=0.4,
+             timeout=10.0,
+             full=False):
+    """
+    Retrieves data for a given KEGG ID and saves it to a specified directory.
 
-    # Check if the file exists
+    Parameters:
+    id (str): The KEGG ID to retrieve data for.
+    save_dir (str): The directory to save the retrieved data.
+    session (requests.Session): The session object to use for making requests.
+    kegg_website (str, optional): The base URL of the KEGG REST API. Defaults to "https://rest.kegg.jp/get/".
+    request_sleep (float, optional): The time to sleep between requests to avoid overloading the server. Defaults to 0.4 seconds.
+    timeout (float, optional): The timeout for the request in seconds. Defaults to 10.0 seconds.
+    full (bool, optional): Whether to retrieve the full data or not. Defaults to False.
+
+    Returns:
+    bool: True if the data was successfully retrieved and saved, False otherwise.
+    """
+    data_type = id[0]
+    full_file = os.path.join(save_dir, f"{id}.data" if data_type == "R" in save_dir or full else f"{id}.mol")
+
     if not os.path.exists(full_file):
-        # Get the data
         try:
-            # Get the response
-            if data_type == "R" in save_dir or full:
-                response = session.get(f"{kegg_website}{id}", timeout=10.0)
-            else:
-                response = session.get(f"{kegg_website}{id}/mol", timeout=10.0)
-            # Limit the number of requests
+            response = session.get(
+                f"{kegg_website}{id}" if data_type == "R" in save_dir or full else f"{kegg_website}{id}/mol",
+                timeout=timeout)
             time.sleep(request_sleep)
         except requests.exceptions.RequestException as e:
-            # Some error in the connection
             print(f"Error in ID {id}, connection exception {e}", flush=True)
             return False
-        # Check if the response is ok
+
         if response.ok:
-            # Strip the last section of the file
-            res = response.text.split("> <ENTRY>")[0]
-            # Make subdirectory
             os.makedirs(save_dir, exist_ok=True)
-            # Save the file
             with open(full_file, "w") as f:
-                f.write(res)
+                f.write(response.text.split("> <ENTRY>")[0])
         else:
-            # Some error in the response
             print(f"Error in ID {id}, response {response.status_code}", flush=True)
             return False
     else:
-        # Skip the download as the file already exists
         print(f"{id} already exists", flush=True)
     return True
 
 
-def get_kegg(target_dir, session,
+def get_kegg(target_dir,
+             session,
              prefix="D",
              max_idx=12897):
     bad_file = os.path.abspath(f"../data/{prefix.replace('_full', '')}_IDs_bad.dat")
@@ -186,7 +224,8 @@ def get_kegg(target_dir, session,
     return None
 
 
-def get_kegg_all(target_dir="kegg_data", target="C"):
+def get_kegg_all(target_dir="kegg_data",
+                 target="C"):
     # make the session
     session = prepare_session()
     # Check if the target is a valid target and get the maximum index
@@ -202,10 +241,14 @@ def get_kegg_all(target_dir="kegg_data", target="C"):
     print(f"Total number of entries {max_idx}", flush=True)
 
     # Get the data
-    get_kegg(os.path.abspath(target_dir + f"_{target}"), session, prefix=target, max_idx=max_idx)
+    get_kegg(os.path.abspath(target_dir + f"_{target}"),
+             session,
+             prefix=target,
+             max_idx=max_idx)
 
 
-def download_data(target="R", target_dir=r"../../data/kegg_data"):
+def download_data(target="R",
+                  target_dir=r"../../data/kegg_data"):
     target_dir = os.path.abspath(target_dir)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
