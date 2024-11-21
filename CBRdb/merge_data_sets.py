@@ -4,24 +4,8 @@ from io import StringIO
 
 import pandas as pd
 import requests
-from requests import Session
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 
-
-def prepare_session():
-    # Make the session
-    s = Session()
-    # Add retries
-    retries = Retry(
-        total=5,
-        backoff_factor=0.1,
-        status_forcelist=[502, 503, 504],
-        allowed_methods={'POST'},
-    )
-    # Mount the session
-    s.mount('https://', HTTPAdapter(max_retries=retries))
-    return s
+from .tools_requests import prepare_session
 
 
 def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction", request_sleep=0.2):

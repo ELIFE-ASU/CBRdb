@@ -2,31 +2,14 @@ import os
 import time
 
 import requests
-from requests import Session
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 
 from .tools_files import clean_empty_folders
+from .tools_requests import prepare_session
 
 
 def load_bad_entries(bad_file, target_str="molless"):
     with open(bad_file, 'r') as file:
         return [line.split(',')[0].strip() for line in file if target_str in line]
-
-
-def prepare_session():
-    # Make the session
-    s = Session()
-    # Add retries
-    retries = Retry(
-        total=5,
-        backoff_factor=0.1,
-        status_forcelist=[502, 503, 504],
-        allowed_methods={'POST'},
-    )
-    # Mount the session
-    s.mount('https://', HTTPAdapter(max_retries=retries))
-    return s
 
 
 def format_mol_id(id_number, prefix="D"):
