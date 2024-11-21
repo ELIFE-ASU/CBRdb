@@ -154,7 +154,7 @@ def side_to_dict(side):
     """
     result = {}
     for component in map(str.strip, side.split('+')):
-        match = re.match(r'(\d*)\s*(C\d+)', component)
+        match = re.match(r'(-?\d*)\s*(C\d+)', component)
         if match:
             count = int(match.group(1)) if match.group(1) else 1
             molecule = match.group(2)
