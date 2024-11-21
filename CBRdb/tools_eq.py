@@ -142,23 +142,11 @@ def get_formulas_from_ids(ids, c_data):
     return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
 
 
-def side_to_dict(side):
-    """
-    Converts a side of a chemical equation into a dictionary with molecules as keys and their counts as values.
-
-    Parameters:
-    side (str): A string representing one side of a chemical equation, with components separated by '+'.
-
-    Returns:
-    dict: A dictionary where keys are molecule identifiers and values are their counts.
-    """
-    result = {}
-    for component in map(str.strip, side.split('+')):
-        match = re.match(r'(-?\d*)\s*(C\d+)', component)
-        if match:
-            count = int(match.group(1)) if match.group(1) else 1
-            molecule = match.group(2)
-            result[molecule] = count
+def side_to_dict(s):
+    pattern = r'([+-]?[^\s]+)\s+(C\d+)'
+    matches = re.findall(pattern, s)
+    result = {code: int(coefficient) if coefficient.lstrip('+-').isdigit() else coefficient for coefficient, code in
+              matches}
     return result
 
 
