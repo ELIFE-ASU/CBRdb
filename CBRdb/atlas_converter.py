@@ -73,18 +73,33 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
     for i, line in enumerate(data):
         # split the line by the delimiter
         line = line.split(";")
-        # Get the reaction id
-        re_id.append(line[0])
+        id = line[0].strip()
+
         # Cleanup the equation line
-        eq_line = cleanup_eq_line(line[1])
+        eq_line = cleanup_eq_line(line[1].strip())
+
+        # If the <=> is not present, replace the last + with <=>
+        if "<=>" not in eq_line:
+            eq_line = eq_line.rsplit("+", 1)[0] + " <=> " + eq_line.rsplit("+", 1)[1]
+
         # Standardise the equation
         eq_line = standardise_eq(eq_line)
+
+        # Clean up the chemical names
+        chem_names = line[2].replace("|", "").strip()
+
+        # Get EC
+        ec = line[3].strip()
+
+        # Get the reaction id
+        re_id.append(id)
+
         # Get the reaction equation
         re_eq.append(eq_line)
         # Get the reaction name
-        re_chem_names.append(line[2].replace("|", ""))
+        re_chem_names.append(chem_names)
         # Get the reaction EC
-        re_ec.append(line[3])
+        re_ec.append(ec)
     # Store the data in a dataframe
     df = pd.DataFrame({'id': re_id, 'reaction': re_eq, 'chemical_names': re_chem_names, 'ec': re_ec})
     # Write the data to a file
