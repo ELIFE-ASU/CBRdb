@@ -409,3 +409,30 @@ def check_eq_unbalanced(react_ele, prod_ele):
     unbalanced = len(diff_ele_react) + len(diff_ele_prod) > 0
 
     return not all_positive_react or not all_positive_prod or unbalanced
+
+def sort_dict_by_keys(input_dict):
+    """
+    Returns a dictionary sorted by its keys.
+
+    Parameters:
+    input_dict (dict): The dictionary to be sorted.
+
+    Returns:
+    dict: A new dictionary sorted by its keys.
+    """
+    return dict(sorted(input_dict.items()))
+
+def standardise_eq(eq):
+    """
+    Standardise the equation by sorting the reactants and products.
+
+    Parameters:
+    eq (str): The equation to be standardised.
+
+    Returns:
+    str: The standardised equation.
+    """
+    r, p = eq_to_dict(eq)
+    r = sort_dict_by_keys(r)
+    p = sort_dict_by_keys(p)
+    return dicts_to_eq(r, p)
