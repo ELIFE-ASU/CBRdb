@@ -1,7 +1,6 @@
 import CBRdb
 
 if __name__ == "__main__":
-
     print("Program started", flush=True)
     f_man = False
 
@@ -30,7 +29,7 @@ if __name__ == "__main__":
     # Convert the atlas files into a more readable format
     print("Converting atlas files", flush=True)
     CBRdb.clean_kegg_atlas()
-    CBRdb.clean_atlas()
+    CBRdb.clean_atlas(f_exclude_kegg=True)
     # Provides the atlas_data_kegg_R.csv.zip and atlas_data_R.csv.zip files
     print("Done! \n", flush=True)
 

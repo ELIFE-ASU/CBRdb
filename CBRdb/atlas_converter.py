@@ -25,7 +25,8 @@ def cleanup_ec_line(ec_line):
     return outline
 
 
-def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat", out_file="../data/atlas_data_kegg_R.csv.zip"):
+def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
+                     out_file="../data/atlas_data_kegg_R.csv.zip"):
     # Get the absolute paths
     in_file = os.path.abspath(in_file)
     out_file = os.path.abspath(out_file)
@@ -69,7 +70,9 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat", out_file="..
     return None
 
 
-def clean_atlas(in_file="../../data/atlas_reactions.dat", out_file="../data/atlas_data_R.csv.zip"):
+def clean_atlas(in_file="../../data/atlas_reactions.dat",
+                out_file="../data/atlas_data_R.csv.zip",
+                f_exclude_kegg=True):
     # Get the absolute paths
     in_file = os.path.abspath(in_file)
     out_file = os.path.abspath(out_file)
@@ -97,17 +100,30 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat", out_file="../data/atla
     for i, line in enumerate(data):
         # split the line by the delimiter
         line = line.split(";")
+        id = format_id(line[0])
+        kegg_id = line[1]
+        eq = cleanup_eq_line(line[3])
+        ec = cleanup_ec_line(line)
+
         # Get the reaction id
-        re_id.append(format_id(line[0]))
+        re_id.append(id)
         # Get the KEGG reaction id
-        re_kegg_id.append(line[1])
+        re_kegg_id.append(kegg_id)
         # Get the reaction equation
-        re_eq.append(cleanup_eq_line(line[3]))
+        re_eq.append(eq)
         # Get the reaction EC
-        # re_ec.append(line[4].replace("|", ""))
-        re_ec.append(cleanup_ec_line(line))
-    # Store the data in a dataframe
+        re_ec.append(ec)
+
     df = pd.DataFrame({'id': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
+    # Fill in the missing values with NaN
+    df = df.replace("", float("NaN"))
+
+    if f_exclude_kegg:
+        # Select only the data which has a NaN kegg_id
+        df = df[df["kegg_id"].isna()]
+        # Remove the kegg_id column
+        df = df.drop(columns=["kegg_id"])
+
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
     print("data written to file", flush=True)
