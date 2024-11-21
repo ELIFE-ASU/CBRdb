@@ -128,18 +128,18 @@ def compare_dict_values(dict1, dict2):
     return diff_in_dict1, diff_in_dict2
 
 
-def get_formulas_from_ids(ids, data):
+def get_formulas_from_ids(ids, c_data):
     """
     Retrieves the chemical formulas corresponding to a list of compound IDs from a DataFrame.
 
     Parameters:
     ids (list): A list of compound IDs.
-    data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
 
     Returns:
     list: A list of chemical formulas corresponding to the given compound IDs.
     """
-    return data.loc[data["compound_id"].isin(ids), "formula"].tolist()
+    return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
 
 
 def side_to_dict(side):
@@ -217,19 +217,19 @@ def strip_plus_x(input_string):
     return re.sub(r'\+\d+', '', input_string).replace('+', '') if '+' in input_string else input_string
 
 
-def get_ids_to_formulas(compound_dict, data):
+def get_ids_to_formulas(compound_dict, c_data):
     """
     Retrieves the chemical formulas corresponding to the compound IDs in the given dictionary.
 
     Parameters:
     compound_dict (dict): A dictionary where keys are compound IDs.
-    data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
 
     Returns:
     dict: A dictionary where keys are compound IDs and values are the corresponding chemical formulas with '+<number>' and '+' characters removed.
     """
     ids = list(set(sorted(compound_dict.keys())))
-    formulas = get_formulas_from_ids(ids, data)
+    formulas = get_formulas_from_ids(ids, c_data)
     return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
 
 
@@ -278,7 +278,7 @@ def convert_form_dict_to_elements(form_dict):
     return elements
 
 
-def get_eq(old_eq, reactants, products, data):
+def get_eq(old_eq, reactants, products, c_data):
     """
     Generates a new chemical equation string by converting reactants and products from formulas to IDs.
 
@@ -286,14 +286,14 @@ def get_eq(old_eq, reactants, products, data):
     old_eq (str): The original chemical equation string.
     reactants (dict): A dictionary where keys are chemical formulas and values are their counts for reactants.
     products (dict): A dictionary where keys are chemical formulas and values are their counts for products.
-    data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
 
     Returns:
     str: A string representation of the new chemical equation in the format 'reactants <=> products'.
     """
     lhs, rhs = eq_to_dict(old_eq)
-    l_key = get_ids_to_formulas(lhs, data)
-    r_key = get_ids_to_formulas(rhs, data)
+    l_key = get_ids_to_formulas(lhs, c_data)
+    r_key = get_ids_to_formulas(rhs, c_data)
 
     reactants = convert_formulas_to_ids(reactants, l_key)
     products = convert_formulas_to_ids(products, r_key)
@@ -303,14 +303,14 @@ def get_eq(old_eq, reactants, products, data):
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
-def get_elements_from_eq(eq, data):
+def get_elements_from_eq(eq, c_data):
     """
     Converts a chemical equation string into dictionaries of reactants and products,
     and then converts these dictionaries into dictionaries of elements and their counts.
 
     Parameters:
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
-    data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
 
     Returns:
     tuple: A tuple containing four dictionaries:
@@ -322,8 +322,8 @@ def get_elements_from_eq(eq, data):
     # Convert the Eq into the dicts
     reactants, products = eq_to_dict(eq)
     # Get the conversion of the ids to formulas
-    react_id_form_key = get_ids_to_formulas(reactants, data)
-    prod_id_form_key = get_ids_to_formulas(products, data)
+    react_id_form_key = get_ids_to_formulas(reactants, c_data)
+    prod_id_form_key = get_ids_to_formulas(products, c_data)
 
     # Convert the reactants into formulas
     converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
@@ -371,20 +371,20 @@ def check_missing_elements(react_ele, prod_ele):
         return False
 
 
-def check_missing_formulas(eq, data):
+def check_missing_formulas(eq, c_data):
     """
     Checks if there are any missing chemical formulas for the compound IDs in the given chemical equation.
 
     Parameters:
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
-    data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
 
     Returns:
     bool: True if there are missing formulas for any compound IDs, False otherwise.
     """
     reactants, products = eq_to_dict(eq)
     ids = list(reactants.keys()) + list(products.keys())
-    formulas = get_formulas_from_ids(ids, data)
+    formulas = get_formulas_from_ids(ids, c_data)
     return len(formulas) != len(ids)
 
 
