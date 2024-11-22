@@ -29,7 +29,7 @@ def test_side_to_dict():
     tmp = CBRdb.side_to_dict('0 C00001 + 1 C00002')
     assert tmp == {'C00001': 0, 'C00002': 1}
 
-    tmp = "1 C00007 + 2 C00339 + C01438"
+    tmp = CBRdb.side_to_dict("1 C00007 + 2 C00339 + C01438")
     assert tmp == {'C00007': 1, 'C00339': 2, 'C01438': 1}
 
 
