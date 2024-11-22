@@ -45,6 +45,7 @@ def test_side_to_dict():
     assert tmp == {'C03323': 'm', 'C03323': 'n'}
 
     tmp = CBRdb.side_to_dict("C03323(m-1) + C03323(n+1)")
+    print(tmp)
     assert tmp == {'C03323': 'm-1+n+1'}
 
 def test_convert_formula_to_dict():

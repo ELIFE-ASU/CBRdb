@@ -2,37 +2,37 @@ import re
 import chemparse
 
 
-# def split_by_letters(input_string):
-#     """
-#     Splits the input string into a list of substrings, each starting with an uppercase letter,
-#     followed by zero or more lowercase letters and optional digits.
-#
-#     Parameters:
-#     input_string (str): The string to be split.
-#
-#     Returns:
-#     list: A list of substrings matching the pattern.
-#     """
-#     return re.findall(r'[A-Z][a-z]*\d*', input_string)
-#
-#
-# def convert_formula_to_dict(input_string):
-#     """
-#     Converts a chemical formula string into a dictionary with elements as keys and their counts as values.
-#
-#     Parameters:
-#     input_string (str): The chemical formula string to be converted.
-#
-#     Returns:
-#     dict: A dictionary where keys are element symbols and values are their counts in the formula.
-#     """
-#     parts = split_by_letters(input_string)
-#     result = {}
-#     for part in parts:
-#         element = re.match(r'[A-Za-z]+', part).group()
-#         count = int(re.search(r'\d+', part).group()) if re.search(r'\d+', part) else 1
-#         result[element] = count
-#     return result
+def split_by_letters(input_string):
+    """
+    Splits the input string into a list of substrings, each starting with an uppercase letter,
+    followed by zero or more lowercase letters and optional digits.
+
+    Parameters:
+    input_string (str): The string to be split.
+
+    Returns:
+    list: A list of substrings matching the pattern.
+    """
+    return re.findall(r'[A-Z][a-z]*\d*', input_string)
+
+
+def convert_formula_to_dict(input_string):
+    """
+    Converts a chemical formula string into a dictionary with elements as keys and their counts as values.
+
+    Parameters:
+    input_string (str): The chemical formula string to be converted.
+
+    Returns:
+    dict: A dictionary where keys are element symbols and values are their counts in the formula.
+    """
+    parts = split_by_letters(input_string)
+    result = {}
+    for part in parts:
+        element = re.match(r'[A-Za-z]+', part).group()
+        count = int(re.search(r'\d+', part).group()) if re.search(r'\d+', part) else 1
+        result[element] = count
+    return result
 
 def strip_ionic_states(formula):
     # Regex to match trailing ionic states (+, -, +2, -4, etc.)
@@ -182,6 +182,63 @@ def side_to_dict(s):
               in matches}
     return result
 
+def side_to_dict(s):
+    # Updated regex pattern to handle cases with or without explicit coefficients
+    pattern = r'([+-]?\d*|[+-]?)\s*(C\d+)'
+    matches = re.findall(pattern, s)
+    result = {}
+    for coefficient, code in matches:
+        if coefficient in ('', '+', '-'):  # Default to 1 or -1 based on sign
+            coefficient = '1' if coefficient in ('', '+') else '-1'
+        try:
+            value = int(coefficient)
+        except ValueError:
+            value = coefficient
+        result[code] = value
+    return result
+
+
+
+def clean_up_eq(eq):
+    # Find 'n+1 C02616' and replace it with '(n+1) C02616'
+    eq = re.sub(r'([A-Z]\d{5})\(([^)]+)\)', r'(\2) \1', eq)
+    return eq
+
+
+def side_to_dict(s):
+    s = clean_up_eq(s)
+    coeff = re.split(r"[A-Z]\d{5}", s)
+    # strip the white spaces
+    coeff = [c.strip() for c in coeff]
+
+    # if the coeff is equal to "+" then replace it with 1
+    coeff = [c if c != "+" else "1" for c in coeff]
+
+    # if the coeff is equal to "+ " then replace it with ""
+    coeff = [c.replace("+ ", "").strip() for c in coeff]
+
+    # replace the empty strings with 1
+    coeff = [1 if c == '' else c for c in coeff]
+
+    # try to convert the strings to integers
+    coeff_out = []
+    for c in coeff:
+        try:
+            coeff_out.append(int(c))
+        except ValueError:
+            coeff_out.append(c.strip('(').strip(')'))
+
+    # Get the matches
+    matches = re.findall(r"[A-Z]\d{5}", s)
+
+
+
+    # Create the dictionary
+    return dict(zip(matches, coeff_out))
+
+
+
+
 
 def eq_to_dict(eq):
     """
@@ -196,7 +253,6 @@ def eq_to_dict(eq):
            - The second dictionary represents the products.
     """
     return map(side_to_dict, eq.split('<=>'))
-
 
 def dict_to_side(d):
     """

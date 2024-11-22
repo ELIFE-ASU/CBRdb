@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # # Converting mol into smiles and cleaning up the data
     # print("Converting mol into smiles and cleaning up the data", flush=True)
     # CBRdb.preprocess(target="C")
-    # CBRdb.preprocess(target="R")
+    CBRdb.preprocess(target="R")
     # # Provides the kegg_data_C.csv.zip and kegg_data_R.csv.zip files
     # print("Done! \n", flush=True)
     #
@@ -52,12 +52,12 @@ if __name__ == "__main__":
     # print("Done! \n", flush=True)
     #
     # Fix the reactions data
-    print("Fixing the reactions data", flush=True)
-    CBRdb.fix_reactions_data(r_file="../data/kegg_data_R.csv.zip")
-    CBRdb.fix_reactions_data(r_file="../data/atlas_data_kegg_R.csv.zip")
-    CBRdb.fix_reactions_data(r_file="../data/atlas_data_R.csv.zip")
-    # Provides the processed R files
-    print("Done! \n", flush=True)
+    # print("Fixing the reactions data", flush=True)
+    # CBRdb.fix_reactions_data(r_file="../data/kegg_data_R.csv.zip")
+    # CBRdb.fix_reactions_data(r_file="../data/atlas_data_kegg_R.csv.zip")
+    # CBRdb.fix_reactions_data(r_file="../data/atlas_data_R.csv.zip")
+    # # Provides the processed R files
+    # print("Done! \n", flush=True)
     #
     # # Fix the reactions data with a n
     #

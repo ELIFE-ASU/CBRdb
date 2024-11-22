@@ -288,6 +288,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                 print("New eq line:", eq_line, flush=True)
                 # Update values
                 reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
+                print("Reactants: ", reactants, flush=True)
+                print("Products:  ", products, flush=True)
                 diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
                 if check_eq_unbalanced(react_ele, prod_ele):
                     try:
