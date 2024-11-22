@@ -16,7 +16,9 @@ def cleanup_eq_line(eq_line):
     Returns:
     str: The cleaned equation line.
     """
-    replacements = {")": " ",
+    replacements = {"-0": "1",
+                    "(0)": "1",
+                    ")": " ",
                     "(": "",
                     "<=>": " <=> ",
                     "<==>": " <=> ",
@@ -77,7 +79,6 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
 
         # Cleanup the equation line
         eq_line = cleanup_eq_line(line[1].strip())
-
         # If the <=> is not present, replace the last + with <=>
         if "<=>" not in eq_line:
             eq_line = eq_line.rsplit("+", 1)[0] + " <=> " + eq_line.rsplit("+", 1)[1]

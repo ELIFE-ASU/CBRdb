@@ -1,37 +1,31 @@
 import re
 
-
-def split_by_letters(input_string):
-    """
-    Splits the input string into a list of substrings, each starting with an uppercase letter,
-    followed by zero or more lowercase letters and optional digits.
-
-    Parameters:
-    input_string (str): The string to be split.
-
-    Returns:
-    list: A list of substrings matching the pattern.
-    """
-    return re.findall(r'[A-Z][a-z]*\d*', input_string)
+import chemparse
 
 
-def convert_formula_to_dict(input_string):
-    """
-    Converts a chemical formula string into a dictionary with elements as keys and their counts as values.
+def strip_ionic_states(formula):
+    # Regex to match trailing ionic states (+, -, +2, -4, etc.)
+    return re.sub(r'[+-]\d*$', '', formula)
 
-    Parameters:
-    input_string (str): The chemical formula string to be converted.
 
-    Returns:
-    dict: A dictionary where keys are element symbols and values are their counts in the formula.
-    """
-    parts = split_by_letters(input_string)
-    result = {}
-    for part in parts:
-        element = re.match(r'[A-Za-z]+', part).group()
-        count = int(re.search(r'\d+', part).group()) if re.search(r'\d+', part) else 1
-        result[element] = count
-    return result
+def convert_formula_to_dict(formula):
+    # Count the occurrences of '*' followed by an optional number
+    star_count = sum(int(num) if num else 1 for num in re.findall(r'\*(\d*)', formula))
+
+    # Replace '*' followed by an optional number with an empty string
+    formula_new = re.sub(r'\*\d*', '', formula)
+
+    # Remove the ionic states
+    # formula_new = strip_ionic_states(formula_new)
+
+    # Parse the formula into a dictionary
+    formula_dict = {k: int(v) for k, v in chemparse.parse_formula(formula_new).items()}
+
+    # Add the '*' count to the dictionary if there were any '*'
+    if star_count > 0:
+        formula_dict['*'] = star_count
+
+    return formula_dict
 
 
 def multiply_dict(input_dict, multiplier):
@@ -142,21 +136,92 @@ def get_formulas_from_ids(ids, c_data):
     return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
 
 
-def side_to_dict(s):
+def clean_up_eq(eq):
     """
-    Converts a side of a chemical equation into a dictionary with molecules as keys and their counts as values.
+    Cleans up the chemical equation string by reformatting compound identifiers.
 
     Parameters:
-    side (str): A string representing one side of a chemical equation, with components separated by '+'.
+    eq (str): The chemical equation string to be cleaned.
 
     Returns:
-    dict: A dictionary where keys are molecule identifiers and values are their counts.
+    str: The cleaned chemical equation string with compound identifiers reformatted.
     """
-    pattern = r'([+-]?[^\s]*?)\s*(C\d+)'
-    matches = re.findall(pattern, s)
-    result = {code: int(coefficient) if coefficient.lstrip('+-').isdigit() else coefficient or 1 for coefficient, code
-              in matches}
-    return result
+    # Replace 'n+1 C02616' with '(n+1) C02616'
+    return re.sub(r'([A-Z]\d{5})\(([^)]+)\)', r'(\2) \1', eq)
+
+
+def merge_duplicates(matches, coeff_out):
+    """
+    Merges duplicate entries in the matches list by summing their corresponding coefficients.
+
+    Parameters:
+    matches (list): A list of match identifiers.
+    coeff_out (list): A list of coefficients corresponding to the matches.
+
+    Returns:
+    tuple: A tuple containing two lists:
+           - The first list contains unique match identifiers.
+           - The second list contains the summed coefficients for each unique match.
+    """
+    merged_coeff = {}
+    for match, coeff in zip(matches, coeff_out):
+        if match in merged_coeff:
+            merged_coeff[match] = (
+                merged_coeff[match] + coeff
+                if isinstance(merged_coeff[match], int) and isinstance(coeff, int)
+                else f"{merged_coeff[match]}+{coeff}"
+            )
+        else:
+            merged_coeff[match] = coeff
+    return list(merged_coeff.keys()), list(merged_coeff.values())
+
+
+def side_to_dict(s):
+    """
+    Converts a chemical equation side into a dictionary with compounds as keys and their coefficients as values.
+
+    Parameters:
+    s (str): A string representing one side of a chemical equation.
+
+    Returns:
+    dict: A dictionary where keys are compound identifiers and values are their coefficients.
+    """
+    # Clean up the equation string
+    s = clean_up_eq(s)
+
+    # Split the string by compound identifiers and strip whitespace
+    coeff = [c.strip() for c in re.split(r"[A-Z]\d{5}", s)]
+
+    # Replace "+" with "1" and strip remaining whitespace
+    coeff = [c if c != "+" else "1" for c in coeff]
+    coeff = [c.replace("+ ", "").strip() for c in coeff]
+
+    # Replace empty strings with 1
+    coeff = [1 if c == '' else c for c in coeff]
+
+    coeff_out = []
+    for c in coeff:
+        try:
+            # Convert coefficients to integers if possible
+            coeff_out.append(int(c))
+        except ValueError:
+            # Strip parentheses if conversion fails
+            coeff_out.append(c.strip('(').strip(')'))
+    # try:
+    #     # Convert coefficients to integers if possible
+    #     coeff_out = [int(c) for c in coeff]
+    # except ValueError:
+    #     coeff_out = [str(c).strip('(').strip(')') for c in coeff]
+
+    # Find all compound identifiers in the string
+    matches = re.findall(r"[A-Z]\d{5}", s)
+
+    # Merge duplicates in matches and their corresponding coefficients
+    matches, coeff_out = merge_duplicates(matches, coeff_out)
+
+    # Create a dictionary with compound identifiers as keys and coefficients as values
+    out = {k: v for k, v in zip(matches, coeff_out) if v != 0}
+    return out
 
 
 def eq_to_dict(eq):
@@ -300,6 +365,33 @@ def get_eq(old_eq, reactants, products, c_data):
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
+def get_formulas_from_eq(eq, c_data):
+    """
+    Converts a chemical equation string into dictionaries of reactants and products with their chemical formulas.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    tuple: A tuple containing two dictionaries:
+           - The first dictionary contains the converted reactants with chemical formulas as keys and their counts as values.
+           - The second dictionary contains the converted products with chemical formulas as keys and their counts as values.
+    """
+    # Convert the Eq into the dicts
+    reactants, products = eq_to_dict(eq)
+
+    # Get the conversion of the ids to formulas
+    react_id_form_key = get_ids_to_formulas(reactants, c_data)
+    prod_id_form_key = get_ids_to_formulas(products, c_data)
+
+    # Convert the reactants into formulas
+    converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
+    converted_products = convert_ids_to_formulas(products, prod_id_form_key)
+
+    return converted_reactants, converted_products
+
+
 def get_elements_from_eq(eq, c_data):
     """
     Converts a chemical equation string into dictionaries of reactants and products,
@@ -316,15 +408,8 @@ def get_elements_from_eq(eq, c_data):
            - The third dictionary contains the elements and their counts in the reactants.
            - The fourth dictionary contains the elements and their counts in the products.
     """
-    # Convert the Eq into the dicts
-    reactants, products = eq_to_dict(eq)
-    # Get the conversion of the ids to formulas
-    react_id_form_key = get_ids_to_formulas(reactants, c_data)
-    prod_id_form_key = get_ids_to_formulas(products, c_data)
-
-    # Convert the reactants into formulas
-    converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
-    converted_products = convert_ids_to_formulas(products, prod_id_form_key)
+    # Convert the Eq into the formula dicts
+    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data)
 
     # Convert the formulas into reactants
     react_ele = convert_form_dict_to_elements(converted_reactants)
@@ -433,3 +518,44 @@ def standardise_eq(eq):
     """
     reactants, products = eq_to_dict(eq)
     return dicts_to_eq(sort_dict_by_keys(reactants), sort_dict_by_keys(products))
+
+
+def contains_n_m_x(reactants, products):
+    """
+    Checks if any of the reactant or product values contain the strings 'n', 'm', or 'x'.
+
+    Parameters:
+    reactants (dict): A dictionary of reactants with chemical formulas as keys and their counts as values.
+    products (dict): A dictionary of products with chemical formulas as keys and their counts as values.
+
+    Returns:
+    bool: True if any reactant or product value contains 'n', 'm', or 'x', False otherwise.
+    """
+    for value in reactants.values():
+        if any(char in value for char in ['n', 'm', 'x']):
+            return True
+    for value in products.values():
+        if any(char in value for char in ['n', 'm', 'x']):
+            return True
+    return False
+
+
+def solve_for_n(elements):
+    """
+    Solves for the smallest integer n that makes all elements in the list greater than 0.
+
+    Parameters:
+    elements (list): A list of strings representing expressions involving 'n'.
+
+    Returns:
+    int: The smallest integer n that makes all elements greater than 0.
+    """
+    min_n = 0
+    for element in elements:
+        # Replace 'n' with a symbolic variable
+        expr = element.replace('n', 'n')
+        # Solve for the smallest n that makes the expression greater than 0
+        n_value = eval(expr.replace('n', '0'))
+        if n_value <= 0:
+            min_n = max(min_n, -n_value + 1)
+    return min_n

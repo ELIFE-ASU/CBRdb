@@ -66,8 +66,8 @@ R01339,general
 R01340,general
 R01368,general
 R01369,general
-R01400,incomplete
 R01400,general
+R01400,incomplete
 R01409,general
 R01427,incomplete
 R01474,incomplete
@@ -786,8 +786,8 @@ R08606,incomplete
 R08679,general
 R08680,general
 R08681,general
-R08682,general
 R08682,incomplete
+R08682,general
 R08683,general
 R08684,general
 R08686,general
