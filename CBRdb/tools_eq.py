@@ -34,9 +34,11 @@ def convert_formula_to_dict(input_string):
         result[element] = count
     return result
 
+
 def strip_ionic_states(formula):
     # Regex to match trailing ionic states (+, -, +2, -4, etc.)
     return re.sub(r'[+-]\d*$', '', formula)
+
 
 def convert_formula_to_dict(formula):
     # Count the occurrences of '*' followed by an optional number
@@ -166,78 +168,87 @@ def get_formulas_from_ids(ids, c_data):
     return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
 
 
-def side_to_dict(s):
+def clean_up_eq(eq):
     """
-    Converts a side of a chemical equation into a dictionary with molecules as keys and their counts as values.
+    Cleans up the chemical equation string by reformatting compound identifiers.
 
     Parameters:
-    side (str): A string representing one side of a chemical equation, with components separated by '+'.
+    eq (str): The chemical equation string to be cleaned.
 
     Returns:
-    dict: A dictionary where keys are molecule identifiers and values are their counts.
+    str: The cleaned chemical equation string with compound identifiers reformatted.
     """
-    pattern = r'([+-]?[^\s]*?)\s*(C\d+)'
-    matches = re.findall(pattern, s)
-    result = {code: int(coefficient) if coefficient.lstrip('+-').isdigit() else coefficient or 1 for coefficient, code
-              in matches}
-    return result
+    # Replace 'n+1 C02616' with '(n+1) C02616'
+    return re.sub(r'([A-Z]\d{5})\(([^)]+)\)', r'(\2) \1', eq)
+
+
+def merge_duplicates(matches, coeff_out):
+    """
+    Merges duplicate entries in the matches list by summing their corresponding coefficients.
+
+    Parameters:
+    matches (list): A list of match identifiers.
+    coeff_out (list): A list of coefficients corresponding to the matches.
+
+    Returns:
+    tuple: A tuple containing two lists:
+           - The first list contains unique match identifiers.
+           - The second list contains the summed coefficients for each unique match.
+    """
+    merged_coeff = {}
+    for match, coeff in zip(matches, coeff_out):
+        if match in merged_coeff:
+            merged_coeff[match] = (
+                merged_coeff[match] + coeff
+                if isinstance(merged_coeff[match], int) and isinstance(coeff, int)
+                else f"{merged_coeff[match]}+{coeff}"
+            )
+        else:
+            merged_coeff[match] = coeff
+    return list(merged_coeff.keys()), list(merged_coeff.values())
+
 
 def side_to_dict(s):
-    # Updated regex pattern to handle cases with or without explicit coefficients
-    pattern = r'([+-]?\d*|[+-]?)\s*(C\d+)'
-    matches = re.findall(pattern, s)
-    result = {}
-    for coefficient, code in matches:
-        if coefficient in ('', '+', '-'):  # Default to 1 or -1 based on sign
-            coefficient = '1' if coefficient in ('', '+') else '-1'
-        try:
-            value = int(coefficient)
-        except ValueError:
-            value = coefficient
-        result[code] = value
-    return result
+    """
+    Converts a chemical equation side into a dictionary with compounds as keys and their coefficients as values.
 
+    Parameters:
+    s (str): A string representing one side of a chemical equation.
 
-
-def clean_up_eq(eq):
-    # Find 'n+1 C02616' and replace it with '(n+1) C02616'
-    eq = re.sub(r'([A-Z]\d{5})\(([^)]+)\)', r'(\2) \1', eq)
-    return eq
-
-
-def side_to_dict(s):
+    Returns:
+    dict: A dictionary where keys are compound identifiers and values are their coefficients.
+    """
+    # Clean up the equation string
     s = clean_up_eq(s)
-    coeff = re.split(r"[A-Z]\d{5}", s)
-    # strip the white spaces
-    coeff = [c.strip() for c in coeff]
 
-    # if the coeff is equal to "+" then replace it with 1
+    # Split the string by compound identifiers and strip whitespace
+    coeff = [c.strip() for c in re.split(r"[A-Z]\d{5}", s)]
+
+    # Replace "+" with "1" and strip remaining whitespace
     coeff = [c if c != "+" else "1" for c in coeff]
-
-    # if the coeff is equal to "+ " then replace it with ""
     coeff = [c.replace("+ ", "").strip() for c in coeff]
 
-    # replace the empty strings with 1
+    # Replace empty strings with 1
     coeff = [1 if c == '' else c for c in coeff]
 
-    # try to convert the strings to integers
     coeff_out = []
     for c in coeff:
         try:
+            # Convert coefficients to integers if possible
             coeff_out.append(int(c))
         except ValueError:
+            # Strip parentheses if conversion fails
             coeff_out.append(c.strip('(').strip(')'))
 
-    # Get the matches
+    # Find all compound identifiers in the string
     matches = re.findall(r"[A-Z]\d{5}", s)
 
+    # Merge duplicates in matches and their corresponding coefficients
+    matches, coeff_out = merge_duplicates(matches, coeff_out)
 
-
-    # Create the dictionary
-    return dict(zip(matches, coeff_out))
-
-
-
+    # Create a dictionary with compound identifiers as keys and coefficients as values
+    out = {k: v for k, v in zip(matches, coeff_out) if v != 0}
+    return out
 
 
 def eq_to_dict(eq):
@@ -253,6 +264,7 @@ def eq_to_dict(eq):
            - The second dictionary represents the products.
     """
     return map(side_to_dict, eq.split('<=>'))
+
 
 def dict_to_side(d):
     """

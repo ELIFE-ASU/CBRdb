@@ -16,7 +16,9 @@ def cleanup_eq_line(eq_line):
     Returns:
     str: The cleaned equation line.
     """
-    replacements = {")": " ",
+    replacements = {"-0": "1",
+                    "0": "1",
+                    ")": " ",
                     "(": "",
                     "<=>": " <=> ",
                     "<==>": " <=> ",
