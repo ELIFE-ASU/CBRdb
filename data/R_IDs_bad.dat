@@ -1,1244 +1,1082 @@
-# Bad IDs, reason
-R00003, invalid
-R00007, invalid
-R00016, invalid
-R00020, invalid
-R00030, invalid
-R00035, invalid
-R00037, invalid
-R00040, invalid
-R00046, invalid
-R00050, invalid
-R00051, invalid
-R00064, invalid
-R00065, invalid
-R00071, invalid
-R00079, invalid
-R00096, invalid
-R00098, invalid
-R00107, invalid
-R00110, invalid
-R00116, invalid
-R00117, invalid
-R00121, invalid
-R00133, invalid
-R00136, invalid
-R00142, invalid
-R00144, invalid
-R00147, invalid
-R00151, invalid
-R00154, invalid
-R00163, invalid
-R00171, invalid
-R00175, invalid
-R00176, invalid
-R00180, invalid
-R00186, invalid
-R00201, invalid
-R00202, invalid
-R00204, invalid
-R00222, invalid
-R00225, invalid
-R00231, invalid
-R00232, invalid
-R00234, invalid
-R00240, invalid
-R00241, invalid
-R00242, invalid
-R00244, invalid
-R00246, invalid
-R00247, invalid
-R00249, invalid
-R00252, invalid
-R00255, invalid
-R00266, invalid
-R00276, invalid
-R00281, invalid
-R00285, invalid
-R00288, invalid
-R00290, invalid
-R00296, invalid
-R00309, invalid
-R00323, invalid
-R00349, invalid
-R00356, invalid
-R00358, invalid
-R00370, invalid
-R00386, invalid
-R00403, invalid
-R00404, invalid
-R00413, invalid
-R00415, invalid
-R00419, invalid
-R00427, invalid
-R00433, invalid
-R00450, invalid
-R00455, invalid
-R00456, invalid
-R00464, invalid
-R00467, invalid
-R00492, invalid
-R00495, invalid
-R00496, invalid
-R00498, invalid
-R00500, invalid
-R00516, invalid
-R00520, invalid
-R00523, invalid
-R00541, invalid
-R00553, invalid
-R00556, invalid
-R00560, invalid
-R00561, invalid
-R00564, invalid
-R00568, invalid
-R00580, invalid
-R00583, invalid
-R00587, invalid
-R00591, invalid
-R00592, invalid
-R00593, invalid
-R00607, invalid
-R00613, invalid
-R00620, invalid
-R00622, invalid
-R00632, invalid
-R00633, invalid
-R00641, invalid
-R00642, invalid
-R00663, invalid
-R00680, invalid
-R00687, invalid
-R00696, invalid
-R00701, invalid
-R00712, invalid
-R00718, invalid
-R00721, invalid
-R00738, invalid
-R00741, invalid
-R00745, invalid
-R00752, invalid
-R00757, invalid
-R00759, invalid
-R00773, invalid
-R00779, invalid
-R00780, invalid
-R00781, invalid
-R00786, invalid
-R00788, invalid
-R00795, invalid
-R00797, invalid
-R00819, invalid
-R00820, invalid
-R00824, invalid
-R00826, invalid
-R00831, invalid
-R00840, invalid
-R00843, invalid
-R00852, invalid
-R00862, invalid
-R00869, invalid
-R00882, invalid
-R00884, invalid
-R00886, invalid
-R00898, invalid
-R00902, invalid
-R00924, invalid
-R00929, invalid
-R00933, invalid
-R00938, invalid
-R00950, invalid
-R00958, invalid
-R00962, invalid
-R00967, invalid
-R00970, invalid
-R00971, invalid
-R00972, invalid
-R00979, invalid
-R00981, invalid
-R00992, invalid
-R01002, invalid
-R01017, invalid
-R01020, invalid
-R01024, invalid
-R01035, invalid
-R01037, invalid
-R01038, invalid
-R01040, invalid
-R01042, invalid
-R01046, invalid
-R01048, invalid
-R01060, invalid
-R01062, invalid
-R01065, invalid
-R01076, invalid
-R01084, invalid
-R01102, invalid
-R01107, invalid
-R01112, invalid
-R01114, invalid
-R01116, invalid
-R01118, invalid
-R01124, invalid
-R01125, invalid
-R01129, invalid
-R01133, invalid
-R01136, invalid
-R01141, invalid
-R01162, invalid
-R01165, invalid
-R01170, invalid
-R01182, invalid
-R01191, invalid
-R01198, invalid
-R01208, invalid
-R01219, invalid
-R01222, invalid
-R01223, invalid
-R01247, invalid
-R01250, invalid
-R01254, invalid
-R01272, invalid
-R01275, invalid
-R01276, invalid
-R01284, invalid
-R01285, invalid
-R01311, invalid
-R01345, invalid
-R01356, invalid
-R01362, invalid
-R01363, invalid
-R01379, invalid
-R01380, invalid
-R01382, invalid
-R01389, invalid
-R01391, invalid
-R01405, invalid
-R01428, invalid
-R01435, invalid
-R01436, invalid
-R01438, invalid
-R01439, invalid
-R01455, invalid
-R01458, invalid
-R01464, invalid
-R01475, invalid
-R01477, invalid
-R01479, invalid
-R01499, invalid
-R01501, invalid
-R01502, invalid
-R01509, invalid
-R01510, invalid
-R01527, invalid
-R01531, invalid
-R01534, invalid
-R01536, invalid
-R01539, invalid
-R01545, invalid
-R01546, invalid
-R01548, invalid
-R01549, invalid
-R01551, invalid
-R01552, invalid
-R01554, invalid
-R01572, invalid
-R01591, invalid
-R01592, invalid
-R01597, invalid
-R01601, invalid
-R01603, invalid
-R01605, invalid
-R01606, invalid
-R01610, invalid
-R01612, invalid
-R01622, invalid
-R01638, invalid
-R01640, invalid
-R01642, invalid
-R01643, invalid
-R01646, invalid
-R01653, invalid
-R01656, invalid
-R01661, invalid
-R01671, invalid
-R01672, invalid
-R01673, invalid
-R01674, invalid
-R01675, invalid
-R01679, invalid
-R01681, invalid
-R01691, invalid
-R01692, invalid
-R01693, invalid
-R01719, invalid
-R01725, invalid
-R01726, invalid
-R01727, invalid
-R01729, invalid
-R01733, invalid
-R01743, invalid
-R01744, invalid
-R01746, invalid
-R01753, invalid
-R01755, invalid
-R01756, invalid
-R01765, invalid
-R01772, invalid
-R01774, invalid
-R01783, invalid
-R01789, invalid
-R01792, invalid
-R01796, invalid
-R01809, invalid
-R01816, invalid
-R01820, invalid
-R01822, invalid
-R01828, invalid
-R01831, invalid
-R01832, invalid
-R01839, invalid
-R01841, invalid
-R01846, invalid
-R01847, invalid
-R01848, invalid
-R01849, invalid
-R01852, invalid
-R01864, invalid
-R01865, invalid
-R01871, invalid
-R01880, invalid
-R01893, invalid
-R01894, invalid
-R01897, invalid
-R01907, invalid
-R01916, invalid
-R01925, invalid
-R01927, invalid
-R01935, invalid
-R01947, invalid
-R01948, invalid
-R01949, invalid
-R01950, invalid
-R01953, invalid
-R01955, invalid
-R01958, invalid
-R01970, invalid
-R01971, invalid
-R01979, invalid
-R01985, invalid
-R01988, invalid
-R02001, invalid
-R02005, invalid
-R02012, invalid
-R02015, invalid
-R02028, invalid
-R02031, invalid
-R02033, invalid
-R02043, invalid
-R02044, invalid
-R02045, invalid
-R02046, invalid
-R02048, invalid
-R02049, invalid
-R02062, invalid
-R02066, invalid
-R02067, invalid
-R02069, invalid
-R02070, invalid
-R02072, invalid
-R02074, invalid
-R02079, invalid
-R02086, invalid
-R02091, invalid
-R02096, invalid
-R02097, invalid
-R02104, invalid
-R02105, invalid
-R02117, invalid
-R02140, invalid
-R02146, invalid
-R02149, invalid
-R02151, invalid
-R02153, invalid
-R02154, invalid
-R02162, invalid
-R02166, invalid
-R02169, invalid
-R02175, invalid
-R02176, invalid
-R02198, invalid
-R02202, invalid
-R02217, invalid
-R02223, invalid
-R02230, invalid
-R02270, invalid
-R02275, invalid
-R02290, invalid
-R02292, invalid
-R02299, invalid
-R02304, invalid
-R02308, invalid
-R02309, invalid
-R02312, invalid
-R02314, invalid
-R02316, invalid
-R02327, invalid
-R02332, invalid
-R02342, invalid
-R02346, invalid
-R02348, invalid
-R02357, invalid
-R02371, invalid
-R02372, invalid
-R02386, invalid
-R02390, invalid
-R02392, invalid
-R02399, invalid
-R02400, invalid
-R02403, invalid
-R02414, invalid
-R02424, invalid
-R02431, invalid
-R02435, invalid
-R02440, invalid
-R02448, invalid
-R02475, invalid
-R02479, invalid
-R02483, invalid
-R02495, invalid
-R02496, invalid
-R02500, invalid
-R02507, invalid
-R02510, invalid
-R02523, invalid
-R02524, invalid
-R02525, invalid
-R02538, invalid
-R02559, invalid
-R02567, invalid
-R02578, invalid
-R02579, invalid
-R02582, invalid
-R02607, invalid
-R02608, invalid
-R02614, invalid
-R02629, invalid
-R02635, invalid
-R02638, invalid
-R02641, invalid
-R02645, invalid
-R02647, invalid
-R02653, invalid
-R02660, invalid
-R02674, invalid
-R02686, invalid
-R02690, invalid
-R02696, invalid
-R02710, invalid
-R02753, invalid
-R02759, invalid
-R02761, invalid
-R02771, invalid
-R02774, invalid
-R02775, invalid
-R02779, invalid
-R02784, invalid
-R02785, invalid
-R02787, invalid
-R02795, invalid
-R02796, invalid
-R02803, invalid
-R02812, invalid
-R02829, invalid
-R02835, invalid
-R02842, invalid
-R02844, invalid
-R02845, invalid
-R02870, invalid
-R02871, invalid
-R02873, invalid
-R02881, invalid
-R02883, invalid
-R02891, invalid
-R02900, invalid
-R02913, invalid
-R02916, invalid
-R02939, invalid
-R02947, invalid
-R02956, invalid
-R02958, invalid
-R02966, invalid
-R02967, invalid
-R02977, invalid
-R02981, invalid
-R03000, invalid
-R03002, invalid
-R03007, invalid
-R03010, invalid
-R03011, invalid
-R03029, invalid
-R03041, invalid
-R03047, invalid
-R03061, invalid
-R03068, invalid
-R03074, invalid
-R03085, invalid
-R03099, invalid
-R03100, invalid
-R03101, invalid
-R03106, invalid
-R03108, invalid
-R03113, invalid
-R03117, invalid
-R03141, invalid
-R03144, invalid
-R03152, invalid
-R03159, invalid
-R03160, invalid
-R03170, invalid
-R03173, invalid
-R03179, invalid
-R03196, invalid
-R03205, invalid
-R03221, invalid
-R03233, invalid
-R03235, invalid
-R03242, invalid
-R03248, invalid
-R03252, invalid
-R03272, invalid
-R03280, invalid
-R03282, invalid
-R03285, invalid
-R03287, invalid
-R03290, invalid
-R03292, invalid
-R03294, invalid
-R03301, invalid
-R03305, invalid
-R03309, invalid
-R03310, invalid
-R03312, invalid
-R03320, invalid
-R03324, invalid
-R03328, invalid
-R03335, invalid
-R03336, invalid
-R03338, invalid
-R03340, invalid
-R03343, invalid
-R03368, invalid
-R03377, invalid
-R03379, invalid
-R03382, invalid
-R03389, invalid
-R03400, invalid
-R03403, invalid
-R03412, invalid
-R03413, invalid
-R03414, invalid
-R03419, invalid
-R03420, invalid
-R03426, invalid
-R03432, invalid
-R03436, invalid
-R03442, invalid
-R03453, invalid
-R03480, invalid
-R03481, invalid
-R03483, invalid
-R03484, invalid
-R03485, invalid
-R03487, invalid
-R03499, invalid
-R03500, invalid
-R03501, invalid
-R03505, invalid
-R03525, invalid
-R03536, invalid
-R03561, invalid
-R03569, invalid
-R03578, invalid
-R03580, invalid
-R03598, invalid
-R03606, invalid
-R03619, invalid
-R03644, invalid
-R03649, invalid
-R03653, invalid
-R03669, invalid
-R03670, invalid
-R03676, invalid
-R03683, invalid
-R03690, invalid
-R03705, invalid
-R03715, invalid
-R03717, invalid
-R03729, invalid
-R03730, invalid
-R03741, invalid
-R03750, invalid
-R03752, invalid
-R03757, invalid
-R03773, invalid
-R03786, invalid
-R03795, invalid
-R03808, invalid
-R03811, invalid
-R03825, invalid
-R03837, invalid
-R03839, invalid
-R03843, invalid
-R03844, invalid
-R03846, invalid
-R03853, invalid
-R03855, invalid
-R03865, invalid
-R03888, invalid
-R03890, invalid
-R03895, invalid
-R03902, invalid
-R03926, invalid
-R03931, invalid
-R03941, invalid
-R03949, invalid
-R03951, invalid
-R03957, invalid
-R03958, invalid
-R03960, invalid
-R03961, invalid
-R03967, invalid
-R03972, invalid
-R03976, invalid
-R03985, invalid
-R03988, invalid
-R04004, invalid
-R04008, invalid
-R04041, invalid
-R04042, invalid
-R04044, invalid
-R04045, invalid
-R04052, invalid
-R04054, invalid
-R04064, invalid
-R04067, invalid
-R04069, invalid
-R04075, invalid
-R04079, invalid
-R04083, invalid
-R04086, invalid
-R04087, invalid
-R04107, invalid
-R04110, invalid
-R04114, invalid
-R04116, invalid
-R04128, invalid
-R04129, invalid
-R04164, invalid
-R04181, invalid
-R04195, invalid
-R04196, invalid
-R04197, invalid
-R04207, invalid
-R04219, invalid
-R04220, invalid
-R04226, invalid
-R04232, invalid
-R04233, invalid
-R04240, invalid
-R04243, invalid
-R04244, invalid
-R04245, invalid
-R04246, invalid
-R04253, invalid
-R04255, invalid
-R04261, invalid
-R04262, invalid
-R04284, invalid
-R04287, invalid
-R04288, invalid
-R04290, invalid
-R04295, invalid
-R04298, invalid
-R04302, invalid
-R04308, invalid
-R04324, invalid
-R04329, invalid
-R04337, invalid
-R04351, invalid
-R04357, invalid
-R04381, invalid
-R04395, invalid
-R04402, invalid
-R04406, invalid
-R04407, invalid
-R04408, invalid
-R04414, invalid
-R04415, invalid
-R04417, invalid
-R04434, invalid
-R04442, invalid
-R04454, invalid
-R04462, invalid
-R04465, invalid
-R04468, invalid
-R04485, invalid
-R04492, invalid
-R04497, invalid
-R04499, invalid
-R04508, invalid
-R04516, invalid
-R04521, invalid
-R04528, invalid
-R04530, invalid
-R04539, invalid
-R04551, invalid
-R04554, invalid
-R04561, invalid
-R04569, invalid
-R04572, invalid
-R04574, invalid
-R04585, invalid
-R04595, invalid
-R04605, invalid
-R04612, invalid
-R04614, invalid
-R04624, invalid
-R04625, invalid
-R04626, invalid
-R04627, invalid
-R04628, invalid
-R04629, invalid
-R04637, invalid
-R04651, invalid
-R04652, invalid
-R04655, invalid
-R04663, invalid
-R04664, invalid
-R04668, invalid
-R04669, invalid
-R04677, invalid
-R04679, invalid
-R04680, invalid
-R04689, invalid
-R04698, invalid
-R04704, invalid
-R04712, invalid
-R04735, invalid
-R04750, invalid
-R04752, invalid
-R04755, invalid
-R04757, invalid
-R04765, invalid
-R04766, invalid
-R04767, invalid
-R04778, invalid
-R04788, invalid
-R04793, invalid
-R04796, invalid
-R04797, invalid
-R04802, invalid
-R04814, invalid
-R04815, invalid
-R04816, invalid
-R04820, invalid
-R04821, invalid
-R04822, invalid
-R04828, invalid
-R04839, invalid
-R04841, invalid
-R04848, invalid
-R04851, invalid
-R04865, invalid
-R04871, invalid
-R04873, invalid
-R04896, invalid
-R04897, invalid
-R04898, invalid
-R04912, invalid
-R04926, invalid
-R04936, invalid
-R04974, invalid
-R04976, invalid
-R04982, invalid
-R04983, invalid
-R04984, invalid
-R04989, invalid
-R04990, invalid
-R04991, invalid
-R04992, invalid
-R04993, invalid
-R04995, invalid
-R04997, invalid
-R05003, invalid
-R05004, invalid
-R05005, invalid
-R05006, invalid
-R05007, invalid
-R05008, invalid
-R05009, invalid
-R05010, invalid
-R05011, invalid
-R05012, invalid
-R05013, invalid
-R05014, invalid
-R05015, invalid
-R05016, invalid
-R05017, invalid
-R05018, invalid
-R05019, invalid
-R05020, invalid
-R05021, invalid
-R05022, invalid
-R05023, invalid
-R05024, invalid
-R05025, invalid
-R05026, invalid
-R05027, invalid
-R05028, invalid
-R05029, invalid
-R05031, invalid
-R05033, invalid
-R05034, invalid
-R05042, invalid
-R05047, invalid
-R05054, invalid
-R05065, invalid
-R05067, invalid
-R05073, invalid
-R05082, invalid
-R05091, invalid
-R05093, invalid
-R05094, invalid
-R05095, invalid
-R05096, invalid
-R05101, invalid
-R05103, invalid
-R05104, invalid
-R05139, invalid
-R05143, invalid
-R05147, invalid
-R05159, invalid
-R05160, invalid
-R05161, invalid
-R05178, invalid
-R05184, invalid
-R05187, invalid
-R05192, invalid
-R05194, invalid
-R05195, invalid
-R05200, invalid
-R05201, invalid
-R05203, invalid
-R05204, invalid
-R05205, invalid
-R05206, invalid
-R05208, invalid
-R05242, invalid
-R05253, invalid
-R05254, invalid
-R05306, invalid
-R05319, invalid
-R05340, invalid
-R05342, invalid
-R05343, invalid
-R05456, invalid
-R05457, invalid
-R05458, invalid
-R05460, invalid
-R05461, invalid
-R05464, invalid
-R05489, invalid
-R05490, invalid
-R05491, invalid
-R05494, invalid
-R05513, invalid
-R05514, invalid
-R05517, invalid
-R05523, invalid
-R05524, invalid
-R05525, invalid
-R05527, invalid
-R05528, invalid
-R05529, invalid
-R05550, invalid
-R05557, invalid
-R05561, invalid
-R05562, invalid
-R05589, invalid
-R05614, invalid
-R05617, invalid
-R05628, invalid
-R05638, invalid
-R05660, invalid
-R05667, invalid
-R05709, invalid
-R05710, invalid
-R05726, invalid
-R05736, invalid
-R05737, invalid
-R05738, invalid
-R05755, invalid
-R05756, invalid
-R05770, invalid
-R05785, invalid
-R05786, invalid
-R05787, invalid
-R05851, invalid
-R05852, invalid
-R05853, invalid
-R05854, invalid
-R05883, invalid
-R05891, invalid
-R05892, invalid
-R05893, invalid
-R05920, invalid
-R05921, invalid
-R05982, invalid
-R05993, invalid
-R05997, invalid
-R06002, invalid
-R06008, invalid
-R06017, invalid
-R06019, invalid
-R06060, invalid
-R06065, invalid
-R06111, invalid
-R06123, invalid
-R06133, invalid
-R06136, invalid
-R06137, invalid
-R06146, invalid
-R06148, invalid
-R06159, invalid
-R06205, invalid
-R06212, invalid
-R06220, invalid
-R06231, invalid
-R06235, invalid
-R06248, invalid
-R06252, invalid
-R06281, invalid
-R06300, invalid
-R06360, invalid
-R06362, invalid
-R06416, invalid
-R06425, invalid
-R06429, invalid
-R06430, invalid
-R06431, invalid
-R06432, invalid
-R06435, invalid
-R06440, invalid
-R06441, invalid
-R06442, invalid
-R06444, invalid
-R06507, invalid
-R06508, invalid
-R06509, invalid
-R06511, invalid
-R06512, invalid
-R06524, invalid
-R06552, invalid
-R06555, invalid
-R06557, invalid
-R06559, invalid
-R06566, invalid
-R06567, invalid
-R06581, invalid
-R06585, invalid
-R06596, invalid
-R06608, invalid
-R06609, invalid
-R06616, invalid
-R06636, invalid
-R06638, invalid
-R06639, invalid
-R06640, invalid
-R06646, invalid
-R06647, invalid
-R06648, invalid
-R06649, invalid
-R06657, invalid
-R06658, invalid
-R06663, invalid
-R06669, invalid
-R06705, invalid
-R06708, invalid
-R06712, invalid
-R06720, invalid
-R06721, invalid
-R06723, invalid
-R06739, invalid
-R06742, invalid
-R06749, invalid
-R06750, invalid
-R06754, invalid
-R06755, invalid
-R06756, invalid
-R06769, invalid
-R06841, invalid
-R06842, invalid
-R06843, invalid
-R06844, invalid
-R06845, invalid
-R06858, invalid
-R06859, invalid
-R06860, invalid
-R06864, invalid
-R06873, invalid
-R06874, invalid
-R06965, invalid
-R06984, invalid
-R07033, invalid
-R07065, invalid
-R07126, invalid
-R07130, invalid
-R07132, invalid
-R07139, invalid
-R07173, invalid
-R07180, invalid
-R07189, invalid
-R07199, invalid
-R07200, invalid
-R07219, invalid
-R07223, invalid
-R07231, invalid
-R07235, invalid
-R07246, invalid
-R07254, invalid
-R07283, invalid
-R07284, invalid
-R07286, invalid
-R07304, invalid
-R07305, invalid
-R07315, invalid
-R07327, invalid
-R07378, invalid
-R07391, invalid
-R07408, invalid
-R07424, invalid
-R07425, invalid
-R07434, invalid
-R07435, invalid
-R07438, invalid
-R07439, invalid
-R07462, invalid
-R07464, invalid
-R07465, invalid
-R07482, invalid
-R07485, invalid
-R07490, invalid
-R07496, invalid
-R07505, invalid
-R07584, invalid
-R07585, invalid
-R07586, invalid
-R07587, invalid
-R07588, invalid
-R07589, invalid
-R07590, invalid
-R07591, invalid
-R07592, invalid
-R07593, invalid
-R07594, invalid
-R07595, invalid
-R07596, invalid
-R07637, invalid
-R07645, invalid
-R07681, invalid
-R07768, invalid
-R07853, invalid
-R08025, invalid
-R08039, invalid
-R08131, invalid
-R08156, invalid
-R08169, invalid
-R08202, invalid
-R08209, invalid
-R08216, invalid
-R08375, invalid
-R08457, invalid
-R08461, invalid
-R08479, invalid
-R08493, invalid
-R08495, invalid
-R08504, invalid
-R08516, invalid
-R08526, invalid
-R08552, invalid
-R08554, invalid
-R08556, invalid
-R08565, invalid
-R08580, invalid
-R08581, invalid
-R08582, invalid
-R08586, invalid
-R08592, invalid
-R08593, invalid
-R08594, invalid
-R08595, invalid
-R08598, invalid
-R08649, invalid
-R08656, invalid
-R08677, invalid
-R08703, invalid
-R08719, invalid
-R08720, invalid
-R08722, invalid
-R08729, invalid
-R08730, invalid
-R08731, invalid
-R08732, invalid
-R08736, invalid
-R08737, invalid
-R08741, invalid
-R08742, invalid
-R08773, invalid
-R08774, invalid
-R08775, invalid
-R08781, invalid
-R08783, invalid
-R08786, invalid
-R08793, invalid
-R08860, invalid
-R08971, invalid
-R09001, invalid
-R09003, invalid
-R09004, invalid
-R09005, invalid
-R09006, invalid
-R09007, invalid
-R09008, invalid
-R09010, invalid
-R09011, invalid
-R09012, invalid
-R09013, invalid
-R09014, invalid
-R09015, invalid
-R09017, invalid
-R09018, invalid
-R09019, invalid
-R09020, invalid
-R09021, invalid
-R09022, invalid
-R09023, invalid
-R09024, invalid
-R09025, invalid
-R09026, invalid
-R09027, invalid
-R09028, invalid
-R09029, invalid
-R09057, invalid
-R09058, invalid
-R09062, invalid
-R09091, invalid
-R09092, invalid
-R09101, invalid
-R09193, invalid
-R09194, invalid
-R09199, invalid
-R09200, invalid
-R09294, invalid
-R09321, invalid
-R09356, invalid
-R09396, invalid
-R09437, invalid
-R09490, invalid
-R09546, invalid
-R09547, invalid
-R09582, invalid
-R09706, invalid
-R09828, invalid
-R09829, invalid
-R09869, invalid
-R09878, invalid
-R10019, invalid
-R10058, invalid
-R10064, invalid
-R10071, invalid
-R10083, invalid
-R10084, invalid
-R10085, invalid
-R10087, invalid
-R10148, invalid
-R10202, invalid
-R10214, invalid
-R10215, invalid
-R10300, invalid
-R10354, invalid
-R10355, invalid
-R10363, invalid
-R10364, invalid
-R10374, invalid
-R10375, invalid
-R10377, invalid
-R10378, invalid
-R10386, invalid
-R10387, invalid
-R10458, invalid
-R10471, invalid
-R10489, invalid
-R10490, invalid
-R10513, invalid
-R10567, invalid
-R10568, invalid
-R10592, invalid
-R10618, invalid
-R10642, invalid
-R10653, invalid
-R10654, invalid
-R10808, invalid
-R10977, invalid
-R11027, invalid
-R11137, invalid
-R11167, invalid
-R11331, invalid
-R11437, invalid
-R11438, invalid
-R11567, invalid
-R11596, invalid
-R11605, invalid
-R11725, invalid
-R11727, invalid
-R11728, invalid
-R11729, invalid
-R11746, invalid
-R11755, invalid
-R11757, invalid
-R11863, invalid
-R11883, invalid
-R11884, invalid
-R11908, invalid
-R11910, invalid
-R11966, invalid
-R11967, invalid
-R11968, invalid
-R11969, invalid
-R11970, invalid
-R12043, invalid
-R12044, invalid
-R12139, invalid
-R12143, invalid
-R12174, invalid
-R12175, invalid
-R12186, invalid
-R12189, invalid
-R12190, invalid
-R12191, invalid
-R12192, invalid
-R12195, invalid
-R12327, invalid
-R12480, invalid
-R12627, invalid
-R12654, invalid
-R12655, invalid
-R12656, invalid
-R12681, invalid
-R12809, invalid
-R13170, invalid
-R13200, invalid
-R13201, invalid
-R13282, invalid
-R13400, invalid
+Reaction,Type
+R00034,general
+R00056,general
+R00083,general
+R00145,general
+R00146,general
+R00162,general
+R00165,incomplete
+R00166,incomplete
+R00167,incomplete
+R00168,incomplete
+R00169,incomplete
+R00172,incomplete
+R00331,general
+R00333,general
+R00334,general
+R00383,general
+R00384,general
+R00385,general
+R00387,general
+R00388,general
+R00389,general
+R00390,general
+R00391,general
+R00392,general
+R00395,general
+R00423,incomplete
+R00423,general
+R00493,general
+R00538,general
+R00539,general
+R00540,general
+R00595,general
+R00623,general
+R00624,general
+R00625,general
+R00626,general
+R00627,general
+R00628,general
+R00630,general
+R00631,general
+R00634,general
+R00635,general
+R00636,general
+R00638,general
+R00639,general
+R00698,incomplete
+R00804,general
+R00914,incomplete
+R00991,incomplete
+R01119,incomplete
+R01178,general
+R01240,general
+R01242,general
+R01243,general
+R01259,general
+R01260,general
+R01261,general
+R01263,general
+R01264,general
+R01265,general
+R01282,incomplete
+R01331,glycan
+R01331,general
+R01339,general
+R01340,general
+R01368,general
+R01369,general
+R01400,general
+R01400,incomplete
+R01409,general
+R01427,incomplete
+R01474,incomplete
+R01478,general
+R01480,general
+R01486,general
+R01487,general
+R01488,general
+R01489,general
+R01490,general
+R01491,general
+R01532,general
+R01578,incomplete
+R01637,incomplete
+R01734,incomplete
+R01778,general
+R01810,general
+R01853,general
+R01854,general
+R01862,general
+R01913,incomplete
+R02008,incomplete
+R02113,general
+R02114,general
+R02115,general
+R02116,incomplete
+R02127,incomplete
+R02128,incomplete
+R02129,incomplete
+R02130,general
+R02131,general
+R02170,general
+R02172,general
+R02281,general
+R02321,general
+R02336,general
+R02337,general
+R02341,general
+R02365,general
+R02409,incomplete
+R02432,general
+R02460,incomplete
+R02518,incomplete
+R02592,incomplete
+R02642,general
+R02643,general
+R02644,general
+R02693,general
+R02713,incomplete
+R02726,general
+R02766,general
+R02767,general
+R02768,general
+R02770,general
+R02806,general
+R02808,general
+R02809,general
+R02811,general
+R02816,incomplete
+R02819,general
+R02820,general
+R02822,general
+R02825,incomplete
+R02826,general
+R02828,general
+R02847,general
+R02848,general
+R02849,general
+R02850,general
+R02861,incomplete
+R02876,general
+R02895,incomplete
+R02898,general
+R02904,incomplete
+R02959,incomplete
+R02996,general
+R03016,general
+R03017,general
+R03060,general
+R03076,general
+R03142,general
+R03148,general
+R03149,general
+R03176,general
+R03201,general
+R03226,general
+R03227,general
+R03228,general
+R03526,general
+R03541,general
+R03570,general
+R03602,incomplete
+R03603,incomplete
+R03645,general
+R03701,general
+R03708,general
+R03740,incomplete
+R03749,general
+R03753,general
+R03754,general
+R03760,general
+R03765,incomplete
+R03797,general
+R03798,incomplete
+R03827,general
+R03836,incomplete
+R03841,general
+R03872,incomplete
+R03873,incomplete
+R03911,incomplete
+R03923,general
+R03946,general
+R03950,incomplete
+R03979,general
+R04055,general
+R04122,general
+R04168,general
+R04250,incomplete
+R04252,incomplete
+R04283,incomplete
+R04294,general
+R04315,general
+R04511,general
+R04514,general
+R04546,incomplete
+R04562,general
+R04563,general
+R04582,general
+R04604,general
+R04616,incomplete
+R04667,incomplete
+R04670,incomplete
+R04763,incomplete
+R04775,incomplete
+R04808,incomplete
+R04860,incomplete
+R04868,general
+R04878,incomplete
+R04899,incomplete
+R04906,incomplete
+R04923,incomplete
+R04925,incomplete
+R04933,incomplete
+R04934,incomplete
+R04975,incomplete
+R04985,general
+R05000,general
+R05044,incomplete
+R05045,incomplete
+R05088,incomplete
+R05089,incomplete
+R05090,incomplete
+R05122,incomplete
+R05131,incomplete
+R05145,general
+R05163,general
+R05344,incomplete
+R05534,incomplete
+R05536,incomplete
+R05671,incomplete
+R05777,general
+R05816,general
+R05836,incomplete
+R05901,glycan
+R05902,glycan
+R05903,glycan
+R05904,glycan
+R05905,glycan
+R05906,glycan
+R05907,glycan
+R05908,glycan
+R05909,glycan
+R05910,glycan
+R05911,glycan
+R05912,glycan
+R05913,glycan
+R05914,glycan
+R05915,glycan
+R05916,glycan
+R05917,glycan
+R05918,glycan
+R05919,glycan
+R05922,glycan
+R05923,glycan
+R05924,glycan
+R05925,glycan
+R05926,glycan
+R05927,glycan
+R05928,glycan
+R05929,glycan
+R05930,glycan
+R05931,glycan
+R05932,glycan
+R05933,glycan
+R05934,glycan
+R05935,glycan
+R05936,glycan
+R05937,glycan
+R05938,glycan
+R05939,glycan
+R05940,glycan
+R05941,glycan
+R05942,glycan
+R05943,glycan
+R05944,glycan
+R05945,glycan
+R05946,glycan
+R05947,glycan
+R05948,glycan
+R05949,glycan
+R05950,glycan
+R05951,glycan
+R05952,glycan
+R05953,glycan
+R05954,glycan
+R05955,glycan
+R05956,glycan
+R05957,glycan
+R05958,glycan
+R05959,glycan
+R05960,glycan
+R05961,glycan
+R05962,glycan
+R05963,glycan
+R05964,glycan
+R05965,glycan
+R05966,glycan
+R05967,glycan
+R05968,glycan
+R05969,glycan
+R05970,glycan
+R05971,glycan
+R05972,glycan
+R05973,glycan
+R05974,glycan
+R05975,glycan
+R05976,glycan
+R05977,glycan
+R05978,glycan
+R05979,glycan
+R05980,glycan
+R05981,glycan
+R05983,glycan
+R05984,glycan
+R05985,glycan
+R05986,glycan
+R05987,glycan
+R05988,glycan
+R05989,glycan
+R05990,glycan
+R05991,glycan
+R05992,glycan
+R05994,glycan
+R05995,glycan
+R05996,glycan
+R05998,glycan
+R05999,glycan
+R06000,glycan
+R06001,glycan
+R06003,glycan
+R06004,glycan
+R06005,glycan
+R06006,glycan
+R06007,glycan
+R06009,glycan
+R06010,glycan
+R06011,glycan
+R06012,glycan
+R06013,glycan
+R06014,glycan
+R06015,glycan
+R06016,glycan
+R06018,glycan
+R06020,glycan
+R06021,glycan
+R06022,glycan
+R06023,glycan
+R06024,glycan
+R06025,glycan
+R06026,glycan
+R06027,glycan
+R06028,glycan
+R06029,glycan
+R06030,glycan
+R06031,glycan
+R06032,glycan
+R06033,glycan
+R06034,glycan
+R06035,glycan
+R06036,glycan
+R06037,glycan
+R06038,glycan
+R06039,glycan
+R06040,glycan
+R06041,glycan
+R06042,glycan
+R06043,glycan
+R06044,glycan
+R06045,glycan
+R06049,glycan
+R06050,glycan
+R06051,glycan
+R06052,glycan
+R06053,glycan
+R06055,glycan
+R06056,glycan
+R06057,glycan
+R06058,glycan
+R06059,glycan
+R06061,glycan
+R06062,glycan
+R06066,glycan
+R06067,glycan
+R06068,glycan
+R06069,glycan
+R06070,glycan
+R06071,glycan
+R06072,glycan
+R06073,glycan
+R06074,glycan
+R06075,glycan
+R06076,glycan
+R06077,glycan
+R06078,glycan
+R06079,glycan
+R06080,glycan
+R06081,glycan
+R06082,glycan
+R06083,glycan
+R06084,glycan
+R06085,glycan
+R06086,glycan
+R06087,glycan
+R06088,glycan
+R06089,glycan
+R06090,glycan
+R06091,glycan
+R06092,glycan
+R06093,glycan
+R06094,glycan
+R06095,glycan
+R06096,glycan
+R06097,glycan
+R06098,glycan
+R06099,glycan
+R06100,glycan
+R06101,glycan
+R06102,glycan
+R06103,glycan
+R06104,glycan
+R06105,glycan
+R06106,glycan
+R06107,glycan
+R06108,glycan
+R06109,glycan
+R06110,glycan
+R06112,glycan
+R06113,glycan
+R06114,glycan
+R06115,glycan
+R06116,glycan
+R06118,glycan
+R06121,glycan
+R06122,glycan
+R06124,general
+R06125,glycan
+R06127,glycan
+R06128,glycan
+R06129,glycan
+R06130,glycan
+R06131,general
+R06132,general
+R06134,general
+R06135,glycan
+R06138,general
+R06139,glycan
+R06140,glycan
+R06141,glycan
+R06142,glycan
+R06143,glycan
+R06144,glycan
+R06145,glycan
+R06147,glycan
+R06149,glycan
+R06150,glycan
+R06151,glycan
+R06152,glycan
+R06153,glycan
+R06155,glycan
+R06156,glycan
+R06157,glycan
+R06158,glycan
+R06160,glycan
+R06161,glycan
+R06162,glycan
+R06163,glycan
+R06164,glycan
+R06165,glycan
+R06167,glycan
+R06168,glycan
+R06169,glycan
+R06170,glycan
+R06172,glycan
+R06173,glycan
+R06174,glycan
+R06175,glycan
+R06176,glycan
+R06177,glycan
+R06179,glycan
+R06181,glycan
+R06182,glycan
+R06183,glycan
+R06184,glycan
+R06185,glycan
+R06186,glycan
+R06187,glycan
+R06188,glycan
+R06189,glycan
+R06190,glycan
+R06191,glycan
+R06192,glycan
+R06193,glycan
+R06196,incomplete
+R06197,glycan
+R06198,glycan
+R06199,glycan
+R06200,glycan
+R06201,glycan
+R06202,glycan
+R06203,glycan
+R06204,glycan
+R06206,glycan
+R06207,glycan
+R06208,glycan
+R06209,glycan
+R06210,glycan
+R06211,glycan
+R06213,glycan
+R06214,glycan
+R06215,glycan
+R06216,glycan
+R06217,glycan
+R06218,glycan
+R06219,glycan
+R06221,glycan
+R06222,glycan
+R06224,glycan
+R06225,glycan
+R06226,glycan
+R06227,glycan
+R06228,glycan
+R06229,glycan
+R06230,glycan
+R06232,glycan
+R06233,glycan
+R06234,glycan
+R06236,glycan
+R06237,glycan
+R06238,glycan
+R06239,glycan
+R06240,glycan
+R06241,glycan
+R06242,glycan
+R06243,glycan
+R06244,glycan
+R06245,glycan
+R06246,glycan
+R06247,glycan
+R06249,glycan
+R06250,glycan
+R06251,glycan
+R06253,glycan
+R06258,glycan
+R06259,glycan
+R06260,glycan
+R06261,glycan
+R06262,glycan
+R06263,glycan
+R06264,glycan
+R06273,glycan
+R06274,glycan
+R06275,glycan
+R06276,glycan
+R06277,glycan
+R06278,glycan
+R06279,glycan
+R06280,glycan
+R06283,glycan
+R06285,glycan
+R06289,glycan
+R06290,glycan
+R06352,incomplete
+R06353,incomplete
+R06355,incomplete
+R06356,incomplete
+R06358,incomplete
+R06359,incomplete
+R06623,glycan
+R06670,incomplete
+R06722,glycan
+R06733,incomplete
+R06768,incomplete
+R06775,incomplete
+R06986,glycan
+R07005,incomplete
+R07006,incomplete
+R07008,incomplete
+R07129,glycan
+R07131,glycan
+R07232,general
+R07233,general
+R07234,general
+R07342,general
+R07344,general
+R07354,general
+R07355,general
+R07466,incomplete
+R07510,incomplete
+R07540,incomplete
+R07542,incomplete
+R07548,incomplete
+R07552,incomplete
+R07555,incomplete
+R07609,glycan
+R07610,glycan
+R07611,glycan
+R07614,glycan
+R07615,glycan
+R07616,glycan
+R07617,glycan
+R07619,glycan
+R07620,glycan
+R07621,glycan
+R07622,glycan
+R07623,glycan
+R07624,glycan
+R07625,glycan
+R07628,glycan
+R07655,incomplete
+R07656,incomplete
+R07663,incomplete
+R07682,incomplete
+R07683,incomplete
+R07685,incomplete
+R07686,incomplete
+R07692,incomplete
+R07693,incomplete
+R07696,incomplete
+R07697,incomplete
+R07698,incomplete
+R07699,incomplete
+R07700,incomplete
+R07725,incomplete
+R07735,incomplete
+R07744,incomplete
+R07805,glycan
+R07806,glycan
+R07807,glycan
+R07808,glycan
+R07809,glycan
+R07810,glycan
+R07811,glycan
+R07812,glycan
+R07813,glycan
+R07814,glycan
+R07815,glycan
+R07816,glycan
+R07817,glycan
+R07818,glycan
+R07819,glycan
+R07820,glycan
+R07821,glycan
+R07822,glycan
+R07823,glycan
+R07824,glycan
+R07825,glycan
+R07826,incomplete
+R07844,incomplete
+R07846,incomplete
+R07847,incomplete
+R07900,incomplete
+R07904,incomplete
+R07915,incomplete
+R08023,incomplete
+R08067,incomplete
+R08107,glycan
+R08234,incomplete
+R08252,incomplete
+R08256,incomplete
+R08268,incomplete
+R08269,incomplete
+R08272,incomplete
+R08276,incomplete
+R08277,incomplete
+R08284,incomplete
+R08286,incomplete
+R08287,incomplete
+R08290,incomplete
+R08291,incomplete
+R08293,incomplete
+R08296,incomplete
+R08297,incomplete
+R08298,incomplete
+R08299,incomplete
+R08301,incomplete
+R08302,incomplete
+R08315,incomplete
+R08316,incomplete
+R08317,incomplete
+R08318,incomplete
+R08319,incomplete
+R08320,incomplete
+R08321,incomplete
+R08322,incomplete
+R08324,incomplete
+R08329,incomplete
+R08330,incomplete
+R08333,incomplete
+R08334,incomplete
+R08335,incomplete
+R08336,incomplete
+R08337,incomplete
+R08338,incomplete
+R08339,incomplete
+R08340,incomplete
+R08341,incomplete
+R08342,incomplete
+R08343,incomplete
+R08344,incomplete
+R08345,incomplete
+R08368,general
+R08371,incomplete
+R08377,incomplete
+R08378,incomplete
+R08386,general
+R08393,incomplete
+R08394,incomplete
+R08397,incomplete
+R08398,incomplete
+R08399,incomplete
+R08401,incomplete
+R08411,incomplete
+R08412,incomplete
+R08413,incomplete
+R08414,incomplete
+R08415,incomplete
+R08416,incomplete
+R08417,incomplete
+R08418,incomplete
+R08419,incomplete
+R08421,incomplete
+R08422,incomplete
+R08424,incomplete
+R08425,incomplete
+R08426,incomplete
+R08427,incomplete
+R08428,incomplete
+R08431,incomplete
+R08435,incomplete
+R08438,incomplete
+R08443,incomplete
+R08444,incomplete
+R08445,incomplete
+R08447,incomplete
+R08450,incomplete
+R08452,incomplete
+R08454,incomplete
+R08456,incomplete
+R08458,incomplete
+R08459,incomplete
+R08460,incomplete
+R08464,incomplete
+R08466,incomplete
+R08470,incomplete
+R08471,incomplete
+R08472,incomplete
+R08473,incomplete
+R08474,incomplete
+R08475,incomplete
+R08476,incomplete
+R08477,incomplete
+R08478,incomplete
+R08481,incomplete
+R08482,incomplete
+R08483,incomplete
+R08484,incomplete
+R08485,incomplete
+R08486,incomplete
+R08487,incomplete
+R08488,incomplete
+R08489,incomplete
+R08490,incomplete
+R08496,incomplete
+R08497,incomplete
+R08498,incomplete
+R08500,incomplete
+R08501,incomplete
+R08502,incomplete
+R08506,incomplete
+R08507,incomplete
+R08508,incomplete
+R08509,incomplete
+R08513,incomplete
+R08519,incomplete
+R08524,incomplete
+R08525,incomplete
+R08535,incomplete
+R08550,general
+R08564,incomplete
+R08579,incomplete
+R08585,incomplete
+R08596,incomplete
+R08599,glycan
+R08605,incomplete
+R08606,incomplete
+R08679,general
+R08680,general
+R08681,general
+R08682,incomplete
+R08682,general
+R08683,general
+R08684,general
+R08686,general
+R08687,general
+R08688,general
+R08690,incomplete
+R08699,incomplete
+R08700,incomplete
+R08716,incomplete
+R08717,glycan
+R08718,glycan
+R08763,incomplete
+R08768,general
+R08769,general
+R08770,general
+R08771,general
+R08772,general
+R08792,incomplete
+R08792,general
+R08798,incomplete
+R08799,incomplete
+R08800,incomplete
+R08801,incomplete
+R08802,incomplete
+R08811,incomplete
+R08812,incomplete
+R08843,incomplete
+R08865,incomplete
+R08882,incomplete
+R08888,incomplete
+R08927,incomplete
+R08928,incomplete
+R08929,incomplete
+R08984,incomplete
+R08985,incomplete
+R08986,incomplete
+R08988,incomplete
+R08989,incomplete
+R08990,incomplete
+R08994,incomplete
+R08995,incomplete
+R09083,incomplete
+R09100,incomplete
+R09108,incomplete
+R09109,incomplete
+R09110,incomplete
+R09112,incomplete
+R09114,incomplete
+R09290,glycan
+R09295,glycan
+R09296,glycan
+R09297,glycan
+R09298,glycan
+R09299,glycan
+R09300,glycan
+R09301,glycan
+R09302,glycan
+R09303,glycan
+R09304,glycan
+R09315,glycan
+R09316,glycan
+R09318,glycan
+R09319,glycan
+R09320,glycan
+R09323,glycan
+R09324,glycan
+R09344,incomplete
+R09471,incomplete
+R09682,general
+R09737,general
+R09764,glycan
+R09766,glycan
+R09808,incomplete
+R09809,incomplete
+R10138,glycan
+R10139,glycan
+R10208,general
+R10244,general
+R10388,general
+R10389,general
+R10397,incomplete
+R10404,incomplete
+R10422,general
+R10423,general
+R10528,general
+R10686,incomplete
+R10716,general
+R10737,incomplete
+R10738,incomplete
+R10749,incomplete
+R10761,general
+R10766,general
+R10830,glycan
+R10831,glycan
+R10863,incomplete
+R10864,incomplete
+R10905,glycan
+R10911,general
+R10912,general
+R10915,incomplete
+R11029,incomplete
+R11105,incomplete
+R11107,incomplete
+R11114,incomplete
+R11178,incomplete
+R11179,incomplete
+R11196,incomplete
+R11287,incomplete
+R11302,incomplete
+R11303,incomplete
+R11304,incomplete
+R11314,incomplete
+R11316,glycan
+R11317,glycan
+R11318,glycan
+R11320,glycan
+R11321,glycan
+R11322,glycan
+R11354,general
+R11362,incomplete
+R11363,incomplete
+R11364,incomplete
+R11365,incomplete
+R11369,incomplete
+R11375,glycan
+R11376,glycan
+R11377,glycan
+R11378,glycan
+R11379,glycan
+R11388,incomplete
+R11389,incomplete
+R11390,incomplete
+R11407,glycan
+R11414,incomplete
+R11415,incomplete
+R11464,incomplete
+R11465,incomplete
+R11466,incomplete
+R11467,incomplete
+R11470,incomplete
+R11481,incomplete
+R11752,incomplete
+R11753,incomplete
+R11890,incomplete
+R11994,glycan
+R11995,glycan
+R11997,glycan
+R11998,glycan
+R12001,incomplete
+R12038,glycan
+R12039,glycan
+R12040,glycan
+R12041,glycan
+R12042,glycan
+R12067,general
+R12075,glycan
+R12077,glycan
+R12078,glycan
+R12079,glycan
+R12080,glycan
+R12127,incomplete
+R12148,general
+R12179,incomplete
+R12180,incomplete
+R12244,glycan
+R12292,glycan
+R12293,glycan
+R12294,glycan
+R12295,glycan
+R12296,glycan
+R12297,glycan
+R12298,glycan
+R12307,general
+R12316,glycan
+R12329,general
+R12350,glycan
+R12351,glycan
+R12477,glycan
+R12479,glycan
+R12482,glycan
+R12494,general
+R12495,general
+R12637,glycan
+R12657,general
+R12658,general
+R12691,incomplete
+R12702,glycan
+R12704,glycan
+R12705,glycan
+R12738,glycan
+R12739,glycan
+R12740,glycan
+R12741,glycan
+R12742,glycan
+R12743,glycan
+R12744,glycan
+R12745,glycan
+R12808,glycan
+R12810,glycan
+R12811,glycan
+R12812,glycan
+R12813,glycan
+R12814,glycan
+R12815,glycan
+R12816,glycan
+R12817,glycan
+R12818,glycan
+R12819,glycan
+R12820,glycan
+R12821,glycan
+R12822,glycan
+R12823,glycan
+R12859,glycan
+R12860,glycan
+R12861,glycan
+R12862,glycan
+R12863,glycan
+R12864,glycan
+R12865,glycan
+R12866,glycan
+R12867,glycan
+R12868,glycan
+R12869,glycan
+R12870,glycan
+R12871,glycan
+R12872,glycan
+R12873,glycan
+R12874,glycan
+R12875,glycan
+R12898,glycan
+R12899,glycan
+R12900,glycan
+R12901,glycan
+R12902,glycan
+R12903,glycan
+R12904,glycan
+R12905,glycan
+R12906,glycan
+R12944,glycan
+R12951,glycan
+R12954,incomplete
+R12993,incomplete
+R12994,incomplete
+R13003,glycan
+R13004,glycan
+R13005,glycan
+R13168,general
+R13169,glycan
+R13171,glycan
+R13172,glycan
+R13173,glycan
+R13174,glycan
+R13175,glycan
+R13204,shortcut
+R13205,shortcut
+R13206,shortcut
+R13207,shortcut
+R13208,shortcut
+R13209,shortcut
+R13210,shortcut
+R13211,shortcut
+R13214,general
+R13222,shortcut
+R13248,glycan
+R13249,incomplete
+R13256,general
+R13257,general
+R13258,general
+R13259,general
+R13260,general
+R13261,general
+R13262,general
+R13263,general
+R13264,general
+R13265,general
+R13267,general
+R13268,general
+R13269,general
+R13271,general
+R13272,general
+R13273,general
+R13274,general
+R13275,general
+R13276,general
+R13277,general
+R13278,general
+R13279,general
+R13280,general
+R13390,glycan
+R13391,glycan
+R13392,glycan
+R13393,glycan
