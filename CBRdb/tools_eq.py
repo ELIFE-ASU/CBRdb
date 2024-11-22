@@ -1,37 +1,61 @@
 import re
+import chemparse
 
 
-def split_by_letters(input_string):
-    """
-    Splits the input string into a list of substrings, each starting with an uppercase letter,
-    followed by zero or more lowercase letters and optional digits.
+# def split_by_letters(input_string):
+#     """
+#     Splits the input string into a list of substrings, each starting with an uppercase letter,
+#     followed by zero or more lowercase letters and optional digits.
+#
+#     Parameters:
+#     input_string (str): The string to be split.
+#
+#     Returns:
+#     list: A list of substrings matching the pattern.
+#     """
+#     return re.findall(r'[A-Z][a-z]*\d*', input_string)
+#
+#
+# def convert_formula_to_dict(input_string):
+#     """
+#     Converts a chemical formula string into a dictionary with elements as keys and their counts as values.
+#
+#     Parameters:
+#     input_string (str): The chemical formula string to be converted.
+#
+#     Returns:
+#     dict: A dictionary where keys are element symbols and values are their counts in the formula.
+#     """
+#     parts = split_by_letters(input_string)
+#     result = {}
+#     for part in parts:
+#         element = re.match(r'[A-Za-z]+', part).group()
+#         count = int(re.search(r'\d+', part).group()) if re.search(r'\d+', part) else 1
+#         result[element] = count
+#     return result
 
-    Parameters:
-    input_string (str): The string to be split.
+def strip_ionic_states(formula):
+    # Regex to match trailing ionic states (+, -, +2, -4, etc.)
+    return re.sub(r'[+-]\d*$', '', formula)
 
-    Returns:
-    list: A list of substrings matching the pattern.
-    """
-    return re.findall(r'[A-Z][a-z]*\d*', input_string)
+def convert_formula_to_dict(formula):
+    # Count the occurrences of '*' followed by an optional number
+    star_count = sum(int(num) if num else 1 for num in re.findall(r'\*(\d*)', formula))
 
+    # Replace '*' followed by an optional number with an empty string
+    formula_new = re.sub(r'\*\d*', '', formula)
 
-def convert_formula_to_dict(input_string):
-    """
-    Converts a chemical formula string into a dictionary with elements as keys and their counts as values.
+    # Remove the ionic states
+    # formula_new = strip_ionic_states(formula_new)
 
-    Parameters:
-    input_string (str): The chemical formula string to be converted.
+    # Parse the formula into a dictionary
+    formula_dict = {k: int(v) for k, v in chemparse.parse_formula(formula_new).items()}
 
-    Returns:
-    dict: A dictionary where keys are element symbols and values are their counts in the formula.
-    """
-    parts = split_by_letters(input_string)
-    result = {}
-    for part in parts:
-        element = re.match(r'[A-Za-z]+', part).group()
-        count = int(re.search(r'\d+', part).group()) if re.search(r'\d+', part) else 1
-        result[element] = count
-    return result
+    # Add the '*' count to the dictionary if there were any '*'
+    if star_count > 0:
+        formula_dict['*'] = star_count
+
+    return formula_dict
 
 
 def multiply_dict(input_dict, multiplier):

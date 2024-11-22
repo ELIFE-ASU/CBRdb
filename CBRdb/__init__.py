@@ -6,7 +6,8 @@ from .fix_reactions_data import (fix_reactions_data)
 from .lets_get_kegg import (download_data)
 from .merge_data_sets import (merge_data, fix_ec_ids)
 from .preprocessor import (preprocess)
-from .tools_eq import (eq_to_dict,
+from .tools_eq import (convert_formula_to_dict,
+                       eq_to_dict,
                        dicts_to_eq,
                        compare_dict_keys,
                        compare_dicts,
