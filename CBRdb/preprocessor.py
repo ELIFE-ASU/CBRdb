@@ -299,7 +299,7 @@ def preprocess_kegg_r(target_dir, outfile, n_print=100):
         # Get the line which contains the equation
         eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
         # Standardise the equation
-        # eq_line = standardise_eq(eq_line)
+        eq_line = standardise_eq(eq_line)
         # Get the line which contains the enzyme class
         try:
             ec_line = [d for d in data if "ENZYME" in d][0].split("ENZYME")[1].strip()
