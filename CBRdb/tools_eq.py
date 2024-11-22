@@ -1,38 +1,6 @@
 import re
+
 import chemparse
-
-
-def split_by_letters(input_string):
-    """
-    Splits the input string into a list of substrings, each starting with an uppercase letter,
-    followed by zero or more lowercase letters and optional digits.
-
-    Parameters:
-    input_string (str): The string to be split.
-
-    Returns:
-    list: A list of substrings matching the pattern.
-    """
-    return re.findall(r'[A-Z][a-z]*\d*', input_string)
-
-
-def convert_formula_to_dict(input_string):
-    """
-    Converts a chemical formula string into a dictionary with elements as keys and their counts as values.
-
-    Parameters:
-    input_string (str): The chemical formula string to be converted.
-
-    Returns:
-    dict: A dictionary where keys are element symbols and values are their counts in the formula.
-    """
-    parts = split_by_letters(input_string)
-    result = {}
-    for part in parts:
-        element = re.match(r'[A-Za-z]+', part).group()
-        count = int(re.search(r'\d+', part).group()) if re.search(r'\d+', part) else 1
-        result[element] = count
-    return result
 
 
 def strip_ionic_states(formula):
@@ -239,6 +207,11 @@ def side_to_dict(s):
         except ValueError:
             # Strip parentheses if conversion fails
             coeff_out.append(c.strip('(').strip(')'))
+    # try:
+    #     # Convert coefficients to integers if possible
+    #     coeff_out = [int(c) for c in coeff]
+    # except ValueError:
+    #     coeff_out = [str(c).strip('(').strip(')') for c in coeff]
 
     # Find all compound identifiers in the string
     matches = re.findall(r"[A-Z]\d{5}", s)
@@ -392,6 +365,33 @@ def get_eq(old_eq, reactants, products, c_data):
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
+def get_formulas_from_eq(eq, c_data):
+    """
+    Converts a chemical equation string into dictionaries of reactants and products with their chemical formulas.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    tuple: A tuple containing two dictionaries:
+           - The first dictionary contains the converted reactants with chemical formulas as keys and their counts as values.
+           - The second dictionary contains the converted products with chemical formulas as keys and their counts as values.
+    """
+    # Convert the Eq into the dicts
+    reactants, products = eq_to_dict(eq)
+
+    # Get the conversion of the ids to formulas
+    react_id_form_key = get_ids_to_formulas(reactants, c_data)
+    prod_id_form_key = get_ids_to_formulas(products, c_data)
+
+    # Convert the reactants into formulas
+    converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
+    converted_products = convert_ids_to_formulas(products, prod_id_form_key)
+
+    return converted_reactants, converted_products
+
+
 def get_elements_from_eq(eq, c_data):
     """
     Converts a chemical equation string into dictionaries of reactants and products,
@@ -408,15 +408,8 @@ def get_elements_from_eq(eq, c_data):
            - The third dictionary contains the elements and their counts in the reactants.
            - The fourth dictionary contains the elements and their counts in the products.
     """
-    # Convert the Eq into the dicts
-    reactants, products = eq_to_dict(eq)
-    # Get the conversion of the ids to formulas
-    react_id_form_key = get_ids_to_formulas(reactants, c_data)
-    prod_id_form_key = get_ids_to_formulas(products, c_data)
-
-    # Convert the reactants into formulas
-    converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
-    converted_products = convert_ids_to_formulas(products, prod_id_form_key)
+    # Convert the Eq into the formula dicts
+    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data)
 
     # Convert the formulas into reactants
     react_ele = convert_form_dict_to_elements(converted_reactants)
@@ -525,3 +518,44 @@ def standardise_eq(eq):
     """
     reactants, products = eq_to_dict(eq)
     return dicts_to_eq(sort_dict_by_keys(reactants), sort_dict_by_keys(products))
+
+
+def contains_n_m_x(reactants, products):
+    """
+    Checks if any of the reactant or product values contain the strings 'n', 'm', or 'x'.
+
+    Parameters:
+    reactants (dict): A dictionary of reactants with chemical formulas as keys and their counts as values.
+    products (dict): A dictionary of products with chemical formulas as keys and their counts as values.
+
+    Returns:
+    bool: True if any reactant or product value contains 'n', 'm', or 'x', False otherwise.
+    """
+    for value in reactants.values():
+        if any(char in value for char in ['n', 'm', 'x']):
+            return True
+    for value in products.values():
+        if any(char in value for char in ['n', 'm', 'x']):
+            return True
+    return False
+
+
+def solve_for_n(elements):
+    """
+    Solves for the smallest integer n that makes all elements in the list greater than 0.
+
+    Parameters:
+    elements (list): A list of strings representing expressions involving 'n'.
+
+    Returns:
+    int: The smallest integer n that makes all elements greater than 0.
+    """
+    min_n = 0
+    for element in elements:
+        # Replace 'n' with a symbolic variable
+        expr = element.replace('n', 'n')
+        # Solve for the smallest n that makes the expression greater than 0
+        n_value = eval(expr.replace('n', '0'))
+        if n_value <= 0:
+            min_n = max(min_n, -n_value + 1)
+    return min_n
