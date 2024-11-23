@@ -201,7 +201,7 @@ def get_kegg(target_dir,
                 invalid_ids.append(id)
 
         # Check if the maximum index is reached and break
-        if max_idx is not None and i >= max_idx:
+        if (max_idx is not None and i >= max_idx) or (valid_ids and i >= len(valid_ids)-1):
             print(f"Maximum index reached {max_idx}", flush=True)
             break
 
@@ -230,7 +230,7 @@ def get_kegg_all(target_dir="kegg_data",
     else:
         raise ValueError(f"Unknown target {target}")
 
-    print(f"Total number of entries {max_idx}", flush=True)
+    print(f"Total number of current entries {len(valid_ids)}", flush=True)
 
     # Get the data
     get_kegg(os.path.abspath(target_dir + f"_{target}"),
