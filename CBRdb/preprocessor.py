@@ -278,43 +278,41 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
 
 def preprocess_kegg_r(target_dir, outfile, n_print=100):
     # Get a list of all files in the directory
-    paths = file_list_all(target_dir)
-    n = len(paths)
-    id_list = []
-    eq_list = []
-    ec_list = []
-    ec_line = None
+    paths =  [m for n in [[f'{i}/{k}' for k in j] for i,_,j in list(os.walk(target_dir))[1:]] for m in n]
 
-    # Loop over the reactions data
-    for i, path in enumerate(paths):
-        # Get the ID
-        re_id = os.path.basename(path).split(".")[0]
-        if i % n_print == 0:
-            print(f"Processing {i}/{n} {re_id}", flush=True)
-        # Load the data
-        with open(path, "r") as f:
-            data = f.read()
-            # Split the data by new lines
-            data = data.split("\n")
-        # Get the line which contains the equation
-        eq_line = [d for d in data if "EQUATION" in d][0].split("EQUATION")[1].strip()
-        # Standardise the equation
-        eq_line = standardise_eq(eq_line)
-        # Get the line which contains the enzyme class
-        try:
-            ec_line = [d for d in data if "ENZYME" in d][0].split("ENZYME")[1].strip()
-        except:
-            ec_line = " "
-        # Append the data to the lists
-        id_list.append(re_id)
-        eq_list.append(eq_line)
-        ec_list.append(ec_line)
-    # Make the dataframe for the id and the equation
-    df = pd.DataFrame({'id': id_list, 'reaction': eq_list, 'ec': ec_line})
-    # Write the data to a file
-    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    # Import reaction data (takes < 20 seconds)
+    df = pd.DataFrame({os.path.basename(path).split(".")[0]: # for each reaction ID
+                pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line']) # read file
+                .fillna(method='ffill').set_index('id') # indented lines relate to last-appearing header
+                ['line'].str.strip().groupby(level=0).apply(' '.join) # combine all lines for each header
+                for path in paths}).drop('///').T # indexes are reaction IDs; cols are info types
+    df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).drop( #remove columns not needed currently
+        ['reference','authors','journal','title','brite','definition'], axis=1)
+
+    # Remove reactions with glycan IDs mixed in. "remark" column tags their equivalent reactions.
+    df = df.loc[df['equation'].str.count(r"(\bG\d{5}\b)")==0]
+
+    # Store observed KO definitions in a file; old versions of this are used to annotate JGI (meta)genomes.
+    ko_defs = df['orthology'].dropna().drop_duplicates()
+    ko_defs = pd.Series(dict(zip(ko_defs.str.findall(r"(\bK\d{5}\b)").explode(),
+                  ko_defs.str.split(r"\bK\d{5}\b").apply(lambda x: x[1:]).explode())))
+    ko_defs.to_csv(outfile.replace('.csv.zip', '_kodefs.csv.zip'), compression='zip', encoding='utf-8')
+    del ko_defs
+
+    # Extract reaction attributes and linkages
+    df['reaction'] = df['equation'].apply(standardise_eq) # standardize reaction formatting
+    df['ec'] = df['enzyme'].fillna(' ').str.split().map(' '.join) # combine all ECs, including partials
+    
+    patterns = {'orthology': r"(\bK\d{5}\b)", 'pathway': r"(\brn\d{5}\b)", 'module': r"(\bM\d{5}\b)",
+            'rclass': r"(\bRC\d{5}\b  \bC\d{5}_C\d{5})", 'dblinks': r"( \d{5})", 'entry': 'Overall'}
+    [df.update(df[k].str.findall(v).map(' '.join, na_action='ignore')) for k,v in patterns.items()]
+
+    # Rename columns where appropriate
+    df.rename(columns={'dblinks':'rhea', 'entry':'category'}, inplace=True)
+    df['category'] = df['category'].replace('',float('nan'))
+    df = df.loc[:,df.count().sort_values(ascending=False).index].drop(columns='enzyme')
+    df.reset_index().to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     return None
-
 
 def preprocess(target="R",
                target_dir=r"../../data/kegg_data",
