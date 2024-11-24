@@ -12,6 +12,40 @@ from .tools_eq import (get_eq,
                        get_missing_elements,
                        standardise_eq)
 
+def filter_compounds_without_star(dataframe):
+    """
+    Filters the compounds DataFrame to return only the rows where the 'smiles' column does not contain a '*'.
+
+    Parameters:
+    dataframe (pd.DataFrame): A DataFrame containing compound data with a 'smiles' column.
+
+    Returns:
+    pd.DataFrame: A filtered DataFrame with rows where the 'smiles' column does not contain a '*'.
+    """
+    return dataframe[~dataframe['smiles'].str.contains('*', regex=False)]
+
+
+def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True):
+    """
+    Retrieves and sorts compound data from a CSV file, optionally filtering out rows where the 'smiles' column contains a '*'.
+
+    Parameters:
+    c_path (str): The path to the CSV file containing compound data.
+    filter_star (bool): Whether to filter out rows where the 'smiles' column contains a '*'. Default is True.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the sorted compound data.
+    """
+    # Get the data
+    data_c = pd.read_csv(os.path.abspath(c_path))
+
+    # Filter out the star compounds or has * in the smiles
+    if filter_star:
+        data_c = filter_compounds_without_star(data_c)
+
+    # Sort by the smile size
+    return data_c.sort_values(by="smiles", key=lambda x: x.str.len())
+
 
 def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
     eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
