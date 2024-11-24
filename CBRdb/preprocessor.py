@@ -283,7 +283,7 @@ def preprocess_kegg_r(target_dir, outfile, n_print=100):
     # Import reaction data (takes < 20 seconds)
     df = pd.DataFrame({os.path.basename(path).split(".")[0]: # for each reaction ID
                 pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line']) # read file
-                .fillna(method='ffill').set_index('id') # indented lines relate to last-appearing header
+                .ffill(axis=0).set_index('id') # indented lines relate to last-appearing header
                 ['line'].str.strip().groupby(level=0).apply(' '.join) # combine all lines for each header
                 for path in paths}).drop('///').T # indexes are reaction IDs; cols are info types
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).drop( #remove columns not needed currently
