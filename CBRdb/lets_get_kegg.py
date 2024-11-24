@@ -163,6 +163,7 @@ def get_kegg(target_dir,
         invalid_ids = load_bad_entries(bad_file, target_str="invalid")
         print(f"Loaded {len(invalid_ids)} invalid IDs", flush=True)
     else:
+        os.makedirs(os.path.dirname(bad_file), exist_ok=True)
         molless_ids = []
         invalid_ids = []
 
@@ -199,7 +200,6 @@ def get_kegg(target_dir,
                 # The ID is invalid, write the invalid id to file
                 print(f"{id} is invalid, written to file", flush=True)
                 invalid_ids.append(id)
-
         # Check if the maximum index is reached and break
         if (max_idx is not None and i >= max_idx) or (valid_ids and i >= len(valid_ids)-1):
             print(f"Maximum index reached {max_idx}", flush=True)
