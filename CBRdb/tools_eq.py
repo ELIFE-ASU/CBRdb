@@ -520,45 +520,53 @@ def standardise_eq(eq):
     return dicts_to_eq(sort_dict_by_keys(reactants), sort_dict_by_keys(products))
 
 
-def contains_n_m_x(reactants, products):
+def contains_var_list(reactants, products, var_list=None):
     """
-    Checks if any of the reactant or product values contain the strings 'n', 'm', or 'x'.
+    Checks if any of the values in the reactants or products dictionaries contain any of the variables in var_list.
+    Returns a list of the variables that are present.
 
     Parameters:
-    reactants (dict): A dictionary of reactants with chemical formulas as keys and their counts as values.
-    products (dict): A dictionary of products with chemical formulas as keys and their counts as values.
+    reactants (dict): A dictionary where keys are compound identifiers and values are their counts for reactants.
+    products (dict): A dictionary where keys are compound identifiers and values are their counts for products.
+    var_list (list, optional): A list of variable names to check for in the values. Default is ['n', 'm', 'x'].
 
     Returns:
-    bool: True if any reactant or product value contains 'n', 'm', or 'x', False otherwise.
+    list: A list of variables that are present in any value.
     """
+    if var_list is None:
+        var_list = ['n', 'm', 'x']
+    present_vars = []
     for value in reactants.values():
-        if any(char in value for char in ['n', 'm', 'x']):
-            return True
+        for var in var_list:
+            if var in value and var not in present_vars:
+                present_vars.append(var)
     for value in products.values():
-        if any(char in value for char in ['n', 'm', 'x']):
-            return True
-    return False
+        for var in var_list:
+            if var in value and var not in present_vars:
+                present_vars.append(var)
+    return present_vars
 
 
-def solve_for_n(elements):
+def solve_for(elements, var='n'):
     """
-    Solves for the smallest integer n that makes all elements in the list greater than 0.
+    Solves for the smallest value of the variable that makes each element expression greater than 0.
 
     Parameters:
-    elements (list): A list of strings representing expressions involving 'n'.
+    elements (list): A list of strings representing element expressions.
+    var (str): The variable to solve for. Default is 'n'.
 
     Returns:
-    int: The smallest integer n that makes all elements greater than 0.
+    int: The smallest value of the variable that makes each element expression greater than 0.
     """
-    min_n = 0
+    min_var = 0
     for element in elements:
-        # Replace 'n' with a symbolic variable
-        expr = element.replace('n', 'n')
-        # Solve for the smallest n that makes the expression greater than 0
-        n_value = eval(expr.replace('n', '0'))
-        if n_value <= 0:
-            min_n = max(min_n, -n_value + 1)
-    return min_n
+        # Replace var with a symbolic variable
+        expr = element.replace(var, var)
+        # Solve for the smallest var that makes the expression greater than 0
+        var_value = eval(expr.replace(var, '0'))
+        if var_value <= 0:
+            min_var = max(min_var, -var_value + 1)
+    return min_var
 
 
 def delete_pm_keys(dictionary):
@@ -579,11 +587,22 @@ def delete_pm_keys(dictionary):
 
 
 def check_eq_n_balanced(eq, data_c):
+    # Convert the Eq into the formula dicts
     converted_reactants, converted_products = get_formulas_from_eq(eq, data_c)
-    # convert all the dict values to strings
+    # Convert all the dict values to strings
     converted_reactants = {k: str(v) for k, v in converted_reactants.items()}
     converted_products = {k: str(v) for k, v in converted_products.items()}
-    if contains_n_m_x(converted_reactants, converted_products):
+
+    
+    # Check if the equation contains 'n', 'm', or 'x'
+    if contains_var_list(converted_reactants, converted_products):
+        # Get the values in the reactants and products
+        reactants_values = list(converted_reactants.values())
+        # Solve for n
+        n_val = solve_for(reactants_values)
+        # Multiply the reactants and products by n
+
+
         return True
     else:
         return False

@@ -25,7 +25,7 @@ from .tools_eq import (convert_formula_to_dict,
                        standardise_eq,
                        check_eq_unbalanced,
                        get_elements_from_eq,
-                       contains_n_m_x,
+                       contains_var_list,
                        solve_for_n,
                        )
 from .tools_files import (file_list,
