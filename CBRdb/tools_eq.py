@@ -559,3 +559,31 @@ def solve_for_n(elements):
         if n_value <= 0:
             min_n = max(min_n, -n_value + 1)
     return min_n
+
+
+def delete_pm_keys(dictionary):
+    """
+    Deletes any keys in the dictionary that are equal to '+' or '-'.
+
+    Parameters:
+    dictionary (dict): The dictionary from which to delete the keys.
+
+    Returns:
+    dict: The dictionary with the specified keys removed.
+    """
+    keys_to_remove = ['+', '-']
+    for key in keys_to_remove:
+        if key in dictionary:
+            del dictionary[key]
+    return dictionary
+
+
+def check_eq_n_balanced(eq, data_c):
+    converted_reactants, converted_products = get_formulas_from_eq(eq, data_c)
+    # convert all the dict values to strings
+    converted_reactants = {k: str(v) for k, v in converted_reactants.items()}
+    converted_products = {k: str(v) for k, v in converted_products.items()}
+    if contains_n_m_x(converted_reactants, converted_products):
+        return True
+    else:
+        return False
