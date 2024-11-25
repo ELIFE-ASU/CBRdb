@@ -41,5 +41,7 @@ from .tools_mols import (sanitize_mol,
                          get_chirality,
                          mol_replacer,
                          get_mol_descriptors)
-
+from .tools_mp import (mp_calc,
+                       mp_calc_star,
+                       tp_calc)
 __version__ = "0.0.01"
