@@ -26,7 +26,7 @@ from .tools_eq import (convert_formula_to_dict,
                        check_eq_unbalanced,
                        get_elements_from_eq,
                        contains_var_list,
-                       solve_for_n,
+                       solve_for,
                        )
 from .tools_files import (file_list,
                           file_list_all,
