@@ -5,19 +5,18 @@ import pandas as pd
 from .tools_files import file_list, clean_empty_folders
 
 
-def compounds_manual_add(molless_path = '../data/C_IDs_molless.dat',
-                         target_dir = '../../data/kegg_data_C_full',
+def compounds_manual_add(molless_path='../data/C_IDs_bad.dat',
+                         target_dir='../../data/kegg_data_C_full',
                          good_file="../data/C_IDs_good.dat"
                          ):
-
     # Set the absolute path
     molless_path = os.path.abspath(molless_path)
     target_dir = os.path.abspath(target_dir)
     good_file = os.path.abspath(good_file)
 
-    data = pd.read_csv(molless_path, sep='\t').values.flatten()
+    data = pd.read_csv(molless_path)
+    data = data["# Bad IDs"].tolist()
     print("data loaded", flush=True)
-    print("data shape", data.shape, flush=True)
     print("data head", data[:4], flush=True)
 
     # Remove empty folders
@@ -25,23 +24,22 @@ def compounds_manual_add(molless_path = '../data/C_IDs_molless.dat',
     # List all files in the target directory
     files = file_list(target_dir)
     print(f"Files in the target directory: {files}", flush=True)
-
-    # Good files to follow-up on
-
     r_list = []
     good_list = []
     # loop over the data
     for i, id in enumerate(data):
-        # print(f"ID: {id}", flush=True)
         # load the data
         f_path = os.path.abspath(f'{target_dir}/{id}/{id}.data')
-        with open(f_path, 'r') as f:
-            lines = f.readlines()
-            for line in lines:
-                line = line.strip()
-                # Check that the cid has an associated reaction
-                if line.startswith('REACTION'):
-                    r_list.append(id)
+        try:
+            with open(f_path, 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    line = line.strip()
+                    # Check that the cid has an associated reaction
+                    if line.startswith('REACTION'):
+                        r_list.append(id)
+        except FileNotFoundError:
+            print(f"ID: {id} not found", flush=True)
 
     # Let us refine the list by removing the generic compounds
     for i, id in enumerate(r_list):

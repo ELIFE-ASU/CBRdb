@@ -2,18 +2,20 @@ import pandas as pd
 import chemparse
 import CBRdb
 import re
+import os
 
-import re
 import chemparse
 from chempy import Substance
 from chempy import balance_stoichiometry
 from sympy import symbols
 from chempy import Reaction
 
-import re
 from collections import defaultdict
+import rdkit.Chem as Chem
 
-import re
+
+
+
 
 
 
@@ -36,7 +38,7 @@ if __name__ == "__main__":
     # print(reac, prod, flush=True)
 
     # load the data
-    data = pd.read_csv("../data/kegg_data_R.csv.zip", compression='zip')  # , index_col=0
+    data = pd.read_csv("../data/kegg_data_R.csv.zip")  # , index_col=0
     # print("data loaded", flush=True)
     # print("data shape", data.shape, flush=True)
     # # print the data columns
@@ -59,10 +61,14 @@ if __name__ == "__main__":
 
     # load to compound data
     data_c = pd.read_csv("../data/kegg_data_C.csv.zip")
-    # print("data columns", data_c.columns, flush=True)
+    print("data columns", data_c.columns, flush=True)
     # print(data_c[data_c["compound_id"] == "C18091"].values, flush=True)
     # print(data_c[data_c["compound_id"] == "C00126"].values, flush=True)
     # print(data_c[data_c["compound_id"] == "C00125"].values, flush=True)
+
+    # Case for n, is to check if it is balanced
+
+
 
     eq = "C11113 + 1 C11131 <=> 1 C11114 + 1 C11181 + 1 C11198"
     eq = "n C00001 + 1 C00404 <=> n+1 C02174"
@@ -82,13 +88,11 @@ if __name__ == "__main__":
     converted_reactants = {k: str(v) for k, v in converted_reactants.items()}
     converted_products = {k: str(v) for k, v in converted_products.items()}
 
-    print(CBRdb.contains_n_m_x(converted_reactants, converted_products), flush=True)
+    print(CBRdb.contains_var_list(converted_reactants, converted_products), flush=True)
     # in the reactants get all the values in the dict
     reactants_values = list(converted_reactants.values())
     print(reactants_values, flush=True)
-    print(CBRdb.solve_for_n(reactants_values), flush=True)
-
-
+    print(CBRdb.solve_for(reactants_values), flush=True)
 
     # print(CBRdb.check_eq_unbalanced(react_ele, prod_ele), flush=True)
 

@@ -14,6 +14,7 @@ if __name__ == "__main__":
 
     # Manually adding the compounds
     if f_man:
+        # Only run this file to construct a list of compounds to manually add to the database
         print("Manually adding the compounds", flush=True)
         CBRdb.compounds_manual_add()  # provides the C_IDs_good.dat file
         # Add this point you need to manually add the reactions in C_IDs_good.dat and the compounds in C_IDs_manual.dat
