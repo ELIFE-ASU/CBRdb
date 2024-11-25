@@ -4,11 +4,31 @@ import chemparse
 
 
 def strip_ionic_states(formula):
+    """
+    Removes trailing ionic states from a chemical formula.
+
+    Parameters:
+    formula (str): The chemical formula from which to remove ionic states.
+
+    Returns:
+    str: The chemical formula without trailing ionic states.
+    """
     # Regex to match trailing ionic states (+, -, +2, -4, etc.)
     return re.sub(r'[+-]\d*$', '', formula)
 
 
-def convert_formula_to_dict(formula):
+def convert_formula_to_dict(formula, strip_ionic=False):
+    """
+    Converts a chemical formula into a dictionary with element symbols as keys and their counts as values.
+
+    Parameters:
+    formula (str): The chemical formula to be converted.
+    strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formula. Default is False.
+
+    Returns:
+    dict: A dictionary where keys are element symbols and values are their counts in the formula.
+    """
+
     # Count the occurrences of '*' followed by an optional number
     star_count = sum(int(num) if num else 1 for num in re.findall(r'\*(\d*)', formula))
 
@@ -16,7 +36,8 @@ def convert_formula_to_dict(formula):
     formula_new = re.sub(r'\*\d*', '', formula)
 
     # Remove the ionic states
-    # formula_new = strip_ionic_states(formula_new)
+    if strip_ionic:
+        formula_new = strip_ionic_states(formula_new)
 
     # Parse the formula into a dictionary
     formula_dict = {k: int(v) for k, v in chemparse.parse_formula(formula_new).items()}

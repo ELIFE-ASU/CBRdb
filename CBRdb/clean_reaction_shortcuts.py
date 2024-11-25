@@ -136,6 +136,17 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
 
 
 def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
+    """
+    Cleans and processes KEGG reaction data, identifying and flagging multistep shortcuts, glycan participants,
+    and reactions with incomplete or general data.
+
+    Parameters:
+    target_dir (str): The path to the directory containing the raw KEGG reaction data files.
+    data_dir (str): The path to the directory where processed data files will be saved.
+
+    Returns:
+    None
+    """
     # Prepare the full path of the files
     target_dir = os.path.abspath(target_dir)
     data_dir = os.path.abspath(data_dir)

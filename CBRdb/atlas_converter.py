@@ -48,32 +48,42 @@ def cleanup_ec_line(ec_line):
 
 def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
                      out_file="../data/atlas_data_kegg_R.csv.zip"):
+    """
+    Cleans and processes KEGG atlas reaction data.
+
+    Parameters:
+    in_file (str): The path to the input file containing KEGG atlas reactions.
+    out_file (str): The path to the output file where cleaned data will be saved.
+
+    Returns:
+    None
+    """
     # Get the absolute paths
     in_file = os.path.abspath(in_file)
     out_file = os.path.abspath(out_file)
 
-    # check if the file exists
+    # Check if the file exists
     if not os.path.exists(in_file):
         print("File does not exist", flush=True)
         print("You need to put the atlas data here", flush=True)
         print(in_file, flush=True)
         raise FileNotFoundError
 
-    # open the file
+    # Open the file
     with open(in_file, "r") as f:
-        # read the data
+        # Read the data
         data = f.read()
-    # split the data by new lines
+    # Split the data by new lines
     data = data.split("\n")
-    # init the lists
+    # Initialize the lists
     re_id = []
     re_eq = []
     re_chem_names = []
     re_ec = []
 
-    # loop over the data
+    # Loop over the data
     for i, line in enumerate(data):
-        # split the line by the delimiter
+        # Split the line by the delimiter
         line = line.split(";")
         id = line[0].strip()
 
@@ -112,11 +122,22 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
 def clean_atlas(in_file="../../data/atlas_reactions.dat",
                 out_file="../data/atlas_data_R.csv.zip",
                 f_exclude_kegg=True):
+    """
+    Cleans and processes atlas reaction data, optionally excluding KEGG reactions.
+
+    Parameters:
+    in_file (str): The path to the input file containing atlas reactions.
+    out_file (str): The path to the output file where cleaned data will be saved.
+    f_exclude_kegg (bool): Flag to exclude KEGG reactions from the output. Default is True.
+
+    Returns:
+    None
+    """
     # Get the absolute paths
     in_file = os.path.abspath(in_file)
     out_file = os.path.abspath(out_file)
 
-    # check if the file exists
+    # Check if the file exists
     if not os.path.exists(in_file):
         print("File does not exist", flush=True)
         print("You need to put the atlas data here", flush=True)
@@ -127,9 +148,9 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     with open(in_file, "r") as f:
         # Read the data
         data = f.read()
-    # split the data by new lines
+    # Split the data by new lines
     data = data.split("\n")
-    # init the lists
+    # Initialize the lists
     re_id = []
     re_kegg_id = []
     re_eq = []
@@ -149,15 +170,13 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
         eq_line = standardise_eq(eq_line)
         # Get the reaction EC
         ec = cleanup_ec_line(line)
-        # Get the reaction id
+        # Append the data to the lists
         re_id.append(id)
-        # Get the KEGG reaction id
         re_kegg_id.append(kegg_id)
-        # Get the reaction equation
         re_eq.append(eq_line)
-        # Get the reaction EC
         re_ec.append(ec)
 
+    # Create a DataFrame from the lists
     df = pd.DataFrame({'id': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
     # Fill in the missing values with NaN
     df = df.replace("", float("NaN"))

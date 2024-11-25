@@ -9,6 +9,17 @@ def compounds_manual_add(molless_path='../data/C_IDs_bad.dat',
                          target_dir='../../data/kegg_data_C_full',
                          good_file="../data/C_IDs_good.dat"
                          ):
+    """
+    Manually adds compounds by processing files in a target directory and filtering out bad entries.
+
+    Parameters:
+    molless_path (str): The path to the file containing bad compound IDs.
+    target_dir (str): The path to the target directory containing compound data files.
+    good_file (str): The path to the file where good compound IDs will be saved.
+
+    Returns:
+    None
+    """
     # Set the absolute path
     molless_path = os.path.abspath(molless_path)
     target_dir = os.path.abspath(target_dir)

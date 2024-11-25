@@ -49,6 +49,18 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True)
 
 
 def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
+    """
+    Injects missing compounds into a reaction equation.
+
+    Parameters:
+    eq_line (str): The original reaction equation line.
+    missing_r (list): A list of missing reactant compound IDs.
+    missing_p (list): A list of missing product compound IDs.
+    missing_dict (dict): A dictionary mapping missing compound names to their IDs.
+
+    Returns:
+    str: The updated reaction equation with missing compounds injected.
+    """
     eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
     eq_left += ''.join(f" + {missing_dict[item]}" for item in missing_r)
     eq_right += ''.join(f" + {missing_dict[item]}" for item in missing_p)
@@ -56,6 +68,18 @@ def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
 
 
 def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
+    """
+    Fixes the imbalance in a reaction equation by injecting a specified compound.
+
+    Parameters:
+    eq_line (str): The original reaction equation line.
+    diff_ele_react (dict): A dictionary of element differences on the reactant side.
+    diff_ele_prod (dict): A dictionary of element differences on the product side.
+    inject (str): The compound ID to inject to balance the equation.
+
+    Returns:
+    str: The updated reaction equation with the injected compound.
+    """
     # Get the reactant and product sides
     eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
     # Find which side has the lowest
@@ -68,6 +92,17 @@ def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
 
 
 def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
+    """
+    Attempts to fix the imbalance in a reaction equation by injecting common compounds based on the element differences.
+
+    Parameters:
+    eq_line (str): The original reaction equation line.
+    diff_ele_react (dict): A dictionary of element differences on the reactant side.
+    diff_ele_prod (dict): A dictionary of element differences on the product side.
+
+    Returns:
+    str: The updated reaction equation with the injected compound if a fix is found, otherwise the original equation.
+    """
     # Find the difference in elements
     diff_ele = set(diff_ele_react) | set(diff_ele_prod)
     # Find the difference in values
@@ -110,6 +145,18 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                        c_file="../data/kegg_data_C.csv.zip",
                        bad_file="../data/R_IDs_bad.dat",
                        f_fresh=True):
+    """
+    Processes reaction data to fix imbalances and missing elements, and saves the updated data to a file.
+
+    Parameters:
+    r_file (str): The path to the CSV file containing reaction data. Default is '../data/kegg_data_R.csv.zip'.
+    c_file (str): The path to the CSV file containing compound data. Default is '../data/kegg_data_C.csv.zip'.
+    bad_file (str): The path to the file containing IDs of bad reactions. Default is '../data/R_IDs_bad.dat'.
+    f_fresh (bool): Flag to indicate whether to start fresh or continue from existing processed data. Default is True.
+
+    Returns:
+    None
+    """
     # Get the absolute paths
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)

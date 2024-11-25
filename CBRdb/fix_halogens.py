@@ -66,8 +66,20 @@ def get_reactions_with_substring(reactions_df, substring):
 def fix_halogen_compounds(
         target_dir_c=r"../../data/kegg_data_C",
         hal_exp=None,
-        f_print=True,
-):
+        f_print=True):
+    """
+    Fixes halogen compounds by expanding halogen placeholders in molecular files and generating new compound IDs.
+
+    Parameters:
+    target_dir_c (str): The path to the target directory containing compound data files. Default is '../../data/kegg_data_C'.
+    hal_exp (list): A list of halogens to expand. Default is ['F', 'Cl', 'Br', 'I'].
+    f_print (bool): Flag to print debug information. Default is True.
+
+    Returns:
+    tuple: A tuple containing two dictionaries:
+        - cids_dict (dict): A dictionary mapping original compound IDs to new compound IDs.
+        - smis_dict (dict): A dictionary mapping original compound IDs to their SMILES representations.
+    """
     # Prepare the full path of the files
     target_dir_c = os.path.abspath(target_dir_c)
     # Prepare the halogen list to expand over
@@ -130,6 +142,19 @@ def merge_halogen_compounds(cids_dict,
                             c_id_file="../data/kegg_data_C.csv.zip",
                             int_file=None,
                             out_file=None):
+    """
+    Merges halogen compound data with existing compound data, removing duplicates and saving the result.
+
+    Parameters:
+    cids_dict (dict): A dictionary mapping original compound IDs to new compound IDs.
+    smis_dict (dict): A dictionary mapping original compound IDs to their SMILES representations.
+    c_id_file (str): The path to the file containing existing compound data. Default is '../data/kegg_data_C.csv.zip'.
+    int_file (str, optional): The path to the intermediate file where merged data will be saved. Default is None.
+    out_file (str, optional): The path to the output file where final merged data will be saved. Default is the same as c_id_file.
+
+    Returns:
+    None
+    """
     if out_file is None:
         out_file = c_id_file
     # Prepare the full path of the files
@@ -192,8 +217,20 @@ def fix_halogen_reactions(cids_dict,
                           r_id_file="../data/atlas_data_R.csv.zip",
                           int_file=None,
                           out_file=None,
-                          f_print=False,
-                          ):
+                          f_print=False):
+    """
+    Fixes halogen reactions by replacing halogen placeholders in reaction equations and generating new reaction IDs.
+
+    Parameters:
+    cids_dict (dict): A dictionary mapping original compound IDs to new compound IDs.
+    r_id_file (str): The path to the file containing existing reaction data. Default is '../data/atlas_data_R.csv.zip'.
+    int_file (str, optional): The path to the intermediate file where processed reaction data will be saved. Default is None.
+    out_file (str, optional): The path to the output file where final processed reaction data will be saved. Default is the same as r_id_file.
+    f_print (bool): Flag to print debug information. Default is False.
+
+    Returns:
+    None
+    """
     if out_file is None:
         out_file = r_id_file
     # Prepare the full path of the files

@@ -145,6 +145,19 @@ def get_kegg(target_dir,
              prefix="D",
              max_idx=12897,
              valid_ids=False):
+    """
+    Downloads data from the KEGG database and saves it to the specified directory.
+
+    Parameters:
+    target_dir (str): The directory to save the downloaded data.
+    session (requests.Session): The session object to use for making requests.
+    prefix (str, optional): The prefix for the KEGG IDs to download. Defaults to "D".
+    max_idx (int, optional): The maximum index to download. Defaults to 12897.
+    valid_ids (bool or list, optional): If False, generate IDs based on the prefix. If a list, use the provided valid IDs. Defaults to False.
+
+    Returns:
+    None
+    """
     bad_file = os.path.abspath(f"../data/{prefix.replace('_full', '')}_IDs_bad.dat")
     # Check if the prefix is to download the full data
     if "_full" in prefix:
@@ -218,6 +231,19 @@ def get_kegg(target_dir,
 
 def get_kegg_all(target_dir="kegg_data",
                  target="C"):
+    """
+    Retrieves all data from the KEGG database for a specified target and saves it to the specified directory.
+
+    Parameters:
+    target_dir (str, optional): The directory to save the downloaded data. Defaults to "kegg_data".
+    target (str, optional): The target type to download from the KEGG database. Can be "D", "D_full", "C", "C_full", or "R". Defaults to "C".
+
+    Returns:
+    None
+
+    Raises:
+    ValueError: If the target is unknown.
+    """
     # make the session
     session = prepare_session()
     # Check if the target is a valid target and get the maximum index
@@ -242,6 +268,16 @@ def get_kegg_all(target_dir="kegg_data",
 
 def download_data(target="R",
                   target_dir=r"../../data/kegg_data"):
+    """
+    Downloads and cleans KEGG data for a specified target.
+
+    Parameters:
+    target (str, optional): The target type to download from the KEGG database. Defaults to "R".
+    target_dir (str, optional): The directory to save the downloaded data. Defaults to "../../data/kegg_data".
+
+    Returns:
+    None
+    """
     target_dir = os.path.abspath(target_dir)
     if not os.path.exists(f"{target_dir}_{target}"):
         os.makedirs(f"{target_dir}_{target}")
@@ -251,3 +287,4 @@ def download_data(target="R",
     get_kegg_all(target_dir=target_dir, target=target)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
+    return None
