@@ -9,6 +9,7 @@ lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_mols import standardize_mol, get_mol_descriptors
 from .tools_files import make_custom_id
+from .preprocessor import check_for_x_group
 
 
 def make_id_range(data, hal_exp):
@@ -30,19 +31,17 @@ def make_id_range(data, hal_exp):
     return [num_range[i:i + n_hal] for i in range(0, n_comb, n_hal)]
 
 
-def load_bad_entries(bad_file, target_str="molless"):
-    """
-    Loads bad entries from a file that contain a specific target string.
-
-    Parameters:
-    bad_file (str): The path to the file containing bad entries.
-    target_str (str): The target string to search for in the file. Default is "molless".
-
-    Returns:
-    list: A list of bad entries that contain the target string.
-    """
-    with open(bad_file, 'r') as file:
-        return [line.split(',')[0].strip() for line in file if target_str in line]
+def load_bad_entries(target_dir_c):
+    # Prepare the full path of the files
+    target_dir_c = os.path.abspath(target_dir_c)
+    # List the files in the directory
+    files = os.listdir(target_dir_c)
+    files_full = [os.path.join(target_dir_c, f, f + ".mol") for f in files]
+    bad_ids = []
+    for i, file in enumerate(files_full):
+        if check_for_x_group(file):
+            bad_ids.append(files[i])
+    return bad_ids
 
 
 def get_reactions_with_substring(reactions_df, substring):
@@ -59,22 +58,21 @@ def get_reactions_with_substring(reactions_df, substring):
     return reactions_df[reactions_df['reaction'].str.contains(substring, case=False, na=False)]
 
 
-def fix_halogen_compounds(c_id_bad_file="../data/C_IDs_bad.dat",
-                          target_dir_c=r"../../data/kegg_data_C",
-                          hal_exp=None,
-                          f_print=False,
-                          ):
+def fix_halogen_compounds(
+        target_dir_c=r"../../data/kegg_data_C",
+        hal_exp=None,
+        f_print=True,
+):
     # Prepare the full path of the files
-    c_id_bad_file = os.path.abspath(c_id_bad_file)
     target_dir_c = os.path.abspath(target_dir_c)
     # Prepare the halogen list to expand over
     if hal_exp is None:
         hal_exp = ['F', 'Cl', 'Br', 'I']
     # Load the bad compound IDs
-    data_bad_id = load_bad_entries(c_id_bad_file, target_str="X group")
+    data_bad_id = load_bad_entries(target_dir_c)
     if f_print:
         print(f"bad files ID with halogens: {data_bad_id}", flush=True)
-
+    exit()
     # Make the combinations of the data and the halogens
     num_range = make_id_range(data_bad_id, hal_exp)
 
