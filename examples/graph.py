@@ -123,7 +123,6 @@ if __name__ == "__main__":
     reaction_list = get_reaction_list(head=10)
     graph = generate_edges_from_reactions(reaction_list, graph)
 
-
     # graph.add_edges_from([(1, 2), (2, 3), (4, 5)])
 
     draw_graph(graph)

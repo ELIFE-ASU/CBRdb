@@ -13,12 +13,6 @@ from chempy import Reaction
 from collections import defaultdict
 import rdkit.Chem as Chem
 
-
-
-
-
-
-
 if __name__ == "__main__":
     print("Program started", flush=True)
     # r = Reaction.from_string("H2O -> H+ + OH-")
@@ -67,8 +61,6 @@ if __name__ == "__main__":
     # print(data_c[data_c["compound_id"] == "C00125"].values, flush=True)
 
     # Case for n, is to check if it is balanced
-
-
 
     eq = "C11113 + 1 C11131 <=> 1 C11114 + 1 C11181 + 1 C11198"
     eq = "n C00001 + 1 C00404 <=> n+1 C02174"

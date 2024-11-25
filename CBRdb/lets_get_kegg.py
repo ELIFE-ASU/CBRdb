@@ -201,7 +201,7 @@ def get_kegg(target_dir,
                 print(f"{id} is invalid, written to file", flush=True)
                 invalid_ids.append(id)
         # Check if the maximum index is reached and break
-        if (max_idx is not None and i >= max_idx) or (valid_ids and i >= len(valid_ids)-1):
+        if (max_idx is not None and i >= max_idx) or (valid_ids and i >= len(valid_ids) - 1):
             print(f"Maximum index reached {max_idx}", flush=True)
             break
 

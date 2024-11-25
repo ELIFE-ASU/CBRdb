@@ -593,7 +593,6 @@ def check_eq_n_balanced(eq, data_c):
     converted_reactants = {k: str(v) for k, v in converted_reactants.items()}
     converted_products = {k: str(v) for k, v in converted_products.items()}
 
-    
     # Check if the equation contains 'n', 'm', or 'x'
     if contains_var_list(converted_reactants, converted_products):
         # Get the values in the reactants and products
@@ -601,7 +600,6 @@ def check_eq_n_balanced(eq, data_c):
         # Solve for n
         n_val = solve_for(reactants_values)
         # Multiply the reactants and products by n
-
 
         return True
     else:

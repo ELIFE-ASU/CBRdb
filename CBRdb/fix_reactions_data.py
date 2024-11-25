@@ -12,6 +12,7 @@ from .tools_eq import (get_eq,
                        get_missing_elements,
                        standardise_eq)
 
+
 def filter_compounds_without_star(dataframe):
     """
     Filters the compounds DataFrame to return only the rows where the 'smiles' column does not contain a '*'.

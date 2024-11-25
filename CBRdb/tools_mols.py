@@ -6,6 +6,7 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
+
 def sanitize_mol(mol):
     """
     Standardizes and normalizes the given molecule.
