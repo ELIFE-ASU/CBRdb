@@ -147,6 +147,7 @@ def check_for_x_group(target_file):
         for line in f:
             if contains_x_not_xe(line):
                 return True
+    return False
 
 
 def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True, n_print=100):

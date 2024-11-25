@@ -10,6 +10,7 @@ lg.setLevel(RDLogger.CRITICAL)
 from .tools_mols import standardize_mol, get_mol_descriptors
 from .tools_files import make_custom_id
 from .preprocessor import check_for_x_group
+from .tools_mp import tp_calc
 
 
 def make_id_range(data, hal_exp):
@@ -32,16 +33,20 @@ def make_id_range(data, hal_exp):
 
 
 def load_bad_entries(target_dir_c):
-    # Prepare the full path of the files
+    """
+    Loads and filters bad entries from a target directory.
+
+    Parameters:
+    target_dir_c (str): The path to the target directory containing the files.
+
+    Returns:
+    list: A list of filenames that are flagged as bad entries.
+    """
     target_dir_c = os.path.abspath(target_dir_c)
-    # List the files in the directory
     files = os.listdir(target_dir_c)
     files_full = [os.path.join(target_dir_c, f, f + ".mol") for f in files]
-    bad_ids = []
-    for i, file in enumerate(files_full):
-        if check_for_x_group(file):
-            bad_ids.append(files[i])
-    return bad_ids
+    flags = tp_calc(check_for_x_group, files_full)
+    return [elem for elem, flag in zip(files, flags) if flag]
 
 
 def get_reactions_with_substring(reactions_df, substring):
@@ -72,7 +77,7 @@ def fix_halogen_compounds(
     data_bad_id = load_bad_entries(target_dir_c)
     if f_print:
         print(f"bad files ID with halogens: {data_bad_id}", flush=True)
-    exit()
+
     # Make the combinations of the data and the halogens
     num_range = make_id_range(data_bad_id, hal_exp)
 

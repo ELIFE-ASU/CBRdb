@@ -35,7 +35,7 @@ if __name__ == "__main__":
     print("Done! \n", flush=True)
 
     # Clean up the data and remove the shortcut reactions
-    print("Getting shortcut and glycan reactions", flush=True)
+    print("Getting shortcut reactions", flush=True)
     CBRdb.clean_reaction_shortcuts()
     # Provides R_IDs_bad.dat
     print("Done! \n", flush=True)
