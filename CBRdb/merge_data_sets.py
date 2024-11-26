@@ -22,10 +22,10 @@ def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction
     # Check if the response is ok
     if response.ok:
         # Get all enzyme-reaction pairs from KEGG
-        df = (pd.read_table(StringIO(response.text), header=None, index_col=None, names=['id', 'ec'])
+        df = (pd.read_table(StringIO(response.text), header=None, index_col=None, names=['index', 'ec'])
               .applymap(lambda x: x.split(':')[1]))
         # Make enzyme list for each reaction
-        df = df.groupby(by='id')['ec'].apply(lambda x: '|'.join(list(x))).to_frame()
+        df = df.groupby(by='index')['ec'].apply(lambda x: '|'.join(list(x))).to_frame()
         return df
 
     else:
@@ -178,11 +178,11 @@ def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
     concat_db = pd.concat([kegg_data, atlas_data], axis=0).reset_index()
     concat_db['ec'] = concat_db['ec'].str.split('|')
     concat_db = concat_db.drop(columns='reaction').set_index('reaction_sorted').explode('ec')
-    concat_db['id2ec'] = (concat_db['id'] + ':' + concat_db['ec']) * (concat_db['ec'] != '')
+    concat_db['id2ec'] = (concat_db['index'] + ':' + concat_db['ec']) * (concat_db['ec'] != '')
 
     print('Merging the data', flush=True)
     merged_db = (concat_db.applymap(lambda x: [x]).groupby(level=0).sum()
                  .applymap(lambda x: '|'.join(sorted(list(set(x)))[::-1])).reset_index()
-                 .rename(columns={'reaction_sorted': 'reaction'}).set_index('id'))
+                 .rename(columns={'reaction_sorted': 'reaction'}).set_index('index'))
     merged_db.to_csv(out_file, compression='zip', encoding='utf-8')
     print("Merged data saved! \n", flush=True)

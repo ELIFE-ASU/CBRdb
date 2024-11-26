@@ -1,3 +1,5 @@
+import re
+
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 from rdkit.Chem import rdMolDescriptors
@@ -5,6 +7,8 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
+
+from .tools_files import remove_filepath
 
 
 def sanitize_mol(mol):
@@ -131,3 +135,179 @@ def get_mol_descriptors(mol):
             rdMolDescriptors.CalcExactMolWt(mol),
             rdMolDescriptors.CalcNumHeavyAtoms(mol),
             get_chirality(mol))
+
+
+def check_for_r_group(target_file, re_target=None):
+    """
+    Checks if a target file contains any R groups.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    re_target (list, optional): A list of R group patterns to search for. Default is ["R# ", "R ", "* "].
+
+    Returns:
+    bool: True if any R group pattern is found in the file, False otherwise.
+    """
+    if re_target is None:
+        re_target = ["R# ", "R ", "* "]
+    with open(target_file, "r") as f:
+        lines = [line for line in f if "M  " not in line]
+        return any(target in line for line in lines for target in re_target)
+
+
+def replace_r_group(target_file, new_file, re_atom="H", re_target=None):
+    """
+    Replaces R groups in a target file with a specified replacement atom and writes the result to a new file.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    new_file (str): The path to the new file where the result will be written.
+    re_atom (str): The replacement atom to use for R groups. Default is "H".
+    re_target (list, optional): A list of R group patterns to search for. Default is ["R# ", "R ", "* "].
+
+    Returns:
+    None
+    """
+    if re_target is None:
+        re_target = ["R# ", "R ", "* "]
+    with open(target_file, "r") as f, open(new_file, "w") as nf:
+        lines = [line for line in f if "M  " not in line]
+        for target in re_target:
+            lines = [line.replace(target, re_atom + "  " if len(target) == 2 else re_atom + " ") for line in lines]
+        for line in lines[:-1]:
+            nf.write(line)
+        nf.write("M  END\n\n")
+
+
+def check_for_problem_group(target_file, re_target=None):
+    """
+    Checks if a target file contains any problem groups.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    re_target (list, optional): A list of problem group patterns to search for. Default is ["OH"].
+
+    Returns:
+    bool: True if any problem group pattern is found in the file, False otherwise.
+    """
+    if re_target is None:
+        re_target = ["OH"]
+    with open(target_file, "r") as f:
+        lines = [line for line in f if "M  " not in line]
+        return any(target in line for line in lines for target in re_target)
+
+
+def replace_problem_group(target_file, new_file, re_target=None):
+    """
+    Replaces problem groups in a target file with a specified replacement atom and writes the result to a new file.
+
+    Parameters:
+    target_file (str): The path to the target file.
+    new_file (str): The path to the new file where the result will be written.
+    re_target (list, optional): A list of problem group patterns to search for. Default is ["OH"].
+
+    Returns:
+    None
+    """
+    if re_target is None:
+        re_target = ["OH"]
+    with open(target_file, "r") as f, open(new_file, "w") as nf:
+        lines = [line for line in f if "M  " not in line]
+        for target in re_target:
+            if target in "OH":
+                lines = [line.replace(target, "O  ") for line in lines]
+        for line in lines[:-1]:
+            nf.write(line)
+        nf.write("M  END\n\n")
+
+
+def contains_x_not_xe(s):
+    """
+    Checks if a string contains the character 'X' not followed by 'e'.
+
+    Parameters:
+    s (str): The input string to search.
+
+    Returns:
+    bool: True if 'X' not followed by 'e' is found, False otherwise.
+    """
+    # Use a regular expression to find "X" not followed by "e"
+    return bool(re.search(r'X(?!e)', s))
+
+
+def check_for_x_group(target_file):
+    """
+    Checks if a target file contains any 'X' groups.
+
+    Parameters:
+    target_file (str): The path to the target file.
+
+    Returns:
+    bool: True if any 'X' group is found in the file, False otherwise.
+    """
+    with open(target_file, "r") as f:
+        for line in f:
+            if contains_x_not_xe(line):
+                return True
+    return False
+
+
+def compound_super_safe_load(file):
+    """
+    Safely loads a compound from a file, handling special cases such as R groups and problem groups.
+
+    Parameters:
+    file (str): The path to the file containing the compound.
+
+    Returns:
+    rdkit.Chem.rdchem.Mol or None: The loaded molecule, or None if the file contains an 'X' group.
+    """
+    # Init flags
+    f_load_r = None
+    f_load_p = None
+    if check_for_x_group(file):
+        return None
+
+    # Check for R groups
+    flag_r = check_for_r_group(file)
+    if flag_r:
+        f_load_r = file.split(".")[0] + "_r.mol"
+        replace_r_group(file, f_load_r)
+        file = f_load_r
+
+    # Check for problem groups
+    flag_p = check_for_problem_group(file)
+    if flag_p:
+        f_load_p = file.split(".")[0] + "_p.mol"
+        replace_problem_group(file, f_load_p)
+        file = f_load_p
+
+    # Get the molecule
+    mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
+    # Remove the temporary files
+    if flag_r:
+        remove_filepath(f_load_r)
+    if flag_p:
+        remove_filepath(f_load_p)
+    return mol
+
+
+def get_properties(mol):
+    """
+    Standardizes a molecule, fixes R groups, converts it to SMILES, and calculates molecular descriptors.
+
+    Parameters:
+    mol (rdkit.Chem.rdchem.Mol): The molecule to process.
+
+    Returns:
+    list: A list containing the SMILES string, molecular formula, molecular weight, number of heavy atoms, and number of chiral centers.
+    """
+    # Standardize and embed the molecule
+    mol = standardize_mol(mol)
+    # Fix the fix r group so that it can be converted to smiles
+    mol = fix_r_group(mol)
+    # Convert the molecule to smiles
+    smi = Chem.MolToSmiles(mol)
+    # Calculate the molecular descriptors
+    formula, mw, n_heavy, nc = get_mol_descriptors(mol)
+    return [smi, formula, mw, n_heavy, nc]
