@@ -250,6 +250,29 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
 
 
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile='Data/kegg_data_C_metadata.csv.zip'):
+    outfile = os.path.abspath(outfile)
+    # Get a list of files for which we have downloaded compound metadata from KEGG
+    paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n if m.endswith('.data')]
+
+    # Import metadata (takes < 20 seconds)
+    df = pd.DataFrame({os.path.basename(path).split(".")[0]:  # for each compound ID
+                           pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line']) # read file
+                           .dropna(subset='line')  # drop empty headers - a few have "sequence" header but no sequence shown
+                          .ffill(axis=0).set_index('id')  # indented lines relate to the last-appearing header
+                           ['line'].str.strip().groupby(level=0).apply('|'.join)  # combine all lines for each header
+                       for path in paths}).drop('///',errors='ignore').T  # indexes are compound IDs; cols are info types
+
+    # retain info from relevant columns
+    df = (df.set_axis(df.columns.str.strip().str.lower(), axis=1)
+          .loc[:, ['name', 'remark', 'comment', 'sequence', 'type', 'brite']].sort_index())
+    df['glycan_ids'] = df.fillna('').query("remark.str.contains('Same as')")['remark'].apply(
+        lambda x: ' '.join([i for i in x.split() if i.startswith("G") and len(i) == 6])).replace('',float('nan'))
+    df.drop(columns='remark', inplace=True)
+    df.reset_index().to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    print('Compound metadata path: '+outfile, flush=True)
+
+
 def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     """
     Preprocesses KEGG reaction data and saves it to a specified output file.
@@ -325,6 +348,8 @@ def preprocess(target="R",
     if target == "C":
         # Defines a dictionary of manual fixes
         man_dict = load_csv_to_dict(cid_manual_file)
+        # gets compound metadata
+        preprocess_kegg_c_metadata(target_dir+'_full', outfile=out_file.replace('.csv.zip', '_metadata.csv.zip'))
         # Defines a list of bad CIDs to skip
         preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)
