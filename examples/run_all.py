@@ -1,8 +1,12 @@
 import CBRdb
+import os
 
 if __name__ == "__main__":
     print("Program started", flush=True)
     f_man = False
+    kegg_reactions_data = "../data/kegg_data_R"
+    atlas_reactions_data = "../data/atlas_data_R"
+    out_reactions_data = "../data/kegg_atlas"
 
     # Downloading all the data, the mol files and the (full) web pages
     print("Downloading all the data, the mol files and the (full) web pages", flush=True)
@@ -46,35 +50,26 @@ if __name__ == "__main__":
     cids_dict, smis_dict = CBRdb.fix_halogen_compounds()
     # Merge the halogen compounds into the C data
     CBRdb.merge_halogen_compounds(cids_dict, smis_dict)
-    # Fix the halogen reactions in the R data
-    CBRdb.fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_R.csv.zip")
-    CBRdb.fix_halogen_reactions(cids_dict, r_id_file="../data/atlas_data_kegg_R.csv.zip")
-    CBRdb.fix_halogen_reactions(cids_dict, r_id_file="../data/kegg_data_R.csv.zip")
+    # Fix the halogen reactions in the R data sets
+    CBRdb.fix_halogen_reactions(cids_dict, r_id_file=kegg_reactions_data + ".csv.zip")
+    CBRdb.fix_halogen_reactions(cids_dict, r_id_file=atlas_reactions_data + ".csv.zip")
     print("Done! \n", flush=True)
 
     # Fix the reactions data
     print("Fixing the reactions data", flush=True)
-    CBRdb.fix_reactions_data(r_file="../data/kegg_data_R.csv.zip")
-    CBRdb.fix_reactions_data(r_file="../data/atlas_data_kegg_R.csv.zip")
-    CBRdb.fix_reactions_data(r_file="../data/atlas_data_R.csv.zip")
+    CBRdb.fix_reactions_data(r_file=kegg_reactions_data + ".csv.zip")
+    CBRdb.fix_reactions_data(r_file=atlas_reactions_data + ".csv.zip")
     # Provides the processed R files
     print("Done! \n", flush=True)
 
     # Merge the data from the atlas and the kegg data
     CBRdb.merge_data(merge_col='reaction',
                      f_keep='first',
-                     kegg_file="../data/atlas_data_kegg_R_processed.csv.zip",
-                     atlas_file="../data/atlas_data_R_processed.csv.zip",
-                     out_file="../data/atlas_kegg_processed_merged.csv.zip")
-
-    CBRdb.merge_data(merge_col='reaction',
-                     f_keep='first',
-                     kegg_file="../data/kegg_data_R_processed.csv.zip",
-                     atlas_file="../data/atlas_data_R_processed.csv.zip",
-                     out_file="../data/kegg_atlas_processed_merged.csv.zip")
+                     kegg_file=kegg_reactions_data + "_processed.csv.zip",
+                     atlas_file=atlas_reactions_data + "_processed.csv.zip",
+                     out_file=out_reactions_data + "_atlas_processed_merged.csv.zip")
     # Fix the EC ids
-    CBRdb.fix_ec_ids(input_file="../data/atlas_kegg_processed_merged.csv.zip")
-    CBRdb.fix_ec_ids(input_file="../data/kegg_atlas_processed_merged.csv.zip")
+    CBRdb.fix_ec_ids(input_file=out_reactions_data + "_atlas_processed_merged.csv.zip")
     # Provides the full_processed_merged.csv.zip file
     print("Done! \n", flush=True)
 
