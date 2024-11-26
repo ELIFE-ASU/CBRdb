@@ -184,7 +184,7 @@ def fix_halogen_reactions(cids_dict,
                           r_id_file="../data/atlas_data_R.csv.zip",
                           int_file=None,
                           out_file=None,
-                          f_print=False):
+                          f_print=True):
     """
     Fixes halogen reactions by replacing halogen placeholders in reaction equations and generating new reaction IDs.
 
@@ -223,26 +223,29 @@ def fix_halogen_reactions(cids_dict,
         print(f"{n_compounds} bad compound files ID with halogens: {data_bad_id}", flush=True)
 
     # Load the reactions data
-    reactions = pd.read_csv(r_id_file, compression='zip')
+    df_reactions = pd.read_csv(r_id_file, compression='zip')
     if f_print:
-        print(reactions.columns, flush=True)
-        print(reactions.head(), flush=True)
+        print(df_reactions.columns, flush=True)
+
 
     # Find the reactions with the halogens
     reactions_set = set()
     for i in range(len(data_bad_id)):
         # Get the equations
-        equations = get_reactions_with_substring(reactions, data_bad_id[i])
-        reactions_set.update(equations['id'].values)
+        equations = get_reactions_with_substring(df_reactions, data_bad_id[i])
+        reactions_set.update(equations['index'].values)
     reactions_set = list(reactions_set)
     n_reactions = len(reactions_set)
     if f_print:
         print(f"{n_reactions} Reactions with the halogens {reactions_set}", flush=True)
 
     # Get the EC numbers of the reactions_set
-    ec_numbers = reactions[reactions['id'].isin(reactions_set)]['ec'].values
+    ec_numbers = df_reactions[df_reactions['index'].isin(reactions_set)]['ec'].values
     if f_print:
         print(f"EC numbers {ec_numbers}", flush=True)
+
+    # Only keep the reactions_set
+    df_reactions_copy = df_reactions[df_reactions['index'].isin(reactions_set)]
 
     id_list = []
     reaction_list = []
@@ -253,7 +256,7 @@ def fix_halogen_reactions(cids_dict,
         if f_print:
             print(f"{i}: Reaction {reactions_set[i]}", flush=True)
         # Get the reaction
-        reaction = reactions[reactions['id'] == reactions_set[i]]
+        reaction = df_reactions[df_reactions['index'] == reactions_set[i]]
         eq = reaction['reaction'].values[0]
         eq_re = eq
         # for each key value in the dictionary of cid
@@ -273,13 +276,21 @@ def fix_halogen_reactions(cids_dict,
                         print(f"output eq_re:   {eq_re}", flush=True)
                         print(f"New ID {new_id}", flush=True)
                     idx += 1
-                    # # Create an entry for the reaction id
+                    # Create an entry for the reaction id
                     id_list.append(new_id)
                     reaction_list.append(eq_re)
                     ec_list.append(ec_numbers[i])
+
+    # update the elements in df_reactions_copy dataframe
+    df_reactions_copy['index'] = id_list
+    df_reactions_copy['reaction'] = reaction_list
+    df_reactions_copy['ec'] = ec_list
+
+
+
     # Create a dataframe
     df = pd.DataFrame(data={
-        "id": id_list,
+        "index": id_list,
         "reaction": reaction_list,
         "ec": ec_list})
     if int_file is not None:
@@ -289,9 +300,9 @@ def fix_halogen_reactions(cids_dict,
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)
     # Drop the duplicates
-    df = df.drop_duplicates(subset="id")
+    df = df.drop_duplicates(subset="index")
     # Sort the dataframe by the ID
-    df = df.sort_values(by="id")
+    df = df.sort_values(by="index")
     # Save the dataframe
     df.to_csv(out_file, compression='zip', encoding='utf-8')
     return None
