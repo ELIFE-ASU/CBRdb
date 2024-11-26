@@ -248,10 +248,13 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     df = df.sort_values(by="compound_id")
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    print('Compound structural-info path: '+outfile, flush=True)
+    return df
 
 
 def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile='Data/kegg_data_C_metadata.csv.zip'):
     outfile = os.path.abspath(outfile)
+    print('Importing compound metadata...', flush=True)
     # Get a list of files for which we have downloaded compound metadata from KEGG
     paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n if m.endswith('.data')]
 
@@ -269,8 +272,10 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile
     df['glycan_ids'] = df.fillna('').query("remark.str.contains('Same as')")['remark'].apply(
         lambda x: ' '.join([i for i in x.split() if i.startswith("G") and len(i) == 6])).replace('',float('nan'))
     df.drop(columns='remark', inplace=True)
-    df.reset_index().to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    df = df.reset_index().rename({'index': 'compound_id'}, axis=1)
+    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     print('Compound metadata path: '+outfile, flush=True)
+    return df
 
 
 def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
@@ -319,9 +324,10 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'category'}, inplace=True)
     df['category'] = df['category'].replace('', float('nan'))
-    df = df.loc[:, df.count().sort_values(ascending=False).index].drop(columns='enzyme')
-    df.reset_index().to_csv(outfile, compression='zip', encoding='utf-8', index=False)
-    return None
+    df = df.loc[:, df.count().sort_values(ascending=False).index].drop(columns='enzyme').reset_index().rename({'index':'id'}, axis=1)
+    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    print('Reaction info path: '+outfile, flush=True)
+    return df
 
 
 def preprocess(target="R",
