@@ -245,7 +245,7 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
         "n_heavy_atoms": arr_n_heavy,
         "n_chiral_centers": arr_nc})
     # Sort the dataframe by the compound ID
-    df = df.sort_values(by="compound_id")
+    df = df.sort_values(by="compound_id").reset_index(drop=True).drop_duplicates().rename_axis(None, axis=1)
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     print('Compound structural-info path: '+outfile, flush=True)
@@ -272,7 +272,7 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile
     df['glycan_ids'] = df.fillna('').query("remark.str.contains('Same as')")['remark'].apply(
         lambda x: ' '.join([i for i in x.split() if i.startswith("G") and len(i) == 6])).replace('',float('nan'))
     df.drop(columns='remark', inplace=True)
-    df = df.reset_index().rename({'index': 'compound_id'}, axis=1)
+    df = df.reset_index().rename({'index': 'compound_id'}, axis=1).rename_axis(None, axis=1)
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     print('Compound metadata path: '+outfile, flush=True)
     return df
@@ -325,7 +325,8 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'category'}, inplace=True)
     df['category'] = df['category'].replace('', float('nan'))
-    df = df.loc[:, df.count().sort_values(ascending=False).index].drop(columns='enzyme').reset_index().rename({'index':'id'}, axis=1)
+    df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns='enzyme')
+          .reset_index().rename({'index':'id'}, axis=1).rename_axis(None, axis=1))
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     print('Reaction info path: '+outfile, flush=True)
     return df
@@ -356,10 +357,12 @@ def preprocess(target="R",
         # Defines a dictionary of manual fixes
         man_dict = load_csv_to_dict(cid_manual_file)
         # gets compound metadata
-        preprocess_kegg_c_metadata(target_dir+'_full', outfile=out_file.replace('.csv.zip', '_metadata.csv.zip'))
+        df_meta = preprocess_kegg_c_metadata(target_dir+'_full', outfile=out_file.replace('.csv.zip', '_metadata.csv.zip'))
         # Defines a list of bad CIDs to skip
-        preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
+        df_main = preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)
+        return(df_meta, df_main)
     elif target == "R":
-        preprocess_kegg_r(target_dir, out_file)
+        df = preprocess_kegg_r(target_dir, out_file)
         print("R preprocessing done", flush=True)
+        return(df)
