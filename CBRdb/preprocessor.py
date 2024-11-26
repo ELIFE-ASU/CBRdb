@@ -151,6 +151,19 @@ def check_for_x_group(target_file):
 
 
 def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True, n_print=100):
+    """
+    Converts .mol files to SMILES format and processes molecular data.
+
+    Parameters:
+    target_dir (str): The directory containing the .mol files.
+    man_dict (dict): A dictionary of manual fixes for compound IDs.
+    outfile (str, optional): The output file path for the processed data. Defaults to "kegg_data_C.csv.zip".
+    calc_info (bool, optional): Whether to calculate molecular descriptors. Defaults to True.
+    n_print (int, optional): The interval for printing progress messages. Defaults to 100.
+
+    Returns:
+    None
+    """
     # Get a list of all files in the directory
     files = file_list_all(target_dir)
     # Clean up the files
@@ -278,7 +291,18 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
             f.write(f"{cid}, SIMILES fail\n")
 
 
-def preprocess_kegg_r(target_dir, outfile, n_print=100):
+def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
+    """
+    Preprocesses KEGG reaction data and saves it to a specified output file.
+
+    Parameters:
+    target_dir (str): The directory containing the KEGG reaction data files.
+    outfile (str): The output file path for the preprocessed data.
+    rm_gly (bool, optional): Whether to remove reactions with glycan IDs. Defaults to True.
+
+    Returns:
+    None
+    """
     # Get a list of all files in the directory
     paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n]
 
@@ -291,9 +315,9 @@ def preprocess_kegg_r(target_dir, outfile, n_print=100):
                        for path in paths}).drop('///').T  # indexes are reaction IDs; cols are info types
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).drop(  # remove columns not needed currently
         ['reference', 'authors', 'journal', 'title', 'brite', 'definition'], axis=1)
-
-    # Remove reactions with glycan IDs mixed in. "remark" column tags their equivalent reactions.
-    df = df.loc[df['equation'].str.count(r"(\bG\d{5}\b)") == 0]
+    if rm_gly:
+        # Remove reactions with glycan IDs mixed in. "remark" column tags their equivalent reactions.
+        df = df.loc[df['equation'].str.count(r"(\bG\d{5}\b)") == 0]
 
     # Store observed KO definitions in a file; old versions of this are used to annotate JGI (meta)genomes.
     ko_defs = df['orthology'].dropna().drop_duplicates()
