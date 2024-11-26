@@ -290,6 +290,7 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     Returns:
     None
     """
+    print('Importing reaction data...', flush=True)
     # Get a list of all files in the directory
     paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n]
 
