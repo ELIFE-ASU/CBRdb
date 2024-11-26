@@ -7,9 +7,9 @@ from rdkit import RDLogger
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from .tools_mols import standardize_mol, get_mol_descriptors, check_for_x_group
+from .tools_mols import standardize_mol, check_for_x_group, get_properties
 from .tools_files import make_custom_id
-from .tools_mp import tp_calc
+from .tools_mp import tp_calc, mp_calc
 
 
 def load_bad_entries(target_dir_c):
@@ -88,7 +88,6 @@ def fix_halogen_compounds(
             mol = standardize_mol(mol)
             smi = Chem.MolToSmiles(mol, allHsExplicit=True)
             # Determine the compound id from the ones already given
-            # If not found, generate a new one
             cid = {
                 "C00462": {"F": "C16487", "Cl": "C01327", "Br": "C13645", "I": "C05590"},
                 "C01322": {},  # full expansion required!
@@ -133,6 +132,7 @@ def merge_halogen_compounds(cids_dict,
     Returns:
     None
     """
+    print("Merging halogen compounds", flush=True)
     if out_file is None:
         out_file = c_id_file
     # Prepare the full path of the files
@@ -148,23 +148,11 @@ def merge_halogen_compounds(cids_dict,
         cids_list.extend(cids_dict[key])
         smis_list.extend(smis_dict[key])
 
-    # Loop over the cids_list
-    arr_formula = []
-    arr_mw = []
-    arr_n_heavy = []
-    arr_nc = []
-    for i in range(len(cids_list)):
-        # Load the molecule
-        mol = Chem.MolFromSmiles(smis_list[i])
-        # Standardize the molecule
-        mol = standardize_mol(mol)
-        # Get the formula, molecular weight, number of heavy atoms, and the number of chiral centers
-        formula, mw, n_heavy, nc = get_mol_descriptors(mol)
-        # Add the data to the arrays
-        arr_formula.append(formula)
-        arr_mw.append(mw)
-        arr_n_heavy.append(n_heavy)
-        arr_nc.append(nc)
+    mols = [Chem.MolFromSmiles(smi) for smi in smis_list]
+    # Get the properties
+    properties = mp_calc(get_properties, mols)
+    # Unpack the properties into the arrays
+    arr_smiles, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
 
     # Create a dataframe
     df = pd.DataFrame(data={
@@ -188,6 +176,7 @@ def merge_halogen_compounds(cids_dict,
     df = df.sort_values(by="compound_id")
     # Save the dataframe
     df.to_csv(out_file, compression='zip', encoding='utf-8')
+    print("Done!", flush=True)
     return None
 
 
