@@ -165,7 +165,7 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
     None
     """
     # Get a list of all files in the directory
-    files = file_list_all(target_dir)
+    files = [f for f in file_list_all(target_dir) if f.endswith('.mol')]
     # Clean up the files
     delete_files_substring(target_dir, "_r")
     delete_files_substring(target_dir, "_p")
