@@ -6,9 +6,9 @@ if __name__ == "__main__":
 
     # Downloading all the data, the mol files and the (full) web pages
     print("Downloading all the data, the mol files and the (full) web pages", flush=True)
-    CBRdb.download_data(target="C")
-    CBRdb.download_data(target="C_full")
-    CBRdb.download_data(target="R")
+    # CBRdb.download_data(target="C")
+    # CBRdb.download_data(target="C_full")
+    # CBRdb.download_data(target="R")
     # Provides the raw data files
     print("Done! \n", flush=True)
 
@@ -23,6 +23,7 @@ if __name__ == "__main__":
     # Converting mol into smiles and cleaning up the data
     print("Converting mol into smiles and cleaning up the data", flush=True)
     CBRdb.preprocess(target="C")
+    exit()
     CBRdb.preprocess(target="R")
     # Provides the kegg_data_C.csv.zip and kegg_data_R.csv.zip files
     print("Done! \n", flush=True)
