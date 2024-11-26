@@ -27,12 +27,16 @@ def load_csv_to_dict(file_path):
     dict: A dictionary where the keys are the first column values and the values are the second column values.
     """
     result_dict = {}
-    with open(file_path, mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            if len(row) >= 2:  # Ensure there are at least two columns
-                key, value = row[0].strip(), row[1].strip()
-                result_dict[key] = value
+    try:
+        with open(file_path, mode='r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if len(row) >= 2:  # Ensure there are at least two columns
+                    key, value = row[0].strip(), row[1].strip()
+                    result_dict[key] = value
+    except FileNotFoundError:
+        print(f"File not found: {file_path}, using an empty dictionary instead.", flush=True)
+
     return result_dict
 
 
@@ -152,6 +156,15 @@ def check_for_x_group(target_file):
 
 
 def compound_super_safe_load(file):
+    """
+    Safely loads a compound from a file, handling special cases such as R groups and problem groups.
+
+    Parameters:
+    file (str): The path to the file containing the compound.
+
+    Returns:
+    rdkit.Chem.rdchem.Mol or None: The loaded molecule, or None if the file contains an 'X' group.
+    """
     # Init flags
     f_load_r = None
     f_load_p = None
@@ -183,6 +196,15 @@ def compound_super_safe_load(file):
 
 
 def get_properties(mol):
+    """
+    Standardizes a molecule, fixes R groups, converts it to SMILES, and calculates molecular descriptors.
+
+    Parameters:
+    mol (rdkit.Chem.rdchem.Mol): The molecule to process.
+
+    Returns:
+    list: A list containing the SMILES string, molecular formula, molecular weight, number of heavy atoms, and number of chiral centers.
+    """
     # Standardize and embed the molecule
     mol = standardize_mol(mol)
     # Fix the fix r group so that it can be converted to smiles
