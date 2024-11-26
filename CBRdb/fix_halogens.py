@@ -7,29 +7,9 @@ from rdkit import RDLogger
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from .tools_mols import standardize_mol, get_mol_descriptors
+from .tools_mols import standardize_mol, get_mol_descriptors, check_for_x_group
 from .tools_files import make_custom_id
-from .preprocessor import check_for_x_group
 from .tools_mp import tp_calc
-
-
-def make_id_range(data, hal_exp):
-    """
-    Creates a range of IDs for combinations of data and halogen expansions.
-
-    Parameters:
-    data (list): A list of data entries.
-    hal_exp (list): A list of halogen expansions.
-
-    Returns:
-    list: A list of ranges, each representing a combination of data and halogen expansions.
-    """
-    n_data = len(data)
-    n_hal = len(hal_exp)
-    n_comb = n_data * n_hal
-    num_range = range(n_comb)
-    # Reshape num_range to a 2D array
-    return [num_range[i:i + n_hal] for i in range(0, n_comb, n_hal)]
 
 
 def load_bad_entries(target_dir_c):
@@ -89,10 +69,7 @@ def fix_halogen_compounds(
     data_bad_id = load_bad_entries(target_dir_c)
     if f_print:
         print(f"bad files ID with halogens: {data_bad_id}", flush=True)
-
-    # Make the combinations of the data and the halogens
-    num_range = make_id_range(data_bad_id, hal_exp)
-
+    idx = 0
     smis_dict = {}
     cids_dict = {}
     for i in range(len(data_bad_id)):
@@ -105,14 +82,11 @@ def fix_halogen_compounds(
         smis_dict[data_bad_id[i]] = []
         # Replace the X with the halogen
         for j, hal in enumerate(hal_exp):
-            idx = num_range[i][j]
             # Load the molecule
             mol = Chem.MolFromMolBlock(file_data.replace("X", hal))
             # Standardize the molecule
             mol = standardize_mol(mol)
             smi = Chem.MolToSmiles(mol, allHsExplicit=True)
-            if f_print:
-                print(f"Compound {data_bad_id[i]} with halogen {hal}, idx {idx} -> {smi}", flush=True)
             # Determine the compound id from the ones already given
             # If not found, generate a new one
             cid = {
@@ -132,6 +106,10 @@ def fix_halogen_compounds(
             # Generate the compound id if not found
             if cid is None:
                 cid = make_custom_id(99000 + idx, prefix="C")
+                idx += 1
+            if f_print:
+                print(f"Compound {data_bad_id[i]} with halogen {hal} -> {cid}: {smi}", flush=True)
+            # Add the data to the dictionaries
             cids_dict[data_bad_id[i]].append(cid)
             smis_dict[data_bad_id[i]].append(smi)
     return cids_dict, smis_dict
