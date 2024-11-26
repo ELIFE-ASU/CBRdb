@@ -112,7 +112,7 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
         # Get the reaction EC
         re_ec.append(ec)
     # Store the data in a dataframe
-    df = pd.DataFrame({'id': re_id, 'reaction': re_eq, 'chemical_names': re_chem_names, 'ec': re_ec})
+    df = pd.DataFrame({'index': re_id, 'reaction': re_eq, 'chemical_names': re_chem_names, 'ec': re_ec})
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
     print("data written to file", flush=True)
@@ -177,7 +177,7 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
         re_ec.append(ec)
 
     # Create a DataFrame from the lists
-    df = pd.DataFrame({'id': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
+    df = pd.DataFrame({'index': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
     # Fill in the missing values with NaN
     df = df.replace("", float("NaN"))
 

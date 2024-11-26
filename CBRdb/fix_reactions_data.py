@@ -231,10 +231,10 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
 
     # Filter out the bad ids
     print("Filtering out bad ids", flush=True)
-    data_r = data_r.loc[~data_r["id"].isin(bad_ids)]
+    data_r = data_r.loc[~data_r["index"].isin(bad_ids)]
 
     # Get the data from the dataframe
-    ids = data_r["id"].tolist()
+    ids = data_r["index"].tolist()
     eq_lines = data_r["reaction"].tolist()
     ec = data_r["ec"].tolist()
     print("data loaded", flush=True)
@@ -253,7 +253,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     if not f_fresh:
         # Load the data from the file
         df = pd.read_csv(out_eq_file)
-        out_ids = df["id"].tolist()
+        out_ids = df["index"].tolist()
         out_eq_lines = df["reaction"].tolist()
         out_ec = df["ec"].tolist()
         print("data loaded", flush=True)
@@ -405,7 +405,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
         out_ec.append(ec[i])
 
     # Store the data in a dataframe
-    df = pd.DataFrame({'id': out_ids, 'reaction': out_eq_lines, 'ec': out_ec})
+    df = pd.DataFrame({'index': out_ids, 'reaction': out_eq_lines, 'ec': out_ec})
 
     # check if the data is fresh
     if not f_fresh:
@@ -414,11 +414,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
         # Append the data
         df = pd.concat([df_old, df])
         # Drop the duplicates
-        df = df.drop_duplicates(subset="id", keep="last")
+        df = df.drop_duplicates(subset="index", keep="last")
         # # Reset the index
         # df = df.reset_index(drop=True)
         # sort the data
-        df = df.sort_values(by="id")
+        df = df.sort_values(by="index")
 
     # Write the data to a file
     # get the shape of the data
