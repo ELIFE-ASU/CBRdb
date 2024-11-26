@@ -151,112 +151,90 @@ def check_for_x_group(target_file):
     return False
 
 
-def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", calc_info=True, n_print=100):
-    # Get a list of all files in the directory
-    files = file_list_all(target_dir)
+def compound_super_safe_load(file):
+    # Init flags
+    f_load_r = None
+    f_load_p = None
+    if check_for_x_group(file):
+        return None
+
+    # Check for R groups
+    flag_r = check_for_r_group(file)
+    if flag_r:
+        f_load_r = file.split(".")[0] + "_r.mol"
+        replace_r_group(file, f_load_r)
+        file = f_load_r
+
+    # Check for problem groups
+    flag_p = check_for_problem_group(file)
+    if flag_p:
+        f_load_p = file.split(".")[0] + "_p.mol"
+        replace_problem_group(file, f_load_p)
+        file = f_load_p
+
+    # Get the molecule
+    mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
+    # Remove the temporary files
+    if flag_r:
+        remove_filepath(f_load_r)
+    if flag_p:
+        remove_filepath(f_load_p)
+    return mol
+
+
+def get_properties(mol):
+    # Standardize and embed the molecule
+    mol = standardize_mol(mol)
+    # Fix the fix r group so that it can be converted to smiles
+    mol = fix_r_group(mol)
+    # Convert the molecule to smiles
+    smi = Chem.MolToSmiles(mol)
+    # Calculate the molecular descriptors
+    formula, mw, n_heavy, nc = get_mol_descriptors(mol)
+    return [smi, formula, mw, n_heavy, nc]
+
+
+def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
+    """
+    Preprocesses KEGG compound data and saves it to a specified output file.
+
+    Parameters:
+    target_dir (str): The directory containing the KEGG compound data files.
+    man_dict (dict): A dictionary of manual compound ID fixes.
+    outfile (str, optional): The output file path for the preprocessed data. Defaults to "kegg_data_C.csv.zip".
+
+    Returns:
+    None
+    """
     # Clean up the files
     delete_files_substring(target_dir, "_r")
     delete_files_substring(target_dir, "_p")
-    # Filter the files to only include .mol files
-    files = [f for f in files if "_r" not in f]
-    files = [f for f in files if "_p" not in f]
+    # Get a list of all mol files in the directory
+    files = [f for f in file_list_all(target_dir) if f.endswith('.mol')]
 
-    # X group files
-    ids_x = []
-    ids_similes_fail = []
+    print(f"Number of files: {len(files)}", flush=True)
+    # Get the compound IDs
+    arr_cid = [os.path.basename(file).split(".")[0] for file in files]
+    # Load the mols in parallel
+    mols = list(tp_calc(compound_super_safe_load, files))
+    print(f"Number of mols: {len(mols)}", flush=True)
+    # Get the ids of the failed mols
+    ids_x = [cid for cid, mol in zip(arr_cid, mols) if mol is None]
+    print(f"Number of X group files removed: {len(ids_x)}", flush=True)
+    print(f"X group compounds {ids_x}", flush=True)
+    # Remove the ids_x from the arr_cid
+    arr_cid = [cid for cid in arr_cid if cid not in ids_x]
+    # Remove the mols that are None
+    mols = [mol for mol in mols if mol is not None]
 
-    # Get the number of files
-    n = len(files)
-    # Create lists to store the outputs
-    arr_smiles = []
-    arr_cid = []
-    arr_formula = []
-    arr_mw = []
-    arr_n_heavy = []
-    arr_nc = []
-    # Loop over the files
-    for i, file in enumerate(files):
-        # Get the CID
-        cid = os.path.basename(file).split(".")[0]
-        if i % n_print == 0:
-            print(f"Processing file {i}/{n}: {cid}", flush=True)
-        # Init flags
-        f_load_r = None
-        f_load_p = None
-        if check_for_x_group(file):
-            print(f"Skipping {cid} due to X group", flush=True)
-            ids_x.append(cid)
-            continue
+    # Load the manual fixes
+    mols += [Chem.MolFromSmiles(smiles) for cid, smiles in man_dict.items()]
+    arr_cid += [cid for cid, smiles in man_dict.items()]
 
-        # Check for R groups
-        flag_r = check_for_r_group(file)
-        if flag_r:
-            f_load_r = file.split(".")[0] + "_r.mol"
-            replace_r_group(file, f_load_r)
-            file = f_load_r
-
-        # Check for problem groups
-        flag_p = check_for_problem_group(file)
-        if flag_p:
-            f_load_p = file.split(".")[0] + "_p.mol"
-            replace_problem_group(file, f_load_p)
-            file = f_load_p
-
-        # Get the molecule
-        mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
-        # Remove the temporary files
-        if flag_r:
-            remove_filepath(f_load_r)
-        if flag_p:
-            remove_filepath(f_load_p)
-
-        try:
-            # Standardize and embed the molecule
-            mol = standardize_mol(mol)
-            # Fix the fix_r_group
-            mol = fix_r_group(mol)
-            # Convert the molecule to smiles
-            smi = Chem.MolToSmiles(mol)
-            # Add the ID
-            arr_cid.append(cid)
-            # Add the smiles to the array
-            arr_smiles.append(smi)
-            if calc_info:
-                formula, mw, n_heavy, nc = get_mol_descriptors(mol)
-                # Get the formula
-                arr_formula.append(formula)
-                # Get the molecular weight
-                arr_mw.append(mw)
-                # Get the number of heavy atoms
-                arr_n_heavy.append(n_heavy)
-                # Get the chirality
-                arr_nc.append(nc)
-        except:
-            print(f"Error in {cid}, could not pass to SIMILES", flush=True)
-            ids_similes_fail.append(cid)
-
-    # Loop over the manual fixes and add them to the list
-    for cid, smiles in man_dict.items():
-        # Check if the CID is not already in the list
-        if cid not in arr_cid:
-            print(f"Adding manual fix for {cid}", flush=True)
-            # Add the ID
-            arr_cid.append(cid)
-            mol = Chem.MolFromSmiles(smiles)
-            # Standardize and embed the molecule
-            mol = standardize_mol(mol)
-            # Add the smiles to the array
-            arr_smiles.append(Chem.MolToSmiles(mol))
-            if calc_info:
-                formula, mw, n_heavy, nc = get_mol_descriptors(mol)
-                # Get the formula
-                arr_formula.append(formula)
-                # Get the molecular weight
-                arr_mw.append(mw)
-                # Get the number of heavy atoms
-                arr_n_heavy.append(n_heavy)
-                # Get the chirality
-                arr_nc.append(nc)
+    # Get the properties
+    properties = mp_calc(get_properties, mols)
+    # Unpack the properties into the arrays
+    arr_smiles, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
 
     # Create a dataframe
     df = pd.DataFrame(data={
@@ -271,19 +249,23 @@ def convert_mol_to_smiles(target_dir, man_dict, outfile="kegg_data_C.csv.zip", c
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
 
-    # Save the problematic CIDs
-    with open("../data/C_IDs_bad.dat", "a") as f:
-        for cid in ids_x:
-            f.write(f"{cid}, X group\n")
-        for cid in ids_similes_fail:
-            f.write(f"{cid}, SIMILES fail\n")
 
+def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
+    """
+    Preprocesses KEGG reaction data and saves it to a specified output file.
 
-def preprocess_kegg_r(target_dir, outfile, n_print=100):
+    Parameters:
+    target_dir (str): The directory containing the KEGG reaction data files.
+    outfile (str): The output file path for the preprocessed data.
+    rm_gly (bool, optional): Whether to remove reactions with glycan IDs. Defaults to True.
+
+    Returns:
+    None
+    """
     # Get a list of all files in the directory
     paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n]
 
-    # Import reaction data (takes < 20 seconds)
+    # Import reaction data
     df = pd.DataFrame({os.path.basename(path).split(".")[0]:  # for each reaction ID
                            pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None,
                                        names=['id', 'line'])  # read file
@@ -292,9 +274,9 @@ def preprocess_kegg_r(target_dir, outfile, n_print=100):
                        for path in paths}).drop('///').T  # indexes are reaction IDs; cols are info types
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).drop(  # remove columns not needed currently
         ['reference', 'authors', 'journal', 'title', 'brite', 'definition'], axis=1)
-
-    # Remove reactions with glycan IDs mixed in. "remark" column tags their equivalent reactions.
-    df = df.loc[df['equation'].str.count(r"(\bG\d{5}\b)") == 0]
+    if rm_gly:
+        # Remove reactions with glycan IDs mixed in. "remark" column tags their equivalent reactions.
+        df = df.loc[df['equation'].str.count(r"(\bG\d{5}\b)") == 0]
 
     # Store observed KO definitions in a file; old versions of this are used to annotate JGI (meta)genomes.
     ko_defs = df['orthology'].dropna().drop_duplicates()
@@ -344,7 +326,7 @@ def preprocess(target="R",
         # Defines a dictionary of manual fixes
         man_dict = load_csv_to_dict(cid_manual_file)
         # Defines a list of bad CIDs to skip
-        convert_mol_to_smiles(target_dir, man_dict, outfile=out_file)
+        preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)
     elif target == "R":
         preprocess_kegg_r(target_dir, out_file)
