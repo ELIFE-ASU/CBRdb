@@ -135,68 +135,40 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     return incomplete_reaction_ids
 
 
-def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../data/"):
+def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
     """
     Cleans and processes KEGG reaction data, identifying and flagging multistep shortcuts, glycan participants,
     and reactions with incomplete or general data.
 
     Parameters:
-    target_dir (str): The path to the directory containing the raw KEGG reaction data files.
+    r_file (str): The path to the directory containing the preprocessed KEGG reaction csv.
     data_dir (str): The path to the directory where processed data files will be saved.
 
     Returns:
     None
     """
     # Prepare the full path of the files
-    target_dir = os.path.abspath(target_dir)
-    data_dir = os.path.abspath(data_dir)
-
-    print("Input: An unzipped, locally-downloaded folder of raw KEGG reaction data files.", flush=True)
-    print("Output: CSVs with relevant reaction info, ties to other databases and flags for removal.", flush=True)
+    r_file = os.path.abspath(r_file)
     global reactions, OK
 
     f_save_files = False
 
-    prefixes = {
-        'RCLASS': r'RC\d{5}',
-        'BRITE': r'br\d{5}',
-        'PATHWAY': r'rn\d{5}',
-        'MODULE': r'M\d{5}',
-        'ORTHOLOGY': r'K\d{5}'
-    }
+    OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
+    # Import reaction metadata. Note that "overall" column tags top-level reactions in 
+    # [this table](https://www.kegg.jp/kegg/tables/br08210.html)
+    reactions = pd.read_csv(r_file, header=0, index_col=0)
+    reactions.columns = reactions.columns.str.upper()
+
+    # Use comments to identify multi-step reactions
+    # artificial shortcuts compressing multiple existing reaction IDs into a single net reaction.
+    
+    dm = reactions['COMMENT'].replace('', float('NaN')).dropna().str.upper().reset_index()
+    dm['ORIGINAL_COMMENT'] = dm['COMMENT'].copy(deep=True)
+
+    f_save_files = False
 
     OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
-
-    # This needs to point to the directory where the KEGG reaction data files are stored.
-    reactions = load_reactions_data(target_dir)
-    print(reactions)
-
-    # Parse each reaction's ties to other databases.
-    # Flag reactions with glycan participants and "overall" reactions
-    # See [this table](https://www.kegg.jp/kegg/tables/br08210.html) for info
-    reactions = reactions.assign(
-        OVERALL_FLAG=reactions['ENTRY'].str.contains('Overall', case=False),
-        GLYCAN_FLAG=reactions['EQUATION'].str.contains('G'),
-        EQUATION_ENTRIES=reactions['EQUATION'].str.findall(r'C\d{5}|G\d{5}'),
-        ENZYME_ENTRIES=reactions['ENZYME'].str.replace(';', ' ').str.split(),
-        DBLINKS_RHEA_ENTRIES=reactions['DBLINKS'].str.lstrip('RHEA: ').str.split())
-
-    for col, pattern in prefixes.items():
-        reactions[f'{col}_ENTRIES'] = reactions[col].str.findall(pattern)
-
-    # KEGG no longer maintains the RCLASS database, BUT some edges in KEGG pathways
-    # are still tagged with RCLASS entries instead of their constituent reactions.
-    # Let's reconstruct RCLASS from REACTION (since we get that for free).
-    r_rclass = reactions['RCLASS'].str.split('; ').explode().to_frame()
-    r_rclass = r_rclass.assign(RC=r_rclass['RCLASS'].str.extract(r'(RC\d{5})'),
-                               CPAIR=r_rclass['RCLASS'].str.findall(r'(C\d{5}_C\d{5})')).drop('RCLASS', axis=1).explode(
-        'CPAIR')
-
-    if f_save_files:
-        rclass_db = r_rclass.reset_index(names='REACTION').groupby(by=['RC', 'CPAIR'])['REACTION'].apply(set).apply(
-            list).to_frame()
-        make_lists_printable(rclass_db).to_csv(os.path.join(data_dir, 'rclass_db.csv'), encoding='utf-8', index=False)
-
+    
     # Use comments to identify multi-step reactions
     # artificial shortcuts compressing multiple existing reaction IDs into a single net reaction.
     to_replace = {'MULTISTEP': 'MULTI-STEP',
@@ -207,7 +179,7 @@ def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../
     dm['ORIGINAL_COMMENT'] = dm['COMMENT'].copy(deep=True)
     for k, v in to_replace.items():
         dm['COMMENT'] = dm['COMMENT'].str.replace(k, v)
-    dm['COMMENT'] = dm['COMMENT'].str.split(';')
+    dm['COMMENT'] = dm['COMMENT'].str.split(';') 
     s1 = r'COMMENT.str.contains("STEP REACTION")'
     s2 = r'COMMENT.str.contains(r"R\d{5}\+|R\d{5} \+|R\d{5} \,")'
     s3 = r'COMMENT.str.contains("STEP OF|PART OF|THE LAST|THE FIRST|THE FORMER|THE LATTER|POSSIBLY|PROBABLY IDENTICAL")'
@@ -271,14 +243,14 @@ def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../
         dm['info'] = dm['info'].str.replace(i, '').str.strip(', ')
 
     dm['n_steps_cited'] = dm['info'].str[0].replace('N', float('nan')).astype(float)
-
+    
     removed = {}
     for i in dm.index:
         noself = (
             dm.loc[i, 'info'][1:]
-            .replace(dm.loc[i, 'index'] + '+', '')
-            .replace('+' + dm.loc[i, 'index'], '')
-            .replace(dm.loc[i, 'index'], '')
+            .replace(dm.loc[i, 'id'] + '+', '')
+            .replace('+' + dm.loc[i, 'id'], '')
+            .replace(dm.loc[i, 'id'], '')
         )
         if '+' in noself:
             removed[i] = [j.strip() for j in noself.split(',')]
@@ -294,8 +266,8 @@ def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../
     dm['n_steps_shown'] = dm['steps_shown'].apply(len)
 
     # Identify reactions with incomplete multistep shortcuts
-    has_rns_missing = dm.loc[dm['steps_shown'].apply(flag_missing_reactions).dropna().index, 'index'].to_list()
-    incomplete_multistep = dm.loc[dm['index'].isin(has_rns_missing), 'index'].unique()
+    has_rns_missing = dm.loc[dm['steps_shown'].apply(flag_missing_reactions).dropna().index, 'id'].to_list()
+    incomplete_multistep = dm.loc[dm['id'].isin(has_rns_missing), 'id'].unique()
     print('Reactions with incomplete multistep shortcuts:', len(incomplete_multistep), incomplete_multistep, flush=True)
 
     # Filter out incomplete multistep reactions
@@ -303,8 +275,8 @@ def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../
     dm['step_group'] = dm['steps_shown'].apply('+'.join)
 
     # Flag multistep shortcuts and generate data files
-    reactions['MULTISTEP_FLAG'] = reactions.index.isin(dm['index'].unique())
-    reactions['STEP_ENTRIES'] = dm.groupby('index')['step_group'].apply(list).fillna('')
+    reactions['MULTISTEP_FLAG'] = reactions.index.isin(dm['id'].unique())
+    reactions['STEP_ENTRIES'] = dm.groupby('id')['step_group'].apply(list).fillna('')
     reactions_printable = make_lists_printable(reactions)
     if f_save_files:
         make_lists_printable(dm).to_csv(os.path.join(data_dir, 'reactions_multistep_intermediate_processing.csv.zip'),
@@ -324,15 +296,10 @@ def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../
                                    encoding='utf-8', index=False)
 
     # Select only the reactions that are overall_flagged or glycan_flagged
-    reactions_shortcut = reactions_printable.query('OVERALL_FLAG == True')
+    reactions_shortcut = reactions_printable.query('OVERALL.notna()')
     print('Reactions that are shortcuts:', len(reactions_shortcut), flush=True)
-    reactions_shortcut = reactions_shortcut['ENTRY'].to_list()
+    reactions_shortcut = reactions_shortcut['ID'].to_list()
     reactions_shortcut = list(set([i.split()[0].strip() for i in reactions_shortcut]))
-
-    reactions_glycan = reactions_printable.query('GLYCAN_FLAG == True')
-    print('Reactions with glycan participants:', len(reactions_glycan), flush=True)
-    reactions_glycan = reactions_glycan['ENTRY'].to_list()
-    reactions_glycan = list(set([i.split()[0].strip() for i in reactions_glycan]))
 
     reactions_incomplete = get_reaction_ids_substr(reactions, substr="incomplete reaction")
     print('Reactions with incomplete data:', len(reactions_incomplete), flush=True)
@@ -341,9 +308,8 @@ def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../
     print('General reactions:', len(reactions_general), flush=True)
 
     data = {
-        'Reaction': reactions_shortcut + reactions_glycan + reactions_incomplete + reactions_general,
+        'Reaction': reactions_shortcut + reactions_incomplete + reactions_general,
         'Type': ['shortcut'] * len(reactions_shortcut)
-                + ['glycan'] * len(reactions_glycan)
                 + ['incomplete'] * len(reactions_incomplete)
                 + ['general'] * len(reactions_general)
     }
@@ -351,3 +317,4 @@ def clean_reaction_shortcuts(target_dir='../../data/kegg_data_R/', data_dir="../
     # Sort the data
     data = data.sort_values(by=['Reaction'])
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
+    return data
