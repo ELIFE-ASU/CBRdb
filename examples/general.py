@@ -16,42 +16,29 @@ import rdkit.Chem as Chem
 import re
 
 
-import sympy as sp
-
-def find_smallest_positive_values(expr_str):
-    """
-    Finds the smallest integer values of the variables that make the expression positive.
-
-    Parameters:
-    expr_str (str): The input expression as a string.
-
-    Returns:
-    dict: A dictionary with variable names as keys and their smallest positive integer values as values.
-    """
-    # Parse the expression
-    expr = sp.parse_expr(expr_str, evaluate=False)
-
-    # Get the variables in the expression
-    variables = expr.free_symbols
-
-    # Dictionary to store the smallest positive values
-    smallest_values = {}
-
-    for var in variables:
-        # Solve the inequality for the variable
-        solution = sp.solve_univariate_inequality(expr > 0, var, domain=sp.S.Integers)
-
-        # Find the smallest positive integer value
-        smallest_value = min([val for val in solution.as_set() if val > 0])
-        smallest_values[var] = smallest_value
-
-    return smallest_values
-
-# Example usage
-expr_str = "2*n + 1"
-print(find_smallest_positive_values(expr_str))  # Output: {n: 1}
 
 
+expr = "2*(n - 1) + 2*(m - 1)+ (x-10)"
+expr = "2*n"
+expr = "m-1+n+1"
+
+# clean up the expression
+
+
+result = CBRdb.find_min_integers(expr)
+print(result)  # Output: {'m': 1, 'n': 1}
+# # get the list of variables in the expression
+# variables = re.findall(r"\b[a-z]\b", expr)
+# print(variables, flush=True)
+#
+# tmp = expr.replace("n", "1")
+# tmp = tmp.replace("m", "1")
+# tmp = tmp.replace("x", "1")
+#
+# print(tmp, flush=True)
+# print(eval(tmp), flush=True)
+
+exit()
 
 if __name__ == "__main__":
     print("Program started", flush=True)
@@ -73,28 +60,25 @@ if __name__ == "__main__":
 
     # load the data
     data = pd.read_csv("../data/kegg_data_R.csv.zip")
-    # print("data loaded", flush=True)
-    # print("data shape", data.shape, flush=True)
-    # # print the data columns
-    # print("data columns", data.columns, flush=True)
-    # # Select the reaction column
-    # print(data["reaction"].tolist(), flush=True)
-    # # Make a list of the reactions which contain the string "n" or "m" in them
-    # reactions = data["reaction"].tolist()
-    # reactions = [r for r in reactions if "n" in r or "m" in r or "x" in r]
-    # print(reactions, flush=True)
-    # for r in reactions:
-    #     print(r, flush=True)
-    # split the reactions into the reactants and products
-    # print the information for R00300
-    # print(data[data["id"] == "R00300"].values, flush=True)
+    print("data loaded", flush=True)
+    print("data shape", data.shape, flush=True)
+    # print the data columns
+    print("data columns", data.columns, flush=True)
+    # Select the reaction column
+    print(data["reaction"].tolist(), flush=True)
+    # Make a list of the reactions which contain the string "n" or "m" in them
+    reactions = data["reaction"].tolist()
+    reactions = [r for r in reactions if "n" in r or "m" in r or "x" in r]
+    print(reactions, flush=True)
+    for r in reactions:
+        print(r, flush=True)
 
-    # for r in reactions:
-    #     # split the reaction into the reactants and products
-    #     r = r.split(" <=> ")
-    #     for i in r:
-    #         print(f'{i} => {CBRdb.side_to_dict(i)}', flush=True)
-    # exit()
+    for r in reactions:
+        # split the reaction into the reactants and products
+        r = r.split(" <=> ")
+        for i in r:
+            print(f'{i} => {CBRdb.side_to_dict(i)}', flush=True)
+    exit()
 
     # load to compound data
     data_c = pd.read_csv("../data/kegg_data_C.csv.zip")
