@@ -1,6 +1,7 @@
 import re
 
 import chemparse
+import sympy as sp
 
 
 def strip_ionic_states(formula):
@@ -586,12 +587,47 @@ def solve_for(elements, var='n'):
     min_var = 1
     for element in elements:
         # Replace var with a symbolic variable
-        expr = element#.replace(var, var)
+        expr = element  # .replace(var, var)
         # Solve for the smallest var that makes the expression greater than 0
         var_value = eval(expr.replace(var, '0'))
         if var_value <= 0:
             min_var = max(min_var, -var_value + 1)
     return min_var
+
+
+def find_min_integers(expr_str):
+    """
+    Finds the smallest integer values of the variables that make the expression positive.
+
+    Note this finds a valid solution, but it may not be the smallest possible value.
+
+    Parameters:
+    expr_str (str): The input expression as a string.
+
+    Returns:
+    dict: A dictionary with variable names as keys and their smallest positive integer values as values.
+    """
+    # Parse the expression string
+    expr = sp.sympify(expr_str)
+
+    # Extract the variables from the expression
+    variables = expr.free_symbols
+
+    # Initialize a dictionary to store the results
+    result = {}
+
+    # Solve iteratively for each variable
+    for var in variables:
+        # Set all other variables to 1 for simplicity
+        assumptions = {v: 1 for v in variables if v != var}
+        # Solve for the current variable
+        sol = sp.solve(expr.subs(assumptions) - 1, var)
+        # Find the smallest integer value that satisfies the condition
+        min_val = max(1, sp.ceiling(sol[0])) if sol else 1
+        result[var] = min_val
+
+    # Return the results as a dictionary where the keys are strings
+    return {str(k): v for k, v in result.items()}
 
 
 def delete_pm_keys(dictionary):
@@ -611,7 +647,7 @@ def delete_pm_keys(dictionary):
     return dictionary
 
 
-def fix_multiply_n(expression, target_letter):
+def fix_multiply_tar(expression, target_letter):
     """
     Replaces occurrences of a number followed by a target letter with the number followed by '*' and the target letter.
 
@@ -625,6 +661,24 @@ def fix_multiply_n(expression, target_letter):
     pattern = rf'(\d+){target_letter}'
     replacement = rf'\1*{target_letter}'
     return re.sub(pattern, replacement, expression)
+
+
+def fix_multiply_tar_all(expression, target_letters=None):
+    """
+    Replaces occurrences of a number followed by any target letter in the target_letters list with the number followed by '*' and the target letter.
+
+    Parameters:
+    expression (str): The input string containing the expression.
+    target_letters (list, optional): A list of target letters to match after the number. Defaults to ["n", "m", "x"].
+
+    Returns:
+    str: The modified expression with replacements.
+    """
+    if target_letters is None:
+        target_letters = ["n", "m", "x"]
+    for target_letter in target_letters:
+        expression = fix_multiply_tar(expression, target_letter)
+    return expression
 
 
 def check_eq_unbalanced_safe(reactants, products):
@@ -641,8 +695,8 @@ def check_eq_unbalanced_safe(reactants, products):
         n_val = solve_for(full_list)
         print(f"n = {n_val}")
         # Substitute the n value into the reactants and products
-        reactants = {k: fix_multiply_n(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
-        products = {k: fix_multiply_n(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
+        reactants = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
+        products = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
         print(reactants)
         print(products)
         # eval the values in the reactants and products
