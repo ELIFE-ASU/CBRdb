@@ -586,7 +586,7 @@ def solve_for(elements, var='n'):
     min_var = 1
     for element in elements:
         # Replace var with a symbolic variable
-        expr = element.replace(var, var)
+        expr = element#.replace(var, var)
         # Solve for the smallest var that makes the expression greater than 0
         var_value = eval(expr.replace(var, '0'))
         if var_value <= 0:

@@ -244,7 +244,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print("data shape", data_r.shape, flush=True)
 
 
-    # Check if the data is empty
+
 
     exit()
 
