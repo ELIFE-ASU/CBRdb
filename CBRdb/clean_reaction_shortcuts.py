@@ -137,7 +137,7 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
 
 def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
     """
-    Cleans and processes KEGG reaction data, identifying and flagging multistep shortcuts, glycan participants,
+    Cleans and processes KEGG reaction data, identifying and flagging multistep shortcuts
     and reactions with incomplete or general data.
 
     Parameters:
@@ -150,8 +150,7 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     # Prepare the full path of the files
     r_file = os.path.abspath(r_file)
     global reactions, OK
-
-    f_save_files = False
+    f_save_files = True
 
     OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
     # Import reaction metadata. Note that "overall" column tags top-level reactions in 
@@ -164,8 +163,6 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     
     dm = reactions['COMMENT'].replace('', float('NaN')).dropna().str.upper().reset_index()
     dm['ORIGINAL_COMMENT'] = dm['COMMENT'].copy(deep=True)
-
-    f_save_files = False
 
     OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
     
@@ -294,8 +291,9 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
         reactions_processed.to_csv(os.path.join(data_dir, 'reactions_processed_basic.csv.zip'),
                                    compression='zip',
                                    encoding='utf-8', index=False)
+        print(len(dm['id'].unique()), 'multistep reactions identified from comments. See ', os.path.join(data_dir, 'reactions_multistep_intermediate_processing.csv.zip'), flush=True)
 
-    # Select only the reactions that are overall_flagged or glycan_flagged
+    # Select only the reactions that are overall_flagged
     reactions_shortcut = reactions_printable.query('OVERALL.notna()')
     print('Reactions that are shortcuts:', len(reactions_shortcut), flush=True)
     reactions_shortcut = reactions_shortcut.reset_index()['id'].to_list()
@@ -317,4 +315,4 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     # Sort the data
     data = data.sort_values(by=['Reaction'])
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
-    return data
+    return {'R_IDs_bad': data, 'multistep_reactions': dm}
