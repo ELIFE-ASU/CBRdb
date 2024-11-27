@@ -144,14 +144,16 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
                            pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None,
                                        names=['id', 'line'])  # read file
                       .ffill(axis=0).set_index('id')  # indented lines relate to last-appearing header
-                           ['line'].str.strip().groupby(level=0).apply(' '.join)  # combine all lines for each header
+                               ['line'].str.strip().groupby(level=0).apply('  ;  '.join)  # combine all lines for each header
                        for path in paths}).drop('///').T  # indexes are reaction IDs; cols are info types
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).drop(  # remove columns not needed currently
         ['reference', 'authors', 'journal', 'title', 'brite', 'definition'], axis=1)
     if rm_gly:
         # Remove reactions with glycan IDs mixed in. "remark" column tags their equivalent reactions.
         df = df.loc[df['equation'].str.count(r"(\bG\d{5}\b)") == 0]
-
+    for col in df.columns.difference(['comment']):
+        df[col] = df[col].str.replace('  ;  ', ' ')     # ensure comment field structure is retained for parsing
+    df['comment'] = df['comment'].str.replace('  ;  ', ';')
     # Store observed KO definitions in a file; old versions of this are used to annotate JGI (meta)genomes.
     ko_defs = df['orthology'].dropna().drop_duplicates()
     ko_defs = pd.Series(dict(zip(ko_defs.str.findall(r"(\bK\d{5}\b)").explode(),
