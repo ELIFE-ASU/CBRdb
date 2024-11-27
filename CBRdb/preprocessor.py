@@ -168,9 +168,9 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     [df.update(df[k].str.findall(v).map(' '.join, na_action='ignore')) for k, v in patterns.items()]
 
     # Rename columns where appropriate
-    df.rename(columns={'dblinks': 'rhea', 'entry': 'category'}, inplace=True)
-    df['category'] = df['category'].replace('', float('nan'))
-    df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns='enzyme')
+    df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
+    df['overall'] = df['overall'].replace('', float('nan'))
+    df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme','equation'])
           .reset_index().rename({'index':'id'}, axis=1).rename_axis(None, axis=1))
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     print('Reaction info path: '+outfile, flush=True)
