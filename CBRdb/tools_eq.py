@@ -582,7 +582,8 @@ def solve_for(elements, var='n'):
     Returns:
     int: The smallest value of the variable that makes each element expression greater than 0.
     """
-    min_var = 0
+
+    min_var = 1
     for element in elements:
         # Replace var with a symbolic variable
         expr = element.replace(var, var)
@@ -610,21 +611,45 @@ def delete_pm_keys(dictionary):
     return dictionary
 
 
-def check_eq_n_balanced(eq, data_c):
-    # Convert the Eq into the formula dicts
-    reactants, products = get_formulas_from_eq(eq, data_c)
+def fix_multiply_n(expression, target_letter):
+    """
+    Replaces occurrences of a number followed by a target letter with the number followed by '*' and the target letter.
 
+    Parameters:
+    expression (str): The input string containing the expression.
+    target_letter (str): The target letter to match after the number.
+
+    Returns:
+    str: The modified expression with replacements.
+    """
+    pattern = rf'(\d+){target_letter}'
+    replacement = rf'\1*{target_letter}'
+    return re.sub(pattern, replacement, expression)
+
+
+def check_eq_unbalanced_safe(reactants, products):
     # Check if the equation contains 'n', 'm', or 'x'
     if contains_var_list(reactants, products):
+        # Convert all the dict values to strings
+        reactants = {k: str(v) for k, v in reactants.items()}
+        products = {k: str(v) for k, v in products.items()}
         # Get the values in the reactants and products
         reactants_values = list(reactants.values())
         products_values = list(products.values())
         full_list = reactants_values + products_values
         # Solve for n
         n_val = solve_for(full_list)
+        print(f"n = {n_val}")
         # Substitute the n value into the reactants and products
-        reactants = {k: v.replace('n', str(n_val)) for k, v in reactants.items()}
-        products = {k: v.replace('n', str(n_val)) for k, v in products.items()}
+        reactants = {k: fix_multiply_n(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
+        products = {k: fix_multiply_n(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
+        print(reactants)
+        print(products)
+        # eval the values in the reactants and products
+        reactants = {k: eval(v) for k, v in reactants.items()}
+        products = {k: eval(v) for k, v in products.items()}
+        print(reactants)
+        print(products)
         return check_eq_unbalanced(reactants, products)
 
     else:
