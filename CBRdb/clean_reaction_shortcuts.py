@@ -156,7 +156,7 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
     # Import reaction metadata. Note that "overall" column tags top-level reactions in 
     # [this table](https://www.kegg.jp/kegg/tables/br08210.html)
-    reactions = pd.read_csv(r_file, header=0, index_col=0)
+    reactions = pd.read_csv(r_file, header=0).set_index('id')
     reactions.columns = reactions.columns.str.upper()
 
     # Use comments to identify multi-step reactions
@@ -196,7 +196,7 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     for k, v in to_replace.items():
         dm['COMMENT'] = dm['COMMENT'].str.replace(k, v).str.strip()
 
-    dm = dm.sort_values('COMMENT')
+    dm = dm.sort_values('COMMENT').reset_index()
 
     # Simplified version of the selected code
     format_to_remove = r'SIMILAR TO R\d{5}, R\d{5}\+R\d{5}'
@@ -298,7 +298,7 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     # Select only the reactions that are overall_flagged or glycan_flagged
     reactions_shortcut = reactions_printable.query('OVERALL.notna()')
     print('Reactions that are shortcuts:', len(reactions_shortcut), flush=True)
-    reactions_shortcut = reactions_shortcut['ID'].to_list()
+    reactions_shortcut = reactions_shortcut.reset_index()['id'].to_list()
     reactions_shortcut = list(set([i.split()[0].strip() for i in reactions_shortcut]))
 
     reactions_incomplete = get_reaction_ids_substr(reactions, substr="incomplete reaction")
