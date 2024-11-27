@@ -15,31 +15,6 @@ import rdkit.Chem as Chem
 
 import re
 
-
-
-
-expr = "2*(n - 1) + 2*(m - 1)+ (x-10)"
-expr = "2*n"
-expr = "m-1+n+1"
-
-# clean up the expression
-
-
-result = CBRdb.find_min_integers(expr)
-print(result)  # Output: {'m': 1, 'n': 1}
-# # get the list of variables in the expression
-# variables = re.findall(r"\b[a-z]\b", expr)
-# print(variables, flush=True)
-#
-# tmp = expr.replace("n", "1")
-# tmp = tmp.replace("m", "1")
-# tmp = tmp.replace("x", "1")
-#
-# print(tmp, flush=True)
-# print(eval(tmp), flush=True)
-
-exit()
-
 if __name__ == "__main__":
     print("Program started", flush=True)
     # r = Reaction.from_string("H2O -> H+ + OH-")
@@ -93,25 +68,6 @@ if __name__ == "__main__":
     eq = "n C00001 + m C00404 <=> n+1 C02174"
     eq = "2n+1 C00001 + 1 C00404 + n+10 C00002 <=> n+1 C02174"
     eq = CBRdb.standardise_eq(eq)
-    print(eq, flush=True)
-    import sympy as sp
-    expr = "2*n + 1 "
-    # turn the string into a sympy expression
-    expr = sp.parse_expr(expr, evaluate=False)
-    var = "n"
-
-    # # make sympy symbols
-    n_s, m_s, x_s = sp.symbols("n m x")
-    # expr = expr.subs(var_s, var)
-    print(expr, flush=True)
-    # find the smallest integer values of the variables that make the expression positive
-
-
-    print(sp.solve_univariate_inequality(expr > 0, [n_s, m_s, x_s]), flush=True)
-
-    exit()
-    # cases to handle 2n,
-
 
     # # Convert the Eq into the dicts
     # reactants, products = CBRdb.eq_to_dict(eq)

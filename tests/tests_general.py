@@ -1,5 +1,6 @@
 import CBRdb
 
+
 def test_side_to_dict():
     tmp = CBRdb.side_to_dict('C00001 + 1 C00002')
     assert tmp == {'C00001': 1, 'C00002': 1}
@@ -45,6 +46,7 @@ def test_side_to_dict():
 
     tmp = CBRdb.side_to_dict("C03323(m-1) + C03323(n+1)")
     assert tmp == {'C03323': 'm-1+n+1'}
+
 
 def test_convert_formula_to_dict():
     tmp = CBRdb.convert_formula_to_dict("C2H2*BrO2")
@@ -96,9 +98,6 @@ def test_eq_n_solver():
     print(result)
     # assert result == {'n': 1, 'm': 1, 'x': 10}
     assert result == {'x': 11, 'n': 6, 'm': 6}
-
-
-
 
 
 if __name__ == "__main__":
