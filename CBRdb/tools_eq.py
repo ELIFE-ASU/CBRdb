@@ -556,6 +556,9 @@ def contains_var_list(reactants, products, var_list=None):
     """
     if var_list is None:
         var_list = ['n', 'm', 'x']
+    # Convert all the dict values to strings
+    reactants = {k: str(v) for k, v in reactants.items()}
+    products = {k: str(v) for k, v in products.items()}
     present_vars = []
     for value in reactants.values():
         for var in var_list:
@@ -609,19 +612,20 @@ def delete_pm_keys(dictionary):
 
 def check_eq_n_balanced(eq, data_c):
     # Convert the Eq into the formula dicts
-    converted_reactants, converted_products = get_formulas_from_eq(eq, data_c)
-    # Convert all the dict values to strings
-    converted_reactants = {k: str(v) for k, v in converted_reactants.items()}
-    converted_products = {k: str(v) for k, v in converted_products.items()}
+    reactants, products = get_formulas_from_eq(eq, data_c)
 
     # Check if the equation contains 'n', 'm', or 'x'
-    if contains_var_list(converted_reactants, converted_products):
+    if contains_var_list(reactants, products):
         # Get the values in the reactants and products
-        reactants_values = list(converted_reactants.values())
+        reactants_values = list(reactants.values())
+        products_values = list(products.values())
+        full_list = reactants_values + products_values
         # Solve for n
-        n_val = solve_for(reactants_values)
-        # Multiply the reactants and products by n
+        n_val = solve_for(full_list)
+        # Substitute the n value into the reactants and products
+        reactants = {k: v.replace('n', str(n_val)) for k, v in reactants.items()}
+        products = {k: v.replace('n', str(n_val)) for k, v in products.items()}
+        return check_eq_unbalanced(reactants, products)
 
-        return True
     else:
-        return False
+        return check_eq_unbalanced(reactants, products)

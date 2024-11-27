@@ -233,6 +233,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print("Filtering out bad ids", flush=True)
     data_r = data_r.loc[~data_r["index"].isin(bad_ids)]
 
+
+
     # Get the data from the dataframe
     ids = data_r["index"].tolist()
     eq_lines = data_r["reaction"].tolist()
@@ -240,6 +242,12 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print("data loaded", flush=True)
     print("data columns", data_r.columns, flush=True)
     print("data shape", data_r.shape, flush=True)
+
+
+    # Check if the data is empty
+
+    exit()
+
 
     # Init the lists
     bad_n = []
