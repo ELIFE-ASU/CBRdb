@@ -43,7 +43,16 @@ def cleanup_ec_line(ec_line):
     # If the outline is empty, use the 4th element
     if outline == "":
         outline = ec_line[4]
-    return outline
+
+    s_out = ''
+    for l in outline:
+        if not (l.isdigit() or l in '.-'):
+            s_out += ' '
+        else:
+            s_out += l
+    s_out = s_out.strip().replace(' ', '|')
+
+    return s_out
 
 
 def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
@@ -190,4 +199,4 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
     print("data written to file", flush=True)
-    return None
+    return df
