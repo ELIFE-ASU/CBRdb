@@ -163,9 +163,10 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
             df.at[i,col2] = df.at[i,col2].replace(df.at[i,col1], '').strip()
         return df
     
+    global reactions, OK
+    OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
     # Prepare the full path of the files
     r_file = os.path.abspath(r_file)
-    global reactions
     reactions = pd.read_csv(r_file, header=0)
     get_multistep_details = False
 
