@@ -305,7 +305,7 @@ def infer_kegg_enzyme_pointers(outfile = r'data/kegg_enzyme_pointers.csv.zip'):
     
     try: # get EC serial numbers and names from KEGG
         ec_serials = pd.read_table('https://rest.kegg.jp/list/enzyme', header=None, names=['ec','name'], index_col=0) 
-        ec_serials.to_csv('output_file')
+        ec_serials.to_csv(outfile)
     except:
         print("Error: could not connect to KEGG API", flush=True)
         raise ConnectionError
