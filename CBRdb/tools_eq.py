@@ -625,3 +625,23 @@ def check_eq_n_balanced(eq, data_c):
         return True
     else:
         return False
+
+
+def replace_substrings(s:str, replacements:dict):
+    """
+    Within a string, replaces all instances of each key in a dictionary with its corresponding value.
+    Keys and values must all be strings. Values may be empty strings.
+
+    Parameters:
+    s (str): The string
+
+    replacements (dict): A dictionary with format {"string_to_be_replaced" : "replacement_string"}
+
+    Returns:
+    s_out: The string with all replacements made.
+    """
+    s_out = s
+    for k,v in replacements.items():
+        s_out = s_out.replace(k,v)
+    return s_out
+
