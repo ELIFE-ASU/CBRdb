@@ -15,6 +15,27 @@ If you use this code in your work, you must reference the following:
 
 - Kanehisa, M., & Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic acids research, 28(1), 27-30.
 
+## Examples of issues
+Here are a couple of example problems.
+
+### Compounds
+- Cases where the star notation is broken
+- Case where OH is an element
+- Case with no mol file
+- Case with broken mol file
+- Halogen generalised mol file
+
+### Reactions
+- unbalanced
+- missing elements
+- missing compounds
+- zero pop
+- shortcuts
+- unclear reactions
+- reactions with unclear compounds
+
+
+
 
 
 ## File Generation explained
