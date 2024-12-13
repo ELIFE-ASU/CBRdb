@@ -1,6 +1,7 @@
 import re
-
+import pandas as pd
 import chemparse
+from .lets_get_kegg import infer_kegg_enzyme_pointers
 
 
 def strip_ionic_states(formula):
@@ -644,4 +645,37 @@ def replace_substrings(s:str, replacements:dict):
     for k,v in replacements.items():
         s_out = s_out.replace(k,v)
     return s_out
+
+
+def reroute_obsolete_ecs(reaction_file = 'data/kegg_data_R.csv.zip', 
+                         enzyme_pointer_file = 'data/kegg_enzyme_pointers.csv.zip'):
+    """
+    Loads a reaction csv (with column "ec") and converts obsolete ECs to their active equivalents.
+
+    Parameters:
+    reaction_file (str): file path for reactions csv with column "ec"
+    enzyme_pointer_file (str): file path for enzyme pointers, i.e. map from obsolete to active ECs.
+
+    Returns:
+    reaction_df (pd.DataFrame): A DataFrame with obsolete ECs converted to active equivalents
+    """
+    # infer enzyme pointers
+    enzyme_pointers = infer_kegg_enzyme_pointers()
+    # load the data
+    reaction_df = pd.read_csv(reaction_file, header=0, index_col=0).fillna('')
+    enzyme_pointers = pd.read_csv(enzyme_pointer_file, header=0, index_col=0).fillna('')
+    # flag the EC serial numbers to replace or remove.
+    replacement_ecs = enzyme_pointers.query('rerouted')['updated_ec'].to_dict()
+    # split EC field to avoid erroneous replacements from partial substring overlap
+    new_ecs = reaction_df['ec'].str.split().explode().fillna('').copy(deep=True)
+    # if whole "ec" field matches, replace with updated ec
+    new_ecs.replace(replacement_ecs, inplace=True)
+    # revert ec field back to a list of ecs
+    new_ecs = new_ecs.groupby(level=0).agg(' '.join)
+    # store old ec field in a new column to ensure data isn't lost upon overwrite
+    reaction_df['ec_orig'] = reaction_df['ec'].copy(deep=True)
+    reaction_df['ec'] = new_ecs
+    reaction_df = reaction_df.replace('',float('nan'))
+    reaction_df.reset_index().to_csv(reaction_file, compression='zip', encoding='utf-8')
+    return reaction_df
 
