@@ -298,7 +298,7 @@ def infer_kegg_enzyme_pointers(outfile = r'data/kegg_enzyme_pointers.csv.zip'):
     outfile (str, optional): The path to which CSVs will be saved.
 
     Returns:
-    None
+    enzyme_pointers (pd.DataFrame): A DataFrame containing the inferred mappings between obsolete and active ECs.
     """
     from CBRdb.tools_eq import replace_substrings
     outfile = os.path.abspath(outfile)
