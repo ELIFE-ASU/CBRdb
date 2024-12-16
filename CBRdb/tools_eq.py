@@ -677,5 +677,5 @@ def reroute_obsolete_ecs(reaction_file = 'data/kegg_data_R.csv.zip',
     reaction_df['ec'] = new_ecs
     reaction_df = reaction_df.replace('',float('nan'))
     reaction_df.to_csv(reaction_file, compression='zip', encoding='utf-8')
-    return reaction_df
+    return reaction_df.reset_index()
 
