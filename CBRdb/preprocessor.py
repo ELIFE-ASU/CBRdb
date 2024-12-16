@@ -98,7 +98,7 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     return df
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile='Data/kegg_data_C_metadata.csv.zip'):
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile='data/kegg_data_C_metadata.csv.zip'):
     outfile = os.path.abspath(outfile)
     target_dir = os.path.abspath(target_dir)
     print('Importing compound metadata...', flush=True)
