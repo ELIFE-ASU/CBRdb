@@ -15,13 +15,13 @@ If you use this code in your work, you must reference the following:
 
 - Kanehisa, M., & Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic acids research, 28(1), 27-30.
 
-## Examples of issues
-Here are a couple of example problems.
+## Examples of issues with KEGG and ATLAS
+Here are a couple of example problems, which this code attempts to solve.
 
 ### Compounds
 - Cases where the star notation is broken
 - Case where OH is an element
-- Case with no mol file
+- Case with no mol file: C00030, C00505, C00923, 
 - Case with broken mol file
 - Halogen generalised mol file
 
