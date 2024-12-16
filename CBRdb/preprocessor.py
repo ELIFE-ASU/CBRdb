@@ -78,6 +78,7 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
 
     # Get the properties
     properties = mp_calc(get_properties, mols)
+
     # Unpack the properties into the arrays
     arr_smiles, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
 
@@ -93,33 +94,37 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     df = df.sort_values(by="compound_id").reset_index(drop=True).drop_duplicates().rename_axis(None, axis=1)
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
-    print('Compound structural-info path: '+outfile, flush=True)
+    print('Compound structural-info path: ' + outfile, flush=True)
     return df
 
 
 def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile='data/kegg_data_C_metadata.csv.zip'):
     outfile = os.path.abspath(outfile)
+    target_dir = os.path.abspath(target_dir)
     print('Importing compound metadata...', flush=True)
     # Get a list of files for which we have downloaded compound metadata from KEGG
-    paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n if m.endswith('.data')]
+    paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n if
+             m.endswith('.data')]
 
     # Import metadata (takes < 20 seconds)
     df = pd.DataFrame({os.path.basename(path).split(".")[0]:  # for each compound ID
-                           pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line']) # read file
-                           .dropna(subset='line')  # drop empty headers - a few have "sequence" header but no sequence shown
-                          .ffill(axis=0).set_index('id')  # indented lines relate to the last-appearing header
+                           pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None,
+                                       names=['id', 'line'])  # read file
+                      .dropna(subset='line')  # drop empty headers - a few have "sequence" header but no sequence shown
+                      .ffill(axis=0).set_index('id')  # indented lines relate to the last-appearing header
                            ['line'].str.strip().groupby(level=0).apply('|'.join)  # combine all lines for each header
-                       for path in paths}).drop('///',errors='ignore').T  # indexes are compound IDs; cols are info types
+                       for path in paths}).drop('///',
+                                                errors='ignore').T  # indexes are compound IDs; cols are info types
 
     # retain info from relevant columns
     df = (df.set_axis(df.columns.str.strip().str.lower(), axis=1)
           .loc[:, ['name', 'remark', 'comment', 'sequence', 'type', 'brite']].sort_index())
     df['glycan_ids'] = df.fillna('').query("remark.str.contains('Same as')")['remark'].apply(
-        lambda x: ' '.join([i for i in x.split() if i.startswith("G") and len(i) == 6])).replace('',float('nan'))
+        lambda x: ' '.join([i for i in x.split() if i.startswith("G") and len(i) == 6])).replace('', float('nan'))
     df.drop(columns='remark', inplace=True)
     df = df.reset_index().rename({'index': 'compound_id'}, axis=1).rename_axis(None, axis=1)
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
-    print('Compound metadata path: '+outfile, flush=True)
+    print('Compound metadata path: ' + outfile, flush=True)
     return df
 
 
@@ -144,7 +149,8 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
                            pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None,
                                        names=['id', 'line'])  # read file
                       .ffill(axis=0).set_index('id')  # indented lines relate to last-appearing header
-                               ['line'].str.strip().groupby(level=0).apply('  ;  '.join)  # combine all lines for each header
+                           ['line'].str.strip().groupby(level=0).apply('  ;  '.join)
+                       # combine all lines for each header
                        for path in paths}).drop('///').T  # indexes are reaction IDs; cols are info types
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).drop(  # remove columns not needed currently
         ['reference', 'authors', 'journal', 'title', 'brite', 'definition'], axis=1)
@@ -152,7 +158,7 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
         # Remove reactions with glycan IDs mixed in. "remark" column tags their equivalent reactions.
         df = df.loc[df['equation'].str.count(r"(\bG\d{5}\b)") == 0]
     for col in df.columns.difference(['comment']):
-        df[col] = df[col].str.replace('  ;  ', ' ')     # ensure comment field structure is retained for parsing
+        df[col] = df[col].str.replace('  ;  ', ' ')  # ensure comment field structure is retained for parsing
     df['comment'] = df['comment'].str.replace('  ;  ', ';')
     # Store observed KO definitions in a file; old versions of this are used to annotate JGI (meta)genomes.
     ko_defs = df['orthology'].dropna().drop_duplicates()
@@ -172,10 +178,10 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
     df['overall'] = df['overall'].replace('', float('nan'))
-    df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme','equation'])
-          .reset_index().rename({'index':'id'}, axis=1).rename_axis(None, axis=1))
+    df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme', 'equation'])
+          .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1))
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
-    print('Reaction info path: '+outfile, flush=True)
+    print('Reaction info path: ' + outfile, flush=True)
     return df
 
 
@@ -204,12 +210,13 @@ def preprocess(target="R",
         # Defines a dictionary of manual fixes
         man_dict = load_csv_to_dict(cid_manual_file)
         # gets compound metadata
-        df_meta = preprocess_kegg_c_metadata(target_dir+'_full', outfile=out_file.replace('.csv.zip', '_metadata.csv.zip'))
+        df_meta = preprocess_kegg_c_metadata(target_dir + '_full',
+                                             outfile=out_file.replace('.csv.zip', '_metadata.csv.zip'))
         # Defines a list of bad CIDs to skip
         df_main = preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)
-        return(df_meta, df_main)
+        return df_meta, df_main
     elif target == "R":
         df = preprocess_kegg_r(target_dir, out_file)
         print("R preprocessing done", flush=True)
-        return(df)
+        return df
