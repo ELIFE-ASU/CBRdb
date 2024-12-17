@@ -3,6 +3,7 @@ import pandas as pd
 import chemparse
 import sympy as sp
 from .lets_get_kegg import infer_kegg_enzyme_pointers
+import copy
 
 
 def strip_ionic_states(formula):
@@ -357,6 +358,7 @@ def convert_form_dict_to_elements(form_dict):
     Returns:
     dict: A dictionary where keys are element symbols and values are their counts in the formulas.
     """
+    form_dict = copy.deepcopy(form_dict)
     elements = {}
     for formula, count in form_dict.items():
         elements = add_dicts(elements, multiply_dict(convert_formula_to_dict(formula), count))
@@ -711,7 +713,7 @@ def check_eq_unbalanced_safe(reactants, products):
         return False
 
 
-def replace_substrings(s:str, replacements:dict):
+def replace_substrings(s: str, replacements: dict):
     """
     Within a string, replaces all instances of each key in a dictionary with its corresponding value.
     Keys and values must all be strings. Values may be empty strings.
@@ -725,13 +727,13 @@ def replace_substrings(s:str, replacements:dict):
     s_out: The string with all replacements made.
     """
     s_out = s
-    for k,v in replacements.items():
-        s_out = s_out.replace(k,v)
+    for k, v in replacements.items():
+        s_out = s_out.replace(k, v)
     return s_out
 
 
-def reroute_obsolete_ecs(reaction_file = 'data/kegg_data_R.csv.zip', 
-                         enzyme_pointer_file = 'data/kegg_enzyme_pointers.csv.zip'):
+def reroute_obsolete_ecs(reaction_file='data/kegg_data_R.csv.zip',
+                         enzyme_pointer_file='data/kegg_enzyme_pointers.csv.zip'):
     """
     Loads a reaction csv (with column "ec") and converts obsolete ECs to their active equivalents.
 
@@ -758,6 +760,6 @@ def reroute_obsolete_ecs(reaction_file = 'data/kegg_data_R.csv.zip',
     # store old ec field in a new column to ensure data isn't lost upon overwrite
     reaction_df['ec_orig'] = reaction_df['ec'].copy(deep=True)
     reaction_df['ec'] = new_ecs
-    reaction_df = reaction_df.replace('',float('nan'))
+    reaction_df = reaction_df.replace('', float('nan'))
     reaction_df.to_csv(reaction_file, compression='zip', encoding='utf-8')
     return reaction_df.reset_index()
