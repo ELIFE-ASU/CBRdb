@@ -1,0 +1,37 @@
+from setuptools import setup, find_packages
+
+setup(
+    name='CBRdb',
+    version='0.1.0',
+    author='Louie Slocombe, Camerian Millsaps, and Kamesh Narasimhan',
+    author_email='louies@hotmail.co.uk',
+    description='A package to run CFG approaches to graphs',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+    url='https://github.com/ELIFE-ASU/CBRdb',
+    packages=find_packages(),
+    classifiers=[
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+    ],
+    python_requires='>=3.9',
+    install_requires=[
+        'numpy',
+        'sympy',
+        'matplotlib',
+        'networkx',
+        'pandas',
+        'rdkit',
+        'chempy',
+        'requests',
+        'urllib3',
+        'chemparse',
+    ],
+    extras_require={
+        'dev': [
+            'pytest',
+            'pytest-cov',
+        ],
+    },
+)

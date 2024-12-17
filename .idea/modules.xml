@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/lets-get-kegg.iml" filepath="$PROJECT_DIR$/.idea/lets-get-kegg.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/CBRdb.iml" filepath="$PROJECT_DIR$/.idea/CBRdb.iml" />
     </modules>
   </component>
 </project>
