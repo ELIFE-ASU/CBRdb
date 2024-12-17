@@ -98,33 +98,40 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     return df
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', outfile='data/kegg_data_C_metadata.csv.zip'):
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
+                               outfile='data/kegg_data_C_metadata.csv.zip'):
+    """
+    Preprocesses KEGG compound metadata and saves it to a specified output file.
+
+    Parameters:
+    target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
+    outfile (str, optional): The output file path for the preprocessed metadata. Defaults to 'data/kegg_data_C_metadata.csv.zip'.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
+    """
     outfile = os.path.abspath(outfile)
     target_dir = os.path.abspath(target_dir)
     print('Importing compound metadata...', flush=True)
-    # Get a list of files for which we have downloaded compound metadata from KEGG
-    paths = [m for n in [[f'{i}/{k}' for k in j] for i, _, j in list(os.walk(target_dir))[1:]] for m in n if
-             m.endswith('.data')]
 
-    # Import metadata (takes < 20 seconds)
-    df = pd.DataFrame({os.path.basename(path).split(".")[0]:  # for each compound ID
-                           pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None,
-                                       names=['id', 'line'])  # read file
-                      .dropna(subset='line')  # drop empty headers - a few have "sequence" header but no sequence shown
-                      .ffill(axis=0).set_index('id')  # indented lines relate to the last-appearing header
-                           ['line'].str.strip().groupby(level=0).apply('|'.join)  # combine all lines for each header
-                       for path in paths}).drop('///',
-                                                errors='ignore').T  # indexes are compound IDs; cols are info types
+    paths = [os.path.join(root, file) for root, _, files in os.walk(target_dir) for file in files if
+             file.endswith('.data')]
 
-    # retain info from relevant columns
-    df = (df.set_axis(df.columns.str.strip().str.lower(), axis=1)
-          .loc[:, ['name', 'remark', 'comment', 'sequence', 'type', 'brite']].sort_index())
-    df['glycan_ids'] = df.fillna('').query("remark.str.contains('Same as')")['remark'].apply(
-        lambda x: ' '.join([i for i in x.split() if i.startswith("G") and len(i) == 6])).replace('', float('nan'))
+    df = pd.DataFrame({
+        os.path.basename(path).split(".")[0]:
+            pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line'])
+            .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('|'.join)
+        for path in paths
+    }).drop('///', errors='ignore').T
+    tar_list = ['name', 'remark', 'comment', 'sequence', 'type', 'brite']
+    df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).loc[:, tar_list].sort_index()
+    df['glycan_ids'] = df['remark'].fillna('').str.extractall(r'(G\d{5})').groupby(level=0).agg(' '.join).replace('',
+                                                                                                                  float(
+                                                                                                                      'nan'))
     df.drop(columns='remark', inplace=True)
-    df = df.reset_index().rename({'index': 'compound_id'}, axis=1).rename_axis(None, axis=1)
+    df = df.reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
-    print('Compound metadata path: ' + outfile, flush=True)
+    print(f'Compound metadata path: {outfile}', flush=True)
     return df
 
 
