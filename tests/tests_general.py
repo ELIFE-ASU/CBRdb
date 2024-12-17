@@ -98,10 +98,3 @@ def test_eq_n_solver():
     print(result)
     # assert result == {'n': 1, 'm': 1, 'x': 10}
     assert result == {'x': 11, 'n': 6, 'm': 6}
-
-
-if __name__ == "__main__":
-    test_side_to_dict()
-    test_convert_formula_to_dict()
-    test_eq_n_solver()
-    print("tests_general.py passed")
