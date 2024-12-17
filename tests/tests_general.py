@@ -1,3 +1,6 @@
+import os
+import pandas as pd
+
 import CBRdb
 
 
@@ -98,3 +101,52 @@ def test_eq_n_solver():
     print(result)
     # assert result == {'n': 1, 'm': 1, 'x': 10}
     assert result == {'x': 11, 'n': 6, 'm': 6}
+
+
+def test_eq_to_dict():
+    print(flush=True)
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007"
+    reactants, products = CBRdb.eq_to_dict(eq)
+    print(reactants, flush=True)
+    print(products, flush=True)
+    # convert back to string
+    eq_out = CBRdb.dicts_to_eq(reactants, products)
+    print(eq_out, flush=True)
+    assert eq_out == eq
+
+
+def test_eq_to_symbols():
+    print(flush=True)
+    c_file = "../data/kegg_data_C.csv.zip"
+    c_file = os.path.abspath(c_file)
+    # load the
+    data_c = pd.read_csv(c_file)
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007"
+    lhs = {'H2O2': 2}
+    rhs = {'H2O': 2, 'O2': 1}
+    lhs_e = {'O': 4, 'H': 4}
+    rhs_e = {'O': 4, 'H': 4}
+
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+
+    assert reactants == lhs
+    assert products == rhs
+
+    assert react_ele == lhs_e
+    assert prod_ele == rhs_e
+
+    # Convert the dict back into eq form
+    eq_out = CBRdb.get_eq(eq, reactants, products, data_c)
+    assert eq_out == eq
+
+
+def test_eq_standard():
+    print(flush=True)
+    # Check it works when the equation is already standard
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007"
+    eq_out = CBRdb.standardise_eq(eq)
+    assert eq_out == eq
+    # Check it works when the equation is not standard, and they are out of order
+    eq_wrong = "2 C00027 <=> 1 C00007 + 2 C00001"
+    eq_out = CBRdb.standardise_eq(eq_wrong)
+    assert eq_out == eq
