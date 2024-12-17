@@ -3,9 +3,9 @@ from setuptools import setup, find_packages
 setup(
     name='CBRdb',
     version='0.1.0',
-    author='Louie Slocombe, Camerian Millsaps, and Kamesh Narasimhan',
+    author='Louie Slocombe, Camerian Millsaps, Kamesh Narasimhan, and Sara Walker',
     author_email='louies@hotmail.co.uk',
-    description='A package to run CFG approaches to graphs',
+    description='A curated biochemical database that integrates and refines data from KEGG and ATLAS databases to support precise analyses of biochemical reaction data.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/ELIFE-ASU/CBRdb',
