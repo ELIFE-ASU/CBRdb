@@ -26,15 +26,12 @@ Here are a couple of example problems that this code attempts to solve.
 
 ### Reactions
 - Unbalanced; nothing is missing, but the elemental stoichiometry is incorrect
-- One or more elements are missing from a side of the equation:
-- One or more compounds are missing from a side of the equation:
+- One or more elements are missing from a side of the equation: , ... etc
+- One or more compounds are missing from a side of the equation: , ... etc
 - Zero population (for ATLAS KEGG FILE): R04242, R04254, ... etc
-- Reactions that are part of shortcuts and are represented by 
-- Unclear reactions that have significant sec tops
-- reactions with unclear compounds
-
-
-
+- Reactions that are part of shortcuts and are represented by chains of other reactions: , ... etc
+- Unclear reactions: R10743, ... etc
+- reactions with unclear compounds: , ... etc
 
 
 ## File Generation explained
