@@ -266,11 +266,13 @@ def compound_super_safe_load(file):
     f_load_r = None
     f_load_p = None
     if check_for_x_group(file):
+        print(f"X group found {file}", flush=True)
         return None
 
     # Check for R groups
     flag_r = check_for_r_group(file)
     if flag_r:
+        print(f"R group found {file}", flush=True)
         f_load_r = file.split(".")[0] + "_r.mol"
         replace_r_group(file, f_load_r)
         file = f_load_r
@@ -278,6 +280,7 @@ def compound_super_safe_load(file):
     # Check for problem groups
     flag_p = check_for_problem_group(file)
     if flag_p:
+        print(f"Problem group found {file}", flush=True)
         f_load_p = file.split(".")[0] + "_p.mol"
         replace_problem_group(file, f_load_p)
         file = f_load_p

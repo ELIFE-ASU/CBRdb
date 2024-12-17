@@ -111,6 +111,9 @@ def fix_halogen_compounds(
             # Add the data to the dictionaries
             cids_dict[data_bad_id[i]].append(cid)
             smis_dict[data_bad_id[i]].append(smi)
+    if f_print:
+        print(f"cids_dict {cids_dict}", flush=True)
+        print(f"Added {idx} new compounds", flush=True)
     return cids_dict, smis_dict
 
 
@@ -227,47 +230,44 @@ def fix_halogen_reactions(cids_dict,
     if f_print:
         print(df_reactions.columns, flush=True)
 
-
     # Find the reactions with the halogens
-    reactions_set = set()
+    reactions_halogen_set = set()
     for i in range(len(data_bad_id)):
         # Get the equations
         equations = get_reactions_with_substring(df_reactions, data_bad_id[i])
-        reactions_set.update(equations['index'].values)
-    reactions_set = list(reactions_set)
-    n_reactions = len(reactions_set)
+        reactions_halogen_set.update(equations['id'].values)
+    reactions_halogen_set = list(reactions_halogen_set)
+    n_reactions = len(reactions_halogen_set)
     if f_print:
-        print(f"{n_reactions} Reactions with the halogens {reactions_set}", flush=True)
+        print(f"Found {n_reactions} reactions with the halogens, IDs: {reactions_halogen_set}", flush=True)
 
-    # Get the EC numbers of the reactions_set
-    ec_numbers = df_reactions[df_reactions['index'].isin(reactions_set)]['ec'].values
-    if f_print:
-        print(f"EC numbers {ec_numbers}", flush=True)
+    # Only keep the reactions with the halogens in the reactions_set
+    df_halogens = df_reactions[df_reactions['id'].isin(reactions_halogen_set)]
+    print(df_halogens)
 
-    # Only keep the reactions_set
-    df_reactions_copy = df_reactions[df_reactions['index'].isin(reactions_set)]
+    df_halogens_exp = pd.DataFrame()
 
-    id_list = []
-    reaction_list = []
-    ec_list = []
     idx = 0
     # loop over the reactions
     for i in range(n_reactions):
         if f_print:
-            print(f"{i}: Reaction {reactions_set[i]}", flush=True)
+            print(f"{i}: Reaction {reactions_halogen_set[i]}", flush=True)
         # Get the reaction
-        reaction = df_reactions[df_reactions['index'] == reactions_set[i]]
+        reaction = df_halogens[df_halogens['id'] == reactions_halogen_set[i]]
+        if f_print:
+            print(reaction, flush=True)
+
         eq = reaction['reaction'].values[0]
         eq_re = eq
-        # for each key value in the dictionary of cid
         if f_print:
             print(f"input eq:       {eq}", flush=True)
-        # Loop over the data_bad_id items
+        # Loop over the data_bad_id items for each key value in the dictionary of cid
         for k in range(n_compounds):
             val = data_bad_id[k]
+            # Check if the value is in the equation
             if val in eq:
                 if f_print:
-                    print(f"{k} Replacing compound {val}", flush=True)
+                    print(f"{k}: Replacing compound {val}", flush=True)
                 for j in range(len(cids_dict[val])):
                     eq_re = eq_re.replace(val, cids_dict[val][j])
                     new_id = make_custom_id(idx_base + idx, prefix=prefix)
@@ -276,33 +276,25 @@ def fix_halogen_reactions(cids_dict,
                         print(f"output eq_re:   {eq_re}", flush=True)
                         print(f"New ID {new_id}", flush=True)
                     idx += 1
-                    # Create an entry for the reaction id
-                    id_list.append(new_id)
-                    reaction_list.append(eq_re)
-                    ec_list.append(ec_numbers[i])
+                    # Add the data to the dataframe
+                    df_copy = reaction.copy()
+                    df_copy['id'] = new_id
+                    df_copy['reaction'] = eq_re
+                    df_halogens_exp = df_halogens_exp._append(df_copy, ignore_index=True)
+    print(f"Added {idx} new reactions", flush=True)
 
-    # update the elements in df_reactions_copy dataframe
-    df_reactions_copy['index'] = id_list
-    df_reactions_copy['reaction'] = reaction_list
-    df_reactions_copy['ec'] = ec_list
-
-
-
-    # Create a dataframe
-    df = pd.DataFrame(data={
-        "index": id_list,
-        "reaction": reaction_list,
-        "ec": ec_list})
     if int_file is not None:
-        df.to_csv(int_file, compression='zip', encoding='utf-8', index=False)
-    # Load the reactions data
-    df_old = pd.read_csv(r_id_file, compression='zip')
+        print(f"Saving intermediate file {int_file}", flush=True)
+        df_halogens_exp.to_csv(int_file, compression='zip', encoding='utf-8', index=False)
+
     # Merge the dataframes
-    df = pd.concat([df_old, df], ignore_index=True)
+    df = pd.concat([df_reactions, df_halogens_exp], ignore_index=True)
     # Drop the duplicates
-    df = df.drop_duplicates(subset="index")
+    df = df.drop_duplicates(subset="id")
+    # Remove the old reactions
+    df = df[~df['id'].isin(reactions_halogen_set)]
     # Sort the dataframe by the ID
-    df = df.sort_values(by="index")
+    df = df.sort_values(by="id")
     # Save the dataframe
     df.to_csv(out_file, compression='zip', encoding='utf-8')
     return None

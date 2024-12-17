@@ -229,19 +229,24 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     # Load the processed data
     data_r = pd.read_csv(r_file)
 
+    print("data loaded", flush=True)
+    print("data columns", data_r.columns, flush=True)
+    print("data shape", data_r.shape, flush=True)
+
+    # sort by the index
+    data_r = data_r.sort_values(by="id")
+
     # Filter out the bad ids
     print("Filtering out bad ids", flush=True)
-    data_r = data_r.loc[~data_r["index"].isin(bad_ids)]
+    data_r = data_r.loc[~data_r["id"].isin(bad_ids)]
 
 
 
     # Get the data from the dataframe
-    ids = data_r["index"].tolist()
+    ids = data_r["id"].tolist()
     eq_lines = data_r["reaction"].tolist()
     ec = data_r["ec"].tolist()
-    print("data loaded", flush=True)
-    print("data columns", data_r.columns, flush=True)
-    print("data shape", data_r.shape, flush=True)
+
 
 
 

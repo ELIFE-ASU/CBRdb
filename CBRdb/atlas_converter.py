@@ -1,9 +1,7 @@
 import os
-
 import pandas as pd
-
+import warnings
 from .tools_eq import standardise_eq
-from .tools_files import make_custom_id
 
 
 def cleanup_eq_line(eq_line):
@@ -28,24 +26,6 @@ def cleanup_eq_line(eq_line):
     return eq_line
 
 
-def cleanup_ec_line(ec_line):
-    """
-    Cleans up the EC line by selecting the appropriate element based on specific conditions.
-
-    Parameters:
-    ec_line (list): A list of strings representing the EC line components.
-
-    Returns:
-    str: The cleaned EC line.
-    """
-    # Select the second to last element and split by the delimiter
-    outline = ec_line[-2].split("/")[-1]
-    # If the outline is empty, use the 4th element
-    if outline == "":
-        outline = ec_line[4]
-    return outline
-
-
 def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
                      out_file="../data/atlas_data_kegg_R.csv.zip"):
     """
@@ -59,64 +39,17 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
     None
     """
     # Get the absolute paths
-    in_file = os.path.abspath(in_file)
+    in_file = os.path.abspath(in_file).replace('_kegg','')
     out_file = os.path.abspath(out_file)
 
-    # Check if the file exists
-    if not os.path.exists(in_file):
-        print("File does not exist", flush=True)
-        print("You need to put the atlas data here", flush=True)
-        print(in_file, flush=True)
-        raise FileNotFoundError
-
-    # Open the file
-    with open(in_file, "r") as f:
-        # Read the data
-        data = f.read()
-    # Split the data by new lines
-    data = data.split("\n")
-    # Initialize the lists
-    re_id = []
-    re_eq = []
-    re_chem_names = []
-    re_ec = []
-
-    # Loop over the data
-    for i, line in enumerate(data):
-        # Split the line by the delimiter
-        line = line.split(";")
-        id = line[0].strip()
-
-        # Cleanup the equation line
-        eq_line = cleanup_eq_line(line[1].strip())
-        # If the <=> is not present, replace the last + with <=>
-        if "<=>" not in eq_line:
-            eq_line = eq_line.rsplit("+", 1)[0] + " <=> " + eq_line.rsplit("+", 1)[1]
-
-        # Standardise the equation
-        eq_line = standardise_eq(eq_line)
-
-        # Clean up the chemical names
-        chem_names = line[2].replace("|", "").strip()
-
-        # Get EC
-        ec = line[3].strip()
-
-        # Get the reaction id
-        re_id.append(id)
-
-        # Get the reaction equation
-        re_eq.append(eq_line)
-        # Get the reaction name
-        re_chem_names.append(chem_names)
-        # Get the reaction EC
-        re_ec.append(ec)
-    # Store the data in a dataframe
-    df = pd.DataFrame({'index': re_id, 'reaction': re_eq, 'chemical_names': re_chem_names, 'ec': re_ec})
-    # Write the data to a file
+    warnings.showwarning(f'\n\tclean_kegg_atlas() will be removed soon. \
+                  \n\tFor now, writing CSV of KEGG reactions in ATLAS using clean_atlas. \
+                  \n\tFor more reaction info, join with KEGG_R on kegg_id.', FutureWarning, filename='', lineno='')
+    
+    df = clean_atlas(in_file=in_file, out_file=out_file, f_exclude_kegg=False).dropna(subset="kegg_id")
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
-    print("data written to file", flush=True)
-    return None
+
+    return df
 
 
 def clean_atlas(in_file="../../data/atlas_reactions.dat",
@@ -144,50 +77,23 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
         print(in_file, flush=True)
         raise FileNotFoundError
 
-    # Open the file
-    with open(in_file, "r") as f:
-        # Read the data
-        data = f.read()
-    # Split the data by new lines
-    data = data.split("\n")
-    # Initialize the lists
-    re_id = []
-    re_kegg_id = []
-    re_eq = []
-    re_ec = []
+    # Open the file. For header description, see p.6: https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf
+    df = (pd.read_table(in_file, header=None, sep=';', usecols=[0,1,3,4], names=['id','kegg_id','reaction','reaction_rule',]) 
+                .assign(id = lambda x: 'A'+x.id.astype(str).str.zfill(6))) # format ATLAS reactions as: AXXXXXX
+    
+    # Extract each reaction's list of 3rd-level EC#s. Remove non-conforming EC#s (e.g. not just numbers and -).
+    rr = (df['reaction_rule'].str.replace('-rev)','-(rev)').str.split('|').explode().str.rstrip('(rev)').to_frame()
+          .assign(format_ok = lambda x: x.reaction_rule.str.replace('.','').str.replace('-','').str.isnumeric())
+          .query('format_ok').groupby(level = 0)['reaction_rule'].apply(lambda x: ' '.join(set(x))))
+    df = df.join(rr.rename('ec'), how='left').drop('reaction_rule', axis=1)
 
-    # Loop over the data
-    for i, line in enumerate(data):
-        # Split the line by the delimiter
-        line = line.split(";")
-        # Get the reaction id
-        id = make_custom_id(line[0], prefix="A", digits=6)
-        # Get the reaction KEGG id
-        kegg_id = line[1]
-        # Cleanup the equation line
-        eq_line = cleanup_eq_line(line[3])
-        # Standardise the equation
-        eq_line = standardise_eq(eq_line)
-        # Get the reaction EC
-        ec = cleanup_ec_line(line)
-        # Append the data to the lists
-        re_id.append(id)
-        re_kegg_id.append(kegg_id)
-        re_eq.append(eq_line)
-        re_ec.append(ec)
-
-    # Create a DataFrame from the lists
-    df = pd.DataFrame({'index': re_id, 'kegg_id': re_kegg_id, 'reaction': re_eq, 'ec': re_ec})
-    # Fill in the missing values with NaN
-    df = df.replace("", float("NaN"))
-
+    # Standardize format of reaction equation.
+    df['reaction'] = df['reaction'].apply(cleanup_eq_line).apply(standardise_eq)
+    
     if f_exclude_kegg:
-        # Select only the data which has a NaN kegg_id
-        df = df[df["kegg_id"].isna()]
-        # Remove the kegg_id column
-        df = df.drop(columns=["kegg_id"])
+        df = df.query('kegg_id.isna()').drop('kegg_id', axis=1)
 
     # Write the data to a file
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
     print("data written to file", flush=True)
-    return None
+    return df
