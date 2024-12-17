@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import chemparse
+import sympy as sp
 from .lets_get_kegg import infer_kegg_enzyme_pointers
 
 
@@ -557,6 +558,9 @@ def contains_var_list(reactants, products, var_list=None):
     """
     if var_list is None:
         var_list = ['n', 'm', 'x']
+    # Convert all the dict values to strings
+    reactants = {k: str(v) for k, v in reactants.items()}
+    products = {k: str(v) for k, v in products.items()}
     present_vars = []
     for value in reactants.values():
         for var in var_list:
@@ -580,15 +584,51 @@ def solve_for(elements, var='n'):
     Returns:
     int: The smallest value of the variable that makes each element expression greater than 0.
     """
-    min_var = 0
+
+    min_var = 1
     for element in elements:
         # Replace var with a symbolic variable
-        expr = element.replace(var, var)
+        expr = element  # .replace(var, var)
         # Solve for the smallest var that makes the expression greater than 0
         var_value = eval(expr.replace(var, '0'))
         if var_value <= 0:
             min_var = max(min_var, -var_value + 1)
     return min_var
+
+
+def find_min_integers(expr_str):
+    """
+    Finds the smallest integer values of the variables that make the expression positive.
+
+    Note this finds a valid solution, but it may not be the smallest possible value.
+
+    Parameters:
+    expr_str (str): The input expression as a string.
+
+    Returns:
+    dict: A dictionary with variable names as keys and their smallest positive integer values as values.
+    """
+    # Parse the expression string
+    expr = sp.sympify(expr_str)
+
+    # Extract the variables from the expression
+    variables = expr.free_symbols
+
+    # Initialize a dictionary to store the results
+    result = {}
+
+    # Solve iteratively for each variable
+    for var in variables:
+        # Set all other variables to 1 for simplicity
+        assumptions = {v: 1 for v in variables if v != var}
+        # Solve for the current variable
+        sol = sp.solve(expr.subs(assumptions) - 1, var)
+        # Find the smallest integer value that satisfies the condition
+        min_val = max(1, sp.ceiling(sol[0])) if sol else 1
+        result[var] = min_val
+
+    # Return the results as a dictionary where the keys are strings
+    return {str(k): v for k, v in result.items()}
 
 
 def delete_pm_keys(dictionary):
@@ -608,22 +648,65 @@ def delete_pm_keys(dictionary):
     return dictionary
 
 
-def check_eq_n_balanced(eq, data_c):
-    # Convert the Eq into the formula dicts
-    converted_reactants, converted_products = get_formulas_from_eq(eq, data_c)
-    # Convert all the dict values to strings
-    converted_reactants = {k: str(v) for k, v in converted_reactants.items()}
-    converted_products = {k: str(v) for k, v in converted_products.items()}
+def fix_multiply_tar(expression, target_letter):
+    """
+    Replaces occurrences of a number followed by a target letter with the number followed by '*' and the target letter.
 
+    Parameters:
+    expression (str): The input string containing the expression.
+    target_letter (str): The target letter to match after the number.
+
+    Returns:
+    str: The modified expression with replacements.
+    """
+    pattern = rf'(\d+){target_letter}'
+    replacement = rf'\1*{target_letter}'
+    return re.sub(pattern, replacement, expression)
+
+
+def fix_multiply_tar_all(expression, target_letters=None):
+    """
+    Replaces occurrences of a number followed by any target letter in the target_letters list with the number followed by '*' and the target letter.
+
+    Parameters:
+    expression (str): The input string containing the expression.
+    target_letters (list, optional): A list of target letters to match after the number. Defaults to ["n", "m", "x"].
+
+    Returns:
+    str: The modified expression with replacements.
+    """
+    if target_letters is None:
+        target_letters = ["n", "m", "x"]
+    for target_letter in target_letters:
+        expression = fix_multiply_tar(expression, target_letter)
+    return expression
+
+
+def check_eq_unbalanced_safe(reactants, products):
     # Check if the equation contains 'n', 'm', or 'x'
-    if contains_var_list(converted_reactants, converted_products):
+    if contains_var_list(reactants, products):
+        # Convert all the dict values to strings
+        reactants = {k: str(v) for k, v in reactants.items()}
+        products = {k: str(v) for k, v in products.items()}
         # Get the values in the reactants and products
-        reactants_values = list(converted_reactants.values())
+        reactants_values = list(reactants.values())
+        products_values = list(products.values())
+        full_list = reactants_values + products_values
         # Solve for n
-        n_val = solve_for(reactants_values)
-        # Multiply the reactants and products by n
+        n_val = solve_for(full_list)
+        print(f"n = {n_val}")
+        # Substitute the n value into the reactants and products
+        reactants = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
+        products = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
+        print(reactants)
+        print(products)
+        # eval the values in the reactants and products
+        reactants = {k: eval(v) for k, v in reactants.items()}
+        products = {k: eval(v) for k, v in products.items()}
+        print(reactants)
+        print(products)
+        return check_eq_unbalanced(reactants, products)
 
-        return True
     else:
         return False
 
@@ -678,4 +761,3 @@ def reroute_obsolete_ecs(reaction_file = 'data/kegg_data_R.csv.zip',
     reaction_df = reaction_df.replace('',float('nan'))
     reaction_df.to_csv(reaction_file, compression='zip', encoding='utf-8')
     return reaction_df.reset_index()
-

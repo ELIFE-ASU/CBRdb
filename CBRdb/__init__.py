@@ -27,6 +27,8 @@ from .tools_eq import (convert_formula_to_dict,
                        get_elements_from_eq,
                        contains_var_list,
                        solve_for,
+                       check_eq_unbalanced_safe,
+                       find_min_integers,
                        )
 from .tools_files import (file_list,
                           file_list_all,
@@ -44,4 +46,5 @@ from .tools_mols import (sanitize_mol,
 from .tools_mp import (mp_calc,
                        mp_calc_star,
                        tp_calc)
+
 __version__ = "0.0.01"
