@@ -575,6 +575,21 @@ def contains_var_list(reactants, products, var_list=None):
     return present_vars
 
 
+def check_contains_var_list(reactants, products, var_list=None):
+    """
+    Checks if any of the values in the reactants or products dictionaries contain any of the variables in var_list.
+
+    Parameters:
+    reactants (dict): A dictionary where keys are compound identifiers and values are their counts for reactants.
+    products (dict): A dictionary where keys are compound identifiers and values are their counts for products.
+    var_list (list, optional): A list of variable names to check for in the values. Default is ['n', 'm', 'x'].
+
+    Returns:
+    bool: True if any of the values contain a variable from var_list, False otherwise.
+    """
+    return len(contains_var_list(reactants, products, var_list)) > 0
+
+
 def solve_for(elements, var='n'):
     """
     Solves for the smallest value of the variable that makes each element expression greater than 0.
@@ -684,33 +699,28 @@ def fix_multiply_tar_all(expression, target_letters=None):
     return expression
 
 
-def check_eq_unbalanced_safe(reactants, products):
-    # Check if the equation contains 'n', 'm', or 'x'
-    if contains_var_list(reactants, products):
-        # Convert all the dict values to strings
-        reactants = {k: str(v) for k, v in reactants.items()}
-        products = {k: str(v) for k, v in products.items()}
-        # Get the values in the reactants and products
-        reactants_values = list(reactants.values())
-        products_values = list(products.values())
-        full_list = reactants_values + products_values
-        # Solve for n
-        n_val = solve_for(full_list)
-        print(f"n = {n_val}")
-        # Substitute the n value into the reactants and products
-        reactants = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
-        products = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
-        print(reactants)
-        print(products)
-        # eval the values in the reactants and products
-        reactants = {k: eval(v) for k, v in reactants.items()}
-        products = {k: eval(v) for k, v in products.items()}
-        print(reactants)
-        print(products)
-        return check_eq_unbalanced(reactants, products)
-
-    else:
-        return False
+def check_vars_eq_balanced(reactants, products):
+    # Convert all the dict values to strings
+    reactants = {k: str(v) for k, v in reactants.items()}
+    products = {k: str(v) for k, v in products.items()}
+    # Get the values in the reactants and products
+    reactants_values = list(reactants.values())
+    products_values = list(products.values())
+    full_list = reactants_values + products_values
+    # Solve for n
+    n_val = solve_for(full_list)
+    print(f"n = {n_val}")
+    # Substitute the n value into the reactants and products
+    reactants = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
+    products = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
+    print(reactants)
+    print(products)
+    # eval the values in the reactants and products
+    reactants = {k: eval(v) for k, v in reactants.items()}
+    products = {k: eval(v) for k, v in products.items()}
+    print(reactants)
+    print(products)
+    return check_eq_unbalanced(reactants, products)
 
 
 def replace_substrings(s: str, replacements: dict):
