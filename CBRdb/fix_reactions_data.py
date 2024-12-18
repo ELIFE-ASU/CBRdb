@@ -48,25 +48,6 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True)
     return data_c.sort_values(by="smiles", key=lambda x: x.str.len())
 
 
-def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
-    """
-    Injects missing compounds into a reaction equation.
-
-    Parameters:
-    eq_line (str): The original reaction equation line.
-    missing_r (list): A list of missing reactant compound IDs.
-    missing_p (list): A list of missing product compound IDs.
-    missing_dict (dict): A dictionary mapping missing compound names to their IDs.
-
-    Returns:
-    str: The updated reaction equation with missing compounds injected.
-    """
-    eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
-    eq_left += ''.join(f" + {missing_dict[item]}" for item in missing_r)
-    eq_right += ''.join(f" + {missing_dict[item]}" for item in missing_p)
-    return f"{eq_left} <=> {eq_right}"
-
-
 def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
     """
     Fixes the imbalance in a reaction equation by injecting a specified compound.
@@ -240,19 +221,12 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print("Filtering out bad ids", flush=True)
     data_r = data_r.loc[~data_r["id"].isin(bad_ids)]
 
-
-
     # Get the data from the dataframe
     ids = data_r["id"].tolist()
     eq_lines = data_r["reaction"].tolist()
     ec = data_r["ec"].tolist()
 
-
-
-
-
     exit()
-
 
     # Init the lists
     bad_n = []
