@@ -203,13 +203,66 @@ def test_missing_formulas():
     assert CBRdb.check_missing_formulas(eq, data_c) == True
 
 
+def test_strip_ionic():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = "C05359 <=> C99999"
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c, strip_ionic=False)
+    print(reactants, flush=True)
+    print(products, flush=True)
+    print(react_ele, flush=True)
+    print(prod_ele, flush=True)
+    # there should be a star in the reactants
+    assert "*" in react_ele
+    # there should be a star in the products
+    assert '-' in prod_ele
+    print(flush=True)
+
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c, strip_ionic=True)
+    print(reactants, flush=True)
+    print(products, flush=True)
+    print(react_ele, flush=True)
+    print(prod_ele, flush=True)
+    # there should be no star in the reactants
+    assert "*" not in react_ele
+    # there should be no star in the products
+    assert '-2' not in prod_ele
+    print(flush=True)
+
+    eq = "C18091 + C00007 + C01847 <=> C00084 + C00088 + C00061 + C00001" # R00025
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c, strip_ionic=True)
+    print(reactants, flush=True)
+    print(products, flush=True)
+    print(react_ele, flush=True)
+    print(prod_ele, flush=True)
+    assert "-" not in react_ele
+
+
+
 def test_missing_elements():
     # Check if there is a missing element in the equation
     # check_missing_elements
     # get_missing_elements
-    pass
+    # Check if there is a missing compound ID in the equation
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007"
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    assert CBRdb.check_missing_elements(react_ele, prod_ele) == False # The equation is balanced
+
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007 + 1 C99999 + 1 C05359"
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+
+
+    assert CBRdb.check_missing_elements(react_ele, prod_ele) == True # C99999 is missing
+    missing_in_react, missing_in_prod = CBRdb.get_missing_elements(react_ele, prod_ele)
+    print("Missing in reactants:        ", missing_in_react, flush=True)
+    print("Missing in products:         ", missing_in_prod, flush=True)
+
+
+
 
 
 def test_inject_compounds():
     # Check if the compounds are injected into the equation
+    #inject_compounds
     pass
