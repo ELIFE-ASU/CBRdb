@@ -1,11 +1,24 @@
 from .atlas_converter import (clean_kegg_atlas, clean_atlas)
+
 from .clean_reaction_shortcuts import (clean_reaction_shortcuts)
+
 from .compounds_manual_add import (compounds_manual_add)
-from .fix_halogens import (fix_halogen_compounds, merge_halogen_compounds, fix_halogen_reactions)
+
+from .fix_halogens import (fix_halogen_compounds,
+                           merge_halogen_compounds,
+                           fix_halogen_reactions,
+                           )
+
 from .fix_reactions_data import (fix_reactions_data)
+
 from .lets_get_kegg import (download_data)
-from .merge_data_sets import (merge_data, fix_ec_ids)
+
+from .merge_data_sets import (merge_data,
+                              fix_ec_ids,
+                              )
+
 from .preprocessor import (preprocess)
+
 from .tools_eq import (convert_formula_to_dict,
                        get_formulas_from_eq,
                        convert_ids_to_formulas,
@@ -34,6 +47,7 @@ from .tools_eq import (convert_formula_to_dict,
                        check_missing_elements,
                        get_missing_elements,
                        )
+
 from .tools_files import (file_list,
                           file_list_all,
                           list_empty_folders,
@@ -41,14 +55,19 @@ from .tools_files import (file_list,
                           remove_filepath,
                           delete_files_substring,
                           )
+
 from .tools_mols import (sanitize_mol,
                          standardize_mol,
                          fix_r_group,
                          get_chirality,
                          mol_replacer,
-                         get_mol_descriptors)
+                         get_mol_descriptors,
+                         get_sorted_compounds,
+                         )
+
 from .tools_mp import (mp_calc,
                        mp_calc_star,
-                       tp_calc)
+                       tp_calc,
+                       )
 
 __version__ = "0.1.0"
