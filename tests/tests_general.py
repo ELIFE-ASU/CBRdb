@@ -5,6 +5,7 @@ import CBRdb
 
 
 def test_side_to_dict():
+    print(flush=True)
     tmp = CBRdb.side_to_dict('C00001 + 1 C00002')
     assert tmp == {'C00001': 1, 'C00002': 1}
 
@@ -50,8 +51,12 @@ def test_side_to_dict():
     tmp = CBRdb.side_to_dict("C03323(m-1) + C03323(n+1)")
     assert tmp == {'C03323': 'm-1+n+1'}
 
+    tmp = CBRdb.side_to_dict("n C00001 + 1 C00404")
+    assert tmp == {'C00001': 'n', 'C00404': 1}
+
 
 def test_convert_formula_to_dict():
+    print(flush=True)
     tmp = CBRdb.convert_formula_to_dict("C2H2*BrO2")
     assert tmp == {'C': 2, 'H': 2, 'Br': 1, 'O': 2, '*': 1}
 
@@ -74,7 +79,19 @@ def test_convert_formula_to_dict():
     assert tmp == {'C': 2, 'H': 4, 'N': 1, 'O': 2, '-': 1, '*': 1}
 
 
+def test_get_formulas_from_eq():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = "1 C00001 <=> 1 C00007"
+    reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
+    print(reactants, flush=True)
+    print(products, flush=True)
+    assert reactants == {'H2O': 1}
+    assert products == {'O2': 1}
+
+
 def test_eq_n_solver():
+    print(flush=True)
     expr = "n-1"
     result = CBRdb.find_min_integers(expr)
     print(result)
@@ -152,32 +169,54 @@ def test_eq_standard():
 def test_eq_balanced():
     print(flush=True)
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+
+    # The equation is balanced
+    print("The equation is balanced", flush=True)
     eq = "2 C00027 <=> 2 C00001 + 1 C00007"
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
-    result = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
-    assert result == False  # The equation is balanced
+    result1 = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
+    result2 = CBRdb.full_check_eq_unbalanced(eq, data_c)
+    print(result1, flush=True)
+    print(result2, flush=True)
+    assert result1 == False
+    assert result2 == False
+    print(flush=True)
 
+    # The equation is not balanced
+    print("The equation is not balanced", flush=True)
     eq = "2 C00027 <=> 2 C00001 + 1 C00007 + 1 C00008"
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
-    result = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
-    assert result == True  # The equation is not balanced
+    result1 = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
+    result2 = CBRdb.full_check_eq_unbalanced(eq, data_c)
+    print(result1, flush=True)
+    print(result2, flush=True)
+    assert result1 == True
+    assert result2 == True
 
 
 def test_contains_var_list_check():
+    print(flush=True)
     # Test which sees if there is variable in the equation
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
     eq = "m C00404 + n C00001 <=> (n+1) C02174 + x C00001"
     reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
     vars = CBRdb.contains_var_list(reactants, products)
-
     assert vars == ['m', 'n', 'x']
-    assert CBRdb.check_contains_var_list(reactants, products) == True
+    assert CBRdb.check_contains_var_list(eq, data_c) == True
 
     # Test which sees if there is no variable in the equation
     eq = "C00404 + C00001 <=> C02174"
     reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
     vars = CBRdb.contains_var_list(reactants, products)
     assert vars == []
+    assert CBRdb.check_contains_var_list(eq, data_c) == False
+
+    eq = "C00404 + n C00001 <=> (n+1) C02174"
+    reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
+    vars = CBRdb.contains_var_list(reactants, products)
+    assert vars == ['n']
+    assert CBRdb.check_contains_var_list(eq, data_c) == True
+
 
 def test_vars_eq_balanced():
     ############################### DOUBLE CHECK THIS FUNCTION ########################################
@@ -229,7 +268,7 @@ def test_strip_ionic():
     assert '-2' not in prod_ele
     print(flush=True)
 
-    eq = "C18091 + C00007 + C01847 <=> C00084 + C00088 + C00061 + C00001" # R00025
+    eq = "C18091 + C00007 + C01847 <=> C00084 + C00088 + C00061 + C00001"  # R00025
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c, strip_ionic=True)
     print(reactants, flush=True)
     print(products, flush=True)
@@ -238,31 +277,51 @@ def test_strip_ionic():
     assert "-" not in react_ele
 
 
-
 def test_missing_elements():
     # Check if there is a missing element in the equation
-    # check_missing_elements
-    # get_missing_elements
-    # Check if there is a missing compound ID in the equation
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
     eq = "2 C00027 <=> 2 C00001 + 1 C00007"
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
-    assert CBRdb.check_missing_elements(react_ele, prod_ele) == False # The equation is balanced
+    assert CBRdb.check_missing_elements(react_ele, prod_ele) == False  # The equation is balanced
 
     eq = "2 C00027 <=> 2 C00001 + 1 C00007 + 1 C99999 + 1 C05359"
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
 
-
-    assert CBRdb.check_missing_elements(react_ele, prod_ele) == True # C99999 is missing
+    assert CBRdb.check_missing_elements(react_ele, prod_ele) == True  # C99999 is missing
     missing_in_react, missing_in_prod = CBRdb.get_missing_elements(react_ele, prod_ele)
     print("Missing in reactants:        ", missing_in_react, flush=True)
     print("Missing in products:         ", missing_in_prod, flush=True)
 
 
+def test_get_small_compounds():
+    print(flush=True)
+    # function that loads the small compounds
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = CBRdb.get_sorted_compounds()
+    print("data columns", data_c.columns, flush=True)
 
+    # filter the small compounds so that anything with smiles length of less than 1 is included
+    filtered_data_c = data_c[data_c["n_heavy_atoms"] <= 3]
+    # 1: 64  mostly metals
+    # 2: 46  small molecules
+    # 3: 60  medium molecules
+
+    print(f"Number of small compounds: {len(filtered_data_c)}", flush=True)
+
+    for item in filtered_data_c.values:
+        print(item, flush=True)
+
+    # print(filtered_data_c['compound_id'].values, flush=True)
+
+    # small_compounds = CBRdb.get_small_compounds(data_c)
+    pass
 
 
 def test_inject_compounds():
     # Check if the compounds are injected into the equation
-    #inject_compounds
+    pass
+
+
+def test_rebalance_eq():
+    # Attempt to rebalance the equation
     pass
