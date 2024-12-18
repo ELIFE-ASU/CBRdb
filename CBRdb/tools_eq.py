@@ -700,6 +700,7 @@ def fix_multiply_tar_all(expression, target_letters=None):
 
 
 def check_vars_eq_balanced(reactants, products):
+    ############################### DOUBLE CHECK THIS FUNCTION ########################################
     # Convert all the dict values to strings
     reactants = {k: str(v) for k, v in reactants.items()}
     products = {k: str(v) for k, v in products.items()}

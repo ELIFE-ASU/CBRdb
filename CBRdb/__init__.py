@@ -29,6 +29,7 @@ from .tools_eq import (convert_formula_to_dict,
                        solve_for,
                        check_vars_eq_balanced,
                        find_min_integers,
+                       check_missing_formulas,
                        )
 from .tools_files import (file_list,
                           file_list_all,

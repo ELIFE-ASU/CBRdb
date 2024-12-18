@@ -117,10 +117,7 @@ def test_eq_to_dict():
 
 def test_eq_to_symbols():
     print(flush=True)
-    c_file = "../data/kegg_data_C.csv.zip"
-    c_file = os.path.abspath(c_file)
-    # load the
-    data_c = pd.read_csv(c_file)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
     eq = "2 C00027 <=> 2 C00001 + 1 C00007"
     lhs = {'H2O2': 2}
     rhs = {'H2O': 2, 'O2': 1}
@@ -150,3 +147,69 @@ def test_eq_standard():
     eq_wrong = "2 C00027 <=> 1 C00007 + 2 C00001"
     eq_out = CBRdb.standardise_eq(eq_wrong)
     assert eq_out == eq
+
+
+def test_eq_balanced():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007"
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    result = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
+    assert result == False  # The equation is balanced
+
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007 + 1 C00008"
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    result = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
+    assert result == True  # The equation is not balanced
+
+
+def test_contains_var_list_check():
+    # Test which sees if there is variable in the equation
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = "m C00404 + n C00001 <=> (n+1) C02174 + x C00001"
+    reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
+    vars = CBRdb.contains_var_list(reactants, products)
+
+    assert vars == ['m', 'n', 'x']
+    assert CBRdb.check_contains_var_list(reactants, products) == True
+
+    # Test which sees if there is no variable in the equation
+    eq = "C00404 + C00001 <=> C02174"
+    reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
+    vars = CBRdb.contains_var_list(reactants, products)
+    assert vars == []
+
+def test_vars_eq_balanced():
+    ############################### DOUBLE CHECK THIS FUNCTION ########################################
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007"
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    result = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
+    assert result == False  # The equation is balanced
+
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007 + 1 C00008"
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    result = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
+    assert result == True  # The equation is not balanced
+
+
+def test_missing_formulas():
+    # Check if there is a missing compound ID in the equation
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007"
+    assert CBRdb.check_missing_formulas(eq, data_c) == False
+    eq = "2 C00027 <=> 2 C00001 + 1 C00007 + 1 C99998"
+    assert CBRdb.check_missing_formulas(eq, data_c) == True
+
+
+def test_missing_elements():
+    # Check if there is a missing element in the equation
+    # check_missing_elements
+    # get_missing_elements
+    pass
+
+
+def test_inject_compounds():
+    # Check if the compounds are injected into the equation
+    pass
