@@ -47,6 +47,7 @@ from .tools_eq import (convert_formula_to_dict,
                        check_missing_elements,
                        get_missing_elements,
                        full_check_eq_unbalanced,
+                       check_full_missing_elements,
                        )
 
 from .tools_files import (file_list,

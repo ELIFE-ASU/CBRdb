@@ -510,6 +510,21 @@ def check_missing_elements(react_ele, prod_ele):
         return False
 
 
+def check_full_missing_elements(eq, c_data):
+    """
+    Checks if there are any missing elements in the reactants or products of a chemical equation.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    bool: True if there are missing elements in either reactants or products, False otherwise.
+    """
+    _, _, react_ele, prod_ele = get_elements_from_eq(eq, c_data)
+    return check_missing_elements(react_ele, prod_ele)
+
+
 def check_missing_formulas(eq, c_data):
     """
     Checks if there are any missing chemical formulas for the compound IDs in the given chemical equation.
