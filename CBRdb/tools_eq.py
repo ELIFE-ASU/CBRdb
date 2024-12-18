@@ -4,6 +4,7 @@ import re
 import chemparse
 import pandas as pd
 import sympy as sp
+from sqlalchemy.sql.operators import truediv
 
 from .lets_get_kegg import infer_kegg_enzyme_pointers
 
@@ -162,6 +163,19 @@ def get_formulas_from_ids(ids, c_data):
     return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
 
 
+def generate_compound_dict(c_data):
+    """
+    Generates a dictionary from the compound_id, with compound_id as the key and formula as the value.
+
+    Parameters:
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    dict: A dictionary with compound_id as keys and formulas as values.
+    """
+    return dict(zip(c_data['compound_id'], c_data['formula']))
+
+
 def clean_up_eq(eq):
     """
     Cleans up the chemical equation string by reformatting compound identifiers.
@@ -316,9 +330,8 @@ def get_ids_to_formulas(compound_dict, c_data):
     Returns:
     dict: A dictionary where keys are compound IDs and values are the corresponding chemical formulas with '+<number>' and '+' characters removed.
     """
-    ids = list(set(sorted(compound_dict.keys())))
-    formulas = get_formulas_from_ids(ids, c_data)
-    return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
+    comp_dict = generate_compound_dict(c_data)
+    return {id: strip_plus_x(comp_dict[id]) for id in compound_dict.keys()}
 
 
 def convert_ids_to_formulas(in_dict, react_id_form):
@@ -591,6 +604,7 @@ def sort_dict_by_keys(input_dict):
     Returns:
     dict: A new dictionary sorted by its keys.
     """
+    input_dict = copy.deepcopy(input_dict)
     return dict(sorted(input_dict.items()))
 
 
