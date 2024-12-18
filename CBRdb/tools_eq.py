@@ -527,6 +527,22 @@ def check_missing_formulas(eq, c_data):
     return len(formulas) != len(ids)
 
 
+def full_check_eq_unbalanced(eq, c_data):
+    """
+    Checks if a chemical equation is unbalanced by verifying if all element counts are positive and non-zero,
+    and if the reactants and products have matching element counts.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    bool: True if the equation is unbalanced, False otherwise.
+    """
+    _, _, react_ele, prod_ele = get_elements_from_eq(eq, c_data)
+    return check_eq_unbalanced(react_ele, prod_ele)
+
+
 def check_eq_unbalanced(react_ele, prod_ele):
     """
     Checks if a chemical equation is unbalanced by verifying if all element counts are positive and non-zero,
@@ -607,18 +623,19 @@ def contains_var_list(reactants, products, var_list=None):
     return present_vars
 
 
-def check_contains_var_list(reactants, products, var_list=None):
+def check_contains_var_list(eq, data_c, var_list=None):
     """
     Checks if any of the values in the reactants or products dictionaries contain any of the variables in var_list.
 
     Parameters:
-    reactants (dict): A dictionary where keys are compound identifiers and values are their counts for reactants.
-    products (dict): A dictionary where keys are compound identifiers and values are their counts for products.
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
     var_list (list, optional): A list of variable names to check for in the values. Default is ['n', 'm', 'x'].
 
     Returns:
     bool: True if any of the values contain a variable from var_list, False otherwise.
     """
+    reactants, products = get_formulas_from_eq(eq, data_c)
     return len(contains_var_list(reactants, products, var_list)) > 0
 
 
