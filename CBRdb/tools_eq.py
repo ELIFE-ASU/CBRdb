@@ -1,7 +1,11 @@
+import copy
 import re
-import pandas as pd
+
 import chemparse
+import pandas as pd
 import sympy as sp
+from sqlalchemy.sql.operators import truediv
+
 from .lets_get_kegg import infer_kegg_enzyme_pointers
 
 
@@ -19,7 +23,7 @@ def strip_ionic_states(formula):
     return re.sub(r'[+-]\d*$', '', formula)
 
 
-def convert_formula_to_dict(formula, strip_ionic=False):
+def convert_formula_to_dict(formula, strip_ionic=True):
     """
     Converts a chemical formula into a dictionary with element symbols as keys and their counts as values.
 
@@ -157,6 +161,19 @@ def get_formulas_from_ids(ids, c_data):
     list: A list of chemical formulas corresponding to the given compound IDs.
     """
     return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
+
+
+def generate_compound_dict(c_data):
+    """
+    Generates a dictionary from the compound_id, with compound_id as the key and formula as the value.
+
+    Parameters:
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    dict: A dictionary with compound_id as keys and formulas as values.
+    """
+    return dict(zip(c_data['compound_id'], c_data['formula']))
 
 
 def clean_up_eq(eq):
@@ -313,9 +330,8 @@ def get_ids_to_formulas(compound_dict, c_data):
     Returns:
     dict: A dictionary where keys are compound IDs and values are the corresponding chemical formulas with '+<number>' and '+' characters removed.
     """
-    ids = list(set(sorted(compound_dict.keys())))
-    formulas = get_formulas_from_ids(ids, c_data)
-    return {id: strip_plus_x(formula) for id, formula in zip(ids, formulas)}
+    comp_dict = generate_compound_dict(c_data)
+    return {id: strip_plus_x(comp_dict[id]) for id in compound_dict.keys()}
 
 
 def convert_ids_to_formulas(in_dict, react_id_form):
@@ -347,19 +363,44 @@ def convert_formulas_to_ids(formulas_dict, react_id_form):
     return {inverse_react_id_form[formula]: count for formula, count in formulas_dict.items()}
 
 
-def convert_form_dict_to_elements(form_dict):
+def remove_electron_cid(compound_dict):
+    """
+    Checks if the compound ID 'C05359' is in the dictionary and removes it if it is.
+
+    Parameters:
+    compound_dict (dict): The dictionary to check and modify.
+
+    Returns:
+    dict: The modified dictionary with 'C05359' removed if it was present.
+    """
+    if 'C05359' in compound_dict:
+        del compound_dict['C05359']
+    return compound_dict
+
+
+def convert_form_dict_to_elements(form_dict, strip_ionic=True):
     """
     Converts a dictionary of chemical formulas and their counts into a dictionary of elements and their counts.
 
     Parameters:
     form_dict (dict): A dictionary where keys are chemical formulas and values are their counts.
+    strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
 
     Returns:
     dict: A dictionary where keys are element symbols and values are their counts in the formulas.
     """
+    # Create a deep copy of the input dictionary to avoid modifying the original
+    form_dict = copy.deepcopy(form_dict)
+
+    # Initialize an empty dictionary to store the element counts
     elements = {}
+
+    # Iterate over each formula and its count in the input dictionary
     for formula, count in form_dict.items():
-        elements = add_dicts(elements, multiply_dict(convert_formula_to_dict(formula), count))
+        # Convert the formula to a dictionary of elements and their counts, multiply by the count, and add to the elements dictionary
+        elements = add_dicts(elements, multiply_dict(convert_formula_to_dict(formula, strip_ionic=strip_ionic), count))
+
+    # Return the dictionary of elements and their counts
     return elements
 
 
@@ -388,13 +429,14 @@ def get_eq(old_eq, reactants, products, c_data):
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
-def get_formulas_from_eq(eq, c_data):
+def get_formulas_from_eq(eq, c_data, strip_ionic=True):
     """
     Converts a chemical equation string into dictionaries of reactants and products with their chemical formulas.
 
     Parameters:
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
 
     Returns:
     tuple: A tuple containing two dictionaries:
@@ -403,6 +445,10 @@ def get_formulas_from_eq(eq, c_data):
     """
     # Convert the Eq into the dicts
     reactants, products = eq_to_dict(eq)
+
+    if strip_ionic:
+        reactants = remove_electron_cid(reactants)
+        products = remove_electron_cid(products)
 
     # Get the conversion of the ids to formulas
     react_id_form_key = get_ids_to_formulas(reactants, c_data)
@@ -415,7 +461,7 @@ def get_formulas_from_eq(eq, c_data):
     return converted_reactants, converted_products
 
 
-def get_elements_from_eq(eq, c_data):
+def get_elements_from_eq(eq, c_data, strip_ionic=True):
     """
     Converts a chemical equation string into dictionaries of reactants and products,
     and then converts these dictionaries into dictionaries of elements and their counts.
@@ -423,6 +469,7 @@ def get_elements_from_eq(eq, c_data):
     Parameters:
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
 
     Returns:
     tuple: A tuple containing four dictionaries:
@@ -432,11 +479,11 @@ def get_elements_from_eq(eq, c_data):
            - The fourth dictionary contains the elements and their counts in the products.
     """
     # Convert the Eq into the formula dicts
-    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data)
+    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data, strip_ionic=strip_ionic)
 
     # Convert the formulas into reactants
-    react_ele = convert_form_dict_to_elements(converted_reactants)
-    prod_ele = convert_form_dict_to_elements(converted_products)
+    react_ele = convert_form_dict_to_elements(converted_reactants, strip_ionic=strip_ionic)
+    prod_ele = convert_form_dict_to_elements(converted_products, strip_ionic=strip_ionic)
 
     return converted_reactants, converted_products, react_ele, prod_ele
 
@@ -476,6 +523,21 @@ def check_missing_elements(react_ele, prod_ele):
         return False
 
 
+def check_full_missing_elements(eq, c_data):
+    """
+    Checks if there are any missing elements in the reactants or products of a chemical equation.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    bool: True if there are missing elements in either reactants or products, False otherwise.
+    """
+    _, _, react_ele, prod_ele = get_elements_from_eq(eq, c_data)
+    return check_missing_elements(react_ele, prod_ele)
+
+
 def check_missing_formulas(eq, c_data):
     """
     Checks if there are any missing chemical formulas for the compound IDs in the given chemical equation.
@@ -491,6 +553,22 @@ def check_missing_formulas(eq, c_data):
     ids = list(reactants.keys()) + list(products.keys())
     formulas = get_formulas_from_ids(ids, c_data)
     return len(formulas) != len(ids)
+
+
+def full_check_eq_unbalanced(eq, c_data):
+    """
+    Checks if a chemical equation is unbalanced by verifying if all element counts are positive and non-zero,
+    and if the reactants and products have matching element counts.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    bool: True if the equation is unbalanced, False otherwise.
+    """
+    _, _, react_ele, prod_ele = get_elements_from_eq(eq, c_data)
+    return check_eq_unbalanced(react_ele, prod_ele)
 
 
 def check_eq_unbalanced(react_ele, prod_ele):
@@ -526,6 +604,7 @@ def sort_dict_by_keys(input_dict):
     Returns:
     dict: A new dictionary sorted by its keys.
     """
+    input_dict = copy.deepcopy(input_dict)
     return dict(sorted(input_dict.items()))
 
 
@@ -571,6 +650,22 @@ def contains_var_list(reactants, products, var_list=None):
             if var in value and var not in present_vars:
                 present_vars.append(var)
     return present_vars
+
+
+def check_contains_var_list(eq, data_c, var_list=None):
+    """
+    Checks if any of the values in the reactants or products dictionaries contain any of the variables in var_list.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    var_list (list, optional): A list of variable names to check for in the values. Default is ['n', 'm', 'x'].
+
+    Returns:
+    bool: True if any of the values contain a variable from var_list, False otherwise.
+    """
+    reactants, products = get_formulas_from_eq(eq, data_c)
+    return len(contains_var_list(reactants, products, var_list)) > 0
 
 
 def solve_for(elements, var='n'):
@@ -682,36 +777,32 @@ def fix_multiply_tar_all(expression, target_letters=None):
     return expression
 
 
-def check_eq_unbalanced_safe(reactants, products):
-    # Check if the equation contains 'n', 'm', or 'x'
-    if contains_var_list(reactants, products):
-        # Convert all the dict values to strings
-        reactants = {k: str(v) for k, v in reactants.items()}
-        products = {k: str(v) for k, v in products.items()}
-        # Get the values in the reactants and products
-        reactants_values = list(reactants.values())
-        products_values = list(products.values())
-        full_list = reactants_values + products_values
-        # Solve for n
-        n_val = solve_for(full_list)
-        print(f"n = {n_val}")
-        # Substitute the n value into the reactants and products
-        reactants = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
-        products = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
-        print(reactants)
-        print(products)
-        # eval the values in the reactants and products
-        reactants = {k: eval(v) for k, v in reactants.items()}
-        products = {k: eval(v) for k, v in products.items()}
-        print(reactants)
-        print(products)
-        return check_eq_unbalanced(reactants, products)
-
-    else:
-        return False
+def check_vars_eq_balanced(reactants, products):
+    ############################### DOUBLE CHECK THIS FUNCTION ########################################
+    # Convert all the dict values to strings
+    reactants = {k: str(v) for k, v in reactants.items()}
+    products = {k: str(v) for k, v in products.items()}
+    # Get the values in the reactants and products
+    reactants_values = list(reactants.values())
+    products_values = list(products.values())
+    full_list = reactants_values + products_values
+    # Solve for n
+    n_val = solve_for(full_list)
+    print(f"n = {n_val}")
+    # Substitute the n value into the reactants and products
+    reactants = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
+    products = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
+    print(reactants)
+    print(products)
+    # eval the values in the reactants and products
+    reactants = {k: eval(v) for k, v in reactants.items()}
+    products = {k: eval(v) for k, v in products.items()}
+    print(reactants)
+    print(products)
+    return check_eq_unbalanced(reactants, products)
 
 
-def replace_substrings(s:str, replacements:dict):
+def replace_substrings(s: str, replacements: dict):
     """
     Within a string, replaces all instances of each key in a dictionary with its corresponding value.
     Keys and values must all be strings. Values may be empty strings.
@@ -725,13 +816,13 @@ def replace_substrings(s:str, replacements:dict):
     s_out: The string with all replacements made.
     """
     s_out = s
-    for k,v in replacements.items():
-        s_out = s_out.replace(k,v)
+    for k, v in replacements.items():
+        s_out = s_out.replace(k, v)
     return s_out
 
 
-def reroute_obsolete_ecs(reaction_file = 'data/kegg_data_R.csv.zip', 
-                         enzyme_pointer_file = 'data/kegg_enzyme_pointers.csv.zip'):
+def reroute_obsolete_ecs(reaction_file='data/kegg_data_R.csv.zip',
+                         enzyme_pointer_file='data/kegg_enzyme_pointers.csv.zip'):
     """
     Loads a reaction csv (with column "ec") and converts obsolete ECs to their active equivalents.
 
@@ -758,6 +849,25 @@ def reroute_obsolete_ecs(reaction_file = 'data/kegg_data_R.csv.zip',
     # store old ec field in a new column to ensure data isn't lost upon overwrite
     reaction_df['ec_orig'] = reaction_df['ec'].copy(deep=True)
     reaction_df['ec'] = new_ecs
-    reaction_df = reaction_df.replace('',float('nan'))
+    reaction_df = reaction_df.replace('', float('nan'))
     reaction_df.to_csv(reaction_file, compression='zip', encoding='utf-8')
     return reaction_df.reset_index()
+
+
+def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
+    """
+    Injects missing compounds into a reaction equation.
+
+    Parameters:
+    eq_line (str): The original reaction equation line.
+    missing_r (list): A list of missing reactant compound IDs.
+    missing_p (list): A list of missing product compound IDs.
+    missing_dict (dict): A dictionary mapping missing compound names to their IDs.
+
+    Returns:
+    str: The updated reaction equation with missing compounds injected.
+    """
+    eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
+    eq_left += ''.join(f" + {missing_dict[item]}" for item in missing_r)
+    eq_right += ''.join(f" + {missing_dict[item]}" for item in missing_p)
+    return f"{eq_left} <=> {eq_right}"

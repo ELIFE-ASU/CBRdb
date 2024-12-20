@@ -91,6 +91,6 @@ if __name__ == "__main__":
     # Convert the Eq into the formula dicts
     reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
 
-    print(CBRdb.check_eq_unbalanced_safe(reactants, products), flush=True)
+    print(CBRdb.check_vars_eq_balanced(reactants, products), flush=True)
 
     print("Program end", flush=True)

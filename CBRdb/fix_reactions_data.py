@@ -1,5 +1,4 @@
 import os
-
 import pandas as pd
 from chempy import balance_stoichiometry
 
@@ -10,61 +9,12 @@ from .tools_eq import (get_eq,
                        check_missing_elements,
                        check_eq_unbalanced,
                        get_missing_elements,
-                       standardise_eq)
+                       standardise_eq,
+                       check_contains_var_list,
+                       check_missing_formulas,
+                       full_check_eq_unbalanced)
 
-
-def filter_compounds_without_star(dataframe):
-    """
-    Filters the compounds DataFrame to return only the rows where the 'smiles' column does not contain a '*'.
-
-    Parameters:
-    dataframe (pd.DataFrame): A DataFrame containing compound data with a 'smiles' column.
-
-    Returns:
-    pd.DataFrame: A filtered DataFrame with rows where the 'smiles' column does not contain a '*'.
-    """
-    return dataframe[~dataframe['smiles'].str.contains('*', regex=False)]
-
-
-def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True):
-    """
-    Retrieves and sorts compound data from a CSV file, optionally filtering out rows where the 'smiles' column contains a '*'.
-
-    Parameters:
-    c_path (str): The path to the CSV file containing compound data.
-    filter_star (bool): Whether to filter out rows where the 'smiles' column contains a '*'. Default is True.
-
-    Returns:
-    pd.DataFrame: A DataFrame containing the sorted compound data.
-    """
-    # Get the data
-    data_c = pd.read_csv(os.path.abspath(c_path))
-
-    # Filter out the star compounds or has * in the smiles
-    if filter_star:
-        data_c = filter_compounds_without_star(data_c)
-
-    # Sort by the smile size
-    return data_c.sort_values(by="smiles", key=lambda x: x.str.len())
-
-
-def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
-    """
-    Injects missing compounds into a reaction equation.
-
-    Parameters:
-    eq_line (str): The original reaction equation line.
-    missing_r (list): A list of missing reactant compound IDs.
-    missing_p (list): A list of missing product compound IDs.
-    missing_dict (dict): A dictionary mapping missing compound names to their IDs.
-
-    Returns:
-    str: The updated reaction equation with missing compounds injected.
-    """
-    eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
-    eq_left += ''.join(f" + {missing_dict[item]}" for item in missing_r)
-    eq_right += ''.join(f" + {missing_dict[item]}" for item in missing_p)
-    return f"{eq_left} <=> {eq_right}"
+from .tools_mp import tp_calc, mp_calc, mp_calc_star
 
 
 def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
@@ -223,22 +173,52 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     with open(bad_file, "r") as f:
         bad_data = f.read()
     bad_ids = [line.split(',')[0].strip() for line in bad_data.split("\n")[1:]]
-    # Load the C data
+    # Load the processed compound data
     data_c = pd.read_csv(c_file)
 
-    # Load the processed data
+    # Load the processed reaction data
     data_r = pd.read_csv(r_file)
 
     print("data loaded", flush=True)
     print("data columns", data_r.columns, flush=True)
     print("data shape", data_r.shape, flush=True)
 
-    # sort by the index
+    # Sort by the index
     data_r = data_r.sort_values(by="id")
 
-    # Filter out the bad ids
+    # Filter out the bad ids, data that is shortcut/general/incomplete
     print("Filtering out bad ids", flush=True)
-    data_r = data_r.loc[~data_r["id"].isin(bad_ids)]
+    bool_bad_ids = data_r["id"].isin(bad_ids)
+    data_r = data_r.loc[~bool_bad_ids]
+    print(f"Number of bad ids removed: {sum(bool_bad_ids)}", flush=True)
+
+    # Filter out the data that has missing formulas
+    print("Filtering out missing formulas", flush=True)
+    bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
+    # data_r_missing_data = data_r[bool_missing_data]
+    data_r = data_r[~bool_missing_data]
+    print(f"Number of missing formulas removed: {sum(bool_missing_data)}", flush=True)
+
+    # Filter out the reactions that contain a var list
+    print("Filtering out var list", flush=True)
+    bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
+    # data_r_var_list = data_r[bool_var_list]
+    data_r = data_r[~bool_var_list]
+    print(f"Number of var list reactions removed: {sum(bool_var_list)}", flush=True)
+
+    # Filter out the data that is
+    print("Filtering out unbalanced reactions", flush=True)
+    bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+    data_r_unbalanced = data_r[bool_unbalanced]
+    data_r = data_r[~bool_unbalanced]
+    print("data shape", data_r.shape, flush=True)
+    # determine the number of reactions that have been removed
+    print(f"Number of unbalanced reactions removed: {sum(bool_unbalanced)}", flush=True)
+    print(data_r_unbalanced, flush=True)
+    print(data_r_unbalanced["id"].item, flush=True)
+
+    print(data_r,flush=True)
+    exit()
 
 
 
@@ -246,13 +226,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     ids = data_r["id"].tolist()
     eq_lines = data_r["reaction"].tolist()
     ec = data_r["ec"].tolist()
-
-
-
-
-
-    exit()
-
 
     # Init the lists
     bad_n = []
