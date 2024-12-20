@@ -375,19 +375,32 @@ def get_small_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True, 
         return data_c[data_c["n_heavy_atoms"] == n]
 
 
-def get_compounds_with_elements(data_c_1, element_symbols):
+def get_compounds_with_matching_elements(data_c_1, diff_ele_react, diff_ele_prod):
     """
-    Returns the compound IDs of all compounds which have all the element symbols in the input list.
+    Filters compounds that contain all the elements present in the union of two dictionaries' keys.
 
     Parameters:
     data_c_1 (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
-    element_symbols (list): A list of element symbols to check for in the compounds.
+    diff_ele_react (dict): A dictionary representing elements in reactants.
+    diff_ele_prod (dict): A dictionary representing elements in products.
 
     Returns:
-    list: A list of compound IDs that contain all the element symbols.
+    list: A list of compound IDs that contain all the element symbols from the union of the keys in diff_ele_react and diff_ele_prod.
     """
+    # Get the set of keys in react_ele and prod_ele
+    element_symbols = list(set(diff_ele_react.keys()).union(set(diff_ele_prod.keys())))
 
     def contains_all_elements(formula, elements):
+        """
+        Checks if a chemical formula contains all specified elements.
+
+        Parameters:
+        formula (str): The chemical formula to check.
+        elements (list): A list of element symbols to check for in the formula.
+
+        Returns:
+        bool: True if all elements are present in the formula, False otherwise.
+        """
         # Convert the formula to a dictionary of elements and their counts
         formula_dict = chemparse.parse_formula(formula)
         # Check if all elements are in the formula
