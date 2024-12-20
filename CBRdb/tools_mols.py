@@ -1,6 +1,7 @@
 import os
 import re
 
+import chemparse
 import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
@@ -372,3 +373,31 @@ def get_small_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True, 
         return data_c[data_c["n_heavy_atoms"] <= n]
     else:
         return data_c[data_c["n_heavy_atoms"] == n]
+
+
+def get_compounds_with_elements(data_c_1, element_symbols):
+    """
+    Returns the compound IDs of all compounds which have all the element symbols in the input list.
+
+    Parameters:
+    data_c_1 (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    element_symbols (list): A list of element symbols to check for in the compounds.
+
+    Returns:
+    list: A list of compound IDs that contain all the element symbols.
+    """
+
+    def contains_all_elements(formula, elements):
+        # Convert the formula to a dictionary of elements and their counts
+        formula_dict = chemparse.parse_formula(formula)
+        # Check if all elements are in the formula
+        return all(element in formula_dict for element in elements)
+
+    # Filter the DataFrame to get compounds that contain all the element symbols
+    filtered_compounds = data_c_1[data_c_1['formula'].apply(lambda x: contains_all_elements(x, element_symbols))]
+
+    # Sort by the number of heavy atoms
+    filtered_compounds = filtered_compounds.sort_values(by='n_heavy_atoms')
+
+    # Return the list of compound IDs
+    return filtered_compounds['compound_id'].tolist()
