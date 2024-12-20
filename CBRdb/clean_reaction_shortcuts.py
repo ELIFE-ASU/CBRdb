@@ -222,6 +222,8 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     # open existing R_IDs_bad.dat file and append new data
     if os.path.exists(os.path.join(data_dir, 'R_IDs_bad.dat')):
         data_old = pd.read_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), header=0)
+        data_old['reason'] = data_old['reason'].str.split('+')
+        data_old = data_old.explode('reason')
         data = pd.concat([data_old, data], ignore_index=True)
     data = data.groupby(by='id')['reason'].apply(lambda x: '+'.join(set(x)))
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'))
