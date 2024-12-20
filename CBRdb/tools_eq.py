@@ -940,3 +940,28 @@ def rebalance_eq(eq, data_c):
 
     # Convert the dict back into eq form and standardise
     return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c))
+
+
+def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
+    """
+    Fixes the imbalance in a reaction equation by injecting a specified compound.
+
+    Parameters:
+    eq_line (str): The original reaction equation line.
+    diff_ele_react (dict): A dictionary of element differences on the reactant side.
+    diff_ele_prod (dict): A dictionary of element differences on the product side.
+    inject (str): The compound ID to inject to balance the equation.
+
+    Returns:
+    str: The updated reaction equation with the injected compound.
+    """
+    # Get the reactant and product sides
+    eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
+    # Find which side has the lowest
+    if sum(diff_ele_react.values()) < sum(diff_ele_prod.values()):
+        eq_left += f" + {inject}"
+    else:
+        eq_right += f" + {inject}"
+    # Update eq_line with the new equation
+    return f"{eq_left} <=> {eq_right}"
+

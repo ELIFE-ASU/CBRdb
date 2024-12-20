@@ -13,35 +13,13 @@ from .tools_eq import (get_eq,
                        check_contains_var_list,
                        check_missing_formulas,
                        full_check_eq_unbalanced,
+                       rebalance_eq,
+                       fix_imbalance_core,
                        )
 
 from .tools_mols import (get_small_compounds)
 
 from .tools_mp import tp_calc, mp_calc, mp_calc_star
-
-
-def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
-    """
-    Fixes the imbalance in a reaction equation by injecting a specified compound.
-
-    Parameters:
-    eq_line (str): The original reaction equation line.
-    diff_ele_react (dict): A dictionary of element differences on the reactant side.
-    diff_ele_prod (dict): A dictionary of element differences on the product side.
-    inject (str): The compound ID to inject to balance the equation.
-
-    Returns:
-    str: The updated reaction equation with the injected compound.
-    """
-    # Get the reactant and product sides
-    eq_left, eq_right = map(str.strip, eq_line.split("<=>"))
-    # Find which side has the lowest
-    if sum(diff_ele_react.values()) < sum(diff_ele_prod.values()):
-        eq_left += f" + {inject}"
-    else:
-        eq_right += f" + {inject}"
-    # Update eq_line with the new equation
-    return f"{eq_left} <=> {eq_right}"
 
 
 def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
@@ -98,7 +76,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                        c_file="../data/kegg_data_C.csv.zip",
                        bad_file="../data/R_IDs_bad.dat",
                        f_fresh=True,
-                       f_assume_var=True):
+                       f_assume_var=True,
+                       f_save_intermediate=False):
     # f_assume_var=True => assume that the equation contains a var list are correct
 
     # Get the absolute paths
@@ -200,6 +179,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print("Filtering out missing formulas", flush=True)
     bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
     data_r_missing_data = data_r[bool_missing_data]
+    if f_save_intermediate:
+        data_r_missing_data.to_csv(f"{r_file.split('.')[0]}_missing_data.csv.zip",
+                                   compression='zip',
+                                   encoding='utf-8',
+                                   index=False)
     data_r = data_r[~bool_missing_data]
     print(f"Number of missing formulas removed: {sum(bool_missing_data)}", flush=True)
 
@@ -207,6 +191,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print("Filtering out var list", flush=True)
     bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
     data_r_var_list = data_r[bool_var_list]
+    if f_save_intermediate:
+        data_r_var_list.to_csv(f"{r_file.split('.')[0]}_var_list.csv.zip",
+                               compression='zip',
+                               encoding='utf-8',
+                               index=False)
     data_r = data_r[~bool_var_list]
     print(f"Number of var list reactions removed: {sum(bool_var_list)}", flush=True)
 
@@ -215,12 +204,15 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
     # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
+    if f_save_intermediate:
+        data_r_unbalanced.to_csv(f"{r_file.split('.')[0]}_unbalanced.csv.zip",
+                                 compression='zip',
+                                 encoding='utf-8',
+                                 index=False)
     # Get the data that is balanced
     data_r = data_r[~bool_unbalanced]
     # Determine the number of reactions that have been removed
     print(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", flush=True)
-    print(data_r_unbalanced, flush=True)
-    print(data_r_unbalanced["id"].item, flush=True)
 
     # # Filter out the var data that is not balanced
     # print("Filtering out unbalanced reactions", flush=True)
@@ -234,12 +226,41 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     # print(data_r_unbalanced, flush=True)
     # print(data_r_unbalanced["id"].item, flush=True)
 
+    # Get the data from the unbalanced dataframe
+    ids = data_r_unbalanced["id"].tolist()
+    eq_lines = data_r_unbalanced["reaction"].tolist()
+    n_ids = len(ids)
 
+    ids_out = []
+    eq_lines_out = []
+
+    # Loop over the unbalanced reactions data
+    for i in range(n_ids):
+        # Standardise the equation
+        eq_line = standardise_eq(eq_lines[i])
+        id = ids[i]
+        print(f"\nProcessing {i}/{n_ids} {id}", flush=True)
+        print("Equation line:", eq_line, flush=True)
+        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
+        print("Reactants: ", reactants, flush=True)
+        print("Products:  ", products, flush=True)
+        try:
+            print("Attempt balancing eq x1", flush=True)
+            eq_line = rebalance_eq(eq_line, data_c)
+            print("Rebalance success!", flush=True)
+        except ValueError as e:
+            print(f"Could not find stoichiometry on first attempt: {e}", flush=True)
+        exit()
+
+    # TEMP
     data_r_rebalanced = data_r_unbalanced
 
-
+    print("Combining the data", flush=True)
     # Combine the data
     if f_assume_var:
+        # Here we have assumed that the data_r_var_list reactions data is correct
+        # This is questionable as the data may be incorrect
+        print("Assuming equations with a var list data is correct...", flush=True)
         df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced])
     else:
         df_final = pd.concat([data_r, data_r_rebalanced])
