@@ -396,6 +396,12 @@ def test_rebalance_eq():
     eq_out = CBRdb.rebalance_eq(eq, data_c)
     assert eq_out == eq
 
+    # Attempt to rebalance the equation when it is impossible to balance
+    eq = CBRdb.standardise_eq("2 C00089 + 2 C00126 <=> C00031 + C03661 + 2 C00125 + 1 C99999")
+    # Rebalance the equation
+    eq_out = CBRdb.rebalance_eq(eq, data_c)
+    assert eq_out == False
+
 
 def test_get_compounds_with_elements():
     print(flush=True)
@@ -408,9 +414,8 @@ def test_get_compounds_with_elements():
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
     diff_ele_react, diff_ele_prod = CBRdb.compare_dict_values(react_ele, prod_ele)
     # Get the set of keys in react_ele and prod_ele
-    element_symbols = set(diff_ele_react.keys()).union(set(diff_ele_prod.keys()))
-    print(element_symbols, flush=True)
-    element_symbols = ['H']
+    element_symbols = list(set(diff_ele_react.keys()).union(set(diff_ele_prod.keys())))
+    assert element_symbols == ['H']
     # Get the compounds that might match
     compounds = CBRdb.get_compounds_with_elements(data_c_1, element_symbols)
     print(compounds, flush=True)
@@ -419,6 +424,8 @@ def test_get_compounds_with_elements():
 
 def test_inject_compounds():
     print(flush=True)
+    data_c_1 = CBRdb.get_small_compounds(n=1)
+
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
     # Rebalancer would fail on this equation
     eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
@@ -435,6 +442,19 @@ def test_inject_compounds():
     print("Missing in reactants:        ", missing_in_react, flush=True)
     print("Missing in products:         ", missing_in_prod, flush=True)
 
-    # find the compounds that might match
+    # Get the eq information
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    # Get the difference in the elements
+    diff_ele_react, diff_ele_prod = CBRdb.compare_dict_values(react_ele, prod_ele)
 
-    pass
+    # Get the compounds that might match
+    compounds = CBRdb.get_compounds_with_matching_elements(data_c_1, diff_ele_react, diff_ele_prod)
+
+    print("Compounds that might match:  ", compounds, flush=True)
+
+    # Inject the compounds into the equation
+    eq_out = CBRdb.fix_imbalance_core(eq, diff_ele_react, diff_ele_prod, compounds[0])
+    # Rebalance the equation
+    eq_out = CBRdb.rebalance_eq(eq_out, data_c)
+
+    assert eq_out == "1 C00027 + 2 C00080 + 2 C00126 <=> 2 C00001 + 2 C00125"
