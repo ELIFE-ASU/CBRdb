@@ -244,12 +244,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
         print("Reactants: ", reactants, flush=True)
         print("Products:  ", products, flush=True)
-        try:
-            print("Attempt balancing eq x1", flush=True)
-            eq_line = rebalance_eq(eq_line, data_c)
-            print("Rebalance success!", flush=True)
-        except ValueError as e:
-            print(f"Could not find stoichiometry on first attempt: {e}", flush=True)
+        eq_line = rebalance_eq(eq_line, data_c)
         exit()
 
     # TEMP

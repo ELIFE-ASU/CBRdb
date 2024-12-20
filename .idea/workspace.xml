@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c852b1dd-75f2-4327-9c7b-0d6b114e9a18" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CBRdb/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/CBRdb/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CBRdb/tools_mols.py" beforeDir="false" afterPath="$PROJECT_DIR$/CBRdb/tools_mols.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CBRdb/fix_reactions_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/CBRdb/fix_reactions_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CBRdb/tools_eq.py" beforeDir="false" afterPath="$PROJECT_DIR$/CBRdb/tools_eq.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/data/kegg_data_R_processed.csv.zip" beforeDir="false" afterPath="$PROJECT_DIR$/data/kegg_data_R_processed.csv.zip" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/run_all.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/run_all.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/tests_general.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/tests_general.py" afterDir="false" />
@@ -62,7 +61,7 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Python tests.Python tests for tests_general.test_inject_compounds">
+  <component name="RunManager" selected="Python tests.Python tests for tests_general.test_rebalance_eq">
     <configuration name="run_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CBRdb" />
       <option name="ENV_FILES" value="" />
@@ -152,11 +151,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Python tests for tests_general.test_rebalance_eq" />
         <item itemvalue="Python tests.Python tests for tests_general.test_inject_compounds" />
         <item itemvalue="Python tests.Python tests for tests_general.test_get_compounds_with_elements" />
         <item itemvalue="Python tests.Python tests for tests_general.test_get_small_compounds" />
         <item itemvalue="Python.run_all" />
-        <item itemvalue="Python tests.Python tests for tests_general.test_rebalance_eq" />
       </list>
     </recent_temporary>
   </component>
@@ -185,7 +184,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/CBRdb$tests_general.coverage" NAME="tests_general Coverage Results" MODIFIED="1734658496801" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
-    <SUITE FILE_PATH="coverage/CBRdb$.coverage" NAME=" Coverage Results" MODIFIED="1734670210499" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/CBRdb$.coverage" NAME=" Coverage Results" MODIFIED="1734670954608" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
     <SUITE FILE_PATH="coverage/CBRdb$fix_reactions_data.coverage" NAME="fix_reactions_data Coverage Results" MODIFIED="1734542530783" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/CBRdb" />
     <SUITE FILE_PATH="coverage/CBRdb$run_all.coverage" NAME="run_all Coverage Results" MODIFIED="1734666923838" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples" />
   </component>

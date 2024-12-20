@@ -900,7 +900,7 @@ def compare_and_delete_keys(dict1, dict2):
     return dict1, dict2, dict1_del, dict2_del
 
 
-def rebalance_eq(eq, data_c):
+def rebalance_eq_core(eq, data_c):
     """
     Rebalances a chemical equation by converting reactants and products from formulas to IDs,
     checking for duplicate keys, and balancing the stoichiometry.
@@ -940,6 +940,26 @@ def rebalance_eq(eq, data_c):
 
     # Convert the dict back into eq form and standardise
     return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c))
+
+
+def rebalance_eq(eq, data_c):
+    """
+    Attempts to rebalance a chemical equation by calling the rebalance_eq_core function.
+    If rebalancing fails due to a ValueError, it prints an error message and returns False.
+
+    Parameters:
+    eq (str): The original chemical equation string.
+    data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    str or bool: The rebalanced chemical equation string if successful, otherwise False.
+    """
+    try:
+        eq = rebalance_eq_core(eq, data_c)
+        return eq
+    except ValueError as e:
+        print(f"Could not find stoichiometry on first attempt: {e}", flush=True)
+        return False
 
 
 def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
