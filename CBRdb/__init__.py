@@ -65,6 +65,7 @@ from .tools_mols import (sanitize_mol,
                          mol_replacer,
                          get_mol_descriptors,
                          get_sorted_compounds,
+                         get_small_compounds,
                          )
 
 from .tools_mp import (mp_calc,

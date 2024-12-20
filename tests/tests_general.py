@@ -362,26 +362,17 @@ def test_missing_elements():
 
 def test_get_small_compounds():
     print(flush=True)
-    # function that loads the small compounds
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
-    data_c = CBRdb.get_sorted_compounds()
-    print("data columns", data_c.columns, flush=True)
+    # Function that loads the small compounds
+    small_1 = CBRdb.get_small_compounds(n=1)
+    assert len(small_1) == 64 # 1: 64  mostly metals
+    small_2 = CBRdb.get_small_compounds(n=2)
+    assert len(small_2) == 46 # 2: 46  small molecules
+    small_3 = CBRdb.get_small_compounds(n=3)
+    assert len(small_3) == 60 # 3: 60  medium molecules
 
-    # filter the small compounds so that anything with smiles length of less than 1 is included
-    filtered_data_c = data_c[data_c["n_heavy_atoms"] <= 3]
-    # 1: 64  mostly metals
-    # 2: 46  small molecules
-    # 3: 60  medium molecules
-
-    print(f"Number of small compounds: {len(filtered_data_c)}", flush=True)
-
-    for item in filtered_data_c.values:
+    for item in small_3.values:
         print(item, flush=True)
 
-    # print(filtered_data_c['compound_id'].values, flush=True)
-
-    # small_compounds = CBRdb.get_small_compounds(data_c)
-    pass
 
 
 def test_inject_compounds():

@@ -12,7 +12,10 @@ from .tools_eq import (get_eq,
                        standardise_eq,
                        check_contains_var_list,
                        check_missing_formulas,
-                       full_check_eq_unbalanced)
+                       full_check_eq_unbalanced,
+                       )
+
+from .tools_mols import (get_small_compounds)
 
 from .tools_mp import tp_calc, mp_calc, mp_calc_star
 
@@ -94,19 +97,10 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
 def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                        c_file="../data/kegg_data_C.csv.zip",
                        bad_file="../data/R_IDs_bad.dat",
-                       f_fresh=True):
-    """
-    Processes reaction data to fix imbalances and missing elements, and saves the updated data to a file.
+                       f_fresh=True,
+                       f_assume_var=True):
+    # f_assume_var=True => assume that the equation contains a var list are correct
 
-    Parameters:
-    r_file (str): The path to the CSV file containing reaction data. Default is '../data/kegg_data_R.csv.zip'.
-    c_file (str): The path to the CSV file containing compound data. Default is '../data/kegg_data_C.csv.zip'.
-    bad_file (str): The path to the file containing IDs of bad reactions. Default is '../data/R_IDs_bad.dat'.
-    f_fresh (bool): Flag to indicate whether to start fresh or continue from existing processed data. Default is True.
-
-    Returns:
-    None
-    """
     # Get the absolute paths
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)
@@ -169,16 +163,26 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
 
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv.zip"
 
-    # read the bad file
+    # Read the bad reactions file
     with open(bad_file, "r") as f:
         bad_data = f.read()
     bad_ids = [line.split(',')[0].strip() for line in bad_data.split("\n")[1:]]
+
     # Load the processed compound data
+    print("Loading the compound data...", flush=True)
     data_c = pd.read_csv(c_file)
+    print(f"Compound data shape: {data_c.shape}", flush=True)
+
+    # Load the small compounds
+    data_c_1 = get_small_compounds(c_path=c_file, n=1)
+    data_c_2 = get_small_compounds(c_path=c_file, n=2)
+    data_c_3 = get_small_compounds(c_path=c_file, n=3)
+    # print the size of the data
+    print(f"Small compound size: 1:{data_c_1.shape}, 2:{data_c_2.shape}, 3:{data_c_3.shape}", flush=True)
 
     # Load the processed reaction data
+    print("Loading the reaction data...", flush=True)
     data_r = pd.read_csv(r_file)
-
     print("data loaded", flush=True)
     print("data columns", data_r.columns, flush=True)
     print("data shape", data_r.shape, flush=True)
@@ -195,32 +199,60 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     # Filter out the data that has missing formulas
     print("Filtering out missing formulas", flush=True)
     bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
-    # data_r_missing_data = data_r[bool_missing_data]
+    data_r_missing_data = data_r[bool_missing_data]
     data_r = data_r[~bool_missing_data]
     print(f"Number of missing formulas removed: {sum(bool_missing_data)}", flush=True)
 
     # Filter out the reactions that contain a var list
     print("Filtering out var list", flush=True)
     bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
-    # data_r_var_list = data_r[bool_var_list]
+    data_r_var_list = data_r[bool_var_list]
     data_r = data_r[~bool_var_list]
     print(f"Number of var list reactions removed: {sum(bool_var_list)}", flush=True)
 
-    # Filter out the data that is
+    # Filter out the data that is not balanced
     print("Filtering out unbalanced reactions", flush=True)
     bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+    # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
+    # Get the data that is balanced
     data_r = data_r[~bool_unbalanced]
-    print("data shape", data_r.shape, flush=True)
-    # determine the number of reactions that have been removed
-    print(f"Number of unbalanced reactions removed: {sum(bool_unbalanced)}", flush=True)
+    # Determine the number of reactions that have been removed
+    print(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", flush=True)
     print(data_r_unbalanced, flush=True)
     print(data_r_unbalanced["id"].item, flush=True)
 
-    print(data_r,flush=True)
+    # # Filter out the var data that is not balanced
+    # print("Filtering out unbalanced reactions", flush=True)
+    # bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+    # # Get the data that is unbalanced
+    # data_r_unbalanced = data_r[bool_unbalanced]
+    # # Get the data that is balanced
+    # data_r = data_r[~bool_unbalanced]
+    # # Determine the number of reactions that have been removed
+    # print(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", flush=True)
+    # print(data_r_unbalanced, flush=True)
+    # print(data_r_unbalanced["id"].item, flush=True)
+
+
+    data_r_rebalanced = data_r_unbalanced
+
+
+    # Combine the data
+    if f_assume_var:
+        df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced])
+    else:
+        df_final = pd.concat([data_r, data_r_rebalanced])
+
+    # Get the finial length of the data
+    print(f"Final data shape: {df_final.shape}", flush=True)
+
+    # Sort by the index
+    df_final = df_final.sort_values(by="id")
+    # Write the data to a file
+    df_final.to_csv(out_eq_file, compression='zip', encoding='utf-8', index=False)
+
     exit()
-
-
 
     # Get the data from the dataframe
     ids = data_r["id"].tolist()

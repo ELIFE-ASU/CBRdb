@@ -351,3 +351,21 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True)
 
     # Sort by the smile size
     return data_c.sort_values(by="smiles", key=lambda x: x.str.len())
+
+
+def get_small_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True, n=1):
+    """
+    Retrieves and filters small compounds from a CSV file.
+
+    Parameters:
+    c_path (str): The path to the CSV file containing compound data. Default is "../data/kegg_data_C.csv.zip".
+    filter_star (bool): Whether to filter out rows where the 'smiles' column contains a '*'. Default is True.
+    n (int): The maximum number of heavy atoms for a compound to be considered small. Default is 1.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the filtered small compounds.
+    """
+    data_c = get_sorted_compounds(c_path=c_path, filter_star=filter_star)
+
+    # Filter compounds by the number of heavy atoms
+    return data_c[data_c["n_heavy_atoms"] == n]
