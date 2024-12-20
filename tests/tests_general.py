@@ -374,30 +374,67 @@ def test_get_small_compounds():
         print(item, flush=True)
 
 
-def test_inject_compounds():
-    # Check if the compounds are injected into the equation
-    pass
-
-
 def test_rebalance_eq():
     print(flush=True)
-    # Attempt to rebalance the equation when there is no need to rebalance
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+
+    # Attempt to rebalance the equation when there is no need to rebalance
     eq = CBRdb.standardise_eq("2 C00089 <=> C00031 + C03661")
     # Rebalance the equation
     eq_out = CBRdb.rebalance_eq(eq, data_c)
     assert eq_out == eq
 
     # Attempt to rebalance the equation when there is a need to rebalance
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
     eq = CBRdb.standardise_eq("4 C00089 <=> C00031 + C03661")
     # Rebalance the equation
     eq_out = CBRdb.rebalance_eq(eq, data_c)
     assert eq_out == "2 C00089 <=> 1 C00031 + 1 C03661"
 
     # Attempt to rebalance the equation when there is repeated compounds
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
     eq = CBRdb.standardise_eq("2 C00089 + 2 C00126 <=> C00031 + C03661 + 2 C00125")
     # Rebalance the equation
     eq_out = CBRdb.rebalance_eq(eq, data_c)
     assert eq_out == eq
+
+
+def test_get_compounds_with_elements():
+    print(flush=True)
+    data_c_1 = CBRdb.get_small_compounds(n=1)
+
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    # Rebalancer would fail on this equation
+    eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
+
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    diff_ele_react, diff_ele_prod = CBRdb.compare_dict_values(react_ele, prod_ele)
+    # Get the set of keys in react_ele and prod_ele
+    element_symbols = set(diff_ele_react.keys()).union(set(diff_ele_prod.keys()))
+    print(element_symbols, flush=True)
+    element_symbols = ['H']
+    # Get the compounds that might match
+    compounds = CBRdb.get_compounds_with_elements(data_c_1, element_symbols)
+    print(compounds, flush=True)
+    assert compounds[0] == "C00080"
+
+
+def test_inject_compounds():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    # Rebalancer would fail on this equation
+    eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
+
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    # Get the difference in the elements population
+    diff_ele_react, diff_ele_prod = CBRdb.compare_dict_values(react_ele, prod_ele)
+    print("Differences in reactants:    ", diff_ele_react, flush=True)
+    print("Differences in products:     ", diff_ele_prod, flush=True)
+    assert diff_ele_react == {'H': 90}
+    assert diff_ele_prod == {'H': 92}
+    # Get the difference in the elements population
+    missing_in_react, missing_in_prod = CBRdb.get_missing_elements(react_ele, prod_ele)
+    print("Missing in reactants:        ", missing_in_react, flush=True)
+    print("Missing in products:         ", missing_in_prod, flush=True)
+
+    # find the compounds that might match
+
+    pass
