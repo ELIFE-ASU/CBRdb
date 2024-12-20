@@ -158,7 +158,10 @@ def get_kegg(target_dir,
     Returns:
     None
     """
-    bad_file = os.path.abspath(f"../data/{prefix.replace('_full', '')}_IDs_bad.dat")
+    bad_file = f"../data/{prefix.replace('_full', '')}_IDs_bad.dat"
+    if os.path.exists('data/'):
+        bad_file = bad_file[3:]
+    bad_file = os.path.abspath(bad_file)
     # Check if the prefix is to download the full data
     if "_full" in prefix:
         full = True
@@ -220,11 +223,11 @@ def get_kegg(target_dir,
 
     # Write a log file
     with open(bad_file, "w") as f:
-        f.write("# Bad IDs, reason\n")
+        f.write("id,reason\n")
         for id in molless_ids:
-            f.write(f"{id}, molless\n")
+            f.write(f"{id},molless\n")
         for id in invalid_ids:
-            f.write(f"{id}, invalid\n")
+            f.write(f"{id},invalid\n")
 
     return None
 

@@ -214,11 +214,16 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
     print('General reactions:', len(reactions_general), flush=True)
 
     data = pd.DataFrame({
-        'Reaction': reactions_multistep + reactions_overall + reactions_incomplete + reactions_general,
-        'Type': ['shortcut'] * len(reactions_multistep)
+        'id': reactions_multistep + reactions_overall + reactions_incomplete + reactions_general,
+        'reason': ['shortcut'] * len(reactions_multistep)
                 + ['shortcut'] * len(reactions_overall)
                 + ['incomplete'] * len(reactions_incomplete)
-                + ['general'] * len(reactions_general)}).sort_values(by=['Reaction']).reset_index(drop=True)
-    data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), index=False)
+                + ['general'] * len(reactions_general)}).sort_values(by=['id']).reset_index(drop=True)
+    # open existing R_IDs_bad.dat file and append new data
+    if os.path.exists(os.path.join(data_dir, 'R_IDs_bad.dat')):
+        data_old = pd.read_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), header=0)
+        data = pd.concat([data_old, data], ignore_index=True)
+    data = data.groupby(by='id')['reason'].apply(lambda x: '+'.join(set(x)))
+    data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'))
     return data
 
