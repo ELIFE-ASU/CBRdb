@@ -8,6 +8,24 @@ import requests
 from .tools_requests import prepare_session
 
 
+def dedupe_compound_files(data_folder='../data'):
+    dupemap_file = f'{data_folder}/kegg_data_C_dupemap.csv.zip'
+    C_meta_file = f'{data_folder}/kegg_data_C_metadata.csv.zip'
+    C_main_file = f'{data_folder}/kegg_data_C.csv.zip'
+    dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:,0]
+    C_meta = (pd.read_csv(C_meta_file, header=0).assign(
+        compound_id=lambda x: x['compound_id'].replace(dupemap))
+        .drop_duplicates(subset='compound_id', keep='first')
+        .sort_values(by='compound_id').reset_index(drop=True))
+    C_main = (pd.read_csv(C_main_file, header=0).assign(
+        compound_id=lambda x: x['compound_id'].replace(dupemap))
+        .drop_duplicates(subset='compound_id', keep='first')
+        .sort_values(by='compound_id').reset_index(drop=True))
+    C_meta.to_csv(C_meta_file, index=False, compression='zip')
+    C_main.to_csv(C_main_file, index=False, compression='zip')
+    return dupemap
+
+
 def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction", request_sleep=0.2):
     # Get the data
     try:

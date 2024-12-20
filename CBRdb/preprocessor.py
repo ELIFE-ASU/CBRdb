@@ -92,10 +92,25 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
         "n_chiral_centers": arr_nc})
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id").reset_index(drop=True).drop_duplicates().rename_axis(None, axis=1)
+    # Identify duplicate structures (do not remove yet)
+    compound_mapping = _identify_duplicate_compounds(df)
+    compound_mapping.to_csv(outfile.replace('.csv.zip', '_dupemap.csv.zip'), compression='zip', encoding='utf-8')
     # Save the dataframe
     df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
     print('Compound structural-info path: ' + outfile, flush=True)
     return df
+
+def _identify_duplicate_compounds(C_main):
+    id_num = C_main.reset_index()['compound_id'].str.lstrip('C').astype(int)
+    count_back_from = id_num.loc[id_num.diff().idxmax()] - 1
+    possible_dupes = (C_main.query('~smiles.str.contains("*", regex=False) & smiles.duplicated(keep=False)').reset_index()
+                    .groupby('smiles')['compound_id'].apply(list).reset_index(drop=True)
+                    .explode().reset_index(name='id_old').rename({'index': 'id_new'}, axis=1))
+    possible_dupes['id_new'] = 'C'+(count_back_from - possible_dupes['id_new']).astype(str)
+    possible_dupes = dict(zip(possible_dupes['id_old'], possible_dupes['id_new']))
+    compound_mapping = pd.Series(possible_dupes).reset_index().groupby(by=0)['index'].apply(lambda x: ' '.join(sorted(list(x))))
+    compound_mapping = compound_mapping.str.split().explode().rename('old_id').reset_index().rename({0: 'new_id'}, axis=1).set_index('old_id')
+    return compound_mapping['new_id']
 
 
 def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
