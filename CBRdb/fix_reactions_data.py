@@ -1,5 +1,9 @@
+import time
 import os
 import pandas as pd
+# import dask.dataframe as dd
+import swifter
+import multiprocessing as mp
 from chempy import balance_stoichiometry
 
 from .tools_eq import (get_eq,
@@ -20,8 +24,17 @@ from .tools_eq import (get_eq,
 
 from .tools_mols import (get_small_compounds, get_small_compounds_all, get_compounds_with_matching_elements)
 
-from .tools_mp import tp_calc, mp_calc, mp_calc_star
-
+from swifter import set_defaults
+set_defaults(
+    npartitions=None,
+    dask_threshold=1,
+    scheduler="processes",
+    progress_bar=True,
+    progress_bar_desc=None,
+    allow_dask_on_strings=False,
+    force_parallel=False,
+)
+mp.cpu_count()
 
 def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
     """
@@ -113,6 +126,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                        f_assume_var=True,
                        f_save_intermediate=False):
     # f_assume_var=True => assume that the equation contains a var list are correct
+
+    swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
 
     # Get the absolute paths
     r_file = os.path.abspath(r_file)
@@ -211,7 +226,21 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
 
     # Filter out the data that has missing formulas
     print("Filtering out missing formulas", flush=True)
+
+    t0 = time.time()
     bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
+    print("Time to check missing formulas: ", time.time() - t0)
+
+    t0 = time.time()
+    bool_missing_data = data_r['reaction'].swifter.force_parallel(enable=True).allow_dask_on_strings(enable=True).apply(check_missing_formulas, args=(data_c,))
+    print("Time to check missing formulas: ", time.time() - t0)
+    exit()
+    # dask_data_r = dd.from_pandas(data_r, npartitions=mp.cpu_count())
+    # t0 = time.time()
+    # bool_missing_data = dask_data_r['reaction'].apply(check_missing_formulas, args=(data_c,),
+    #                                                   meta=('result', 'bool')).compute()
+    # print("Time to check missing formulas: ", time.time() - t0)
+
     data_r_missing_data = data_r[bool_missing_data]
     if f_save_intermediate:
         data_r_missing_data.to_csv(f"{r_file.split('.')[0]}_missing_data.csv.zip",
@@ -223,7 +252,23 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
 
     # Filter out the reactions that contain a var list
     print("Filtering out var list", flush=True)
-    bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
+    # t0 = time.time()
+    # bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
+    # print("Time to check missing formulas: ", time.time() - t0)
+
+    t0 = time.time()
+    bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list, args=(data_c,))
+    print("Time to check missing formulas: ", time.time() - t0)
+
+
+    # dask_data_r = dd.from_pandas(data_r, npartitions=mp.cpu_count())
+    # t0 = time.time()
+    # bool_var_list = dask_data_r['reaction'].apply(check_contains_var_list, args=(data_c,),
+    #                                               meta=('result', 'bool')).compute()
+    # print("Time to check missing formulas: ", time.time() - t0)
+
+
+
     data_r_var_list = data_r[bool_var_list]
     if f_save_intermediate:
         data_r_var_list.to_csv(f"{r_file.split('.')[0]}_var_list.csv.zip",
@@ -235,7 +280,16 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
 
     # Filter out the data that is not balanced
     print("Filtering out unbalanced reactions", flush=True)
+    t0 = time.time()
     bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+    print("Time to check missing formulas: ", time.time() - t0)
+
+    t0 = time.time()
+    bool_unbalanced = data_r['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced, args=(data_c,))
+    print("Time to check missing formulas: ", time.time() - t0)
+
+    exit()
+
     # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
     if f_save_intermediate:
@@ -281,15 +335,13 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
         eq_line_new = rebalance_eq(eq_line, data_c)
         if eq_line_new is False:
             # Need to get dirty and try to fix the imbalance
-            pass
-
-
-
+            eq_line_new = kitchen_sink(eq_line, data_c, data_c_1)
+            if eq_line_new is False:
+                print("Could not fix the imbalance", flush=True)
         else:
             ids_out.append(id)
             eq_lines_out.append(eq_line_new)
 
-    # TEMP
     data_r_rebalanced = data_r_unbalanced
 
     print("Combining the data", flush=True)
