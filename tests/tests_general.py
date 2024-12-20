@@ -364,15 +364,14 @@ def test_get_small_compounds():
     print(flush=True)
     # Function that loads the small compounds
     small_1 = CBRdb.get_small_compounds(n=1)
-    assert len(small_1) == 64 # 1: 64  mostly metals
+    assert len(small_1) == 64  # 1: 64  mostly metals
     small_2 = CBRdb.get_small_compounds(n=2)
-    assert len(small_2) == 46 # 2: 46  small molecules
+    assert len(small_2) == 46  # 2: 46  small molecules
     small_3 = CBRdb.get_small_compounds(n=3)
-    assert len(small_3) == 60 # 3: 60  medium molecules
+    assert len(small_3) == 60  # 3: 60  medium molecules
 
     for item in small_3.values:
         print(item, flush=True)
-
 
 
 def test_inject_compounds():
@@ -381,5 +380,24 @@ def test_inject_compounds():
 
 
 def test_rebalance_eq():
-    # Attempt to rebalance the equation
-    pass
+    print(flush=True)
+    # Attempt to rebalance the equation when there is no need to rebalance
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = CBRdb.standardise_eq("2 C00089 <=> C00031 + C03661")
+    # Rebalance the equation
+    eq_out = CBRdb.rebalance_eq(eq, data_c)
+    assert eq_out == eq
+
+    # Attempt to rebalance the equation when there is a need to rebalance
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = CBRdb.standardise_eq("4 C00089 <=> C00031 + C03661")
+    # Rebalance the equation
+    eq_out = CBRdb.rebalance_eq(eq, data_c)
+    assert eq_out == "2 C00089 <=> 1 C00031 + 1 C03661"
+
+    # Attempt to rebalance the equation when there is repeated compounds
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    eq = CBRdb.standardise_eq("2 C00089 + 2 C00126 <=> C00031 + C03661 + 2 C00125")
+    # Rebalance the equation
+    eq_out = CBRdb.rebalance_eq(eq, data_c)
+    assert eq_out == eq

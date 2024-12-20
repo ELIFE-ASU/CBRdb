@@ -48,6 +48,8 @@ from .tools_eq import (convert_formula_to_dict,
                        get_missing_elements,
                        full_check_eq_unbalanced,
                        check_full_missing_elements,
+                       rebalance_eq,
+                       compare_and_delete_keys,
                        )
 
 from .tools_files import (file_list,

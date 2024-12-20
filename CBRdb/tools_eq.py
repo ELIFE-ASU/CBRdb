@@ -5,6 +5,7 @@ import chemparse
 import pandas as pd
 import sympy as sp
 from sqlalchemy.sql.operators import truediv
+from chempy import balance_stoichiometry
 
 from .lets_get_kegg import infer_kegg_enzyme_pointers
 
@@ -871,3 +872,71 @@ def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
     eq_left += ''.join(f" + {missing_dict[item]}" for item in missing_r)
     eq_right += ''.join(f" + {missing_dict[item]}" for item in missing_p)
     return f"{eq_left} <=> {eq_right}"
+
+
+def compare_and_delete_keys(dict1, dict2):
+    """
+    Compares two dictionaries, deletes keys that are the same in both dictionaries, and returns the two new dictionaries along with the deleted items.
+
+    Parameters:
+    dict1 (dict): The first dictionary.
+    dict2 (dict): The second dictionary.
+
+    Returns:
+    tuple: A tuple containing four dictionaries:
+           - The first dictionary with the common keys removed from dict1.
+           - The second dictionary with the common keys removed from dict2.
+           - A dictionary of the deleted items from dict1.
+           - A dictionary of the deleted items from dict2.
+    """
+    dict1 = copy.deepcopy(dict1)
+    dict2 = copy.deepcopy(dict2)
+    common_keys = set(dict1.keys()) & set(dict2.keys())
+    dict1_del = {key: dict1[key] for key in dict1 if key in common_keys}
+    dict2_del = {key: dict2[key] for key in dict2 if key in common_keys}
+    for key in common_keys:
+        del dict1[key]
+        del dict2[key]
+    return dict1, dict2, dict1_del, dict2_del
+
+
+def rebalance_eq(eq, data_c):
+    """
+    Rebalances a chemical equation by converting reactants and products from formulas to IDs,
+    checking for duplicate keys, and balancing the stoichiometry.
+
+    Parameters:
+    eq (str): The original chemical equation string.
+    data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+
+    Returns:
+    str: The rebalanced and standardized chemical equation.
+    """
+    # Get the reactants and products from the eq
+    reactants, products = get_formulas_from_eq(eq, data_c)
+
+    f_repeated = False
+    reactants_del = {}
+    products_del = {}
+    # Check if any of the keys are duplicate in the reactants and products
+    if len(set(reactants.keys()) & set(products.keys())) > 0:
+        f_repeated = True
+        # Get the unique reactants and products
+        reactants, products, reactants_del, products_del = compare_and_delete_keys(reactants, products)
+
+    # Balance the equation
+    reactants, products = balance_stoichiometry(set(reactants.keys()),
+                                                set(products.keys()),
+                                                underdetermined=None)
+    # Convert the formulas back to eq form
+    reactants = dict(reactants)
+    products = dict(products)
+
+    # Check if the reactants and products were the same
+    if f_repeated:
+        # In case of repeated compounds, add the deleted compounds back
+        reactants = add_dicts(reactants, reactants_del)
+        products = add_dicts(products, products_del)
+
+    # Convert the dict back into eq form and standardise
+    return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c))

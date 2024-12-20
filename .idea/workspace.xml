@@ -5,6 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c852b1dd-75f2-4327-9c7b-0d6b114e9a18" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/CBRdb.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/CBRdb.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CBRdb/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/CBRdb/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CBRdb/fix_reactions_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/CBRdb/fix_reactions_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CBRdb/tools_eq.py" beforeDir="false" afterPath="$PROJECT_DIR$/CBRdb/tools_eq.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/kegg_data_R_processed.csv.zip" beforeDir="false" afterPath="$PROJECT_DIR$/data/kegg_data_R_processed.csv.zip" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/run_all.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/run_all.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/tests_general.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/tests_general.py" afterDir="false" />
     </list>
@@ -36,6 +42,7 @@
     "Python tests.Python tests for tests_general.test_get_small_compounds.executor": "Run",
     "Python tests.Python tests for tests_general.test_missing_elements.executor": "Run",
     "Python tests.Python tests for tests_general.test_missing_formulas.executor": "Run",
+    "Python tests.Python tests for tests_general.test_rebalance_eq.executor": "Run",
     "Python tests.Python tests for tests_general.test_side_to_dict.executor": "Run",
     "Python tests.Python tests for tests_general.test_strip_ionic.executor": "Run",
     "Python.fix_reactions_data.executor": "Run",
@@ -55,21 +62,51 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Python tests.Python tests for tests_general.test_eq_standard">
-    <configuration name="Python tests for tests_general.test_eq_n_solver" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python tests.Python tests for tests_general.test_rebalance_eq">
+    <configuration name="run_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CBRdb" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/run_all.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="tests_general" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CBRdb" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests_general.test_eq_n_solver&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tests/tests_general.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
     <configuration name="Python tests for tests_general.test_eq_standard" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
@@ -85,22 +122,6 @@
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;tests_general.test_eq_standard&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests for tests_general.test_eq_to_dict" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="CBRdb" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests_general.test_eq_to_dict&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -120,7 +141,7 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for tests_general.test_get_formulas_from_eq" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+    <configuration name="Python tests for tests_general.test_rebalance_eq" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="CBRdb" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -132,17 +153,17 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests_general.test_get_formulas_from_eq&quot;" />
+      <option name="_new_target" value="&quot;tests_general.test_rebalance_eq&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Python tests for tests_general.test_rebalance_eq" />
+        <item itemvalue="Python.run_all" />
+        <item itemvalue="Python.tests_general" />
         <item itemvalue="Python tests.Python tests for tests_general.test_eq_standard" />
         <item itemvalue="Python tests.Python tests for tests_general.test_eq_to_symbols" />
-        <item itemvalue="Python tests.Python tests for tests_general.test_eq_to_dict" />
-        <item itemvalue="Python tests.Python tests for tests_general.test_eq_n_solver" />
-        <item itemvalue="Python tests.Python tests for tests_general.test_get_formulas_from_eq" />
       </list>
     </recent_temporary>
   </component>
@@ -162,6 +183,7 @@
       <workItem from="1734486199600" duration="52000" />
       <workItem from="1734486259005" duration="4481000" />
       <workItem from="1734534842168" duration="20933000" />
+      <workItem from="1734665696440" duration="1066000" />
     </task>
     <servers />
   </component>
@@ -169,9 +191,9 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CBRdb$tests_general.coverage" NAME="tests_general Coverage Results" MODIFIED="1734473743359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
-    <SUITE FILE_PATH="coverage/CBRdb$.coverage" NAME=" Coverage Results" MODIFIED="1734559755428" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/CBRdb$tests_general.coverage" NAME="tests_general Coverage Results" MODIFIED="1734658496801" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/CBRdb$.coverage" NAME=" Coverage Results" MODIFIED="1734666750732" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
     <SUITE FILE_PATH="coverage/CBRdb$fix_reactions_data.coverage" NAME="fix_reactions_data Coverage Results" MODIFIED="1734542530783" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/CBRdb" />
-    <SUITE FILE_PATH="coverage/CBRdb$run_all.coverage" NAME="run_all Coverage Results" MODIFIED="1734548665272" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples" />
+    <SUITE FILE_PATH="coverage/CBRdb$run_all.coverage" NAME="run_all Coverage Results" MODIFIED="1734664993069" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples" />
   </component>
 </project>
