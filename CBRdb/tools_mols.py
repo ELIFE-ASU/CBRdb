@@ -368,4 +368,7 @@ def get_small_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True, 
     data_c = get_sorted_compounds(c_path=c_path, filter_star=filter_star)
 
     # Filter compounds by the number of heavy atoms
-    return data_c[data_c["n_heavy_atoms"] == n]
+    if n == 1:
+        return data_c[data_c["n_heavy_atoms"] <= n]
+    else:
+        return data_c[data_c["n_heavy_atoms"] == n]
