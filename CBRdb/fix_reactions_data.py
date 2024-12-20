@@ -15,9 +15,10 @@ from .tools_eq import (get_eq,
                        full_check_eq_unbalanced,
                        rebalance_eq,
                        fix_imbalance_core,
+                       inject_compounds,
                        )
 
-from .tools_mols import (get_small_compounds)
+from .tools_mols import (get_small_compounds, get_small_compounds_all, get_compounds_with_matching_elements)
 
 from .tools_mp import tp_calc, mp_calc, mp_calc_star
 
@@ -70,6 +71,39 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
     else:
         print("Could not fix the imbalance", flush=True)
         return eq_line
+
+
+def kitchen_sink(eq, data_c, small_compounds):
+    reactants, products, react_ele, prod_ele = get_elements_from_eq(eq, data_c)
+    diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+
+    compounds = get_compounds_with_matching_elements(small_compounds, diff_ele_react, diff_ele_prod)
+    print("Compounds that might match:  ", compounds, flush=True)
+
+    eq_new = eq
+    attempt = 1
+    for compound in compounds:
+        # Counter
+        print(f"Attempt {attempt}", flush=True)
+        attempt += 1
+
+        # Get the elements
+        _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c)
+        # Check the difference
+        diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+        print("Differences in reactants:    ", diff_ele_react, flush=True)
+        print("Differences in products:     ", diff_ele_prod, flush=True)
+
+        # Inject the compound
+        eq_new = fix_imbalance_core(eq_new, diff_ele_react, diff_ele_prod, compound)
+        # rebalance the equation
+        eq_new = rebalance_eq(eq_new, data_c)
+        if eq_new is False:
+            eq_new = eq
+        else:
+            break
+
+    return eq_new
 
 
 def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
@@ -244,8 +278,16 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
         print("Reactants: ", reactants, flush=True)
         print("Products:  ", products, flush=True)
-        eq_line = rebalance_eq(eq_line, data_c)
-        exit()
+        eq_line_new = rebalance_eq(eq_line, data_c)
+        if eq_line_new is False:
+            # Need to get dirty and try to fix the imbalance
+            pass
+
+
+
+        else:
+            ids_out.append(id)
+            eq_lines_out.append(eq_line_new)
 
     # TEMP
     data_r_rebalanced = data_r_unbalanced
