@@ -9,7 +9,7 @@ from .fix_halogens import (fix_halogen_compounds,
                            fix_halogen_reactions,
                            )
 
-from .fix_reactions_data import (fix_reactions_data)
+from .fix_reactions_data import (fix_reactions_data, kitchen_sink)
 
 from .lets_get_kegg import (download_data)
 

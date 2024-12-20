@@ -374,7 +374,7 @@ def test_get_small_compounds():
         print(item, flush=True)
 
     small_3_all = CBRdb.get_small_compounds_all(n=3)
-    assert len(small_3_all) == 60+46+64
+    assert len(small_3_all) == 60 + 46 + 64
 
 
 def test_rebalance_eq():
@@ -460,4 +460,15 @@ def test_inject_compounds():
     # Rebalance the equation
     eq_out = CBRdb.rebalance_eq(eq_out, data_c)
 
+    assert eq_out == "1 C00027 + 2 C00080 + 2 C00126 <=> 2 C00001 + 2 C00125"
+
+
+def test_kitchen_sink():
+    print(flush=True)
+    data_c_1 = CBRdb.get_small_compounds(n=1)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    # Rebalancer would fail on this equation
+    eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
+    eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1)
+    print(eq_out, flush=True)
     assert eq_out == "1 C00027 + 2 C00080 + 2 C00126 <=> 2 C00001 + 2 C00125"
