@@ -352,6 +352,7 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True)
     # Sort by the smile size
     return data_c.sort_values(by="smiles", key=lambda x: x.str.len())
 
+
 def get_small_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True, n=1):
     """
     Retrieves and filters small compounds from a CSV file.
