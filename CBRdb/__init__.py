@@ -69,6 +69,7 @@ from .tools_mols import (sanitize_mol,
                          get_mol_descriptors,
                          get_sorted_compounds,
                          get_small_compounds,
+                         get_small_compounds_all,
                          get_compounds_with_matching_elements,
                          )
 

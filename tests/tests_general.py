@@ -370,8 +370,11 @@ def test_get_small_compounds():
     small_3 = CBRdb.get_small_compounds(n=3)
     assert len(small_3) == 60  # 3: 60  medium molecules
 
-    for item in small_3.values:
+    for item in small_1.values:
         print(item, flush=True)
+
+    small_3_all = CBRdb.get_small_compounds_all(n=3)
+    assert len(small_3_all) == 60+46+64
 
 
 def test_rebalance_eq():
