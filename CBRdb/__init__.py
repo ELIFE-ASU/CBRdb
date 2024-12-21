@@ -1,6 +1,7 @@
 from .atlas_converter import (clean_kegg_atlas, clean_atlas)
 
-from .clean_reaction_shortcuts import (clean_reaction_shortcuts)
+from .clean_reaction_shortcuts import (find_suspect_reactions,
+                                       remove_suspect_reactions)
 
 from .compounds_manual_add import (compounds_manual_add)
 

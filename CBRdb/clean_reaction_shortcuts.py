@@ -135,10 +135,10 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     return incomplete_reaction_ids
 
 
-def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
+def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
     """
-    Cleans and processes KEGG reaction data, identifying and flagging multistep shortcuts
-    and reactions with incomplete or general data.
+    Identifies and flags KEGG reactions that are suspect, including shortcuts
+    (summaries of multi-step processes) and reactions with incomplete or general data.
 
     Parameters:
     r_file (str): The path to the directory containing the preprocessed KEGG reaction csv.
@@ -226,6 +226,20 @@ def clean_reaction_shortcuts(r_file='../data/kegg_data_R.csv.zip', data_dir='../
         data_old = data_old.explode('reason')
         data = pd.concat([data_old, data], ignore_index=True)
     data = data.groupby(by='id')['reason'].apply(lambda x: '+'.join(set(sorted(list(x)))))
+    data = data.reset_index().drop_duplicates().sort_values(by='id').set_index('id')
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'))
     return data
 
+def remove_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
+    """
+    Removes suspect reactions from a reaction data file.
+    NOTE: Does NOT remove reactions whose definitions (but not ID) matches a suspect reaction.
+    """
+    sus = find_suspect_reactions(r_file, data_dir)
+    rns = pd.read_csv(r_file, index_col=0)
+    if 'kegg_id' in rns.columns:
+        rns = rns.query('kegg_id.isin(@sus.index)==False')
+    else:
+        rns = rns.drop(sus.index, axis=0, errors='ignore')
+    rns.to_csv(r_file, compression='zip', encoding='utf-8')
+    return rns.reset_index()

@@ -37,9 +37,9 @@ if __name__ == "__main__":
     # Provides the atlas_data_kegg_R.csv.zip and atlas_data_R.csv.zip files
     print("Done! \n", flush=True)
 
-    # Clean up the data and remove the shortcut reactions
-    print("Getting shortcut reactions", flush=True)
-    CBRdb.clean_reaction_shortcuts()
+    # Clean up the data and remove the suspect reactions from KEGG
+    print("Getting suspect reactions", flush=True)
+    CBRdb.remove_suspect_reactions()
     # Provides R_IDs_bad.dat
     print("Done! \n", flush=True)
 
