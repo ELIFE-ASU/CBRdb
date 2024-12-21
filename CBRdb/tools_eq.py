@@ -1,6 +1,6 @@
 import copy
 import re
-
+import os
 import chemparse
 import pandas as pd
 import sympy as sp
@@ -834,8 +834,9 @@ def reroute_obsolete_ecs(reaction_file='data/kegg_data_R.csv.zip',
     Returns:
     reaction_df (pd.DataFrame): A DataFrame with obsolete ECs converted to active equivalents
     """
-    # infer enzyme pointers
-    enzyme_pointers = infer_kegg_enzyme_pointers()
+    if not os.path.exists(enzyme_pointer_file):
+        # infer enzyme pointers i.e. transfers and deletions, if not separately downloaded
+        enzyme_pointers = infer_kegg_enzyme_pointers()
     # load the data
     reaction_df = pd.read_csv(reaction_file, header=0, index_col=0).fillna('')
     enzyme_pointers = pd.read_csv(enzyme_pointer_file, header=0, index_col=0).fillna('')

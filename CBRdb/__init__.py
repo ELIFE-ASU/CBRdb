@@ -15,6 +15,7 @@ from .lets_get_kegg import (download_data)
 
 from .merge_data_sets import (merge_data,
                               fix_ec_ids,
+                              dedupe_compound_files
                               )
 
 from .preprocessor import (preprocess)
@@ -51,6 +52,7 @@ from .tools_eq import (convert_formula_to_dict,
                        rebalance_eq,
                        compare_and_delete_keys,
                        fix_imbalance_core,
+                       reroute_obsolete_ecs
                        )
 
 from .tools_files import (file_list,
