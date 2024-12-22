@@ -25,22 +25,21 @@ if __name__ == "__main__":
 
     # Converting mol into smiles and cleaning up the data
     print("Converting mol into smiles and cleaning up the data", flush=True)
-    CBRdb.preprocess(target="C")
-    CBRdb.preprocess(target="R")
+    C_meta, C_main = CBRdb.preprocess(target="C")
+    kegg_data_R = CBRdb.preprocess(target="R")
     # Provides the kegg_data_C.csv.zip and kegg_data_R.csv.zip files
     print("Done! \n", flush=True)
 
     # Convert the atlas files into a more readable format
     print("Converting atlas files", flush=True)
-    CBRdb.clean_kegg_atlas()
-    CBRdb.clean_atlas(f_exclude_kegg=True)
-    # Provides the atlas_data_kegg_R.csv.zip and atlas_data_R.csv.zip files
+    atlas_data_R = CBRdb.clean_atlas(f_exclude_kegg=True)
+    # Provides atlas_data_R.csv.zip file
     print("Done! \n", flush=True)
 
-    # Clean up the data and remove the suspect reactions from KEGG
-    print("Getting suspect reactions", flush=True)
-    CBRdb.remove_suspect_reactions()
-    # Provides R_IDs_bad.dat
+    # Remove the suspect reactions from KEGG
+    print("Finding and removing suspect reactions", flush=True)
+    kegg_data_R = CBRdb.remove_suspect_reactions()
+    # Calls on find_suspect_reactions which adds to R_IDs_bad.dat
     print("Done! \n", flush=True)
 
     # Fix the problems with the reactions with the halogens
@@ -53,6 +52,10 @@ if __name__ == "__main__":
     CBRdb.fix_halogen_reactions(cids_dict, r_id_file=kegg_reactions_data + ".csv.zip")
     CBRdb.fix_halogen_reactions(cids_dict, r_id_file=atlas_reactions_data + ".csv.zip")
     print("Done! \n", flush=True)
+
+    # identify and merge duplicate compounds
+    dupemap = CBRdb.merge_data_sets.dedupe_compound_files(data_folder='data/')
+    # dedupe reactions given dupe compounds
 
     # Fix the reactions data
     print("Fixing the reactions data", flush=True)
