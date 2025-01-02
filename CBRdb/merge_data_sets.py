@@ -9,24 +9,53 @@ from .tools_requests import prepare_session
 
 
 def dedupe_compound_files(data_folder='../data'):
+    """
+    Deduplicates compound files by replacing duplicate compound IDs with unique ones.
+
+    Parameters:
+    data_folder (str): The folder path where the compound data files are located. Defaults to '../data'.
+
+    Returns:
+    pd.Series: A Series mapping duplicate compound IDs to unique ones.
+    """
     dupemap_file = f'{data_folder}/kegg_data_C_dupemap.csv.zip'
     C_meta_file = f'{data_folder}/kegg_data_C_metadata.csv.zip'
     C_main_file = f'{data_folder}/kegg_data_C.csv.zip'
+
+    # Read the duplicate map file
     dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:,0]
+
+    # Read and process the metadata file
     C_meta = (pd.read_csv(C_meta_file, header=0).assign(
         compound_id=lambda x: x['compound_id'].replace(dupemap))
         .drop_duplicates(subset='compound_id', keep='first')
         .sort_values(by='compound_id').reset_index(drop=True))
+
+    # Read and process the main compound file
     C_main = (pd.read_csv(C_main_file, header=0).assign(
         compound_id=lambda x: x['compound_id'].replace(dupemap))
         .drop_duplicates(subset='compound_id', keep='first')
         .sort_values(by='compound_id').reset_index(drop=True))
+
+    # Save the processed metadata and main compound files
     C_meta.to_csv(C_meta_file, index=False, compression='zip')
     C_main.to_csv(C_main_file, index=False, compression='zip')
+
     return dupemap
 
 
 def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction", request_sleep=0.2):
+    """
+    Retrieves enzyme-reaction pairs from the KEGG website and returns them as a DataFrame.
+
+    Parameters:
+    session (requests.Session): The session object to use for making the request.
+    kegg_website (str): The URL of the KEGG website to fetch the enzyme-reaction pairs from. Defaults to "https://rest.kegg.jp/link/enzyme/reaction".
+    request_sleep (float): The time to sleep between requests to avoid overloading the server. Defaults to 0.2 seconds.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing enzyme-reaction pairs with reactions as the index and enzymes as the values.
+    """
     # Get the data
     try:
         # Get the response
@@ -45,7 +74,6 @@ def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction
         # Make enzyme list for each reaction
         df = df.groupby(by='index')['ec'].apply(lambda x: '|'.join(list(x))).to_frame()
         return df
-
     else:
         # Some error in the response
         print(f"Error response {response.status_code}")
@@ -71,6 +99,17 @@ def replace_entries(df1, df2):
 def fix_ec_ids(file_ec_ids="../data/ec_ids.csv.zip",
                input_file="../data/kegg_atlas_processed_merged.csv.zip",
                output_file=None):
+    """
+    Fixes EC IDs in the reaction data by replacing them with updated EC IDs from a specified file.
+
+    Parameters:
+    file_ec_ids (str): The file path to the EC IDs CSV file. Defaults to "../data/ec_ids.csv.zip".
+    input_file (str): The file path to the input reaction data CSV file. Defaults to "../data/kegg_atlas_processed_merged.csv.zip".
+    output_file (str, optional): The file path to save the updated reaction data CSV file. If None, the input file path is used. Defaults to None.
+
+    Returns:
+    None
+    """
     # Check if the output file is specified
     if output_file is None:
         output_file = input_file
@@ -99,6 +138,18 @@ def fix_ec_ids(file_ec_ids="../data/ec_ids.csv.zip",
 
 
 def merge_and_create_unique_db(df1, df2, column_name, f_keep='first'):
+    """
+    Merges two DataFrames and drops duplicates based on a specified column.
+
+    Parameters:
+    df1 (pd.DataFrame): The first DataFrame to merge.
+    df2 (pd.DataFrame): The second DataFrame to merge.
+    column_name (str): The column name to check for duplicates.
+    f_keep (str): Which duplicates (if any) to keep. 'first' keeps the first occurrence. Defaults to 'first'.
+
+    Returns:
+    pd.DataFrame: The merged DataFrame with duplicates removed.
+    """
     # Merge the two DataFrames
     merged_df = pd.concat([df1, df2], ignore_index=True)
     # Drop duplicates, keeping the first occurrence (from df1)
@@ -107,6 +158,17 @@ def merge_and_create_unique_db(df1, df2, column_name, f_keep='first'):
 
 
 def get_nonunique_entries(df1, df2, column_name):
+    """
+    Identifies non-unique entries in the first DataFrame based on a specified column after merging with the second DataFrame.
+
+    Parameters:
+    df1 (pd.DataFrame): The first DataFrame to check for non-unique entries.
+    df2 (pd.DataFrame): The second DataFrame to merge with the first DataFrame.
+    column_name (str): The column name to check for duplicates.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the non-unique entries from the first DataFrame.
+    """
     # Merge the two DataFrames
     merged_df = pd.concat([df1, df2], ignore_index=True)
 
@@ -121,6 +183,19 @@ def merge_data(merge_col='reaction',
                kegg_file="../data/kegg_data_R_processed.csv.zip",
                atlas_file="../data/atlas_data_R_processed.csv.zip",
                out_file="../data/kegg_atlas_processed_merged.csv.zip"):
+    """
+    Merges KEGG and ATLAS data sets, drops duplicates based on a specified column, and saves the merged data.
+
+    Parameters:
+    merge_col (str): The column name to check for duplicates. Defaults to 'reaction'.
+    f_keep (str): Which duplicates (if any) to keep. 'first' keeps the first occurrence. Defaults to 'first'.
+    kegg_file (str): The file path to the KEGG data CSV file. Defaults to "../data/kegg_data_R_processed.csv.zip".
+    atlas_file (str): The file path to the ATLAS data CSV file. Defaults to "../data/atlas_data_R_processed.csv.zip".
+    out_file (str): The file path to save the merged data CSV file. Defaults to "../data/kegg_atlas_processed_merged.csv.zip".
+
+    Returns:
+    None
+    """
     # Convert the file paths to absolute paths
     kegg_file = os.path.abspath(kegg_file)
     atlas_file = os.path.abspath(atlas_file)
@@ -161,6 +236,18 @@ def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
                               atlas_file="../data/atlas_data_R_processed.csv.zip",
                               out_file="../data/atlas_kegg_processed_merged_deduped.csv.zip",
                               ec_file="../data/ec_ids.csv.zip"):
+    """
+    Merges KEGG and ATLAS data sets, standardizes compound order and EC numbers, and saves the merged data.
+
+    Parameters:
+    kegg_file (str): The file path to the KEGG data CSV file. Defaults to "../data/kegg_data_R_processed.csv.zip".
+    atlas_file (str): The file path to the ATLAS data CSV file. Defaults to "../data/atlas_data_R_processed.csv.zip".
+    out_file (str): The file path to save the merged data CSV file. Defaults to "../data/atlas_kegg_processed_merged_deduped.csv.zip".
+    ec_file (str): The file path to the EC IDs CSV file. Defaults to "../data/ec_ids.csv.zip".
+
+    Returns:
+    None
+    """
     # Convert the file paths to absolute paths
     kegg_file = os.path.abspath(kegg_file)
     atlas_file = os.path.abspath(atlas_file)

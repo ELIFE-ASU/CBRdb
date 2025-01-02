@@ -8,6 +8,16 @@ import CBRdb
 
 
 def get_compound_list(path_c="../data/kegg_data_C.csv.zip", head=None):
+    """
+    Reads the compound data from a CSV file and returns a list of compound IDs.
+
+    Parameters:
+    path_c (str): The file path to the compound data CSV file. Defaults to "../data/kegg_data_C.csv.zip".
+    head (int, optional): The number of rows to read from the CSV file. If None, all rows are read. Defaults to None.
+
+    Returns:
+    list: A list of compound IDs from the CSV file.
+    """
     data_c = pd.read_csv(os.path.abspath(path_c))
     if head is not None:
         data_c = data_c.head(head)
@@ -15,6 +25,16 @@ def get_compound_list(path_c="../data/kegg_data_C.csv.zip", head=None):
 
 
 def generate_nodes_from_compounds(compound_list, graph=None):
+    """
+    Generates nodes in the graph based on the given list of compounds.
+
+    Parameters:
+    compound_list (list): A list of compound IDs.
+    graph (nx.Graph, optional): A NetworkX graph where nodes will be added. If None, a new graph is created. Defaults to None.
+
+    Returns:
+    nx.Graph: The updated graph with nodes added based on the compounds.
+    """
     if graph is None:
         graph = nx.Graph()
     for compound_id in compound_list:
@@ -23,6 +43,16 @@ def generate_nodes_from_compounds(compound_list, graph=None):
 
 
 def get_reaction_list(path_r="../data/kegg_data_R.csv.zip", head=None):
+    """
+    Reads the reaction data from a CSV file and returns a list of reactions.
+
+    Parameters:
+    path_r (str): The file path to the reaction data CSV file. Defaults to "../data/kegg_data_R.csv.zip".
+    head (int, optional): The number of rows to read from the CSV file. If None, all rows are read. Defaults to None.
+
+    Returns:
+    list: A list of reaction strings from the CSV file.
+    """
     data_r = pd.read_csv(os.path.abspath(path_r))
     if head is not None:
         data_r = data_r.head(head)
@@ -30,14 +60,29 @@ def get_reaction_list(path_r="../data/kegg_data_R.csv.zip", head=None):
 
 
 def generate_edges_from_reactions(reaction_list, graph, f_print=True):
+    """
+    Generates edges in the graph based on the given list of reactions.
+
+    Parameters:
+    reaction_list (list): A list of reaction strings.
+    graph (nx.Graph): A NetworkX graph where edges will be added.
+    f_print (bool): A flag to enable or disable printing of debug information.
+
+    Returns:
+    nx.Graph: The updated graph with edges added based on the reactions.
+    """
     for reaction in reaction_list:
+        # Convert the reaction string to reactants and products
         reactants, products = CBRdb.eq_to_dict(reaction)
-        print(f"Reaction: {reaction}", flush=True)
-        print(f"Reactants: {reactants}", flush=True)
-        print(f"Products: {products}", flush=True)
+        if f_print:
+            print(f"Reaction: {reaction}", flush=True)
+            print(f"Reactants: {reactants}", flush=True)
+            print(f"Products: {products}", flush=True)
+
+        # Iterate over each reactant and product to add edges
         for reactant in reactants:
             for product in products:
-                # check if the reactant and product are in the graph
+                # Check if both reactant and product are in the graph
                 if reactant in graph.nodes and product in graph.nodes:
                     graph.add_edge(reactant, product)
                     if f_print:
@@ -122,8 +167,6 @@ if __name__ == "__main__":
 
     reaction_list = get_reaction_list(head=10)
     graph = generate_edges_from_reactions(reaction_list, graph)
-
-    # graph.add_edges_from([(1, 2), (2, 3), (4, 5)])
 
     draw_graph(graph)
     pruned_graph = prune_nodes_with_no_edges(graph)

@@ -100,16 +100,30 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     print('Compound structural-info path: ' + outfile, flush=True)
     return df
 
+
 def _identify_duplicate_compounds(C_main):
+    """
+    Identifies duplicate compounds in a DataFrame and maps them to new unique IDs.
+
+    Parameters:
+    C_main (pd.DataFrame): The main DataFrame containing compound data with 'compound_id' and 'smiles' columns.
+
+    Returns:
+    pd.Series: A Series mapping old compound IDs to new unique compound IDs.
+    """
     id_num = C_main.reset_index()['compound_id'].str.lstrip('C').astype(int)
     count_back_from = id_num.loc[id_num.diff().idxmax()] - 1
-    possible_dupes = (C_main.query('~smiles.str.contains("*", regex=False) & smiles.duplicated(keep=False)').reset_index()
-                    .groupby('smiles')['compound_id'].apply(list).reset_index(drop=True)
-                    .explode().reset_index(name='id_old').rename({'index': 'id_new'}, axis=1))
-    possible_dupes['id_new'] = 'C'+(count_back_from - possible_dupes['id_new']).astype(str)
+    possible_dupes = (
+        C_main.query('~smiles.str.contains("*", regex=False) & smiles.duplicated(keep=False)').reset_index()
+        .groupby('smiles')['compound_id'].apply(list).reset_index(drop=True)
+        .explode().reset_index(name='id_old').rename({'index': 'id_new'}, axis=1))
+    possible_dupes['id_new'] = 'C' + (count_back_from - possible_dupes['id_new']).astype(str)
     possible_dupes = dict(zip(possible_dupes['id_old'], possible_dupes['id_new']))
-    compound_mapping = pd.Series(possible_dupes).reset_index().groupby(by=0)['index'].apply(lambda x: ' '.join(sorted(list(x))))
-    compound_mapping = compound_mapping.str.split().explode().rename('old_id').reset_index().rename({0: 'new_id'}, axis=1).set_index('old_id')
+    compound_mapping = pd.Series(possible_dupes).reset_index().groupby(by=0)['index'].apply(
+        lambda x: ' '.join(sorted(list(x))))
+    compound_mapping = compound_mapping.str.split().explode().rename('old_id').reset_index().rename({0: 'new_id'},
+                                                                                                    axis=1).set_index(
+        'old_id')
     return compound_mapping['new_id']
 
 

@@ -1,10 +1,10 @@
 import copy
-import re
 import os
+import re
+
 import chemparse
 import pandas as pd
 import sympy as sp
-from sqlalchemy.sql.operators import truediv
 from chempy import balance_stoichiometry
 
 from .lets_get_kegg import infer_kegg_enzyme_pointers
@@ -985,4 +985,3 @@ def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
         eq_right += f" + {inject}"
     # Update eq_line with the new equation
     return f"{eq_left} <=> {eq_right}"
-
