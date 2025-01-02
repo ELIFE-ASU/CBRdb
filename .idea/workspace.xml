@@ -6,8 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="c852b1dd-75f2-4327-9c7b-0d6b114e9a18" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/kegg_data_R_processed.csv.zip" beforeDir="false" afterPath="$PROJECT_DIR$/data/kegg_data_R_processed.csv.zip" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/run_all.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/run_all.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/general.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/general.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,43 +24,67 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python tests.Python tests for tests_general.test_contains_var_list_check.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_convert_formula_to_dict.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_eq_balanced.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_eq_standard.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_eq_to_dict.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_eq_to_symbols.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_get_compounds_with_elements.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_get_formulas_from_eq.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_get_small_compounds.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_inject_compounds.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_kitchen_sink.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_missing_elements.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_missing_formulas.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_rebalance_eq.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_side_to_dict.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests_general.test_strip_ionic.executor&quot;: &quot;Run&quot;,
-    &quot;Python.fix_reactions_data.executor&quot;: &quot;Run&quot;,
-    &quot;Python.run_all.executor&quot;: &quot;Run&quot;,
-    &quot;Python.tests_general.executor&quot;: &quot;Run&quot;,
-    &quot;Python.tools_mp.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python tests.Python tests for tests_general.test_contains_var_list_check.executor": "Run",
+    "Python tests.Python tests for tests_general.test_convert_formula_to_dict.executor": "Run",
+    "Python tests.Python tests for tests_general.test_eq_balanced.executor": "Run",
+    "Python tests.Python tests for tests_general.test_eq_standard.executor": "Run",
+    "Python tests.Python tests for tests_general.test_eq_to_dict.executor": "Run",
+    "Python tests.Python tests for tests_general.test_eq_to_symbols.executor": "Run",
+    "Python tests.Python tests for tests_general.test_get_compounds_with_elements.executor": "Run",
+    "Python tests.Python tests for tests_general.test_get_formulas_from_eq.executor": "Run",
+    "Python tests.Python tests for tests_general.test_get_small_compounds.executor": "Run",
+    "Python tests.Python tests for tests_general.test_inject_compounds.executor": "Run",
+    "Python tests.Python tests for tests_general.test_kitchen_sink.executor": "Run",
+    "Python tests.Python tests for tests_general.test_missing_elements.executor": "Run",
+    "Python tests.Python tests for tests_general.test_missing_formulas.executor": "Run",
+    "Python tests.Python tests for tests_general.test_rebalance_eq.executor": "Run",
+    "Python tests.Python tests for tests_general.test_side_to_dict.executor": "Run",
+    "Python tests.Python tests for tests_general.test_strip_ionic.executor": "Run",
+    "Python.fix_reactions_data.executor": "Run",
+    "Python.general.executor": "Run",
+    "Python.run_all.executor": "Run",
+    "Python.tests_general.executor": "Run",
+    "Python.tools_mp.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
-  <component name="RunManager" selected="Python.run_all">
+}]]></component>
+  <component name="RunManager" selected="Python.general">
+    <configuration name="general" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CBRdb" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/general.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="run_all" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CBRdb" />
       <option name="ENV_FILES" value="" />
@@ -108,22 +131,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for tests_general.test_get_small_compounds" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="CBRdb" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests_general.test_get_small_compounds&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
     <configuration name="Python tests for tests_general.test_inject_compounds" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="CBRdb" />
       <option name="ENV_FILES" value="" />
@@ -158,11 +165,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.general" />
         <item itemvalue="Python.run_all" />
         <item itemvalue="Python.tools_mp" />
         <item itemvalue="Python tests.Python tests for tests_general.test_kitchen_sink" />
         <item itemvalue="Python tests.Python tests for tests_general.test_inject_compounds" />
-        <item itemvalue="Python tests.Python tests for tests_general.test_get_small_compounds" />
       </list>
     </recent_temporary>
   </component>
@@ -194,6 +201,7 @@
       <workItem from="1734718500600" duration="1189000" />
       <workItem from="1734723153154" duration="9634000" />
       <workItem from="1734798164796" duration="1030000" />
+      <workItem from="1735842032879" duration="428000" />
     </task>
     <servers />
   </component>

@@ -15,8 +15,42 @@ import rdkit.Chem as Chem
 
 import re
 
+
+def merge_atlas_kegg_r(atlas_file="../data/atlas_data_R.csv.zip", kegg_file="../data/kegg_data_R.csv.zip"):
+    atlas_data = pd.read_csv(atlas_file, compression='zip')
+    atlas_data = atlas_data.sort_values(by="kegg_id")
+
+    print("id", atlas_data["id"].tolist(), flush=True)
+    print("data loaded", flush=True)
+    print("data shape", atlas_data.shape, flush=True)
+    print("data columns", atlas_data.columns, flush=True)
+
+    # Get the max index
+    max_index = atlas_data["kegg_id"].tolist()
+    print(f"max index: {max_index}", flush=True)
+
+    # Load the kegg data
+    kegg_data = pd.read_csv(kegg_file, compression='zip')
+    kegg_data = kegg_data.sort_values(by="id")
+    print("data loaded", flush=True)
+    print("data shape", kegg_data.shape, flush=True)
+    print("data columns", kegg_data.columns, flush=True)
+
+    # get the indexes that are not in the atlas data set but are in the kegg data set
+    missing_indexes = kegg_data.index.difference(atlas_data.index)
+    print(f"missing indexes: {missing_indexes}", flush=True)
+
+
+
+    return None
+
+
 if __name__ == "__main__":
     print("Program started", flush=True)
+    merge_atlas_kegg_r()
+    exit()
+
+
     # r = Reaction.from_string("H2O -> H+ + OH-")
     # # Balance the reaction
     # r_balanced = balance_stoichiometry(r)
