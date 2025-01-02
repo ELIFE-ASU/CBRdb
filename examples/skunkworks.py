@@ -40,8 +40,6 @@ def merge_atlas_kegg_r(atlas_file="../data/atlas_data_R.csv.zip", kegg_file="../
     missing_indexes = kegg_data.index.difference(atlas_data.index)
     print(f"missing indexes: {missing_indexes}", flush=True)
 
-
-
     return None
 
 
@@ -49,7 +47,6 @@ if __name__ == "__main__":
     print("Program started", flush=True)
     merge_atlas_kegg_r()
     exit()
-
 
     # r = Reaction.from_string("H2O -> H+ + OH-")
     # # Balance the reaction
