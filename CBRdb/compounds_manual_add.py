@@ -25,8 +25,8 @@ def compounds_manual_add(molless_path='../data/C_IDs_bad.dat',
     target_dir = os.path.abspath(target_dir)
     good_file = os.path.abspath(good_file)
 
-    data = pd.read_csv(molless_path)
-    data = data["# Bad IDs"].tolist()
+    data = pd.read_csv(molless_path, skipinitialspace=True).query('reason != "invalid"')
+    data = data["# Bad IDs"].drop_duplicates().tolist()
     print("data loaded", flush=True)
     print("data head", data[:4], flush=True)
 
