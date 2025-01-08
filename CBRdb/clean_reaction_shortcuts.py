@@ -225,7 +225,7 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
         data_old['reason'] = data_old['reason'].str.split('+')
         data_old = data_old.explode('reason')
         data = pd.concat([data_old, data], ignore_index=True)
-    data = data.groupby(by='id')['reason'].apply(lambda x: '+'.join(set(sorted(list(x)))))
+    data = data.groupby(by='id')['reason'].apply(lambda x: '+'.join(sorted(list(set(x)))))
     data = data.reset_index().drop_duplicates().sort_values(by='id').set_index('id')
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'))
     return data

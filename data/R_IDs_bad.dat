@@ -33,7 +33,7 @@ R00390,general
 R00391,general
 R00392,general
 R00395,general
-R00423,incomplete+general
+R00423,general+incomplete
 R00424,shortcut
 R00459,shortcut
 R00493,general
@@ -95,7 +95,7 @@ R01339,general
 R01340,general
 R01368,general
 R01369,general
-R01400,incomplete+general
+R01400,general+incomplete
 R01409,general
 R01427,incomplete
 R01474,incomplete
@@ -528,7 +528,7 @@ R08678,shortcut
 R08679,general
 R08680,general
 R08681,general
-R08682,incomplete+general
+R08682,general+incomplete
 R08683,general
 R08684,general
 R08685,shortcut
@@ -546,7 +546,7 @@ R08769,general
 R08770,general
 R08771,general
 R08772,general
-R08792,incomplete+general+shortcut
+R08792,general+incomplete+shortcut
 R08798,incomplete
 R08799,incomplete
 R08800,incomplete
