@@ -294,7 +294,7 @@ def download_data(target="R",
     return None
 
 
-def infer_kegg_enzyme_pointers(outfile=r'data/kegg_enzyme_pointers.csv.zip'):
+def infer_kegg_enzyme_pointers(outfile=r'../data/kegg_enzyme_pointers.csv.zip'):
     """
     Uses KEGG's enzyme list to infer mapping between obsolete ECs and active ones.
 
@@ -309,7 +309,6 @@ def infer_kegg_enzyme_pointers(outfile=r'data/kegg_enzyme_pointers.csv.zip'):
 
     try:  # get EC serial numbers and names from KEGG
         ec_serials = pd.read_table('https://rest.kegg.jp/list/enzyme', header=None, names=['ec', 'name'], index_col=0)
-        ec_serials.to_csv(outfile)
     except:
         print("Error: could not connect to KEGG API", flush=True)
         raise ConnectionError
@@ -334,6 +333,6 @@ def infer_kegg_enzyme_pointers(outfile=r'data/kegg_enzyme_pointers.csv.zip'):
     enzyme_pointers['rerouted'] = enzyme_pointers['original_ec'] != enzyme_pointers['updated_ec']
     # write output
     enzyme_pointers = enzyme_pointers.set_index('original_ec')
-    enzyme_pointers.to_csv('data/kegg_enzyme_pointers.csv.zip', compression='zip')
+    enzyme_pointers.to_csv(outfile, compression='zip')
 
     return enzyme_pointers
