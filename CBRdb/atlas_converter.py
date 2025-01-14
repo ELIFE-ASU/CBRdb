@@ -80,8 +80,9 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
         raise FileNotFoundError
 
     # Open the file. For header description, see p.6: https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf
-    df = (pd.read_table(in_file, header=None, sep=';', usecols=[0, 1, 3, 4],
-                        names=['id', 'kegg_id', 'reaction', 'reaction_rule', ])
+    df = (pd.read_table(in_file, header=None, sep=';', usecols=[0, 1, 3, 4, 5, 6], 
+                        converters={5: lambda x: -1.0*pd.to_numeric(x, errors='coerce')}, # sign reversed from pdf above
+                        names=['id', 'kegg_id', 'reaction', 'reaction_rule', 'dG_kJ/mol', 'dG_err'])
           .assign(id=lambda x: 'A' + x.id.astype(str).str.zfill(6)))  # format ATLAS reactions as: AXXXXXX
 
     # Extract each reaction's list of 3rd-level EC#s. Remove non-conforming EC#s (e.g. not just numbers and -).
