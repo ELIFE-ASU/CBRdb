@@ -5,7 +5,6 @@ from io import StringIO
 import pandas as pd
 import requests
 
-from .tools_requests import prepare_session
 
 
 def dedupe_compound_files(data_folder='../data'):
@@ -46,41 +45,6 @@ def dedupe_compound_files(data_folder='../data'):
     return dupe_groups
 
 
-def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction", request_sleep=0.2):
-    """
-    Retrieves enzyme-reaction pairs from the KEGG website and returns them as a DataFrame.
-
-    Parameters:
-    session (requests.Session): The session object to use for making the request.
-    kegg_website (str): The URL of the KEGG website to fetch the enzyme-reaction pairs from. Defaults to "https://rest.kegg.jp/link/enzyme/reaction".
-    request_sleep (float): The time to sleep between requests to avoid overloading the server. Defaults to 0.2 seconds.
-
-    Returns:
-    pd.DataFrame: A DataFrame containing enzyme-reaction pairs with reactions as the index and enzymes as the values.
-    """
-    # Get the data
-    try:
-        # Get the response
-        response = session.get(f"{kegg_website}", timeout=10.0)
-        # Limit the number of requests
-        time.sleep(request_sleep)
-    except requests.exceptions.RequestException as e:
-        # Some error in the connection
-        print(f"Error connection exception {e}", flush=True)
-        exit()
-    # Check if the response is ok
-    if response.ok:
-        # Get all enzyme-reaction pairs from KEGG
-        df = (pd.read_table(StringIO(response.text), header=None, index_col=None, names=['index', 'ec'])
-              .applymap(lambda x: x.split(':')[1]))
-        # Make enzyme list for each reaction
-        df = df.groupby(by='index')['ec'].apply(lambda x: '|'.join(list(x))).to_frame()
-        return df
-    else:
-        # Some error in the response
-        print(f"Error response {response.status_code}")
-        exit()
-
 
 def replace_entries(df1, df2):
     """
@@ -97,46 +61,6 @@ def replace_entries(df1, df2):
     df1.update(df2)
     return df1
 
-
-def fix_ec_ids(file_ec_ids="../data/ec_ids.csv.zip",
-               input_file="../data/kegg_atlas_processed_merged.csv.zip",
-               output_file=None):
-    """
-    Fixes EC IDs in the reaction data by replacing them with updated EC IDs from a specified file.
-
-    Parameters:
-    file_ec_ids (str): The file path to the EC IDs CSV file. Defaults to "../data/ec_ids.csv.zip".
-    input_file (str): The file path to the input reaction data CSV file. Defaults to "../data/kegg_atlas_processed_merged.csv.zip".
-    output_file (str, optional): The file path to save the updated reaction data CSV file. If None, the input file path is used. Defaults to None.
-
-    Returns:
-    None
-    """
-    # Check if the output file is specified
-    if output_file is None:
-        output_file = input_file
-    # Convert the file paths to absolute paths
-    file_ec_ids = os.path.abspath(file_ec_ids)
-    input_file = os.path.abspath(input_file)
-    output_file = os.path.abspath(output_file)
-
-    # Grab the EC data from the KEGG website
-    if not os.path.exists(file_ec_ids):
-        print("Getting the EC data from the KEGG website", flush=True)
-        session = prepare_session()
-        data = get_ec_ids(session)
-        # Write the data to a file
-        data.to_csv(file_ec_ids, compression='zip', encoding='utf-8')
-        print("EC data saved! \n", flush=True)
-    # Read the data from the file
-    data_ec = pd.read_csv(file_ec_ids, compression='zip')
-    # Read the reaction data
-    data_reactions = pd.read_csv(input_file, compression='zip')
-    # Replace the entries in the reaction data
-    print("Replacing the EC entries in the reaction data", flush=True)
-    updated_df = replace_entries(data_reactions, data_ec)
-    updated_df.to_csv(output_file, compression='zip', encoding='utf-8')
-    print("EC data replaced! \n", flush=True)
 
 
 def merge_and_create_unique_db(df1, df2, column_name, f_keep='first'):
@@ -237,7 +161,7 @@ def merge_data(merge_col='reaction',
 def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
                               atlas_file="../data/atlas_data_R_processed.csv.zip",
                               out_file="../data/atlas_kegg_processed_merged_deduped.csv.zip",
-                              ec_file="../data/ec_ids.csv.zip"):
+                              ):
     """
     Merges KEGG and ATLAS data sets, standardizes compound order and EC numbers, and saves the merged data.
 
@@ -245,7 +169,6 @@ def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
     kegg_file (str): The file path to the KEGG data CSV file. Defaults to "../data/kegg_data_R_processed.csv.zip".
     atlas_file (str): The file path to the ATLAS data CSV file. Defaults to "../data/atlas_data_R_processed.csv.zip".
     out_file (str): The file path to save the merged data CSV file. Defaults to "../data/atlas_kegg_processed_merged_deduped.csv.zip".
-    ec_file (str): The file path to the EC IDs CSV file. Defaults to "../data/ec_ids.csv.zip".
 
     Returns:
     None
@@ -254,7 +177,6 @@ def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
     kegg_file = os.path.abspath(kegg_file)
     atlas_file = os.path.abspath(atlas_file)
     out_file = os.path.abspath(out_file)
-    ec_file = os.path.abspath(ec_file)
 
     print("Merging the KEGG and ATLAS data sets", flush=True)
     print(f"KEGG file: {kegg_file}", flush=True)
@@ -278,8 +200,6 @@ def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
         [i for i in single_sep(x).replace('(rev)', '').split('|')
          if '-' not in i and i.count('.') == 3 and i.split('.')[-1].isnumeric()]))))  # some end in e.g. B##
     atlas_data['ec'] = atlas_data['ec'].apply(extract_ec_serial_numbers)
-    kegg_ecs = pd.read_csv(ec_file, compression='zip', index_col=0)['ec']
-    kegg_data['ec'] = kegg_data.index.map(kegg_ecs).fillna('')  # until kegg_data_R_processed.csv.zip is fixed
 
     print('Combining the datasets and preserving EC# sources', flush=True)
     concat_db = pd.concat([kegg_data, atlas_data], axis=0).reset_index()
