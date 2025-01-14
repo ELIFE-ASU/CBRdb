@@ -219,7 +219,7 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
     reactions_overall = reactions.query('overall.notna()')['id'].tolist()
     print('Reactions that are overall:', len(reactions_overall), flush=True)
 
-    reactions = reactions.set_index('id')
+    reactions = reactions.set_index('id').replace('incomplete', 'incomplete reaction')
     reactions_incomplete = get_reaction_ids_substr(reactions, substr="incomplete reaction")
     print('Reactions with incomplete data:', len(reactions_incomplete), flush=True)
 
