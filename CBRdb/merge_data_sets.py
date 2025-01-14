@@ -16,7 +16,7 @@ def dedupe_compound_files(data_folder='../data'):
     data_folder (str): The folder path where the compound data files are located. Defaults to '../data'.
 
     Returns:
-    pd.Series: A Series mapping duplicate compound IDs to unique ones.
+    pd.Series: Series where values are group of KEGG IDs, and indices are each group's new unique ID.
     """
     dupemap_file = f'{data_folder}/kegg_data_C_dupemap.csv.zip'
     C_meta_file = f'{data_folder}/kegg_data_C_metadata.csv.zip'
@@ -41,7 +41,9 @@ def dedupe_compound_files(data_folder='../data'):
     C_meta.to_csv(C_meta_file, index=False, compression='zip')
     C_main.to_csv(C_main_file, index=False, compression='zip')
 
-    return dupemap
+    dupe_groups = dupemap.to_frame().reset_index().groupby('new_id')['old_id'].apply(list)
+    
+    return dupe_groups
 
 
 def get_ec_ids(session, kegg_website=r"https://rest.kegg.jp/link/enzyme/reaction", request_sleep=0.2):

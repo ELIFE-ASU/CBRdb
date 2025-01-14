@@ -54,7 +54,7 @@ if __name__ == "__main__":
     print("Done! \n", flush=True)
 
     # identify and merge duplicate compounds
-    dupemap = CBRdb.merge_data_sets.dedupe_compound_files(data_folder='data/')
+    dupe_groups = CBRdb.merge_data_sets.dedupe_compound_files()
     # dedupe reactions given dupe compounds
 
     # Fix the reactions data
