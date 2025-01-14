@@ -187,7 +187,8 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
                       .ffill(axis=0).set_index('id')  # indented lines relate to last-appearing header
                            ['line'].str.strip().groupby(level=0).apply('  ;  '.join)
                        # combine all lines for each header
-                       for path in paths}).drop('///', errors='ignore').T  # indexes are reaction IDs; cols are info types
+                       for path in paths}).drop('///',
+                                                errors='ignore').T  # indexes are reaction IDs; cols are info types
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).drop(  # remove columns not needed currently
         ['reference', 'authors', 'journal', 'title', 'brite', 'definition'], axis=1)
     if rm_gly:

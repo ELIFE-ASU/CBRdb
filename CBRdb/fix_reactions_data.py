@@ -1,15 +1,14 @@
-import time
 import os
+import time
+
 import pandas as pd
 # import dask.dataframe as dd
 import swifter
-import multiprocessing as mp
 from chempy import balance_stoichiometry
 
 from .tools_eq import (get_eq,
                        get_elements_from_eq,
                        compare_dict_values,
-                       check_missing_formulas,
                        check_missing_elements,
                        check_eq_unbalanced,
                        get_missing_elements,
@@ -21,7 +20,6 @@ from .tools_eq import (get_eq,
                        fix_imbalance_core,
                        inject_compounds,
                        )
-
 from .tools_mols import (get_small_compounds, get_small_compounds_all, get_compounds_with_matching_elements)
 
 

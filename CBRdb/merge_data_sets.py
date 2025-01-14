@@ -23,19 +23,19 @@ def dedupe_compound_files(data_folder='../data'):
     C_main_file = f'{data_folder}/kegg_data_C.csv.zip'
 
     # Read the duplicate map file
-    dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:,0]
+    dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:, 0]
 
     # Read and process the metadata file
     C_meta = (pd.read_csv(C_meta_file, header=0).assign(
         compound_id=lambda x: x['compound_id'].replace(dupemap))
-        .drop_duplicates(subset='compound_id', keep='first')
-        .sort_values(by='compound_id').reset_index(drop=True))
+              .drop_duplicates(subset='compound_id', keep='first')
+              .sort_values(by='compound_id').reset_index(drop=True))
 
     # Read and process the main compound file
     C_main = (pd.read_csv(C_main_file, header=0).assign(
         compound_id=lambda x: x['compound_id'].replace(dupemap))
-        .drop_duplicates(subset='compound_id', keep='first')
-        .sort_values(by='compound_id').reset_index(drop=True))
+              .drop_duplicates(subset='compound_id', keep='first')
+              .sort_values(by='compound_id').reset_index(drop=True))
 
     # Save the processed metadata and main compound files
     C_meta.to_csv(C_meta_file, index=False, compression='zip')

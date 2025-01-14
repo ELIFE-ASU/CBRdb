@@ -1,5 +1,6 @@
 import os
 import time
+
 import pandas as pd
 import requests
 
@@ -293,7 +294,7 @@ def download_data(target="R",
     return None
 
 
-def infer_kegg_enzyme_pointers(outfile = r'data/kegg_enzyme_pointers.csv.zip'):
+def infer_kegg_enzyme_pointers(outfile=r'data/kegg_enzyme_pointers.csv.zip'):
     """
     Uses KEGG's enzyme list to infer mapping between obsolete ECs and active ones.
 
@@ -305,24 +306,29 @@ def infer_kegg_enzyme_pointers(outfile = r'data/kegg_enzyme_pointers.csv.zip'):
     """
     from CBRdb.tools_eq import replace_substrings
     outfile = os.path.abspath(outfile)
-    
-    try: # get EC serial numbers and names from KEGG
-        ec_serials = pd.read_table('https://rest.kegg.jp/list/enzyme', header=None, names=['ec','name'], index_col=0) 
+
+    try:  # get EC serial numbers and names from KEGG
+        ec_serials = pd.read_table('https://rest.kegg.jp/list/enzyme', header=None, names=['ec', 'name'], index_col=0)
         ec_serials.to_csv(outfile)
     except:
         print("Error: could not connect to KEGG API", flush=True)
         raise ConnectionError
-    
-    self_id_set = pd.Series(index=ec_serials.index, data=ec_serials.index.map(lambda x: {x})) # when in doubt, each EC points to itself
-    ecs_deleted = pd.Series(index=ec_serials.query('name.str.contains("eleted")').index, data=' ')  # deleted ECs point nowhere
+
+    self_id_set = pd.Series(index=ec_serials.index,
+                            data=ec_serials.index.map(lambda x: {x}))  # when in doubt, each EC points to itself
+    ecs_deleted = pd.Series(index=ec_serials.query('name.str.contains("eleted")').index,
+                            data=' ')  # deleted ECs point nowhere
     ecs_transferred = ec_serials.query('name.str.contains("ransferred")')['name'].str.strip('Transferred to '
-                        ).str.findall(r'(\d+\.\d+\.\d+\.\d+)').map(set)  # transferred ECs point to their transfer-targets
-    ecs_transferred = ((ecs_transferred - self_id_set.loc[ecs_transferred.index]) # from transfer targets, remove self-references
-                            - set(ecs_deleted.index)).apply(' '.join) # and references to deleted ECs 
+                                                                                            ).str.findall(
+        r'(\d+\.\d+\.\d+\.\d+)').map(set)  # transferred ECs point to their transfer-targets
+    ecs_transferred = ((ecs_transferred - self_id_set.loc[
+        ecs_transferred.index])  # from transfer targets, remove self-references
+                       - set(ecs_deleted.index)).apply(' '.join)  # and references to deleted ECs
     # some transferred ECs point to another transferred EC. resolve these.
     ecs_transferred = ecs_transferred.map(lambda x: replace_substrings(x, ecs_transferred.to_dict()))
     # now: replace transferred ECs' self-pointers with pointers to transfer targets. remove all pointers to deleted enzymes. standardize separators.
-    enzyme_pointers = (self_id_set.apply(''.join).replace(ecs_transferred)).replace(ecs_deleted).str.split().apply(lambda x: ' '.join(set(x)))
+    enzyme_pointers = (self_id_set.apply(''.join).replace(ecs_transferred)).replace(ecs_deleted).str.split().apply(
+        lambda x: ' '.join(set(x)))
     enzyme_pointers = enzyme_pointers.rename_axis('original_ec').rename('updated_ec').reset_index()
     # tag whether enzyme has been rerouted or not. query on "rerouted" before passing to CBRdb.tools_eq.replace_substrings
     enzyme_pointers['rerouted'] = enzyme_pointers['original_ec'] != enzyme_pointers['updated_ec']

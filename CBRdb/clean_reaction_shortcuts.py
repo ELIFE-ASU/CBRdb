@@ -149,20 +149,22 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
     """
     reaction_pattern = r'r\d{5}'
     keep_acceptable_nonalnum_chars = lambda x: ''.join([i for i in x if i.isalnum() or i in '-+ ;'])
-    str_replacement_order = {'step':'-step', '--':'-', ' -step':' step', 'two':'2', 'three':'3', 'four':'4', 'multi':'0', ' + ':'+',
-                            'similar': ';similar', 'incomplete reaction':'', 'unclear reaction':'', 'probably':'possibly', 
-                            'possibly':';possibly', ';possibly ;similar': ';possibly similar'}
+    str_replacement_order = {'step': '-step', '--': '-', ' -step': ' step', 'two': '2', 'three': '3', 'four': '4',
+                             'multi': '0', ' + ': '+',
+                             'similar': ';similar', 'incomplete reaction': '', 'unclear reaction': '',
+                             'probably': 'possibly',
+                             'possibly': ';possibly', ';possibly ;similar': ';possibly similar'}
 
-    def _replace_strings(s:str, replacements:dict):
-        for k,v in replacements.items():
-            s = s.replace(k,v)
+    def _replace_strings(s: str, replacements: dict):
+        for k, v in replacements.items():
+            s = s.replace(k, v)
         return s
 
-    def _strip_col1_from_col2(df:pd.DataFrame, col1:str, col2:str):
+    def _strip_col1_from_col2(df: pd.DataFrame, col1: str, col2: str):
         for i in df.index:
-            df.at[i,col2] = df.at[i,col2].replace(df.at[i,col1], '').strip()
+            df.at[i, col2] = df.at[i, col2].replace(df.at[i, col1], '').strip()
         return df
-    
+
     global reactions, OK
     OK = ['STEP', 'REACTION', 'SIMILAR', 'TO', 'SEE', '+', r'R\d{5}']
     # Prepare the full path of the files
@@ -171,33 +173,44 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
     get_multistep_details = False
 
     # Trickiest "shortcuts" to identify: multi-step reactions, compressing other reaction IDs into a net reaction.
-    rmulti = ((reactions.dropna(subset='comment')[['id','comment']].copy(deep=True) # info is contained in unstructured comment field
-        .apply(lambda x: x.str.lower().str.replace('eaction;', 'eaction, ')) # compress two-line reaction attributes into one line
-        .map(keep_acceptable_nonalnum_chars, na_action='ignore') # remove uninformative formatting
-        .set_index('id')['comment'].str.split(';').explode().reset_index() # one reaction attribute per line --> split by lines
-        .query('comment.str.contains(@reaction_pattern) & comment.str.lower().str.contains("step")') # keep only multi-step parameters
-        .sort_values(by='id').set_index('id'))['comment'].apply( # sort by reaction ID
-            lambda x: _replace_strings(x, str_replacement_order)) # standardize formatting
-            .explode().str.split('reaction', expand=True).reset_index() # general format per line: N-step reaction, see: RXXXXX+RXXXXX
-            .rename(columns={'id': 'id', 0: 'n_steps', 1: 'parts'}) # number of steps, parts themselves
-            .query('~n_steps.str.contains("of|possibly|one")')) # remove entries that are "part of" a multi-step reaction or "possibly" multi-step
-    rmulti = _strip_col1_from_col2(rmulti, 'id', 'parts').apply(lambda x: x.str.strip()) # ensure that parts column contains only constituent steps
-    rmulti['parts'] = rmulti['parts'].str.replace(' or ',';').str.split(';') # split step batches into separate lines
-    rmulti = (rmulti.explode('parts').query("parts.str.count(@reaction_pattern)>1 & ~parts.str.contains('possibly|similar')") # remove lines with comparisons not step lists
-            .sort_values(by='n_steps', ascending=False)).reset_index(drop=True).map(lambda x: x.upper()).query('id!="R10693"') # this is a comparison instance
-    rmulti['parts'] = rmulti['parts'].str.replace('R08637','R11101+R11098') # this is a multistep reaction itself
+    rmulti = ((reactions.dropna(subset='comment')[['id', 'comment']].copy(
+        deep=True)  # info is contained in unstructured comment field
+               .apply(lambda x: x.str.lower().str.replace('eaction;',
+                                                          'eaction, '))  # compress two-line reaction attributes into one line
+               .map(keep_acceptable_nonalnum_chars, na_action='ignore')  # remove uninformative formatting
+               .set_index('id')['comment'].str.split(
+        ';').explode().reset_index()  # one reaction attribute per line --> split by lines
+               .query(
+        'comment.str.contains(@reaction_pattern) & comment.str.lower().str.contains("step")')  # keep only multi-step parameters
+               .sort_values(by='id').set_index('id'))['comment'].apply(  # sort by reaction ID
+        lambda x: _replace_strings(x, str_replacement_order))  # standardize formatting
+              .explode().str.split('reaction',
+                                   expand=True).reset_index()  # general format per line: N-step reaction, see: RXXXXX+RXXXXX
+              .rename(columns={'id': 'id', 0: 'n_steps', 1: 'parts'})  # number of steps, parts themselves
+              .query(
+        '~n_steps.str.contains("of|possibly|one")'))  # remove entries that are "part of" a multi-step reaction or "possibly" multi-step
+    rmulti = _strip_col1_from_col2(rmulti, 'id', 'parts').apply(
+        lambda x: x.str.strip())  # ensure that parts column contains only constituent steps
+    rmulti['parts'] = rmulti['parts'].str.replace(' or ', ';').str.split(';')  # split step batches into separate lines
+    rmulti = (rmulti.explode('parts').query(
+        "parts.str.count(@reaction_pattern)>1 & ~parts.str.contains('possibly|similar')")  # remove lines with comparisons not step lists
+              .sort_values(by='n_steps', ascending=False)).reset_index(drop=True).map(lambda x: x.upper()).query(
+        'id!="R10693"')  # this is a comparison instance
+    rmulti['parts'] = rmulti['parts'].str.replace('R08637', 'R11101+R11098')  # this is a multistep reaction itself
 
-    if get_multistep_details: # optional: extract details of multi-step reactions
-        rmulti['parts'] = rmulti['parts'].apply(lambda x: ' '.join([i.lstrip('+') for i in x.split() if 'R1' in i or 'R0' in i]))
-        rmulti.update(rmulti.query('~parts.str.contains("+", regex=False)').assign(parts=lambda x: x['parts'].str.split().apply('+'.join)))
+    if get_multistep_details:  # optional: extract details of multi-step reactions
+        rmulti['parts'] = rmulti['parts'].apply(
+            lambda x: ' '.join([i.lstrip('+') for i in x.split() if 'R1' in i or 'R0' in i]))
+        rmulti.update(rmulti.query('~parts.str.contains("+", regex=False)').assign(
+            parts=lambda x: x['parts'].str.split().apply('+'.join)))
         rmulti['parts'] = rmulti['parts'].str.split()
         rmulti = rmulti.explode('parts').reset_index(drop=True)
         rmulti['n_step_sets'] = rmulti['id'].map(rmulti['id'].value_counts())
-        rmulti = (rmulti.sort_values(by=['n_step_sets','id'], ascending=[False,True])
-                .reset_index(drop=True).drop('n_step_sets', axis=1)
-                .apply(lambda x: x.str.rstrip('-STEP')).replace('0','N'))
-        rmulti.to_csv(data_dir+'multi_step_reactions.csv.zip', index=False, compression='zip')
-    
+        rmulti = (rmulti.sort_values(by=['n_step_sets', 'id'], ascending=[False, True])
+                  .reset_index(drop=True).drop('n_step_sets', axis=1)
+                  .apply(lambda x: x.str.rstrip('-STEP')).replace('0', 'N'))
+        rmulti.to_csv(data_dir + 'multi_step_reactions.csv.zip', index=False, compression='zip')
+
     reactions_multistep = list(rmulti['id'].unique())
     print('Reactions that are multi-step:', len(reactions_multistep), flush=True)
 
@@ -216,9 +229,9 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
     data = pd.DataFrame({
         'id': reactions_multistep + reactions_overall + reactions_incomplete + reactions_general,
         'reason': ['shortcut'] * len(reactions_multistep)
-                + ['shortcut'] * len(reactions_overall)
-                + ['incomplete'] * len(reactions_incomplete)
-                + ['general'] * len(reactions_general)}).sort_values(by=['id']).reset_index(drop=True)
+                  + ['shortcut'] * len(reactions_overall)
+                  + ['incomplete'] * len(reactions_incomplete)
+                  + ['general'] * len(reactions_general)}).sort_values(by=['id']).reset_index(drop=True)
     # open existing R_IDs_bad.dat file and append new data
     if os.path.exists(os.path.join(data_dir, 'R_IDs_bad.dat')):
         data_old = pd.read_csv(os.path.join(data_dir, 'R_IDs_bad.dat'), header=0)
@@ -229,6 +242,7 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
     data = data.reset_index().drop_duplicates().sort_values(by='id').set_index('id')
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'))
     return data
+
 
 def remove_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
     """

@@ -1,6 +1,8 @@
 import os
-import pandas as pd
 import warnings
+
+import pandas as pd
+
 from .tools_eq import standardise_eq
 
 
@@ -39,13 +41,13 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
     None
     """
     # Get the absolute paths
-    in_file = os.path.abspath(in_file).replace('_kegg','')
+    in_file = os.path.abspath(in_file).replace('_kegg', '')
     out_file = os.path.abspath(out_file)
 
     warnings.showwarning(f'\n\tclean_kegg_atlas() will be removed soon. \
                   \n\tFor now, writing CSV of KEGG reactions in ATLAS using clean_atlas. \
                   \n\tFor more reaction info, join with KEGG_R on kegg_id.', FutureWarning, filename='', lineno='')
-    
+
     df = clean_atlas(in_file=in_file, out_file=out_file, f_exclude_kegg=False).dropna(subset="kegg_id")
     df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
 
@@ -78,18 +80,19 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
         raise FileNotFoundError
 
     # Open the file. For header description, see p.6: https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf
-    df = (pd.read_table(in_file, header=None, sep=';', usecols=[0,1,3,4], names=['id','kegg_id','reaction','reaction_rule',]) 
-                .assign(id = lambda x: 'A'+x.id.astype(str).str.zfill(6))) # format ATLAS reactions as: AXXXXXX
-    
+    df = (pd.read_table(in_file, header=None, sep=';', usecols=[0, 1, 3, 4],
+                        names=['id', 'kegg_id', 'reaction', 'reaction_rule', ])
+          .assign(id=lambda x: 'A' + x.id.astype(str).str.zfill(6)))  # format ATLAS reactions as: AXXXXXX
+
     # Extract each reaction's list of 3rd-level EC#s. Remove non-conforming EC#s (e.g. not just numbers and -).
-    rr = (df['reaction_rule'].str.replace('-rev)','-(rev)').str.split('|').explode().str.rstrip('(rev)').to_frame()
-          .assign(format_ok = lambda x: x.reaction_rule.str.replace('.','').str.replace('-','').str.isnumeric())
-          .query('format_ok').groupby(level = 0)['reaction_rule'].apply(lambda x: ' '.join(set(x))))
+    rr = (df['reaction_rule'].str.replace('-rev)', '-(rev)').str.split('|').explode().str.rstrip('(rev)').to_frame()
+          .assign(format_ok=lambda x: x.reaction_rule.str.replace('.', '').str.replace('-', '').str.isnumeric())
+          .query('format_ok').groupby(level=0)['reaction_rule'].apply(lambda x: ' '.join(set(x))))
     df = df.join(rr.rename('ec'), how='left').drop('reaction_rule', axis=1)
 
     # Standardize format of reaction equation.
     df['reaction'] = df['reaction'].apply(cleanup_eq_line).apply(standardise_eq)
-    
+
     if f_exclude_kegg:
         df = df.query('kegg_id.isna()').drop('kegg_id', axis=1)
 
