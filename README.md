@@ -15,6 +15,8 @@ If you use this code in your work, you must reference the following:
 
 - Kanehisa, M., & Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic acids research, 28(1), 27-30.
 
+See .bib file.
+
 ## Examples of issues with KEGG and ATLAS
 Here are a couple of example problems that this code attempts to solve.
 
