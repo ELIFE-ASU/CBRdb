@@ -52,8 +52,8 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     None
     """
     # Clean up the files
-    delete_files_substring(target_dir, "_r")
-    delete_files_substring(target_dir, "_p")
+    delete_files_substring(target_dir, "_r.mol")
+    delete_files_substring(target_dir, "_p.mol")
     # Get a list of all mol files in the directory
     files = [f for f in file_list_all(target_dir) if f.endswith('.mol')]
 
