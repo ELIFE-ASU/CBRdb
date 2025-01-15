@@ -24,7 +24,7 @@ def load_bad_entries(target_dir_c):
     """
     target_dir_c = os.path.abspath(target_dir_c)
     files = os.listdir(target_dir_c)
-    files_full = [os.path.join(target_dir_c, f, f + ".mol") for f in files]
+    files_full = [os.path.join(target_dir_c, f, f + ".mol") for f in files if not f.startswith('.')]
     flags = tp_calc(check_for_x_group, files_full)
     return [elem for elem, flag in zip(files, flags) if flag]
 
