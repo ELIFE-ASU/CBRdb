@@ -609,6 +609,13 @@ def sort_dict_by_keys(input_dict):
     return dict(sorted(input_dict.items()))
 
 
+def ordered_reaction_series(reaction_series):
+    """sorts a pd.Series of reaction equations such that reaction directionality is not retained"""
+    return(reaction_series.str.split(' <=> ', expand=True)
+                                  .map(lambda x: [' + '.join(sorted(x.split(' + ')))])
+                                  .sum(axis=1).apply(lambda x: ' <=> '.join(sorted(x))))
+
+
 def standardise_eq(eq):
     """
     Standardise the equation by sorting the reactants and products.

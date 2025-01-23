@@ -7,19 +7,21 @@ import requests
 
 
 
-def dedupe_compound_files(data_folder='../data'):
+def dedupe_compounds(data_folder='../data'):
     """
     Deduplicates compound files by replacing duplicate compound IDs with unique ones.
 
     Parameters:
-    data_folder (str): The folder path where the compound data files are located. Defaults to '../data'.
+    data_folder (str): The folder path where the compound, reaction, and dupe-map files are located. Defaults to '../data'.
 
     Returns:
-    pd.Series: Series where values are group of KEGG IDs, and indices are each group's new unique ID.
+    dict: dictionary of all reaction and compound datasets with de-duplicated compound IDs, plus the compound dupe-map itself
     """
     dupemap_file = f'{data_folder}/kegg_data_C_dupemap.csv.zip'
     C_meta_file = f'{data_folder}/kegg_data_C_metadata.csv.zip'
     C_main_file = f'{data_folder}/kegg_data_C.csv.zip'
+    atlas_data_R_file = f'{data_folder}/atlas_data_R.csv.zip'
+    kegg_data_R_file = f'{data_folder}/kegg_data_R.csv.zip'
 
     # Read the duplicate map file
     dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:, 0]
@@ -36,31 +38,24 @@ def dedupe_compound_files(data_folder='../data'):
               .drop_duplicates(subset='compound_id', keep='first')
               .sort_values(by='compound_id').reset_index(drop=True))
 
-    # Save the processed metadata and main compound files
+    # Read and process the ATLAS reaction file
+    atlas_data_R = pd.read_csv(atlas_data_R_file, header=0, index_col=0)
+    atlas_data_R['reaction'] = (atlas_data_R['reaction'].str.split(expand=True).replace(dupemap)
+                                .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
+    
+    # Read and process the KEGG reaction file
+    kegg_data_R = pd.read_csv(kegg_data_R_file, header=0)
+    kegg_data_R['reaction'] = (kegg_data_R['reaction'].str.split(expand=True).replace(dupemap)
+                                .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
+    
+    # Save the deduped compound files and reaction files
     C_meta.to_csv(C_meta_file, index=False, compression='zip')
     C_main.to_csv(C_main_file, index=False, compression='zip')
+    atlas_data_R.to_csv(atlas_data_R_file, index=False, compression='zip', encoding='utf-8')
+    kegg_data_R.to_csv(kegg_data_R_file, index=False, compression='zip', encoding='utf-8')
 
-    dupe_groups = dupemap.to_frame().reset_index().groupby('new_id')['old_id'].apply(list)
-    
-    return dupe_groups
-
-
-
-def replace_entries(df1, df2):
-    """
-    Replaces entries in df1 with corresponding entries from df2.
-
-    Parameters:
-    df1 (pd.DataFrame): The first DataFrame to be updated.
-    df2 (pd.DataFrame): The second DataFrame with replacement values.
-
-    Returns:
-    pd.DataFrame: The updated DataFrame.
-    """
-    # Ensure the indices and columns match
-    df1.update(df2)
-    return df1
-
+    datasets = dict(zip('C_meta C_main atlas_data_R kegg_data_R dupemap'.split(), [C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
+    return datasets
 
 
 def merge_and_create_unique_db(df1, df2, column_name, f_keep='first'):

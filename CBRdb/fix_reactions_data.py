@@ -113,6 +113,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                        f_assume_var=True,
                        f_save_intermediate=False,
                        f_parallel=True):
+    """creates processed version of r_file csv from original r_file csv; returns processed r_file as pd.DataFrame"""
     # f_assume_var=True => assume that the equation contains a var list are correct
 
     if f_parallel:
@@ -548,3 +549,5 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print(f"len bad_missing_ele: {len(bad_missing_ele)}/{n_ids}", flush=True)
     print(f"len bad no balance: {len(bad_no_balance)}/{n_ids}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
+    
+    return df
