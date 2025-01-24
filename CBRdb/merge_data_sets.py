@@ -7,6 +7,27 @@ import requests
 
 out_fmt = {'compression': 'zip', 'encoding': 'utf-8', 'index': False}
 
+def merge_duplicate_reactions(df, r_dupemap, data_folder='../data'):
+    """ for a given reaction pd.Dataframe with (at least) KEGG fields... merges duplicate reactions based on a user-provided r_dupemap pd.Series. no CSV output yet. """
+    df['eqn_set'] = df['id'].replace(r_dupemap)
+    unique_str_sep = lambda x: ' '.join(set([i for i in ' '.join(x).split()]))
+    all_provided = lambda x: ' | '.join(x[x!=''].unique())
+    func_dict = {'reaction': lambda x: x.iloc[0],
+                'id': unique_str_sep,
+                'ec': unique_str_sep,
+                'pathway': unique_str_sep,
+                'orthology': unique_str_sep,
+                'rhea': unique_str_sep,
+                'module': unique_str_sep,
+                'name': all_provided, 
+                'comment': all_provided,
+                'rclass': lambda x: ' | '.join(set(x.str.findall(r'(RC\d+  C\d+_C\d+)').sum())),
+                }
+    deduped_df = (df.fillna('').groupby(by='eqn_set').aggregate(func_dict)).replace('', float('nan')
+                                    ).reset_index().rename(columns={'id': 'id_orig', 'eqn_set': 'id'})
+    return deduped_df
+
+
 def dedupe_compounds(data_folder='../data'):
     """
     Deduplicates compound files by replacing duplicate compound IDs with unique ones.

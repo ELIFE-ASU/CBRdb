@@ -15,7 +15,8 @@ from .fix_reactions_data import (fix_reactions_data, kitchen_sink)
 from .lets_get_kegg import (download_data)
 
 from .merge_data_sets import (merge_data,
-                              dedupe_compounds
+                              dedupe_compounds,
+                              merge_duplicate_reactions
                               )
 
 from .preprocessor import (preprocess)
@@ -52,6 +53,7 @@ from .tools_eq import (convert_formula_to_dict,
                        rebalance_eq,
                        compare_and_delete_keys,
                        fix_imbalance_core,
+                       generate_reaction_dupemap
                        )
 
 from .tools_files import (file_list,
