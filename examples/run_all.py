@@ -58,6 +58,6 @@ if __name__ == "__main__":
     datasets['reactions_joined'] = pd.concat(objs=[datasets['kegg_data_R_processed'], datasets['atlas_data_R_processed']], ignore_index=True)
     datasets['r_dupemap'] = CBRdb.tools_eq.generate_reaction_dupemap(datasets['reactions_joined'], prefix='T')
     datasets['reactions_merged'] = CBRdb.merge_duplicate_reactions(datasets['reactions_joined'], datasets['r_dupemap'])
-    datasets['reactions_merged'].to_csv(out_reactions_data + "processed_merged.csv.zip", compression='zip', encoding='utf-8', index=False)
+    datasets['reactions_merged'].to_csv(out_reactions_data + "_processed_merged.csv.zip", compression='zip', encoding='utf-8', index=False)
 
     print("Program finished", flush=True)
