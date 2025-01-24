@@ -5,7 +5,7 @@ from io import StringIO
 import pandas as pd
 import requests
 
-
+out_fmt = {'compression': 'zip', 'encoding': 'utf-8', 'index': False}
 
 def dedupe_compounds(data_folder='../data'):
     """
@@ -30,16 +30,16 @@ def dedupe_compounds(data_folder='../data'):
     C_meta = (pd.read_csv(C_meta_file, header=0).assign(
         compound_id=lambda x: x['compound_id'].replace(dupemap))
               .drop_duplicates(subset='compound_id', keep='first')
-              .sort_values(by='compound_id').reset_index(drop=True))
+              .sort_values(by='compound_id'))
 
     # Read and process the main compound file
     C_main = (pd.read_csv(C_main_file, header=0).assign(
         compound_id=lambda x: x['compound_id'].replace(dupemap))
               .drop_duplicates(subset='compound_id', keep='first')
-              .sort_values(by='compound_id').reset_index(drop=True))
+              .sort_values(by='compound_id'))
 
     # Read and process the ATLAS reaction file
-    atlas_data_R = pd.read_csv(atlas_data_R_file, header=0, index_col=0)
+    atlas_data_R = pd.read_csv(atlas_data_R_file, header=0)
     atlas_data_R['reaction'] = (atlas_data_R['reaction'].str.split(expand=True).replace(dupemap)
                                 .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
     
@@ -49,10 +49,10 @@ def dedupe_compounds(data_folder='../data'):
                                 .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
     
     # Save the deduped compound files and reaction files
-    C_meta.to_csv(C_meta_file, index=False, compression='zip')
-    C_main.to_csv(C_main_file, index=False, compression='zip')
-    atlas_data_R.to_csv(atlas_data_R_file, index=False, compression='zip', encoding='utf-8')
-    kegg_data_R.to_csv(kegg_data_R_file, index=False, compression='zip', encoding='utf-8')
+    C_meta.to_csv(C_meta_file, **out_fmt)
+    C_main.to_csv(C_main_file, **out_fmt)
+    atlas_data_R.to_csv(atlas_data_R_file, **out_fmt)
+    kegg_data_R.to_csv(kegg_data_R_file, **out_fmt)
 
     datasets = dict(zip('C_meta C_main atlas_data_R kegg_data_R dupemap'.split(), [C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
     return datasets

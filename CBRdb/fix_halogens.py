@@ -178,7 +178,7 @@ def merge_halogen_compounds(cids_dict,
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id")
     # Save the dataframe
-    df.to_csv(out_file, compression='zip', encoding='utf-8')
+    df.to_csv(out_file, compression='zip', index=False, encoding='utf-8')
     print("Done!", flush=True)
     return df
 
@@ -294,7 +294,7 @@ def fix_halogen_reactions(cids_dict,
     # Remove the old reactions
     df = df[~df['id'].isin(reactions_halogen_set)]
     # Sort the dataframe by the ID
-    df = df.sort_values(by="id")
+    df = df.sort_values(by="id").reset_index(drop=True)
     # Save the dataframe
-    df.to_csv(out_file, compression='zip', encoding='utf-8')
+    df.to_csv(out_file, compression='zip', index=False, encoding='utf-8')
     return df
