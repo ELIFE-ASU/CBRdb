@@ -616,6 +616,15 @@ def ordered_reaction_series(reaction_series):
                                   .sum(axis=1).apply(lambda x: ' <=> '.join(sorted(x))))
 
 
+def generate_reaction_dupemap(df, prefix="T"):
+    """transforms 'reaction' col of dataframe to identify dupes; returns a map (pd.Series & CSV) of oldID-->newID with user-specified prefix"""
+    equation_groups = ordered_reaction_series(df.set_index('id')['reaction']).to_frame(name='eq_grp')
+    duped_groups = equation_groups.query('eq_grp.duplicated(keep=False)').assign(grp_num = lambda x: x.eq_grp.factorize()[0])
+    dupemap = prefix + duped_groups['grp_num'].astype(str).str.zfill(5)
+    dupemap.to_csv(f'../data/{prefix}_reaction_dupemap.csv.zip', compression='zip', encoding='utf-8')
+    return(dupemap)
+
+
 def standardise_eq(eq):
     """
     Standardise the equation by sorting the reactants and products.
