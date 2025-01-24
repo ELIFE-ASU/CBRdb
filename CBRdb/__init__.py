@@ -15,7 +15,7 @@ from .fix_reactions_data import (fix_reactions_data, kitchen_sink)
 from .lets_get_kegg import (download_data)
 
 from .merge_data_sets import (merge_data,
-                              dedupe_compound_files
+                              dedupe_compounds
                               )
 
 from .preprocessor import (preprocess)
