@@ -6,6 +6,41 @@ We present CBR-db, a curated biochemical database that integrates and refines da
 To start everything locally, you can look at run_all.py, which will take you over the whole data pipeline. Otherwise, you can run each part by themselves.
 
 
+## Installation
+### Fresh environment
+It is recommended that you start from a fresh environment to prevent issues.
+```
+conda create -n cbrdb_env python=3.12
+```
+Activate the new env.
+```
+conda activate cbrdb_env
+```
+Add channels in this order.
+```
+conda config --env --add channels conda-forge
+```
+Best to make them strict
+```
+conda config --set channel_priority true
+```
+To check your updated channel list, run:
+```
+conda config --show channels
+```
+Make sure to upgrade the conda env to force the channel priority.
+```
+conda update conda --all -y
+```
+### Install the requirements
+```
+conda install conda-forge::numpy conda-forge::sympy conda-forge::matplotlib conda-forge::networkx conda-forge::pandas conda-forge::rdkit conda-forge::chempy conda-forge::requests conda-forge::urllib3 conda-forge::chemparse -y
+```
+Then install CBRdb:
+```
+pip install git+https://github.com/ELIFE-ASU/CBRdb.git@v1.0.0
+```
+
 ## References
 If you use this code in your work, you must reference the following:
 
