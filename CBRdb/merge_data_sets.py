@@ -1,30 +1,29 @@
 import os
-import time
-from io import StringIO
 
 import pandas as pd
-import requests
 
 out_fmt = {'compression': 'zip', 'encoding': 'utf-8', 'index': False}
+
 
 def merge_duplicate_reactions(df, r_dupemap, data_folder='../data'):
     """ for a given reaction pd.Dataframe with (at least) KEGG fields... merges duplicate reactions based on a user-provided r_dupemap pd.Series. no CSV output yet. """
     df['eqn_set'] = df['id'].replace(r_dupemap)
     unique_str_sep = lambda x: ' '.join(set([i for i in ' '.join(x).split()]))
-    all_provided = lambda x: ' | '.join(x[x!=''].unique())
+    all_provided = lambda x: ' | '.join(x[x != ''].unique())
     func_dict = {'reaction': lambda x: x.iloc[0],
-                'id': unique_str_sep,
-                'ec': unique_str_sep,
-                'pathway': unique_str_sep,
-                'orthology': unique_str_sep,
-                'rhea': unique_str_sep,
-                'module': unique_str_sep,
-                'name': all_provided, 
-                'comment': all_provided,
-                'rclass': lambda x: ' | '.join(set(x.str.findall(r'(RC\d+  C\d+_C\d+)').sum())),
-                }
+                 'id': unique_str_sep,
+                 'ec': unique_str_sep,
+                 'pathway': unique_str_sep,
+                 'orthology': unique_str_sep,
+                 'rhea': unique_str_sep,
+                 'module': unique_str_sep,
+                 'name': all_provided,
+                 'comment': all_provided,
+                 'rclass': lambda x: ' | '.join(set(x.str.findall(r'(RC\d+  C\d+_C\d+)').sum())),
+                 }
     deduped_df = (df.fillna('').groupby(by='eqn_set').aggregate(func_dict)).replace('', float('nan')
-                                    ).reset_index().rename(columns={'id': 'id_orig', 'eqn_set': 'id'})
+                                                                                    ).reset_index().rename(
+        columns={'id': 'id_orig', 'eqn_set': 'id'})
     return deduped_df
 
 
@@ -63,19 +62,20 @@ def dedupe_compounds(data_folder='../data'):
     atlas_data_R = pd.read_csv(atlas_data_R_file, header=0)
     atlas_data_R['reaction'] = (atlas_data_R['reaction'].str.split(expand=True).replace(dupemap)
                                 .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
-    
+
     # Read and process the KEGG reaction file
     kegg_data_R = pd.read_csv(kegg_data_R_file, header=0)
     kegg_data_R['reaction'] = (kegg_data_R['reaction'].str.split(expand=True).replace(dupemap)
-                                .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
-    
+                               .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
+
     # Save the deduped compound files and reaction files
     C_meta.to_csv(C_meta_file, **out_fmt)
     C_main.to_csv(C_main_file, **out_fmt)
     atlas_data_R.to_csv(atlas_data_R_file, **out_fmt)
     kegg_data_R.to_csv(kegg_data_R_file, **out_fmt)
 
-    datasets = dict(zip('C_meta C_main atlas_data_R kegg_data_R dupemap'.split(), [C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
+    datasets = dict(zip('C_meta C_main atlas_data_R kegg_data_R dupemap'.split(),
+                        [C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
     return datasets
 
 

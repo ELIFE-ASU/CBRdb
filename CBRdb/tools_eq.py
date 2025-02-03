@@ -1,13 +1,9 @@
 import copy
-import os
 import re
 
 import chemparse
-import pandas as pd
 import sympy as sp
 from chempy import balance_stoichiometry
-
-from .lets_get_kegg import infer_kegg_enzyme_pointers
 
 
 def strip_ionic_states(formula):
@@ -610,19 +606,45 @@ def sort_dict_by_keys(input_dict):
 
 
 def ordered_reaction_series(reaction_series):
-    """sorts a pd.Series of reaction equations such that reaction directionality is not retained"""
-    return(reaction_series.str.split(' <=> ', expand=True)
-                                  .map(lambda x: [' + '.join(sorted(x.split(' + ')))])
-                                  .sum(axis=1).apply(lambda x: ' <=> '.join(sorted(x))))
+    """
+    Sorts a pandas Series of reaction equations such that reaction directionality is not retained.
+
+    Parameters:
+    reaction_series (pd.Series): A Series containing reaction equations.
+
+    Returns:
+    pd.Series: A Series with sorted reaction equations.
+    """
+    return (reaction_series.str.split(' <=> ', expand=True)
+            .map(lambda x: [' + '.join(sorted(x.split(' + ')))])
+            .sum(axis=1).apply(lambda x: ' <=> '.join(sorted(x))))
 
 
 def generate_reaction_dupemap(df, prefix="T"):
-    """transforms 'reaction' col of dataframe to identify dupes; returns a map (pd.Series & CSV) of oldID-->newID with user-specified prefix"""
+    """
+    Transforms the 'reaction' column of a DataFrame to identify duplicate reactions and returns a map of oldID to newID with a user-specified prefix.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame containing reaction data with an 'id' column and a 'reaction' column.
+    prefix (str): The prefix to use for the new IDs. Defaults to "T".
+
+    Returns:
+    pd.Series: A Series mapping old IDs to new IDs with the specified prefix.
+    """
+    # Group the reactions by sorting and standardizing them
     equation_groups = ordered_reaction_series(df.set_index('id')['reaction']).to_frame(name='eq_grp')
-    duped_groups = equation_groups.query('eq_grp.duplicated(keep=False)').assign(grp_num = lambda x: x.eq_grp.factorize()[0])
+
+    # Identify duplicated groups and assign a group number
+    duped_groups = equation_groups.query('eq_grp.duplicated(keep=False)').assign(
+        grp_num=lambda x: x.eq_grp.factorize()[0])
+
+    # Create a map of old IDs to new IDs with the specified prefix
     dupemap = prefix + duped_groups['grp_num'].astype(str).str.zfill(5)
+
+    # Save the map to a CSV file
     dupemap.to_csv(f'../data/{prefix}_reaction_dupemap.csv.zip', compression='zip', encoding='utf-8')
-    return(dupemap)
+
+    return dupemap
 
 
 def standardise_eq(eq):
@@ -778,7 +800,8 @@ def fix_multiply_tar(expression, target_letter):
 
 def fix_multiply_tar_all(expression, target_letters=None):
     """
-    Replaces occurrences of a number followed by any target letter in the target_letters list with the number followed by '*' and the target letter.
+    Replaces occurrences of a number followed by any target letter in the target_letters list with
+    the number followed by '*' and the target letter.
 
     Parameters:
     expression (str): The input string containing the expression.
@@ -838,7 +861,6 @@ def replace_substrings(s: str, replacements: dict):
     return s_out
 
 
-
 def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
     """
     Injects missing compounds into a reaction equation.
@@ -860,7 +882,8 @@ def inject_compounds(eq_line, missing_r, missing_p, missing_dict):
 
 def compare_and_delete_keys(dict1, dict2):
     """
-    Compares two dictionaries, deletes keys that are the same in both dictionaries, and returns the two new dictionaries along with the deleted items.
+    Compares two dictionaries, deletes keys that are the same in both dictionaries,
+    and returns the two new dictionaries along with the deleted items.
 
     Parameters:
     dict1 (dict): The first dictionary.
