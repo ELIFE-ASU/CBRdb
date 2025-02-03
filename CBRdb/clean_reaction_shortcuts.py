@@ -184,10 +184,10 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
         'comment.str.contains(@reaction_pattern) & comment.str.lower().str.contains("step")')  # keep only multi-step parameters
                .sort_values(by='id').set_index('id'))['comment'].apply(  # sort by reaction ID
         lambda x: _replace_strings(x, str_replacement_order))  # standardize formatting
-              .explode().str.split('reaction',
-                                   expand=True).reset_index()  # general format per line: N-step reaction, see: RXXXXX+RXXXXX
-              .rename(columns={'id': 'id', 0: 'n_steps', 1: 'parts'})  # number of steps, parts themselves
-              .query(
+    .explode().str.split('reaction',
+                         expand=True).reset_index()  # general format per line: N-step reaction, see: RXXXXX+RXXXXX
+    .rename(columns={'id': 'id', 0: 'n_steps', 1: 'parts'})  # number of steps, parts themselves
+    .query(
         '~n_steps.str.contains("of|possibly|one")'))  # remove entries that are "part of" a multi-step reaction or "possibly" multi-step
     rmulti = _strip_col1_from_col2(rmulti, 'id', 'parts').apply(
         lambda x: x.str.strip())  # ensure that parts column contains only constituent steps

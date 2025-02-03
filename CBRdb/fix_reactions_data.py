@@ -549,5 +549,5 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     print(f"len bad_missing_ele: {len(bad_missing_ele)}/{n_ids}", flush=True)
     print(f"len bad no balance: {len(bad_no_balance)}/{n_ids}", flush=True)
     print(f"missing ele {set(missing_ele)}", flush=True)
-    
+
     return df
