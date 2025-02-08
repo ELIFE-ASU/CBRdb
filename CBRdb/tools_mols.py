@@ -99,6 +99,29 @@ def get_chirality(mol):
         return float('NaN')
 
 
+def get_mol_descriptors(mol, missingval=None):
+    """
+    Calculates molecular descriptors for a given molecule.
+
+    This function iterates over all available molecular descriptors in RDKit,
+    calculates each descriptor for the provided molecule, and stores the results
+    in a dictionary. If a descriptor calculation fails, a specified missing value
+    is assigned.
+
+    :param mol: An RDKit molecule object.
+    :param missingval: The value to assign if a descriptor calculation fails. Default is None.
+    :return: A dictionary with descriptor names as keys and their calculated values as values.
+    """
+    res = {}
+    for nm, fn in Descriptors._descList:
+        try:
+            res[nm] = fn(mol)
+        except:
+            traceback.print_exc()
+            res[nm] = missingval
+    return res
+
+
 def mol_replacer(smi, target="[H]"):
     """
     Replaces all occurrences of the '*' atom in the given SMILES string with the specified target atom or group.
