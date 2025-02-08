@@ -1,10 +1,12 @@
 import os
 import re
+import traceback
 
 import chemparse
 import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
+from rdkit.Chem import Descriptors
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
