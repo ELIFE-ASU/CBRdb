@@ -155,8 +155,17 @@ def make_custom_id(idx, prefix="C", digits=5):
 
 
 def add_suffix_to_file(fname, suffix):
-    """" adds suffix to a file name before its extension."""    
-    dn = os.path.dirname(fname)
-    bn = os.path.basename(fname)
-    fn, ext = bn[:bn.find(".")], bn[bn.find("."):]
-    return(f"{dn}/{fn}_{suffix}{ext}")
+    """
+    Adds a suffix to the base name of a file before the file extension.
+
+    Parameters:
+    fname (str): The full path to the file.
+    suffix (str): The suffix to add to the file name.
+
+    Returns:
+    str: The new file name with the suffix added.
+    """
+    dn = os.path.dirname(fname)  # Get the directory name from the file path
+    bn = os.path.basename(fname)  # Get the base name of the file
+    fn, ext = bn[:bn.find(".")], bn[bn.find("."):]  # Split the base name into the file name and extension
+    return f"{dn}/{fn}_{suffix}{ext}"  # Return the new file name with the suffix added
