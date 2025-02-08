@@ -5,25 +5,43 @@ import pandas as pd
 out_fmt = {'compression': 'zip', 'encoding': 'utf-8', 'index': False}
 
 
-def merge_duplicate_reactions(df, r_dupemap, data_folder='../data'):
-    """ for a given reaction pd.Dataframe with (at least) KEGG fields... merges duplicate reactions based on a user-provided r_dupemap pd.Series. no CSV output yet. """
+def merge_duplicate_reactions(df, r_dupemap):
+    """
+    Merges duplicate reactions in a DataFrame based on a user-provided duplicate map.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame containing reaction data with KEGG fields.
+    r_dupemap (pd.Series): A Series mapping old reaction IDs to new unique reaction IDs.
+
+    Returns:
+    pd.DataFrame: A DataFrame with merged duplicate reactions.
+    """
+    # Replace reaction IDs with the duplicate map
     df['eqn_set'] = df['id'].replace(r_dupemap)
+
+    # Define functions for aggregating data
     unique_str_sep = lambda x: ' '.join(set([i for i in ' '.join(x).split()]))
     all_provided = lambda x: ' | '.join(x[x != ''].unique())
-    func_dict = {'reaction': lambda x: x.iloc[0],
-                 'id': unique_str_sep,
-                 'ec': unique_str_sep,
-                 'pathway': unique_str_sep,
-                 'orthology': unique_str_sep,
-                 'rhea': unique_str_sep,
-                 'module': unique_str_sep,
-                 'name': all_provided,
-                 'comment': all_provided,
-                 'rclass': lambda x: ' | '.join(set(x.str.findall(r'(RC\d+  C\d+_C\d+)').sum())),
-                 }
-    deduped_df = (df.fillna('').groupby(by='eqn_set').aggregate(func_dict)).replace('', float('nan')
-                                                                                    ).reset_index().rename(
+
+    # Dictionary of aggregation functions for each column
+    func_dict = {
+        'reaction': lambda x: x.iloc[0],
+        'id': unique_str_sep,
+        'ec': unique_str_sep,
+        'pathway': unique_str_sep,
+        'orthology': unique_str_sep,
+        'rhea': unique_str_sep,
+        'module': unique_str_sep,
+        'name': all_provided,
+        'comment': all_provided,
+        'rclass': lambda x: ' | '.join(set(x.str.findall(r'(RC\d+  C\d+_C\d+)').sum())),
+    }
+
+    # Group by the new reaction IDs and aggregate the data
+    deduped_df = (df.fillna('').groupby(by='eqn_set').aggregate(func_dict)
+                  ).replace('', float('nan')).reset_index().rename(
         columns={'id': 'id_orig', 'eqn_set': 'id'})
+
     return deduped_df
 
 
@@ -160,18 +178,18 @@ def merge_data(merge_col='reaction',
     merged_database = merge_and_create_unique_db(kegg_data, atlas_data, merge_col, f_keep=f_keep)
     n_merged = merged_database.shape[0]
     # print the difference in the number of reactions
-    print(f"Number of KEGG reactions: {n_kegg}")
-    print(f"Number of ATLAS reactions: {n_atlas}")
-    print(f"Number of merged reactions: {n_merged}")
-    print(f"Number of non-unique reactions: {n_kegg + n_atlas - n_merged}")
+    print(f"Number of KEGG reactions: {n_kegg}", flush=True)
+    print(f"Number of ATLAS reactions: {n_atlas}", flush=True)
+    print(f"Number of merged reactions: {n_merged}", flush=True)
+    print(f"Number of non-unique reactions: {n_kegg + n_atlas - n_merged}", flush=True)
     # Save the merged database
     merged_database.to_csv(out_file, compression='zip', encoding='utf-8')
     print("Merged data saved! \n", flush=True)
 
     tmp = get_nonunique_entries(kegg_data, atlas_data, merge_col)
     if tmp.shape[0] > 0:
-        print("Non-unique entries that were removed:")
-        print(tmp)
+        print("Non-unique entries that were removed:", flush=True)
+        print(tmp, flush=True)
 
 
 def merge_data_retain_sources(kegg_file="../data/kegg_data_R_processed.csv.zip",
