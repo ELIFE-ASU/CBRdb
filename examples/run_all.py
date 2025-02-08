@@ -14,7 +14,7 @@ if __name__ == "__main__":
     f_download = False
     kegg_reactions_data = "../data/kegg_data_R"
     atlas_reactions_data = "../data/atlas_data_R"
-    out_reactions_data = "../data/kegg_atlas"
+    out_reactions_data = "../data/CBRdb_R"
 
     if f_download:
         print("Downloading all the data, the mol files and the (full) web pages", flush=True)
@@ -58,6 +58,6 @@ if __name__ == "__main__":
     datasets['reactions_joined'] = pd.concat(objs=[datasets['kegg_data_R_processed'], datasets['atlas_data_R_processed']], ignore_index=True)
     datasets['r_dupemap'] = CBRdb.tools_eq.generate_reaction_dupemap(datasets['reactions_joined'], prefix='T')
     datasets['reactions_merged'] = CBRdb.merge_duplicate_reactions(datasets['reactions_joined'], datasets['r_dupemap'])
-    datasets['reactions_merged'].to_csv(out_reactions_data + "_processed_merged.csv.zip", compression='zip', encoding='utf-8', index=False)
+    datasets['reactions_merged'].to_csv(out_reactions_data + ".csv.zip", compression='zip', encoding='utf-8', index=False)
 
     print("Program finished", flush=True)
