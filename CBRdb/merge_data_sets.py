@@ -3,9 +3,9 @@ import os
 import pandas as pd
 
 out_fmt = {'compression': 'zip', 'encoding': 'utf-8', 'index': False}
+from .tools_files import add_suffix_to_file
 
-
-def merge_duplicate_reactions(df, r_dupemap, data_folder='../data'):
+def merge_duplicate_reactions(df, r_dupemap):
     """ for a given reaction pd.Dataframe with (at least) KEGG fields... merges duplicate reactions based on a user-provided r_dupemap pd.Series. no CSV output yet. """
     df['eqn_set'] = df['id'].replace(r_dupemap)
     unique_str_sep = lambda x: ' '.join(set([i for i in ' '.join(x).split()]))
@@ -42,6 +42,7 @@ def dedupe_compounds(data_folder='../data'):
     C_main_file = f'{data_folder}/kegg_data_C.csv.zip'
     atlas_data_R_file = f'{data_folder}/atlas_data_R.csv.zip'
     kegg_data_R_file = f'{data_folder}/kegg_data_R.csv.zip'
+    dd_suf = lambda x: add_suffix_to_file(x, 'deduped')
 
     # Read the duplicate map file
     dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:, 0]
@@ -68,14 +69,16 @@ def dedupe_compounds(data_folder='../data'):
     kegg_data_R['reaction'] = (kegg_data_R['reaction'].str.split(expand=True).replace(dupemap)
                                .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
 
-    # Save the deduped compound files and reaction files
-    C_meta.to_csv(C_meta_file, **out_fmt)
-    C_main.to_csv(C_main_file, **out_fmt)
-    atlas_data_R.to_csv(atlas_data_R_file, **out_fmt)
-    kegg_data_R.to_csv(kegg_data_R_file, **out_fmt)
+    # Save the deduped compound files and reaction files, and tag them as de-duped
+    C_meta.to_csv(dd_suf(C_meta_file), **out_fmt)
+    C_main.to_csv(dd_suf(C_main_file), **out_fmt)
+    atlas_data_R.to_csv(dd_suf(atlas_data_R_file), **out_fmt)
+    kegg_data_R.to_csv(dd_suf(kegg_data_R_file), **out_fmt)
+    CBRdb_C = C_main.merge(C_meta, on='compound_id', how='outer')
+    CBRdb_C.to_csv(data_folder+'/CBRdb_C.csv.zip', compression='zip', encoding='utf-8', index=False)
 
-    datasets = dict(zip('C_meta C_main atlas_data_R kegg_data_R dupemap'.split(),
-                        [C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
+    datasets = dict(zip('CBRdb_C C_meta C_main atlas_data_R kegg_data_R dupemap'.split(),
+                        [CBRdb_C, C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
     return datasets
 
 
