@@ -152,3 +152,11 @@ def make_custom_id(idx, prefix="C", digits=5):
     str: The generated custom ID.
     """
     return f"{prefix}{int(idx):0{digits}d}"
+
+
+def add_suffix_to_file(fname, suffix):
+    """" adds suffix to a file name before its extension."""    
+    dn = os.path.dirname(fname)
+    bn = os.path.basename(fname)
+    fn, ext = bn[:bn.find(".")], bn[bn.find("."):]
+    return(f"{dn}/{fn}_{suffix}{ext}")

@@ -62,6 +62,7 @@ from .tools_files import (file_list,
                           clean_empty_folders,
                           remove_filepath,
                           delete_files_substring,
+                          add_suffix_to_file
                           )
 
 from .tools_mols import (sanitize_mol,
