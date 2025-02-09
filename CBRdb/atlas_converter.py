@@ -29,7 +29,7 @@ def cleanup_eq_line(eq_line):
 
 
 def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
-                     out_file="../data/atlas_data_kegg_R.csv.zip"):
+                     out_file="../data/atlas_data_kegg_R.csv"):
     """
     Cleans and processes KEGG atlas reaction data.
 
@@ -49,13 +49,13 @@ def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
                   \n\tFor more reaction info, join with KEGG_R on kegg_id.', FutureWarning, filename='', lineno='')
 
     df = clean_atlas(in_file=in_file, out_file=out_file, f_exclude_kegg=False).dropna(subset="kegg_id")
-    df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(out_file, encoding='utf-8', index=False)
 
     return df
 
 
 def clean_atlas(in_file="../../data/atlas_reactions.dat",
-                out_file="../data/atlas_data_R.csv.zip",
+                out_file="../data/atlas_data_R.csv",
                 f_exclude_kegg=True):
     """
     Cleans and processes atlas reaction data, optionally excluding KEGG reactions.
@@ -99,6 +99,6 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
         df = df.query('kegg_id.isna()').drop('kegg_id', axis=1)
 
     # Write the data to a file
-    df.to_csv(out_file, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(out_file, encoding='utf-8', index=False)
     print("data written to file", flush=True)
     return df

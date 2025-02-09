@@ -16,8 +16,8 @@ import rdkit.Chem as Chem
 import re
 
 
-def merge_atlas_kegg_r(atlas_file="../data/atlas_data_R.csv.zip", kegg_file="../data/kegg_data_R.csv.zip"):
-    atlas_data = pd.read_csv(atlas_file, compression='zip')
+def merge_atlas_kegg_r(atlas_file="../data/atlas_data_R.csv", kegg_file="../data/kegg_data_R.csv"):
+    atlas_data = pd.read_csv(atlas_file)
     atlas_data = atlas_data.sort_values(by="kegg_id")
 
     print("id", atlas_data["id"].tolist(), flush=True)
@@ -30,7 +30,7 @@ def merge_atlas_kegg_r(atlas_file="../data/atlas_data_R.csv.zip", kegg_file="../
     print(f"max index: {max_index}", flush=True)
 
     # Load the kegg data
-    kegg_data = pd.read_csv(kegg_file, compression='zip')
+    kegg_data = pd.read_csv(kegg_file)
     kegg_data = kegg_data.sort_values(by="id")
     print("data loaded", flush=True)
     print("data shape", kegg_data.shape, flush=True)
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # print(reac, prod, flush=True)
 
     # load the data
-    data = pd.read_csv("../data/kegg_data_R.csv.zip")
+    data = pd.read_csv("../data/kegg_data_R.csv")
     print("data loaded", flush=True)
     print("data shape", data.shape, flush=True)
     # print the data columns
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     exit()
 
     # load to compound data
-    data_c = pd.read_csv("../data/kegg_data_C.csv.zip")
+    data_c = pd.read_csv("../data/kegg_data_C.csv")
     print("data columns", data_c.columns, flush=True)
     # print(data_c[data_c["compound_id"] == "C18091"].values, flush=True)
     # print(data_c[data_c["compound_id"] == "C00126"].values, flush=True)

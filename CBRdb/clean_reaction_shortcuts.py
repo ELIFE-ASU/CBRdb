@@ -56,7 +56,7 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     return incomplete_reaction_ids
 
 
-def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
+def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'):
     """
     Identifies and flags KEGG reactions that are suspect, including shortcuts
     (summaries of multi-step processes) and reactions with incomplete or general data.
@@ -130,7 +130,7 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
         rmulti = (rmulti.sort_values(by=['n_step_sets', 'id'], ascending=[False, True])
                   .reset_index(drop=True).drop('n_step_sets', axis=1)
                   .apply(lambda x: x.str.rstrip('-STEP')).replace('0', 'N'))
-        rmulti.to_csv(data_dir + 'multi_step_reactions.csv.zip', index=False, compression='zip')
+        rmulti.to_csv(data_dir + 'multi_step_reactions.csv', index=False)
 
     reactions_multistep = list(rmulti['id'].unique())
     print('Reactions that are multi-step:', len(reactions_multistep), flush=True)
@@ -165,7 +165,7 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../da
     return data
 
 
-def remove_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../data/'):
+def remove_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'):
     """
     Removes suspect reactions from a reaction data file.
     NOTE: Does NOT remove reactions whose definitions (but not ID) matches a suspect reaction.
@@ -176,5 +176,5 @@ def remove_suspect_reactions(r_file='../data/kegg_data_R.csv.zip', data_dir='../
         rns = rns.query('kegg_id.isin(@sus.index)==False')
     else:
         rns = rns.drop(sus.index, axis=0, errors='ignore')
-    rns.to_csv(r_file, compression='zip', encoding='utf-8')
+    rns.to_csv(r_file, encoding='utf-8')
     return rns.reset_index()

@@ -357,7 +357,7 @@ def filter_compounds_without_star(dataframe):
     return dataframe[~dataframe['smiles'].str.contains('*', regex=False)]
 
 
-def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True):
+def get_sorted_compounds(c_path="../data/kegg_data_C.csv", filter_star=True):
     """
     Retrieves and sorts compound data from a CSV file, optionally filtering out rows where the 'smiles' column contains a '*'.
 
@@ -379,12 +379,12 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True)
     return data_c.sort_values(by="smiles", key=lambda x: x.str.len())
 
 
-def get_small_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True, n=1):
+def get_small_compounds(c_path="../data/kegg_data_C.csv", filter_star=True, n=1):
     """
     Retrieves and filters small compounds from a CSV file.
 
     Parameters:
-    c_path (str): The path to the CSV file containing compound data. Default is "../data/kegg_data_C.csv.zip".
+    c_path (str): The path to the CSV file containing compound data. Default is "../data/kegg_data_C.csv".
     filter_star (bool): Whether to filter out rows where the 'smiles' column contains a '*'. Default is True.
     n (int): The maximum number of heavy atoms for a compound to be considered small. Default is 1.
 
@@ -400,12 +400,12 @@ def get_small_compounds(c_path="../data/kegg_data_C.csv.zip", filter_star=True, 
         return data_c[data_c["n_heavy_atoms"] == n]
 
 
-def get_small_compounds_all(c_path="../data/kegg_data_C.csv.zip", filter_star=True, n=1):
+def get_small_compounds_all(c_path="../data/kegg_data_C.csv", filter_star=True, n=1):
     """
     Retrieves and filters small compounds from a CSV file.
 
     Parameters:
-    c_path (str): The path to the CSV file containing compound data. Default is "../data/kegg_data_C.csv.zip".
+    c_path (str): The path to the CSV file containing compound data. Default is "../data/kegg_data_C.csv".
     filter_star (bool): Whether to filter out rows where the 'smiles' column contains a '*'. Default is True.
     n (int): The maximum number of heavy atoms for a compound to be considered small. Default is 1.
 

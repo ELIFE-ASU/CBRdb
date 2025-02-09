@@ -106,8 +106,8 @@ def kitchen_sink(eq, data_c, small_compounds):
     return eq_new
 
 
-def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
-                       c_file="../data/kegg_data_C.csv.zip",
+def fix_reactions_data(r_file="../data/kegg_data_R.csv",
+                       c_file="../data/kegg_data_C.csv",
                        bad_file="../data/R_IDs_bad.dat",
                        f_fresh=True,
                        f_assume_var=True,
@@ -179,7 +179,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
                      "H2Se": "C01528",  # Selenous acid
                      }
 
-    out_eq_file = f"{r_file.split('.')[0]}_processed.csv.zip".replace('_deduped', '')
+    out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
 
     # Read the bad reactions file
     with open(bad_file, "r") as f:
@@ -230,8 +230,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
 
     data_r_missing_data = data_r[bool_missing_data]
     if f_save_intermediate:
-        data_r_missing_data.to_csv(f"{r_file.split('.')[0]}_missing_data.csv.zip",
-                                   compression='zip',
+        data_r_missing_data.to_csv(f"{r_file.split('.')[0]}_missing_data.csv",
                                    encoding='utf-8',
                                    index=False)
     data_r = data_r[~bool_missing_data]
@@ -252,8 +251,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
 
     data_r_var_list = data_r[bool_var_list]
     if f_save_intermediate:
-        data_r_var_list.to_csv(f"{r_file.split('.')[0]}_var_list.csv.zip",
-                               compression='zip',
+        data_r_var_list.to_csv(f"{r_file.split('.')[0]}_var_list.csv",
                                encoding='utf-8',
                                index=False)
     data_r = data_r[~bool_var_list]
@@ -274,8 +272,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
     if f_save_intermediate:
-        data_r_unbalanced.to_csv(f"{r_file.split('.')[0]}_unbalanced.csv.zip",
-                                 compression='zip',
+        data_r_unbalanced.to_csv(f"{r_file.split('.')[0]}_unbalanced.csv",
                                  encoding='utf-8',
                                  index=False)
     # Get the data that is balanced
@@ -341,7 +338,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     # Sort by the index
     df_final = df_final.sort_values(by="id")
     # Write the data to a file
-    df_final.to_csv(out_eq_file, compression='zip', encoding='utf-8', index=False)
+    df_final.to_csv(out_eq_file, encoding='utf-8', index=False)
 
     exit()
 
@@ -532,7 +529,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv.zip",
     # Write the data to a file
     # get the shape of the data
     print("data shape", df.shape, flush=True)
-    df.to_csv(out_eq_file, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(out_eq_file, encoding='utf-8', index=False)
 
     # print out the bad files
     print(f"bad n: {bad_n}", flush=True)

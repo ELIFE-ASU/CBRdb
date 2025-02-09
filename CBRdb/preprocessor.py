@@ -39,14 +39,14 @@ def load_csv_to_dict(file_path):
     return result_dict
 
 
-def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
+def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv"):
     """
     Preprocesses KEGG compound data and saves it to a specified output file.
 
     Parameters:
     target_dir (str): The directory containing the KEGG compound data files.
     man_dict (dict): A dictionary of manual compound ID fixes.
-    outfile (str, optional): The output file path for the preprocessed data. Defaults to "kegg_data_C.csv.zip".
+    outfile (str, optional): The output file path for the preprocessed data. Defaults to "kegg_data_C.csv".
 
     Returns:
     None
@@ -94,9 +94,9 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv.zip"):
     df = df.sort_values(by="compound_id").reset_index(drop=True).drop_duplicates().rename_axis(None, axis=1)
     # Identify duplicate structures (do not remove yet)
     compound_mapping = _identify_duplicate_compounds(df)
-    compound_mapping.to_csv(outfile.replace('.csv.zip', '_dupemap.csv.zip'), compression='zip', encoding='utf-8')
+    compound_mapping.to_csv(outfile.replace('.csv', '_dupemap.csv'), encoding='utf-8')
     # Save the dataframe
-    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(outfile, encoding='utf-8', index=False)
     print('Compound structural-info path: ' + outfile, flush=True)
     return df
 
@@ -128,13 +128,13 @@ def _identify_duplicate_compounds(C_main):
 
 
 def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
-                               outfile='data/kegg_data_C_metadata.csv.zip'):
+                               outfile='data/kegg_data_C_metadata.csv'):
     """
     Preprocesses KEGG compound metadata and saves it to a specified output file.
 
     Parameters:
     target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
-    outfile (str, optional): The output file path for the preprocessed metadata. Defaults to 'data/kegg_data_C_metadata.csv.zip'.
+    outfile (str, optional): The output file path for the preprocessed metadata. Defaults to 'data/kegg_data_C_metadata.csv'.
 
     Returns:
     pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
@@ -159,7 +159,7 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
                                                                                                                       'nan'))
     df.drop(columns='remark', inplace=True)
     df = df.reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
-    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(outfile, encoding='utf-8', index=False)
     print(f'Compound metadata path: {outfile}', flush=True)
     return df
 
@@ -201,7 +201,7 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     ko_defs = df['orthology'].dropna().drop_duplicates()
     ko_defs = pd.Series(dict(zip(ko_defs.str.findall(r"(\bK\d{5}\b)").explode(),
                                  ko_defs.str.split(r"\bK\d{5}\b").apply(lambda x: x[1:]).explode())))
-    ko_defs.to_csv(outfile.replace('.csv.zip', '_kodefs.csv.zip'), compression='zip', encoding='utf-8')
+    ko_defs.to_csv(outfile.replace('.csv', '_kodefs.csv'), encoding='utf-8')
     del ko_defs
 
     # Extract reaction attributes and linkages
@@ -217,7 +217,7 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     df['overall'] = df['overall'].replace('', float('nan'))
     df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme', 'equation'])
           .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1))
-    df.to_csv(outfile, compression='zip', encoding='utf-8', index=False)
+    df.to_csv(outfile, encoding='utf-8', index=False)
     print('Reaction info path: ' + outfile, flush=True)
     return df
 
@@ -240,7 +240,7 @@ def preprocess(target="R",
     """
     # Set absolute paths
     target_dir = os.path.abspath(target_dir + f"_{target}")
-    out_file = os.path.abspath(f"{out_file}_{target}.csv.zip")
+    out_file = os.path.abspath(f"{out_file}_{target}.csv")
     cid_manual_file = os.path.abspath(cid_manual_file)
 
     if target == "C":
@@ -248,7 +248,7 @@ def preprocess(target="R",
         man_dict = load_csv_to_dict(cid_manual_file)
         # gets compound metadata
         df_meta = preprocess_kegg_c_metadata(target_dir + '_full',
-                                             outfile=out_file.replace('.csv.zip', '_metadata.csv.zip'))
+                                             outfile=out_file.replace('.csv', '_metadata.csv'))
         # Defines a list of bad CIDs to skip
         df_main = preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
         print("C preprocessing done", flush=True)

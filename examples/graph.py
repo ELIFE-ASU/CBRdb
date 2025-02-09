@@ -7,12 +7,12 @@ import pandas as pd
 import CBRdb
 
 
-def get_compound_list(path_c="../data/kegg_data_C.csv.zip", head=None):
+def get_compound_list(path_c="../data/kegg_data_C.csv", head=None):
     """
     Reads the compound data from a CSV file and returns a list of compound IDs.
 
     Parameters:
-    path_c (str): The file path to the compound data CSV file. Defaults to "../data/kegg_data_C.csv.zip".
+    path_c (str): The file path to the compound data CSV file. Defaults to "../data/kegg_data_C.csv".
     head (int, optional): The number of rows to read from the CSV file. If None, all rows are read. Defaults to None.
 
     Returns:
@@ -42,12 +42,12 @@ def generate_nodes_from_compounds(compound_list, graph=None):
     return graph
 
 
-def get_reaction_list(path_r="../data/kegg_data_R.csv.zip", head=None):
+def get_reaction_list(path_r="../data/kegg_data_R.csv", head=None):
     """
     Reads the reaction data from a CSV file and returns a list of reactions.
 
     Parameters:
-    path_r (str): The file path to the reaction data CSV file. Defaults to "../data/kegg_data_R.csv.zip".
+    path_r (str): The file path to the reaction data CSV file. Defaults to "../data/kegg_data_R.csv".
     head (int, optional): The number of rows to read from the CSV file. If None, all rows are read. Defaults to None.
 
     Returns:

@@ -119,7 +119,7 @@ def fix_halogen_compounds(
 
 def merge_halogen_compounds(cids_dict,
                             smis_dict,
-                            c_id_file="../data/kegg_data_C.csv.zip",
+                            c_id_file="../data/kegg_data_C.csv",
                             int_file=None,
                             out_file=None):
     """
@@ -128,7 +128,7 @@ def merge_halogen_compounds(cids_dict,
     Parameters:
     cids_dict (dict): A dictionary mapping original compound IDs to new compound IDs.
     smis_dict (dict): A dictionary mapping original compound IDs to their SMILES representations.
-    c_id_file (str): The path to the file containing existing compound data. Default is '../data/kegg_data_C.csv.zip'.
+    c_id_file (str): The path to the file containing existing compound data. Default is '../data/kegg_data_C.csv'.
     int_file (str, optional): The path to the intermediate file where merged data will be saved. Default is None.
     out_file (str, optional): The path to the output file where final merged data will be saved. Default is the same as c_id_file.
 
@@ -166,10 +166,10 @@ def merge_halogen_compounds(cids_dict,
         "n_heavy_atoms": arr_n_heavy,
         "n_chiral_centers": arr_nc})
     if int_file is not None:
-        df.to_csv(int_file, compression='zip', encoding='utf-8', index=False)
+        df.to_csv(int_file, encoding='utf-8', index=False)
 
     # Load the compounds data
-    df_old = pd.read_csv(c_id_file, compression='zip')
+    df_old = pd.read_csv(c_id_file)
 
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)
@@ -178,13 +178,13 @@ def merge_halogen_compounds(cids_dict,
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id")
     # Save the dataframe
-    df.to_csv(out_file, compression='zip', index=False, encoding='utf-8')
+    df.to_csv(out_file, index=False, encoding='utf-8')
     print("Done!", flush=True)
     return df
 
 
 def fix_halogen_reactions(cids_dict,
-                          r_id_file="../data/atlas_data_R.csv.zip",
+                          r_id_file="../data/atlas_data_R.csv",
                           int_file=None,
                           out_file=None,
                           f_print=True):
@@ -193,7 +193,7 @@ def fix_halogen_reactions(cids_dict,
 
     Parameters:
     cids_dict (dict): A dictionary mapping original compound IDs to new compound IDs.
-    r_id_file (str): The path to the file containing existing reaction data. Default is '../data/atlas_data_R.csv.zip'.
+    r_id_file (str): The path to the file containing existing reaction data. Default is '../data/atlas_data_R.csv'.
     int_file (str, optional): The path to the intermediate file where processed reaction data will be saved. Default is None.
     out_file (str, optional): The path to the output file where final processed reaction data will be saved. Default is the same as r_id_file.
     f_print (bool): Flag to print debug information. Default is False.
@@ -226,7 +226,7 @@ def fix_halogen_reactions(cids_dict,
         print(f"{n_compounds} bad compound files ID with halogens: {data_bad_id}", flush=True)
 
     # Load the reactions data
-    df_reactions = pd.read_csv(r_id_file, compression='zip')
+    df_reactions = pd.read_csv(r_id_file)
     if f_print:
         print(df_reactions.columns, flush=True)
 
@@ -285,7 +285,7 @@ def fix_halogen_reactions(cids_dict,
 
     if int_file is not None:
         print(f"Saving intermediate file {int_file}", flush=True)
-        df_halogens_exp.to_csv(int_file, compression='zip', encoding='utf-8', index=False)
+        df_halogens_exp.to_csv(int_file, encoding='utf-8', index=False)
 
     # Merge the dataframes
     df = pd.concat([df_reactions, df_halogens_exp], ignore_index=True)
@@ -296,5 +296,5 @@ def fix_halogen_reactions(cids_dict,
     # Sort the dataframe by the ID
     df = df.sort_values(by="id").reset_index(drop=True)
     # Save the dataframe
-    df.to_csv(out_file, compression='zip', index=False, encoding='utf-8')
+    df.to_csv(out_file, index=False, encoding='utf-8')
     return df

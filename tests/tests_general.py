@@ -91,7 +91,7 @@ def test_convert_formula_to_dict():
 
 def test_get_formulas_from_eq():
     print(flush=True)
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     eq = "1 C00001 <=> 1 C00007"
     reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
     print(reactants, flush=True)
@@ -156,7 +156,7 @@ def test_eq_to_dict():
 
 def test_eq_to_symbols():
     print(flush=True)
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     eq = "2 C00027 <=> 2 C00001 + 1 C00007"
 
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
@@ -192,7 +192,7 @@ def test_eq_standard():
 
 def test_eq_balanced():
     print(flush=True)
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
 
     # # The equation is balanced
     # print("The equation is balanced", flush=True)
@@ -243,7 +243,7 @@ def test_eq_difference():
 def test_contains_var_list_check():
     print(flush=True)
     # Test which sees if there is variable in the equation
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     eq = "m C00404 + n C00001 <=> (n+1) C02174 + x C00001"
     reactants, products = CBRdb.get_formulas_from_eq(eq, data_c)
     vars = CBRdb.contains_var_list(reactants, products)
@@ -267,7 +267,7 @@ def test_contains_var_list_check():
 def test_vars_eq_balanced():
     ############################### DOUBLE CHECK THIS FUNCTION ########################################
     # print(flush=True)
-    # data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    # data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     # eq = "2 C00027 <=> 2 C00001 + 1 C00007"
     # reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
     # result = CBRdb.check_eq_unbalanced(react_ele, prod_ele)
@@ -282,7 +282,7 @@ def test_vars_eq_balanced():
 
 def test_missing_formulas():
     # Check if there is a missing compound ID in the equation
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     eq = "2 C00027 <=> 2 C00001 + 1 C00007"
     assert CBRdb.check_missing_formulas(eq, data_c) == False
     eq = "2 C00027 <=> 2 C00001 + 1 C00007 + 1 C99998"
@@ -291,7 +291,7 @@ def test_missing_formulas():
 
 def test_strip_ionic():
     print(flush=True)
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     eq = "C05359 <=> C99999"
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c, strip_ionic=False)
     print(reactants, flush=True)
@@ -327,7 +327,7 @@ def test_strip_ionic():
 def test_missing_elements():
     print(flush=True)
     # Check if there is a missing element in the equation
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     eq = "2 C00027 <=> 2 C00001 + 1 C00007"
     eq = CBRdb.standardise_eq(eq)
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
@@ -380,7 +380,7 @@ def test_get_small_compounds():
 
 def test_rebalance_eq():
     print(flush=True)
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
 
     # Attempt to rebalance the equation when there is no need to rebalance
     eq = CBRdb.standardise_eq("2 C00089 <=> C00031 + C03661")
@@ -411,7 +411,7 @@ def test_get_compounds_with_elements():
     print(flush=True)
     data_c_1 = CBRdb.get_small_compounds(n=1)
 
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     # Rebalancer would fail on this equation
     eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
 
@@ -430,7 +430,7 @@ def test_inject_compounds():
     print(flush=True)
     data_c_1 = CBRdb.get_small_compounds(n=1)
 
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     # Rebalancer would fail on this equation
     eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
 
@@ -467,7 +467,7 @@ def test_inject_compounds():
 def test_kitchen_sink():
     print(flush=True)
     data_c_1 = CBRdb.get_small_compounds(n=1)
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv.zip"))
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     # Rebalancer would fail on this equation
     eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
     eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1)
