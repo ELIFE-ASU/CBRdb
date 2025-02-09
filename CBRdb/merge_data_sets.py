@@ -88,14 +88,13 @@ def dedupe_compounds(data_folder='../data'):
                                .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
 
     # Save the deduped compound files and reaction files, and tag them as de-duped
-    dd_suf = lambda x: add_suffix_to_file(x, '_deduped')
+    dd_suf = lambda x: add_suffix_to_file(x, 'deduped')
     C_meta.to_csv(dd_suf(C_meta_file), **out_fmt)
     C_main.to_csv(dd_suf(C_main_file), **out_fmt)
 
-    dd_suf = lambda x: add_suffix_to_file(x, '_dedupedCs')
+    dd_suf = lambda x: add_suffix_to_file(x, 'dedupedCs')
     atlas_data_R.to_csv(dd_suf(atlas_data_R_file), **out_fmt)
     kegg_data_R.to_csv(dd_suf(kegg_data_R_file), **out_fmt)
-    
     CBRdb_C = C_main.merge(C_meta, on='compound_id', how='outer')
     CBRdb_C.to_csv(data_folder+'/CBRdb_C.csv', encoding='utf-8', index=False)
 
