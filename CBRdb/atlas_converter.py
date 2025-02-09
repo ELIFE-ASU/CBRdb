@@ -89,7 +89,7 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     # Extract each reaction's list of 3rd-level EC#s. Remove non-conforming EC#s (e.g. not just numbers and -).
     rr = (df['reaction_rule'].str.replace('-rev)', '-(rev)').str.split('|').explode().str.rstrip('(rev)').to_frame()
           .assign(format_ok=lambda x: x.reaction_rule.str.replace('.', '').str.replace('-', '').str.isnumeric())
-          .query('format_ok').groupby(level=0)['reaction_rule'].apply(lambda x: ' '.join(set(x))))
+          .query('format_ok').groupby(level=0)['reaction_rule'].apply(lambda x: ' '.join(sorted(list(set(x))))))
     df = df.join(rr.rename('ec'), how='left').drop('reaction_rule', axis=1)
 
     # Standardize format of reaction equation.

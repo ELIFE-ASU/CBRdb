@@ -206,11 +206,11 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
 
     # Extract reaction attributes and linkages
     df['reaction'] = df['equation'].apply(standardise_eq)  # standardize reaction formatting
-    df['ec'] = df['enzyme'].fillna(' ').str.split().map(' '.join)  # combine all ECs, including partials
+    df['ec'] = df['enzyme'].fillna(' ').str.split().map(lambda x: ' '.join(sorted(list(x))))  # combine all ECs, including partials
 
     patterns = {'orthology': r"(\bK\d{5}\b)", 'pathway': r"(\brn\d{5}\b)", 'module': r"(\bM\d{5}\b)",
                 'rclass': r"(\bRC\d{5}\b  \bC\d{5}_C\d{5})", 'dblinks': r"( \d{5})", 'entry': 'Overall'}
-    [df.update(df[k].str.findall(v).map(' '.join, na_action='ignore')) for k, v in patterns.items()]
+    [df.update(df[k].str.findall(v).map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')) for k, v in patterns.items()]
 
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
