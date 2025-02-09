@@ -642,7 +642,7 @@ def generate_reaction_dupemap(df, prefix="T"):
     dupemap = prefix + duped_groups['grp_num'].astype(str).str.zfill(5)
 
     # Save the map to a CSV file
-    dupemap.to_csv(f'../data/{prefix}_reaction_dupemap.csv', encoding='utf-8')
+    dupemap.sort_index().to_csv(f'../data/{prefix}_reaction_dupemap.csv', encoding='utf-8')
 
     return dupemap
 
