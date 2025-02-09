@@ -220,7 +220,7 @@ def fix_halogen_reactions(cids_dict,
         print(f"cids_dict {cids_dict}", flush=True)
 
     # Load the bad compound IDs
-    data_bad_id = list(cids_dict.keys())
+    data_bad_id = sorted(list(cids_dict.keys()))
     n_compounds = len(data_bad_id)
     if f_print:
         print(f"{n_compounds} bad compound files ID with halogens: {data_bad_id}", flush=True)
@@ -236,7 +236,7 @@ def fix_halogen_reactions(cids_dict,
         # Get the equations
         equations = get_reactions_with_substring(df_reactions, data_bad_id[i])
         reactions_halogen_set.update(equations['id'].values)
-    reactions_halogen_set = list(reactions_halogen_set)
+    reactions_halogen_set = sorted(list(reactions_halogen_set))
     n_reactions = len(reactions_halogen_set)
     if f_print:
         print(f"Found {n_reactions} reactions with the halogens, IDs: {reactions_halogen_set}", flush=True)
