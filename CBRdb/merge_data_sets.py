@@ -95,7 +95,7 @@ def dedupe_compounds(data_folder='../data'):
     dd_suf = lambda x: add_suffix_to_file(x, 'dedupedCs')
     atlas_data_R.to_csv(dd_suf(atlas_data_R_file), **out_fmt)
     kegg_data_R.to_csv(dd_suf(kegg_data_R_file), **out_fmt)
-    CBRdb_C = C_main.merge(C_meta, on='compound_id', how='outer')
+    CBRdb_C = C_main.merge(C_meta, on='compound_id', how='left')
     CBRdb_C.to_csv(data_folder+'/CBRdb_C.csv', encoding='utf-8', index=False)
 
     datasets = dict(zip('CBRdb_C C_meta C_main atlas_data_R kegg_data_R dupemap'.split(),
