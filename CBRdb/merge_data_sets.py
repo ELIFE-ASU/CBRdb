@@ -21,8 +21,8 @@ def merge_duplicate_reactions(df, r_dupemap):
     df['eqn_set'] = df['id'].replace(r_dupemap)
 
     # Define functions for aggregating data
-    unique_str_sep = lambda x: ' '.join(set([i for i in ' '.join(x).split()]))
-    all_provided = lambda x: ' | '.join(x[x != ''].unique())
+    unique_str_sep = lambda x: ' '.join(sorted(list(set([i for i in ' '.join(x).split()]))))
+    all_provided = lambda x: ' | '.join(sorted(list(x[x != ''].unique())))
 
     # Dictionary of aggregation functions for each column
     func_dict = {
