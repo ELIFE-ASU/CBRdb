@@ -51,8 +51,8 @@ if __name__ == "__main__":
     datasets = CBRdb.merge_data_sets.dedupe_compounds()  # modifies all compound and reaction data files above; returns de-duped versions of them
     
     print("Fixing the reactions data...", flush=True) 
-    datasets['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_deduped.csv")  # generates kegg_data_R_processed.csv 
-    datasets['atlas_data_R_processed'] = CBRdb.fix_reactions_data(r_file=atlas_reactions_data + "_deduped.csv")  # generates atlas_data_R_processed.csv 
+    datasets['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_dedupedCs.csv")  
+    datasets['atlas_data_R_processed'] = CBRdb.fix_reactions_data(r_file=atlas_reactions_data + "_dedupedCs.csv")
 
     print("Combining and deduplicating the reactions data...", flush=True)
     datasets['reactions_joined'] = pd.concat(objs=[datasets['kegg_data_R_processed'], datasets['atlas_data_R_processed']], ignore_index=True)
