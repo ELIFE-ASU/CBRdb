@@ -34,7 +34,7 @@ conda update conda --all -y
 ```
 ### Install the requirements
 ```
-conda install conda-forge::numpy conda-forge::sympy conda-forge::matplotlib conda-forge::networkx conda-forge::pandas conda-forge::rdkit conda-forge::chempy conda-forge::requests conda-forge::urllib3 conda-forge::chemparse -y
+conda install conda-forge::numpy conda-forge::sympy conda-forge::matplotlib conda-forge::networkx conda-forge::pandas conda-forge::rdkit conda-forge::chempy conda-forge::requests conda-forge::urllib3 conda-forge::chemparse conda-forge::swifter -y
 ```
 Then install CBRdb:
 ```
