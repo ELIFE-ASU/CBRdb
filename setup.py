@@ -27,6 +27,7 @@ setup(
         'requests',
         'urllib3',
         'chemparse',
+        'swifter',
     ],
     extras_require={
         'dev': [
