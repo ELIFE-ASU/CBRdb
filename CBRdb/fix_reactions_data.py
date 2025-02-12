@@ -77,7 +77,7 @@ def kitchen_sink(eq, data_c, small_compounds):
     attempt = 1
     for compound in compounds:
         # Counter
-        print(f"Attempt {attempt}", flush=True)
+        print(f"Attempt {attempt}, {compound}", flush=True)
         attempt += 1
 
         # Get the elements
@@ -89,6 +89,20 @@ def kitchen_sink(eq, data_c, small_compounds):
 
         # Inject the compound
         eq_new = fix_imbalance_core(eq_new, diff_ele_react, diff_ele_prod, compound)
+        print("New equation:                ", eq_new, flush=True)
+
+        # Get the elements
+        _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c)
+        # Check the difference
+        diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
+        print("Differences in reactants:    ", diff_ele_react, flush=True)
+        print("Differences in products:     ", diff_ele_prod, flush=True)
+
+        # Check if the equation is balanced by checking the differences
+        if not diff_ele_react and not diff_ele_prod:
+            print("Balanced equation found", flush=True)
+            return eq_new
+
         # rebalance the equation
         eq_new = rebalance_eq(eq_new, data_c)
         if eq_new is False:
