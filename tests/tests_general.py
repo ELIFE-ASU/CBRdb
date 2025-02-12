@@ -488,3 +488,20 @@ def test_star_problem():
     print(prod_ele, flush=True)
 
     assert CBRdb.dict_ele_contains_star(react_ele, prod_ele)
+
+def test_dict_values_problem():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
+    # Rebalancer would fail on this equation
+    eq = CBRdb.standardise_eq("C00011 <=> 1 C07728")
+    print(eq, flush=True)
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    diff_ele_react, diff_ele_prod = CBRdb.compare_dict_values(react_ele, prod_ele)
+
+
+    print(reactants, flush=True)
+    print(products, flush=True)
+    print(react_ele, flush=True)
+    print(prod_ele, flush=True)
+    print(diff_ele_react, flush=True)
+    print(diff_ele_prod, flush=True)
