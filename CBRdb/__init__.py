@@ -10,7 +10,7 @@ from .fix_halogens import (fix_halogen_compounds,
                            fix_halogen_reactions,
                            )
 
-from .fix_reactions_data import (fix_reactions_data, kitchen_sink)
+from .fix_reactions_data import (fix_reactions_data, kitchen_sink,dict_ele_contains_star)
 
 from .lets_get_kegg import (download_data)
 
@@ -50,7 +50,7 @@ from .tools_eq import (convert_formula_to_dict,
                        rebalance_eq,
                        compare_and_delete_keys,
                        fix_imbalance_core,
-                       generate_reaction_dupemap
+                       generate_reaction_dupemap,
                        )
 
 from .tools_files import (file_list,
