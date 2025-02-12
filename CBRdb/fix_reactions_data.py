@@ -2,25 +2,18 @@ import os
 import time
 
 import pandas as pd
-# import dask.dataframe as dd
 import swifter
-from chempy import balance_stoichiometry
 
-from .tools_eq import (get_eq,
-                       get_elements_from_eq,
+from .tools_eq import (get_elements_from_eq,
                        compare_dict_values,
-                       check_missing_elements,
-                       check_eq_unbalanced,
-                       get_missing_elements,
                        standardise_eq,
                        check_contains_var_list,
                        check_missing_formulas,
                        full_check_eq_unbalanced,
                        rebalance_eq,
                        fix_imbalance_core,
-                       inject_compounds,
                        )
-from .tools_mols import (get_small_compounds, get_small_compounds_all, get_compounds_with_matching_elements)
+from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
 
 
 def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
@@ -236,16 +229,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     data_r = data_r[~bool_unbalanced]
     # Determine the number of reactions that have been removed
     print(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", flush=True)
-
-    # # Filter out the var data that is not balanced
-    # print("Filtering out unbalanced reactions", flush=True)
-    # bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
-    # # Get the data that is unbalanced
-    # data_r_unbalanced = data_r[bool_unbalanced]
-    # # Get the data that is balanced
-    # data_r = data_r[~bool_unbalanced]
-    # # Determine the number of reactions that have been removed
-    # print(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", flush=True)
     # print(data_r_unbalanced, flush=True)
     # print(data_r_unbalanced["id"].item, flush=True)
 
@@ -269,12 +252,15 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         print("Reactants: ", reactants, flush=True)
         print("Products:  ", products, flush=True)
 
+        # Check if the equation contains a '*' in either reactants or products
         if dict_ele_contains_star(react_ele, prod_ele):
+            # We assume that the equation is correct and add it to the output
             if f_assume_star:
                 print(f"Assuming {id} is correct", flush=True)
                 ids_out.append(id)
                 eq_lines_out.append(eq_line)
                 continue
+            # We assume that the equation is incorrect and skip it as we cannot fix it
             else:
                 print(f"Skipping {id}", flush=True)
                 continue
