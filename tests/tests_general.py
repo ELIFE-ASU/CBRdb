@@ -473,3 +473,18 @@ def test_kitchen_sink():
     eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1)
     print(eq_out, flush=True)
     assert eq_out == "1 C00027 + 2 C00080 + 2 C00126 <=> 2 C00001 + 2 C00125"
+
+
+def test_star_problem():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
+    # Rebalancer would fail on this equation
+    eq = CBRdb.standardise_eq("1 C00001 + 1 C00454 <=> 1 C00009 + 1 C00215")
+    print(eq, flush=True)
+    reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
+    print(reactants, flush=True)
+    print(products, flush=True)
+    print(react_ele, flush=True)
+    print(prod_ele, flush=True)
+
+    assert CBRdb.dict_ele_contains_star(react_ele, prod_ele)
