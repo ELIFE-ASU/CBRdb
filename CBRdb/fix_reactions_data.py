@@ -140,61 +140,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     c_file = os.path.abspath(c_file)
     bad_file = os.path.abspath(bad_file)
 
-    missing_dict = {"H2O": "C00001",
-                    "H": "C00080",
-                    "Fe": "C00023",  # C14819, C14818 https://www.kegg.jp/entry/C00023
-                    "Na": "C01330",
-                    "Ca": "C00076",
-                    "Cu": "C00070",
-                    "Al": "C06264",
-                    "Cl": "C00698",
-                    "Co": "C00175",
-                    "Ni": "C19609",
-                    "Mo": "C00150",
-                    "O2": "C00007",
-                    "H2Se": "C01528",
-                    "SeO3": "C05684",
-                    "H3PO4": "C00009",  # this is bad up anything smaller?
-                    "CO2": "C00011",
-                    "NH3": "C00014",
-                    "H2": "C00282",
-                    "Mn": "C19610",  # https://www.kegg.jp/entry/C00034
-                    "Zn": "C00038",
-                    "CH4": "C01438",
-                    "NO2": "C00088",
-                    "CH2O": "C00067",
-                    "SO2": "C09306",
-                    "S": "C00087",
-                    "H2S": "C00283",
-                    "I": "C00708",
-                    "Br": "C01324",
-                    "Pb": "C06696",
-                    "K": "C00238",
-                    "Mg": "C00305",
-                    "F": "C00742",
-                    "Te": "C99999",
-                    }
-
-    fix_comp_dict = {"H2SO4": "C00059",  # Sulfuric acid
-                     "H4P2O7": "C00013",  # Pyrophosphate
-                     "C3H7O6P": "C00111",  # Glycerone phosphate
-                     "CH3NO": "C00488",  # Formamide
-                     "C2H4": "C06547",  # Ethene
-                     "H2O2": "C00027",  # Hydrogen peroxide
-                     "HCN": "C01326",  # Hydrogen cyanide
-                     "H2CO3": "C01353",  # Carbonic acid
-                     "C5H9O9P": "C22278",  # 3-Oxoisoapionate 4-phosphate
-                     "CH2O": "C00067",  # Formaldehyde
-                     "HCl": "C01327",  # Hydrochloric acid
-                     "H5P3O10": "C00536",  # Triphosphate
-                     "CH5O3P": "C20396",  # Methylphosphonate
-                     "SeO3": "C05684",  # Selenite
-                     "WH2O4": "C20679",  # Tungstic acid
-                     "H2MoO4": "C06232",  # Molybdate
-                     "HCO3": "C00288",  # Hydrogencarbonate
-                     "H2Se": "C01528",  # Selenous acid
-                     }
-
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
 
     # Read the bad reactions file
@@ -211,10 +156,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     data_c_1 = get_small_compounds(c_path=c_file, n=1)
     data_c_2 = get_small_compounds(c_path=c_file, n=2)
     data_c_3 = get_small_compounds(c_path=c_file, n=3)
-    # print the size of the data
     print(f"Small compound size: 1:{data_c_1.shape}, 2:{data_c_2.shape}, 3:{data_c_3.shape}", flush=True)
-
-    data_c_small = get_small_compounds_all(c_path=c_file, n=1)
 
     # Load the processed reaction data
     print("Loading the reaction data...", flush=True)
