@@ -131,6 +131,7 @@ def compare_dicts(dict1, dict2):
 def compare_dict_values(dict1, dict2):
     """
     Compares the values of two dictionaries and identifies differences.
+    If any values are None, they are treated as 0.
 
     Parameters:
     dict1 (dict): The first dictionary.
@@ -141,8 +142,8 @@ def compare_dict_values(dict1, dict2):
            - The first dictionary contains key-value pairs from dict1 where the values differ from dict2.
            - The second dictionary contains key-value pairs from dict2 where the values differ from dict1.
     """
-    diff_in_dict1 = {key: dict1.get(key) for key in set(dict1) | set(dict2) if dict1.get(key) != dict2.get(key)}
-    diff_in_dict2 = {key: dict2.get(key) for key in set(dict1) | set(dict2) if dict1.get(key) != dict2.get(key)}
+    diff_in_dict1 = {key: (dict1.get(key) or 0) for key in set(dict1) | set(dict2) if (dict1.get(key) or 0) != (dict2.get(key) or 0)}
+    diff_in_dict2 = {key: (dict2.get(key) or 0) for key in set(dict1) | set(dict2) if (dict1.get(key) or 0) != (dict2.get(key) or 0)}
     return diff_in_dict1, diff_in_dict2
 
 
