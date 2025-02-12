@@ -505,3 +505,13 @@ def test_dict_values_problem():
     print(prod_ele, flush=True)
     print(diff_ele_react, flush=True)
     print(diff_ele_prod, flush=True)
+
+def test_rebalancer_fail():
+    print(flush=True)
+    data_c_1 = CBRdb.get_small_compounds(n=1)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
+    # Rebalancer would fail on this equation
+    eq = CBRdb.standardise_eq("1 C00001 + 1 C05195 <=> 1 C19684")
+    eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1)
+    print(eq_out, flush=True)
+
