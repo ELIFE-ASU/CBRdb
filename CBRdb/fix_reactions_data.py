@@ -312,3 +312,4 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     df_final = df_final.sort_values(by="id")
     # Write the data to a file
     df_final.to_csv(out_eq_file, encoding='utf-8', index=False)
+    return df_final
