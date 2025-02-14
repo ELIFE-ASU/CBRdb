@@ -223,7 +223,7 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
     df['overall'] = df['overall'].replace('', float('nan'))
     df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme', 'equation'])
-          .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1))
+          .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1)).sort_values(by='id')
     df.to_csv(outfile, encoding='utf-8', index=False)
     print('Reaction info path: ' + outfile, flush=True)
     return df
