@@ -1,5 +1,5 @@
 import os
-
+from .tools_files import add_suffix_to_file
 import pandas as pd
 from rdkit import RDLogger
 
@@ -56,7 +56,7 @@ def get_reaction_ids_substr(reactions, substr="incomplete reaction"):
     return incomplete_reaction_ids
 
 
-def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'):
+def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/', verbose=False):
     """
     Identifies and flags KEGG reactions that are suspect, including shortcuts
     (summaries of multi-step processes) and reactions with incomplete or general data.
@@ -64,9 +64,10 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'
     Parameters:
     r_file (str): The path to the directory containing the preprocessed KEGG reaction csv.
     data_dir (str): The path to the directory where processed data files will be saved.
+    verbose (bool, default False): Whether to create files preserving info on suspect reactions found
 
     Returns:
-    None
+    pd.Series: A Series with index=ID and value=reason(s) reaction was flagged as suspect
     """
     reaction_pattern = r'r\d{5}'
     keep_acceptable_nonalnum_chars = lambda x: ''.join([i for i in x if i.isalnum() or i in '-+ ;'])
@@ -91,7 +92,6 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'
     # Prepare the full path of the files
     r_file = os.path.abspath(r_file)
     reactions = pd.read_csv(r_file, header=0)
-    get_multistep_details = False
 
     # Trickiest "shortcuts" to identify: multi-step reactions, compressing other reaction IDs into a net reaction.
     rmulti = ((reactions.dropna(subset='comment')[['id', 'comment']].copy(
@@ -119,7 +119,7 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'
         'id!="R10693"')  # this is a comparison instance
     rmulti['parts'] = rmulti['parts'].str.replace('R08637', 'R11101+R11098')  # this is a multistep reaction itself
 
-    if get_multistep_details:  # optional: extract details of multi-step reactions
+    if verbose:  # extract stepwise details of multi-step reactions
         rmulti['parts'] = rmulti['parts'].apply(
             lambda x: ' '.join([i.lstrip('+') for i in x.split() if 'R1' in i or 'R0' in i]))
         rmulti.update(rmulti.query('~parts.str.contains("+", regex=False)').assign(
@@ -130,7 +130,7 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'
         rmulti = (rmulti.sort_values(by=['n_step_sets', 'id'], ascending=[False, True])
                   .reset_index(drop=True).drop('n_step_sets', axis=1)
                   .apply(lambda x: x.str.rstrip('-STEP')).replace('0', 'N'))
-        rmulti.to_csv(data_dir + 'multi_step_reactions.csv', index=False)
+        rmulti.to_csv(add_suffix_to_file(r_file, 'suspect_steps'), index=False)
 
     reactions_multistep = list(rmulti['id'].unique())
     print('Reactions that are multi-step:', len(reactions_multistep), flush=True)
@@ -162,15 +162,19 @@ def find_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'
     data = data.groupby(by='id')['reason'].apply(lambda x: '+'.join(sorted(list(set(x)))))
     data = data.reset_index().drop_duplicates().sort_values(by='id').set_index('id')
     data.to_csv(os.path.join(data_dir, 'R_IDs_bad.dat'))
+
+    if verbose:
+        reactions.query('compound_id.isin(@data.id)').to_csv(add_suffix_to_file(r_file, 'suspect'), index=False)
+
     return data
 
 
-def remove_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/'):
+def remove_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data/', verbose=False):
     """
     Removes suspect reactions from a reaction data file.
     NOTE: Does NOT remove reactions whose definitions (but not ID) matches a suspect reaction.
     """
-    sus = find_suspect_reactions(r_file, data_dir)
+    sus = find_suspect_reactions(r_file, data_dir, verbose)
     rns = pd.read_csv(r_file, index_col=0)
     if 'kegg_id' in rns.columns:
         rns = rns.query('kegg_id.isin(@sus.index)==False')

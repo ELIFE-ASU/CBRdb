@@ -87,6 +87,17 @@ def dedupe_compounds(data_folder='../data'):
     kegg_data_R['reaction'] = (kegg_data_R['reaction'].str.split(expand=True).replace(dupemap)
                                .fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip())
 
+    # Merge the compound dataset
+    CBRdb_C = C_main.merge(C_meta, on='compound_id', how='left')
+    CBRdb_C.to_csv(data_folder+'/CBRdb_C.csv', encoding='utf-8', index=False)
+
+    # Remove reactions with compounds not found in the compound dataset
+    cpd_roster = CBRdb_C['compound_id'].values
+    nf = ~kegg_data_R['reaction'].str.findall(r'(C\d{5})').explode().isin(cpd_roster)
+    kegg_data_R.drop(list(set(nf[nf].index)), inplace=True)
+    nf = ~atlas_data_R['reaction'].str.findall(r'(C\d{5})').explode().isin(cpd_roster)
+    atlas_data_R.drop(list(set(nf[nf].index)), inplace=True)
+
     # Save the deduped compound files and reaction files, and tag them as de-duped
     dd_suf = lambda x: add_suffix_to_file(x, 'deduped')
     C_meta.to_csv(dd_suf(C_meta_file), **out_fmt)
@@ -95,8 +106,6 @@ def dedupe_compounds(data_folder='../data'):
     dd_suf = lambda x: add_suffix_to_file(x, 'dedupedCs')
     atlas_data_R.to_csv(dd_suf(atlas_data_R_file), **out_fmt)
     kegg_data_R.to_csv(dd_suf(kegg_data_R_file), **out_fmt)
-    CBRdb_C = C_main.merge(C_meta, on='compound_id', how='left')
-    CBRdb_C.to_csv(data_folder+'/CBRdb_C.csv', encoding='utf-8', index=False)
 
     datasets = dict(zip('CBRdb_C C_meta C_main atlas_data_R kegg_data_R dupemap'.split(),
                         [CBRdb_C, C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))

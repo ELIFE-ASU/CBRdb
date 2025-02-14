@@ -128,13 +128,15 @@ def _identify_duplicate_compounds(C_main):
 
 
 def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
-                               outfile='data/kegg_data_C_metadata.csv'):
+                               outfile='data/kegg_data_C_metadata.csv',
+                               valid_cids=None):
     """
     Preprocesses KEGG compound metadata and saves it to a specified output file.
 
     Parameters:
     target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
     outfile (str, optional): The output file path for the preprocessed metadata. Defaults to 'data/kegg_data_C_metadata.csv'.
+    valid_cids (iterable, optional): If provided, a list of compound IDs to keep. Defaults to None.
 
     Returns:
     pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
@@ -158,7 +160,12 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
                                                                                                                   float(
                                                                                                                       'nan'))
     df.drop(columns='remark', inplace=True)
-    df = df.reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
+    df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
+    if valid_cids is not None:
+            if hasattr(valid_cids, '__iter__'):
+                df = df.query('compound_id.isin(@valid_cids)')
+            else:
+                raise TypeError('valid_cids must be iterable')
     df.to_csv(outfile, encoding='utf-8', index=False)
     print(f'Compound metadata path: {outfile}', flush=True)
     return df
@@ -244,13 +251,14 @@ def preprocess(target="R",
     cid_manual_file = os.path.abspath(cid_manual_file)
 
     if target == "C":
-        # Defines a dictionary of manual fixes
+        # Defines a dictionary of manual fixes whose mol files are not found in target_dir
         man_dict = load_csv_to_dict(cid_manual_file)
+        # converts compound mol files to smiles strings; defines a list of CIDs to skip
+        df_main = preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
         # gets compound metadata
         df_meta = preprocess_kegg_c_metadata(target_dir + '_full',
-                                             outfile=out_file.replace('.csv', '_metadata.csv'))
-        # Defines a list of bad CIDs to skip
-        df_main = preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
+                                             outfile=out_file.replace('.csv', '_metadata.csv'),
+                                             valid_cids=list(df_main['compound_id'].sort_values()))
         print("C preprocessing done", flush=True)
         return df_meta, df_main
     elif target == "R":
