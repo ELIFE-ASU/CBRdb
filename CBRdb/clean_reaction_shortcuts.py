@@ -179,6 +179,6 @@ def remove_suspect_reactions(r_file='../data/kegg_data_R.csv', data_dir='../data
     if 'kegg_id' in rns.columns:
         rns = rns.query('kegg_id.isin(@sus.index)==False')
     else:
-        rns = rns.drop(sus.index, axis=0, errors='ignore')
+        rns = rns.drop(sus.index, axis=0, errors='ignore').sort_index()
     rns.to_csv(r_file, encoding='utf-8')
     return rns.reset_index()
