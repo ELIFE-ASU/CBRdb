@@ -61,6 +61,10 @@ def dedupe_compounds(data_folder='../data'):
     C_main_file = f'{data_folder}/kegg_data_C.csv'
     atlas_data_R_file = f'{data_folder}/atlas_data_R.csv'
     kegg_data_R_file = f'{data_folder}/kegg_data_R.csv'
+    removed_Rs_file = f'{data_folder}/R_IDs_bad.dat'
+
+    files = dict(zip('dupemap C_meta C_main atlas_data_R kegg_data_R removed_Rs'.split(),
+                    [dupemap_file, C_meta_file, C_main_file, atlas_data_R_file, kegg_data_R_file, removed_Rs_file]))
 
     # Read the duplicate map file
     dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:, 0]
@@ -93,10 +97,9 @@ def dedupe_compounds(data_folder='../data'):
 
     # Remove reactions with compounds not found in the compound dataset
     cpd_roster = CBRdb_C['compound_id'].values
-    nf = ~kegg_data_R['reaction'].str.findall(r'(C\d{5})').explode().isin(cpd_roster)
-    kegg_data_R.drop(list(set(nf[nf].index)), inplace=True)
-    nf = ~atlas_data_R['reaction'].str.findall(r'(C\d{5})').explode().isin(cpd_roster)
-    atlas_data_R.drop(list(set(nf[nf].index)), inplace=True)
+
+    kegg_data_R = _remove_deadref_reactions(cpd_roster, kegg_data_R, removed_Rs_file)
+    atlas_data_R = _remove_deadref_reactions(cpd_roster, atlas_data_R, removed_Rs_file)
 
     # Save the deduped compound files and reaction files, and tag them as de-duped
     dd_suf = lambda x: add_suffix_to_file(x, 'deduped')
@@ -110,4 +113,16 @@ def dedupe_compounds(data_folder='../data'):
     datasets = dict(zip('CBRdb_C C_meta C_main atlas_data_R kegg_data_R dupemap'.split(),
                         [CBRdb_C, C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
     return datasets
+
+def _remove_deadref_reactions(cpd_roster, reaction_df, removed_Rs_file):
+    """Removes reactions from reaction_df which contain compounds not found in cpd_roster. Logs these reactions in removed_Rs_file."""
+    if not hasattr(cpd_roster, '__iter__'):
+        raise TypeError('cpd_roster must be an iterable of valid compound IDs.')
+    nf = ~reaction_df['reaction'].str.findall(r'(\bC\d{5}\b)').explode().isin(cpd_roster)
+    nf = list(set(nf[nf].index))
+    nfK = reaction_df.loc[nf, ['id']].drop_duplicates().assign(reason='structure_missing').copy(deep=True)
+    nfK.set_index('id').to_csv(removed_Rs_file, mode='a', index=True, header=False)
+    f = pd.read_csv(removed_Rs_file, header=0).drop_duplicates().sort_values(by=['reason','id']).set_index('id')
+    f.to_csv(removed_Rs_file, header=True, mode='w')
+    return reaction_df.drop(nfK.index)
 
