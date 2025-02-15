@@ -67,6 +67,17 @@ def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
 
 
 def kitchen_sink(eq, data_c, small_compounds):
+    """
+    Attempts to balance a chemical equation by injecting small compounds based on element differences.
+
+    Parameters:
+    eq (str): The original chemical equation.
+    data_c (pd.DataFrame): The DataFrame containing compound data.
+    small_compounds (list): A list of small compounds to be used for balancing.
+
+    Returns:
+    str: The balanced chemical equation if a solution is found, otherwise the original equation.
+    """
     reactants, products, react_ele, prod_ele = get_elements_from_eq(eq, data_c)
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
 
@@ -103,7 +114,7 @@ def kitchen_sink(eq, data_c, small_compounds):
             print("Balanced equation found", flush=True)
             return eq_new
 
-        # rebalance the equation
+        # Rebalance the equation
         eq_new = rebalance_eq(eq_new, data_c)
         if eq_new is False:
             eq_new = eq
@@ -130,19 +141,34 @@ def dict_ele_contains_star(react_ele, prod_ele):
 def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        c_file="../data/kegg_data_C.csv",
                        bad_file="../data/R_IDs_bad.dat",
-                       f_fresh=True,
                        f_assume_var=True,
                        f_assume_star=True,
                        f_save_intermediate=False,
                        f_parallel=True):
-    """creates processed version of r_file csv from original r_file csv; returns processed r_file as pd.DataFrame"""
+    """
+    Creates a processed version of the reaction data file from the original reaction data file.
+
+    Parameters:
+    r_file (str): Path to the original reaction data file. Defaults to "../data/kegg_data_R.csv".
+    c_file (str): Path to the compound data file. Defaults to "../data/kegg_data_C.csv".
+    bad_file (str): Path to the file containing bad reaction IDs. Defaults to "../data/R_IDs_bad.dat".
+    f_fresh (bool): Flag to indicate if fresh processing is required. Defaults to True.
+    f_assume_var (bool): Flag to assume that equations containing variable lists are correct. Defaults to True.
+    f_assume_star (bool): Flag to assume that equations containing a '*' are correct. Defaults to True.
+    f_save_intermediate (bool): Flag to save intermediate files during processing. Defaults to False.
+    f_parallel (bool): Flag to enable parallel processing. Defaults to True.
+
+    Returns:
+    pd.DataFrame: The processed reaction data as a DataFrame.
+    """
     # f_assume_var=True => assume that the equation contains a var list are correct
     # f_assume_star=True => assume that the equation contains a star are correct
+
 
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
 
-    # Get the absolute paths
+        # Get the absolute paths
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)
     bad_file = os.path.abspath(bad_file)
@@ -187,11 +213,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_missing_data = data_r['reaction'].swifter.force_parallel(enable=True).allow_dask_on_strings(
             enable=True).apply(check_missing_formulas, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0)
+        print("Time to check missing formulas: ", time.time() - t0, flush=True)
     else:
         t0 = time.time()
         bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0)
+        print("Time to check missing formulas: ", time.time() - t0, flush=True)
 
     data_r_missing_data = data_r[bool_missing_data]
     if f_save_intermediate:
@@ -207,11 +233,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list,
                                                                                      args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0)
+        print("Time to check missing formulas: ", time.time() - t0, flush=True)
     else:
         t0 = time.time()
         bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0)
+        print("Time to check missing formulas: ", time.time() - t0, flush=True)
 
     data_r_var_list = data_r[bool_var_list]
     if f_save_intermediate:
@@ -227,11 +253,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced,
                                                                                        args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0)
+        print("Time to check missing formulas: ", time.time() - t0, flush=True)
     else:
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0)
+        print("Time to check missing formulas: ", time.time() - t0, flush=True)
 
     # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
