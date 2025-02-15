@@ -142,8 +142,10 @@ def compare_dict_values(dict1, dict2):
            - The first dictionary contains key-value pairs from dict1 where the values differ from dict2.
            - The second dictionary contains key-value pairs from dict2 where the values differ from dict1.
     """
-    diff_in_dict1 = {key: (dict1.get(key) or 0) for key in set(dict1) | set(dict2) if (dict1.get(key) or 0) != (dict2.get(key) or 0)}
-    diff_in_dict2 = {key: (dict2.get(key) or 0) for key in set(dict1) | set(dict2) if (dict1.get(key) or 0) != (dict2.get(key) or 0)}
+    diff_in_dict1 = {key: (dict1.get(key) or 0) for key in set(dict1) | set(dict2) if
+                     (dict1.get(key) or 0) != (dict2.get(key) or 0)}
+    diff_in_dict2 = {key: (dict2.get(key) or 0) for key in set(dict1) | set(dict2) if
+                     (dict1.get(key) or 0) != (dict2.get(key) or 0)}
     return diff_in_dict1, diff_in_dict2
 
 
@@ -819,27 +821,41 @@ def fix_multiply_tar_all(expression, target_letters=None):
 
 
 def check_vars_eq_balanced(reactants, products):
-    ############################### DOUBLE CHECK THIS FUNCTION ########################################
+    """
+    Checks if a chemical equation with variables is balanced by solving for the variable values and evaluating the equation.
+
+    Parameters:
+    reactants (dict): A dictionary where keys are compound identifiers and values are their counts for reactants.
+    products (dict): A dictionary where keys are compound identifiers and values are their counts for products.
+
+    Returns:
+    bool: True if the equation is balanced, False otherwise.
+    """
     # Convert all the dict values to strings
     reactants = {k: str(v) for k, v in reactants.items()}
     products = {k: str(v) for k, v in products.items()}
+
     # Get the values in the reactants and products
     reactants_values = list(reactants.values())
     products_values = list(products.values())
     full_list = reactants_values + products_values
+
     # Solve for n
     n_val = solve_for(full_list)
-    print(f"n = {n_val}")
+    print(f"n = {n_val}", flush=True)
+
     # Substitute the n value into the reactants and products
     reactants = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in reactants.items()}
     products = {k: fix_multiply_tar(v, 'n').replace('n', str(n_val)) for k, v in products.items()}
-    print(reactants)
-    print(products)
+    print(reactants, flush=True)
+    print(products, flush=True)
+
     # eval the values in the reactants and products
     reactants = {k: eval(v) for k, v in reactants.items()}
     products = {k: eval(v) for k, v in products.items()}
-    print(reactants)
-    print(products)
+    print(reactants, flush=True)
+    print(products, flush=True)
+
     return check_eq_unbalanced(reactants, products)
 
 
