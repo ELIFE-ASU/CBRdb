@@ -153,6 +153,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     f_rebalance = open(rebalance_file, "w")
     # Write the header
     f_log.write("# Bad IDs, reason\n")
+    f_rebalance.write("# This file contains information on the rebalancer run\n")
 
     # Get the output file name
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
@@ -177,8 +178,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     print("Loading the reaction data...", flush=True)
     data_r = pd.read_csv(r_file)
     print("data loaded", flush=True)
-    print("data columns", data_r.columns, flush=True)
-    print("data shape", data_r.shape, flush=True)
+    print(f"data columns: {data_r.columns}", flush=True)
+    print(f"data shape: {data_r.shape}", flush=True)
 
     # Sort by the index
     data_r = data_r.sort_values(by="id")
@@ -195,11 +196,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_missing_data = data_r['reaction'].swifter.force_parallel(enable=True).allow_dask_on_strings(
             enable=True).apply(check_missing_formulas, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0, flush=True)
+        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
     else:
         t0 = time.time()
         bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0, flush=True)
+        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
 
     data_r_missing_data = data_r[bool_missing_data]
     if f_save_intermediate:
@@ -215,11 +216,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list,
                                                                                      args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0, flush=True)
+        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
     else:
         t0 = time.time()
         bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0, flush=True)
+        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
 
     data_r_var_list = data_r[bool_var_list]
     if f_save_intermediate:
@@ -235,11 +236,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced,
                                                                                        args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0, flush=True)
+        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
     else:
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
-        print("Time to check missing formulas: ", time.time() - t0, flush=True)
+        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
 
     # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
@@ -259,51 +260,62 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     eq_lines = data_r_unbalanced["reaction"].tolist()
     n_ids = len(ids)
 
+    # Initialise the output lists
     ids_out = []
     eq_lines_out = []
 
     # Loop over the unbalanced reactions data
     for i in range(n_ids):
-        # Standardise the equation
+        # Enforce that the equation is standardised
         eq_line = standardise_eq(eq_lines[i])
+        # Get the id
         id = ids[i]
 
         print(f"\nProcessing {i}/{n_ids} {id}", flush=True)
         print(f"Equation line: {eq_line}", flush=True)
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
-        print("Reactants: ", reactants, flush=True)
-        print("Products:  ", products, flush=True)
+        print(f"Reactants: {reactants}", flush=True)
+        print(f"Products:  {products}", flush=True)
 
         # Check if the equation contains a '*' in either reactants or products
         if dict_ele_contains_star(react_ele, prod_ele):
             # We assume that the equation is correct and add it to the output
             if f_assume_star:
-                print(f"Assuming {id} is correct", flush=True)
+                print(f"Assuming eq {id} is correct", flush=True)
                 ids_out.append(id)
                 eq_lines_out.append(eq_line)
                 continue
             # We assume that the equation is incorrect and skip it as we cannot fix it
             else:
-                print(f"Skipping {id}", flush=True)
+                print(f"Assume that the eq {id} is incorrect and skip it as we cannot fix it..", flush=True)
                 continue
 
         if id == 'R00263':
-            print(f"Skipping {id}", flush=True)
+            print(f"Skipping {id} due to it being malformed", flush=True)
             continue
 
+        # Check if the equation is balanced
         eq_line_new = rebalance_eq(eq_line, data_c)
+
         if eq_line_new is False:
-            # Need to get dirty and try to fix the imbalance
+            # Throw the equation into the kitchen sink and see what happens...
             eq_line_new = kitchen_sink(eq_line, data_c, data_c_1)
             if eq_line_new is False:
-                print("Could not fix the imbalance", flush=True)
+                print(f"Could not fix the imbalance for eq {id}", flush=True)
         else:
             ids_out.append(id)
             eq_lines_out.append(eq_line_new)
 
+    # Using the output lists update data_r_unbalanced df
+    data_r_unbalanced["id"] = ids_out
+    data_r_unbalanced["reaction"] = eq_lines_out
+
+    # drop the rows that are not in the output lists
+    data_r_unbalanced = data_r_unbalanced[data_r_unbalanced["id"].isin(ids_out)]
+
     data_r_rebalanced = data_r_unbalanced
 
-    print("Combining the data", flush=True)
+    print("Combining the data!", flush=True)
     # Combine the data
     if f_assume_var:
         # Here we have assumed that the data_r_var_list reactions data is correct
@@ -311,6 +323,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         print("Assuming equations with a var list data is correct...", flush=True)
         df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced])
     else:
+        print("Assuming equations with a var list data is incorrect...", flush=True)
         df_final = pd.concat([data_r, data_r_rebalanced])
 
     # Get the finial length of the data
