@@ -16,6 +16,22 @@ from .tools_eq import (get_elements_from_eq,
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
 
 
+def print_and_log(statement, file):
+    """
+    Prints and logs a statement.
+
+    Parameters:
+    statement (str): The statement to be printed and logged.
+    file (file object): The file object to log the statement.
+
+    Returns:
+    None
+    """
+    print(statement, flush=True)
+    file.write(statement + "\n")
+    return None
+
+
 def kitchen_sink(eq, data_c, small_compounds):
     """
     Attempts to balance a chemical equation by injecting small compounds based on element differences.
@@ -33,6 +49,10 @@ def kitchen_sink(eq, data_c, small_compounds):
 
     compounds = get_compounds_with_matching_elements(small_compounds, diff_ele_react, diff_ele_prod)
     print(f"Compounds that might match:  {compounds}", flush=True)
+
+    if not compounds:
+        print("No compounds found that match the element differences.", flush=True)
+        return False
 
     eq_new = eq
     attempt = 1
@@ -62,7 +82,9 @@ def kitchen_sink(eq, data_c, small_compounds):
         # Check if the equation is balanced by checking the differences
         if not diff_ele_react and not diff_ele_prod:
             print("Differences null, balanced equation found!", flush=True)
-            break
+            # Return the new equation line
+            print(f"Final equation:              {eq_new}", flush=True)
+            return eq_new
 
         # Try to rebalance the equation
         eq_new = rebalance_eq(eq_new, data_c)
@@ -71,13 +93,14 @@ def kitchen_sink(eq, data_c, small_compounds):
             eq_new = eq
             print("Rebalance failed, trying next compound...", flush=True)
         else:
-            break
+            # Return the new equation line
+            print(f"Final equation:              {eq_new}", flush=True)
+            return eq_new
         # Increment the attempt
         attempt += 1
+    return False
 
-    # Return the new equation line
-    print(f"Final equation:              {eq_new}", flush=True)
-    return eq_new
+
 
 
 def dict_ele_contains_star(react_ele, prod_ele):
@@ -92,21 +115,6 @@ def dict_ele_contains_star(react_ele, prod_ele):
     bool: True if there is a '*' in either reactants or products, False otherwise.
     """
     return '*' in react_ele or '*' in prod_ele
-
-
-def print_and_log(statement, file):
-    """
-    Prints and logs a statement.
-
-    Parameters:
-    statement (str): The statement to be printed and logged.
-    file (file object): The file object to log the statement.
-
-    Returns:
-    None
-    """
-    print(statement, flush=True)
-    file.write(statement + "\n")
 
 
 def fix_reactions_data(r_file="../data/kegg_data_R.csv",
@@ -140,9 +148,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     pd.DataFrame: The processed reaction data as a DataFrame.
     """
 
-    # Get the filename from r_file using os
-    rebalance_file = os.path.basename(r_file).split('.')[0] + f'_{rebalance_file}'
-    log_file = os.path.basename(r_file).split('.')[0] + f'_{log_file}'
+
 
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
@@ -151,12 +157,22 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)
     bad_file = os.path.abspath(bad_file)
-    log_file = os.path.abspath(log_file)
-    rebalance_file = os.path.abspath(rebalance_file)
+
+    # Get the path from r_file
+    tmp_path = os.path.dirname(r_file)
+
+    # Get the file names
+    rebalance_file = os.path.basename(r_file).split('.')[0] + f'_{rebalance_file}'
+    log_file = os.path.basename(r_file).split('.')[0] + f'_{log_file}'
+
+    # Get the absolute paths
+    log_file = os.path.abspath(os.path.join(tmp_path,log_file))
+    rebalance_file = os.path.abspath(os.path.join(tmp_path,rebalance_file))
 
     # Open the log file and rebalance file
     f_log = open(log_file, "w")
     f_rebalance = open(rebalance_file, "w")
+
     # Write the header
     f_log.write("# Bad IDs, reason\n")
     f_rebalance.write("# This file contains information on the rebalancer run\n")
@@ -170,15 +186,15 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     bad_ids = [line.split(',')[0].strip() for line in bad_data.split("\n")[1:]]
 
     # Load the processed compound data
-    print("Loading the compound data...", flush=True)
+    print_and_log("Loading the compound data...", f_log)
     data_c = pd.read_csv(c_file)
-    print(f"Compound data shape: {data_c.shape}", flush=True)
+    print_and_log(f"Compound data shape: {data_c.shape}", f_log)
 
     # Load the small compounds
     data_c_1 = get_small_compounds(c_path=c_file, n=1)
     data_c_2 = get_small_compounds(c_path=c_file, n=2)
     data_c_3 = get_small_compounds(c_path=c_file, n=3)
-    print(f"Small compound size: 1:{data_c_1.shape}, 2:{data_c_2.shape}, 3:{data_c_3.shape}", flush=True)
+    print_and_log(f"Small compound size: 1:{data_c_1.shape}, 2:{data_c_2.shape}, 3:{data_c_3.shape}", f_log)
 
     # Load the processed reaction data
     print("Loading the reaction data...", flush=True)
@@ -258,8 +274,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     data_r = data_r[~bool_unbalanced]
     # Determine the number of reactions that have been removed
     print(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", flush=True)
-    # print(data_r_unbalanced, flush=True)
-    # print(data_r_unbalanced["id"].item, flush=True)
 
     # Get the data from the unbalanced dataframe
     ids = data_r_unbalanced["id"].tolist()
@@ -269,9 +283,12 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     # Initialise the output lists
     ids_out = []
     eq_lines_out = []
+    ids_failed = []
 
     # Loop over the unbalanced reactions data
     for i in range(n_ids):
+        if i > 100:
+            break
         # Enforce that the equation is standardised
         eq_line = standardise_eq(eq_lines[i])
         # Get the id
@@ -308,31 +325,38 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
             eq_line_new = kitchen_sink(eq_line, data_c, data_c_1)
             if eq_line_new is False:
                 print(f"Could not fix the imbalance for eq {id}", flush=True)
-        else:
-            ids_out.append(id)
-            eq_lines_out.append(eq_line_new)
+                ids_failed.append(id)
+                continue
+        print(f"rebalanced {id} with new equation line: {eq_line_new}", flush=True)
+        ids_out.append(id)
+        eq_lines_out.append(eq_line_new)
 
-    # Using the output lists update data_r_unbalanced df
-    data_r_unbalanced["id"] = ids_out
-    data_r_unbalanced["reaction"] = eq_lines_out
+    print(f"Number of reactions rebalanced: {len(ids_out)}", flush=True)
+    print(f"Number of reactions failed: {len(ids_failed)}", flush=True)
+    print(f"Reactions failed: {ids_failed}", flush=True)
 
-    # drop the rows that are not in the output lists
-    data_r_unbalanced = data_r_unbalanced[data_r_unbalanced["id"].isin(ids_out)]
+    # Update the "reaction" column in data_r_unbalanced using eq_lines_out and ids_out
+    data_r_unbalanced.loc[data_r_unbalanced["id"].isin(ids_out), "reaction"] = eq_lines_out
 
     data_r_rebalanced = data_r_unbalanced
 
+
     print("Combining the data!", flush=True)
+    print(f"data_r shape: {data_r.shape}", flush=True)
+    print(f"data_r_var_list shape: {data_r_var_list.shape}", flush=True)
+    print(f"data_r_rebalanced shape: {data_r_rebalanced.shape}", flush=True)
+
     # Combine the data
     if f_assume_var:
         # Here we have assumed that the data_r_var_list reactions data is correct
         # This is questionable as the data may be incorrect
-        print("Assuming equations with a var list data is correct...", flush=True)
+        print("Merging data assuming equations with a var list data are correct...", flush=True)
         df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced])
     else:
-        print("Assuming equations with a var list data is incorrect...", flush=True)
+        print("Merging data assuming equations with a var list data are incorrect...", flush=True)
         df_final = pd.concat([data_r, data_r_rebalanced])
 
-    # Get the finial length of the data
+    # Get the final length of the data
     print(f"Final data shape: {df_final.shape}", flush=True)
 
     # Sort by the index
