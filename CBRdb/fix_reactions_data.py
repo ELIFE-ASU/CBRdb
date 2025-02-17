@@ -123,28 +123,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        f_assume_var=True,
                        f_assume_star=True,
                        f_save_intermediate=False,
-                       f_parallel=True):
-    """
-    Creates a processed version of the reaction data file from the original reaction data file.
-
-
-    Key assumptions:
-    f_assume_var=True => assume that the equation contains a var list are correct
-    f_assume_star=True => assume that the equation contains a star are correct
-
-    Parameters:
-    r_file (str): Path to the original reaction data file. Defaults to "../data/kegg_data_R.csv".
-    c_file (str): Path to the compound data file. Defaults to "../data/kegg_data_C.csv".
-    bad_file (str): Path to the file containing bad reaction IDs. Defaults to "../data/R_IDs_bad.dat".
-    f_fresh (bool): Flag to indicate if fresh processing is required. Defaults to True.
-    f_assume_var (bool): Flag to assume that equations containing variable lists are correct. Defaults to True.
-    f_assume_star (bool): Flag to assume that equations containing a '*' are correct. Defaults to True.
-    f_save_intermediate (bool): Flag to save intermediate files during processing. Defaults to False.
-    f_parallel (bool): Flag to enable parallel processing. Defaults to True.
-
-    Returns:
-    pd.DataFrame: The processed reaction data as a DataFrame.
-    """
+                       f_parallel=True,
+                       rebalance_depth=1):
 
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
@@ -289,7 +269,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         id = ids[i]
 
         print(f"\nProcessing {i}/{n_ids} {id}", flush=True)
-        print(f"Equation line: {eq_line}", flush=True)
+        print(f"Original equation line: {eq_line}", flush=True)
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
         print(f"Reactants: {reactants}", flush=True)
         print(f"Products:  {products}", flush=True)
@@ -313,23 +293,30 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
         # Check if the equation is balanced
         eq_line_new = rebalance_eq(eq_line, data_c)
-
+        # Equation is not balance...
         if eq_line_new is False:
-            # Attempt with the c1 compounds
+            # Attempt injecting methods with the c1 compounds
             eq_line_new = kitchen_sink(eq_line, data_c, data_c_1)
             if eq_line_new is False:
                 print(f"Could not fix the imbalance for eq {id} using c1 list!", flush=True)
-                # Attempt with the c2 compounds
-                eq_line_new = kitchen_sink(eq_line, data_c, data_c_2)
-                if eq_line_new is False:
-                    print(f"Could not fix the imbalance for eq {id} using c2 list!", flush=True)
-
+                if rebalance_depth > 1:
+                    # Attempt with the c2 compounds
                     eq_line_new = kitchen_sink(eq_line, data_c, data_c_2)
                     if eq_line_new is False:
-                        print(f"Could not fix the imbalance for eq {id} using c3 list!", flush=True)
-
-                        ids_failed.append(id)
-                        continue
+                        print(f"Could not fix the imbalance for eq {id} using c2 list!", flush=True)
+                        if rebalance_depth > 2:
+                            # Attempt with the c3 compounds
+                            eq_line_new = kitchen_sink(eq_line, data_c, data_c_3)
+                            if eq_line_new is False:
+                                print(f"Could not fix the imbalance for eq {id} using c3 list!", flush=True)
+                                ids_failed.append(id)
+                                continue
+                        else:
+                            ids_failed.append(id)
+                            continue
+                else:
+                    ids_failed.append(id)
+                    continue
 
         print(f"rebalanced {id} with new equation line: {eq_line_new}", flush=True)
         ids_out.append(id)
@@ -367,7 +354,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     # Write the data to a file
     df_final.to_csv(out_eq_file, encoding='utf-8', index=False)
 
-    # Close the log file
+    # Close the log files
     f_log.close()
     f_rebalance.close()
 
