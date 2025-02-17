@@ -80,7 +80,7 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv"):
     properties = mp_calc(get_properties, mols)
 
     # Unpack the properties into the arrays
-    arr_smiles, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
+    arr_smiles, arr_smiles_capped, arr_inchi_capped, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
 
     # Create a dataframe
     df = pd.DataFrame(data={
@@ -89,7 +89,9 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv"):
         "formula": arr_formula,
         "molecular_weight": arr_mw,
         "n_heavy_atoms": arr_n_heavy,
-        "n_chiral_centers": arr_nc})
+        "n_chiral_centers": arr_nc,
+        "smiles_capped": arr_smiles_capped,
+        "inchi_capped": arr_inchi_capped})
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id").reset_index(drop=True).drop_duplicates().rename_axis(None, axis=1)
     # Identify duplicate structures (do not remove yet)
@@ -162,10 +164,10 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     df.drop(columns='remark', inplace=True)
     df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
     if valid_cids is not None:
-            if hasattr(valid_cids, '__iter__'):
-                df = df.query('compound_id.isin(@valid_cids)')
-            else:
-                raise TypeError('valid_cids must be iterable')
+        if hasattr(valid_cids, '__iter__'):
+            df = df.query('compound_id.isin(@valid_cids)')
+        else:
+            raise TypeError('valid_cids must be iterable')
     df.to_csv(outfile, encoding='utf-8', index=False)
     print(f'Compound metadata path: {outfile}', flush=True)
     return df
@@ -213,11 +215,13 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
 
     # Extract reaction attributes and linkages
     df['reaction'] = df['equation'].apply(standardise_eq)  # standardize reaction formatting
-    df['ec'] = df['enzyme'].fillna(' ').str.split().map(lambda x: ' '.join(sorted(list(x))))  # combine all ECs, including partials
+    df['ec'] = df['enzyme'].fillna(' ').str.split().map(
+        lambda x: ' '.join(sorted(list(x))))  # combine all ECs, including partials
 
     patterns = {'orthology': r"(\bK\d{5}\b)", 'pathway': r"(\brn\d{5}\b)", 'module': r"(\bM\d{5}\b)",
                 'rclass': r"(\bRC\d{5}\b  \bC\d{5}_C\d{5})", 'dblinks': r"( \d{5})", 'entry': 'Overall'}
-    [df.update(df[k].str.findall(v).map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')) for k, v in patterns.items()]
+    [df.update(df[k].str.findall(v).map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')) for k, v in
+     patterns.items()]
 
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)

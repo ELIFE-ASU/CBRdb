@@ -155,7 +155,7 @@ def merge_halogen_compounds(cids_dict,
     # Get the properties
     properties = mp_calc(get_properties, mols)
     # Unpack the properties into the arrays
-    arr_smiles, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
+    arr_smiles, arr_smiles_capped, arr_inchi_capped, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
 
     # Create a dataframe
     df = pd.DataFrame(data={
@@ -164,7 +164,9 @@ def merge_halogen_compounds(cids_dict,
         "formula": arr_formula,
         "molecular_weight": arr_mw,
         "n_heavy_atoms": arr_n_heavy,
-        "n_chiral_centers": arr_nc})
+        "n_chiral_centers": arr_nc,
+        "smiles_capped": arr_smiles_capped,
+        "inchi_capped": arr_inchi_capped, })
     if int_file is not None:
         df.to_csv(int_file, encoding='utf-8', index=False)
 

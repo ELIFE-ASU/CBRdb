@@ -360,9 +360,14 @@ def get_properties(mol):
     mol = fix_r_group(mol)
     # Convert the molecule to SMILES string
     smi = Chem.MolToSmiles(mol)
+    # Get H capped molecule
+    mol_capped = mol_replacer(mol)
+    smi_capped = Chem.MolToSmiles(mol_capped)
+    inchi_capped = Chem.MolToInchi(mol_capped)
+
     # Calculate the molecular descriptors
     formula, mw, n_heavy, nc = get_mol_descriptors(mol)
-    return [smi, formula, mw, n_heavy, nc]
+    return [smi, smi_capped, inchi_capped, formula, mw, n_heavy, nc]
 
 
 def filter_compounds_without_star(dataframe):
