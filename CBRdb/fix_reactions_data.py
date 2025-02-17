@@ -16,56 +16,6 @@ from .tools_eq import (get_elements_from_eq,
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
 
 
-def fix_simple_imbalance(eq_line, diff_ele_react, diff_ele_prod):
-    """
-    Attempts to fix the imbalance in a reaction equation by injecting common compounds based on the element differences.
-
-    Parameters:
-    eq_line (str): The original reaction equation line.
-    diff_ele_react (dict): A dictionary of element differences on the reactant side.
-    diff_ele_prod (dict): A dictionary of element differences on the product side.
-
-    Returns:
-    str: The updated reaction equation with the injected compound if a fix is found, otherwise the original equation.
-    """
-    # Find the difference in elements
-    diff_ele = set(diff_ele_react) | set(diff_ele_prod)
-    # Find the difference in values
-    diff_val = abs(sum(diff_ele_react.values()) - sum(diff_ele_prod.values()))
-
-    # Attempt to fix issue with missing
-    if diff_ele == {"H"} and diff_val % 2 != 0:
-        print("Adding H", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00080")
-    elif diff_ele == {"H"} and diff_val % 2 == 0:
-        print("Adding H2", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00282")
-    elif diff_ele == {"O", "H"}:
-        print("Adding H2O", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00001")
-    elif diff_ele == {"O"}:
-        print("Adding O2", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00007")
-    elif diff_ele == {"C", "O"}:
-        print("Adding CO2", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00011")
-    elif diff_ele == {"N", "H"}:
-        print("Adding NH3", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00014")
-    elif diff_ele == {"C", "H"}:
-        print("Adding CH4", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C01438")
-    elif diff_ele == {"N", "O"}:
-        print("Adding NO2", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C00088")
-    elif diff_ele == {"S", "O"}:
-        print("Adding SO2", flush=True)
-        return fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, "C09306")
-    else:
-        print("Could not fix the imbalance", flush=True)
-        return eq_line
-
-
 def kitchen_sink(eq, data_c, small_compounds):
     """
     Attempts to balance a chemical equation by injecting small compounds based on element differences.
@@ -148,6 +98,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     """
     Creates a processed version of the reaction data file from the original reaction data file.
 
+
+    Key assumptions:
+    f_assume_var=True => assume that the equation contains a var list are correct
+    f_assume_star=True => assume that the equation contains a star are correct
+
     Parameters:
     r_file (str): Path to the original reaction data file. Defaults to "../data/kegg_data_R.csv".
     c_file (str): Path to the compound data file. Defaults to "../data/kegg_data_C.csv".
@@ -161,9 +116,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     Returns:
     pd.DataFrame: The processed reaction data as a DataFrame.
     """
-    # f_assume_var=True => assume that the equation contains a var list are correct
-    # f_assume_star=True => assume that the equation contains a star are correct
-
 
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
