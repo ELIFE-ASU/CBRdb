@@ -124,7 +124,7 @@ def get_mol_descriptors_all(mol, missing_val=None):
     return res
 
 
-def mol_replacer(smi, target="[H]"):
+def mol_replacer_smi(smi, target="[H]"):
     """
     Replaces all occurrences of the '*' atom in the given SMILES string with the specified target atom or group.
 
@@ -145,6 +145,27 @@ def mol_replacer(smi, target="[H]"):
     mol_re = Chem.ReplaceSubstructs(mol, star, tar, replaceAll=True)
     # Convert the modified molecule back to a SMILES string and return it
     return Chem.MolToSmiles(mol_re[0])
+
+
+def mol_replacer(mol, target="[H]"):
+    """
+    Replaces all occurrences of the '*' atom in the given molecule with the specified target atom or group.
+
+    Parameters:
+    mol (rdkit.Chem.Mol): The molecule to be modified.
+    target (str): The atom or group to replace '*' with (default is "[H]").
+
+    Returns:
+    rdkit.Chem.Mol: The modified molecule with all '*' atoms replaced by the target.
+    """
+    # Create a molecule for the '*' atom
+    star = Chem.MolFromSmiles('*')
+    # Create a molecule for the target atom or group
+    tar = Chem.MolFromSmiles(target)
+    # Replace all occurrences of '*' with the target in the molecule
+    mol_re = Chem.ReplaceSubstructs(mol, star, tar, replaceAll=True)
+
+    return mol_re[0]
 
 
 def get_mol_descriptors(mol):
@@ -337,7 +358,7 @@ def get_properties(mol):
     mol = standardize_mol(mol)
     # Fix the fix r group so that it can be converted to smiles
     mol = fix_r_group(mol)
-    # Convert the molecule to smiles
+    # Convert the molecule to SMILES string
     smi = Chem.MolToSmiles(mol)
     # Calculate the molecular descriptors
     formula, mw, n_heavy, nc = get_mol_descriptors(mol)

@@ -10,7 +10,7 @@ from .fix_halogens import (fix_halogen_compounds,
                            fix_halogen_reactions,
                            )
 
-from .fix_reactions_data import (fix_reactions_data, kitchen_sink,dict_ele_contains_star)
+from .fix_reactions_data import (fix_reactions_data, kitchen_sink, dict_ele_contains_star)
 
 from .lets_get_kegg import (download_data)
 
@@ -68,6 +68,7 @@ from .tools_mols import (sanitize_mol,
                          get_chirality,
                          get_mol_descriptors,
                          mol_replacer,
+                         mol_replacer_smi,
                          get_mol_descriptors,
                          get_sorted_compounds,
                          get_small_compounds,
