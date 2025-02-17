@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+from rdkit import Chem as Chem
 
 import CBRdb
 
@@ -489,6 +490,7 @@ def test_star_problem():
 
     assert CBRdb.dict_ele_contains_star(react_ele, prod_ele)
 
+
 def test_dict_values_problem():
     print(flush=True)
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
@@ -498,13 +500,13 @@ def test_dict_values_problem():
     reactants, products, react_ele, prod_ele = CBRdb.get_elements_from_eq(eq, data_c)
     diff_ele_react, diff_ele_prod = CBRdb.compare_dict_values(react_ele, prod_ele)
 
-
     print(reactants, flush=True)
     print(products, flush=True)
     print(react_ele, flush=True)
     print(prod_ele, flush=True)
     print(diff_ele_react, flush=True)
     print(diff_ele_prod, flush=True)
+
 
 def test_rebalancer_fail():
     print(flush=True)
@@ -515,3 +517,23 @@ def test_rebalancer_fail():
     eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1)
     print(eq_out, flush=True)
 
+
+def test_mol_replacer_smi():
+    print(flush=True)
+
+    smi = "*CC(=O)c1ccc(C(=O)O)cc1"
+    smi_out = CBRdb.mol_replacer_smi(smi, target="[H]")
+    print(smi_out, flush=True)
+    assert smi_out == "[H]CC(=O)c1ccc(C(=O)O)cc1"
+
+
+def test_mol_replacer():
+    print(flush=True)
+    smi = "*CC(=O)c1ccc(C(=O)O)cc1"
+    mol = Chem.MolFromSmiles(smi)
+    mol_out = CBRdb.mol_replacer(mol, target="[H]")
+    smi_out = Chem.MolToSmiles(mol_out)
+    inchi_out = Chem.MolToInchi(mol_out)
+    print(smi_out, flush=True)
+    print(inchi_out, flush=True)
+    assert smi_out == "[H]CC(=O)c1ccc(C(=O)O)cc1"
