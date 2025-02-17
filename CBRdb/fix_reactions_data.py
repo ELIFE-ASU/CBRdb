@@ -88,9 +88,26 @@ def dict_ele_contains_star(react_ele, prod_ele):
     return '*' in react_ele or '*' in prod_ele
 
 
+def print_and_log(statement, file):
+    """
+    Prints and logs a statement.
+
+    Parameters:
+    statement (str): The statement to be printed and logged.
+    file (file object): The file object to log the statement.
+
+    Returns:
+    None
+    """
+    print(statement, flush=True)
+    file.write(statement + "\n")
+
+
 def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        c_file="../data/kegg_data_C.csv",
                        bad_file="../data/R_IDs_bad.dat",
+                       rebalance_file="R_IDs_bad_rebalance_log.dat",
+                       log_file="fix_reactions_data_log.dat",
                        f_assume_var=True,
                        f_assume_star=True,
                        f_save_intermediate=False,
@@ -117,14 +134,27 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     pd.DataFrame: The processed reaction data as a DataFrame.
     """
 
+    # Get the filename from r_file using os
+    rebalance_file = os.path.basename(r_file).split('.')[0] + f'_{rebalance_file}'
+    log_file = os.path.basename(r_file).split('.')[0] + f'_{log_file}'
+
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
 
-        # Get the absolute paths
+    # Get the absolute paths
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)
     bad_file = os.path.abspath(bad_file)
+    log_file = os.path.abspath(log_file)
+    rebalance_file = os.path.abspath(rebalance_file)
 
+    # Open the log file and rebalance file
+    f_log = open(log_file, "w")
+    f_rebalance = open(rebalance_file, "w")
+    # Write the header
+    f_log.write("# Bad IDs, reason\n")
+
+    # Get the output file name
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
 
     # Read the bad reactions file
@@ -239,7 +269,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         id = ids[i]
 
         print(f"\nProcessing {i}/{n_ids} {id}", flush=True)
-        print("Equation line:", eq_line, flush=True)
+        print(f"Equation line: {eq_line}", flush=True)
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
         print("Reactants: ", reactants, flush=True)
         print("Products:  ", products, flush=True)
@@ -290,4 +320,9 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     df_final = df_final.sort_values(by="id")
     # Write the data to a file
     df_final.to_csv(out_eq_file, encoding='utf-8', index=False)
+
+    # Close the log file
+    f_log.close()
+    f_rebalance.close()
+
     return df_final
