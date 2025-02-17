@@ -101,8 +101,6 @@ def kitchen_sink(eq, data_c, small_compounds):
     return False
 
 
-
-
 def dict_ele_contains_star(react_ele, prod_ele):
     """
     Checks if there is a '*' in either reactants or products.
@@ -148,8 +146,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     pd.DataFrame: The processed reaction data as a DataFrame.
     """
 
-
-
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
 
@@ -166,8 +162,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     log_file = os.path.basename(r_file).split('.')[0] + f'_{log_file}'
 
     # Get the absolute paths
-    log_file = os.path.abspath(os.path.join(tmp_path,log_file))
-    rebalance_file = os.path.abspath(os.path.join(tmp_path,rebalance_file))
+    log_file = os.path.abspath(os.path.join(tmp_path, log_file))
+    rebalance_file = os.path.abspath(os.path.join(tmp_path, rebalance_file))
 
     # Open the log file and rebalance file
     f_log = open(log_file, "w")
@@ -287,8 +283,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Loop over the unbalanced reactions data
     for i in range(n_ids):
-        if i > 100:
-            break
         # Enforce that the equation is standardised
         eq_line = standardise_eq(eq_lines[i])
         # Get the id
@@ -321,12 +315,22 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         eq_line_new = rebalance_eq(eq_line, data_c)
 
         if eq_line_new is False:
-            # Throw the equation into the kitchen sink and see what happens...
+            # Attempt with the c1 compounds
             eq_line_new = kitchen_sink(eq_line, data_c, data_c_1)
             if eq_line_new is False:
-                print(f"Could not fix the imbalance for eq {id}", flush=True)
-                ids_failed.append(id)
-                continue
+                print(f"Could not fix the imbalance for eq {id} using c1 list!", flush=True)
+                # Attempt with the c2 compounds
+                eq_line_new = kitchen_sink(eq_line, data_c, data_c_2)
+                if eq_line_new is False:
+                    print(f"Could not fix the imbalance for eq {id} using c2 list!", flush=True)
+
+                    eq_line_new = kitchen_sink(eq_line, data_c, data_c_2)
+                    if eq_line_new is False:
+                        print(f"Could not fix the imbalance for eq {id} using c3 list!", flush=True)
+
+                        ids_failed.append(id)
+                        continue
+
         print(f"rebalanced {id} with new equation line: {eq_line_new}", flush=True)
         ids_out.append(id)
         eq_lines_out.append(eq_line_new)
@@ -339,7 +343,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     data_r_unbalanced.loc[data_r_unbalanced["id"].isin(ids_out), "reaction"] = eq_lines_out
 
     data_r_rebalanced = data_r_unbalanced
-
 
     print("Combining the data!", flush=True)
     print(f"data_r shape: {data_r.shape}", flush=True)
