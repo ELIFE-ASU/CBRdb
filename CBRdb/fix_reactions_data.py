@@ -32,45 +32,51 @@ def kitchen_sink(eq, data_c, small_compounds):
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
 
     compounds = get_compounds_with_matching_elements(small_compounds, diff_ele_react, diff_ele_prod)
-    print("Compounds that might match:  ", compounds, flush=True)
+    print(f"Compounds that might match:  {compounds}", flush=True)
 
     eq_new = eq
     attempt = 1
     for compound in compounds:
         # Counter
         print(f"Attempt {attempt}, {compound}", flush=True)
-        attempt += 1
 
         # Get the elements
         _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c)
         # Check the difference
         diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-        print("Differences in reactants:    ", diff_ele_react, flush=True)
-        print("Differences in products:     ", diff_ele_prod, flush=True)
+        print(f"Differences in reactants:    {diff_ele_react}", flush=True)
+        print(f"Differences in products:     {diff_ele_prod}", flush=True)
 
         # Inject the compound
         eq_new = fix_imbalance_core(eq_new, diff_ele_react, diff_ele_prod, compound)
-        print("New equation:                ", eq_new, flush=True)
+        print(f"New equation:                {eq_new}", flush=True)
 
         # Get the elements
         _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c)
+
         # Check the difference
         diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-        print("Differences in reactants:    ", diff_ele_react, flush=True)
-        print("Differences in products:     ", diff_ele_prod, flush=True)
+        print(f"Differences in reactants:    {diff_ele_react}", flush=True)
+        print(f"Differences in products:     {diff_ele_prod}", flush=True)
 
         # Check if the equation is balanced by checking the differences
         if not diff_ele_react and not diff_ele_prod:
-            print("Balanced equation found", flush=True)
-            return eq_new
-
-        # Rebalance the equation
-        eq_new = rebalance_eq(eq_new, data_c)
-        if eq_new is False:
-            eq_new = eq
-        else:
+            print("Differences null, balanced equation found!", flush=True)
             break
 
+        # Try to rebalance the equation
+        eq_new = rebalance_eq(eq_new, data_c)
+        if eq_new is False:
+            # Revert to the original equation and try the next compound
+            eq_new = eq
+            print("Rebalance failed, trying next compound...", flush=True)
+        else:
+            break
+        # Increment the attempt
+        attempt += 1
+
+    # Return the new equation line
+    print(f"Final equation:              {eq_new}", flush=True)
     return eq_new
 
 
