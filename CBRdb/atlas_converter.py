@@ -28,32 +28,6 @@ def cleanup_eq_line(eq_line):
     return eq_line
 
 
-def clean_kegg_atlas(in_file="../../data/atlas_kegg_reactions.dat",
-                     out_file="../data/atlas_data_kegg_R.csv"):
-    """
-    Cleans and processes KEGG atlas reaction data.
-
-    Parameters:
-    in_file (str): The path to the input file containing KEGG atlas reactions.
-    out_file (str): The path to the output file where cleaned data will be saved.
-
-    Returns:
-    None
-    """
-    # Get the absolute paths
-    in_file = os.path.abspath(in_file).replace('_kegg', '')
-    out_file = os.path.abspath(out_file)
-
-    warnings.showwarning(f'\n\tclean_kegg_atlas() will be removed soon. \
-                  \n\tFor now, writing CSV of KEGG reactions in ATLAS using clean_atlas. \
-                  \n\tFor more reaction info, join with KEGG_R on kegg_id.', FutureWarning, filename='', lineno='')
-
-    df = clean_atlas(in_file=in_file, out_file=out_file, f_exclude_kegg=False).dropna(subset="kegg_id")
-    df.to_csv(out_file, encoding='utf-8', index=False)
-
-    return df
-
-
 def clean_atlas(in_file="../../data/atlas_reactions.dat",
                 out_file="../data/atlas_data_R.csv",
                 f_exclude_kegg=True):

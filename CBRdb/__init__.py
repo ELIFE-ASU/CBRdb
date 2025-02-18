@@ -1,4 +1,4 @@
-from .atlas_converter import (clean_kegg_atlas, clean_atlas)
+from .atlas_converter import (clean_atlas)
 
 from .clean_reaction_shortcuts import (find_suspect_reactions,
                                        remove_suspect_reactions)
