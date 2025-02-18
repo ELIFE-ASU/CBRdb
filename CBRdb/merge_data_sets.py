@@ -114,13 +114,32 @@ def dedupe_compounds(data_folder='../data'):
 
 
 def _remove_deadref_reactions(cpd_roster, reaction_df, removed_Rs_file):
-    """Removes reactions from reaction_df which contain compounds not found in cpd_roster. Logs these reactions in removed_Rs_file."""
+    """
+    Removes reactions from the reaction_df which contain compounds not found in cpd_roster.
+    Logs these reactions in removed_Rs_file.
+
+    Parameters:
+    cpd_roster (iterable): An iterable of valid compound IDs.
+    reaction_df (pd.DataFrame): The DataFrame containing reaction data.
+    removed_Rs_file (str): The file path where removed reactions will be logged.
+
+    Returns:
+    pd.DataFrame: The DataFrame with reactions containing invalid compounds removed.
+    """
     if not hasattr(cpd_roster, '__iter__'):
         raise TypeError('cpd_roster must be an iterable of valid compound IDs.')
+
+    # Find reactions with compounds not in cpd_roster
     nf = ~reaction_df['reaction'].str.findall(r'(\bC\d{5}\b)').explode().isin(cpd_roster)
     nf = list(set(nf[nf].index))
+
+    # Log the removed reactions
     nfK = reaction_df.loc[nf, ['id']].drop_duplicates().assign(reason='structure_missing').copy(deep=True)
     nfK.set_index('id').to_csv(removed_Rs_file, mode='a', index=True, header=False)
+
+    # Read and sort the log file
     f = pd.read_csv(removed_Rs_file, header=0).drop_duplicates().sort_values(by=['reason', 'id']).set_index('id')
     f.to_csv(removed_Rs_file, header=True, mode='w')
+
+    # Return the DataFrame with invalid reactions removed
     return reaction_df.drop(nfK.index)

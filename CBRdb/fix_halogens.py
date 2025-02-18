@@ -245,7 +245,7 @@ def fix_halogen_reactions(cids_dict,
 
     # Only keep the reactions with the halogens in the reactions_set
     df_halogens = df_reactions[df_reactions['id'].isin(reactions_halogen_set)]
-    print(df_halogens)
+    print(df_halogens, flush=True)
 
     df_halogens_exp = pd.DataFrame()
 
