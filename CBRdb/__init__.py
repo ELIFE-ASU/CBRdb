@@ -1,28 +1,19 @@
 from .atlas_converter import (clean_atlas)
-
 from .clean_reaction_shortcuts import (find_suspect_reactions,
                                        remove_suspect_reactions)
-
-from .prune_reactions import (df_of_suspect_reactions,
-                              suspect_reaction_subset,
-                              quarantine_suspect_reactions_matching,
-                              add_suspect_reactions_to_existing_bad_file)
-
 from .compounds_manual_add import (compounds_manual_add)
-
 from .fix_halogens import (fix_halogen_compounds,
                            merge_halogen_compounds,
                            fix_halogen_reactions,
                            )
-
 from .fix_reactions_data import (fix_reactions_data, kitchen_sink, dict_ele_contains_star)
-
 from .lets_get_kegg import (download_data)
-
 from .merge_data_sets import (dedupe_compounds, merge_duplicate_reactions)
-
 from .preprocessor import (preprocess)
-
+from .prune_reactions import (df_of_suspect_reactions,
+                              suspect_reaction_subset,
+                              quarantine_suspect_reactions_matching,
+                              add_suspect_reactions_to_existing_bad_file)
 from .tools_eq import (convert_formula_to_dict,
                        get_formulas_from_eq,
                        convert_ids_to_formulas,
@@ -57,8 +48,8 @@ from .tools_eq import (convert_formula_to_dict,
                        fix_imbalance_core,
                        generate_reaction_dupemap,
                        plot_eq_line,
+                       plot_reaction_id,
                        )
-
 from .tools_files import (file_list,
                           file_list_all,
                           list_empty_folders,
@@ -67,7 +58,6 @@ from .tools_files import (file_list,
                           delete_files_substring,
                           add_suffix_to_file
                           )
-
 from .tools_mols import (sanitize_mol,
                          standardize_mol,
                          fix_r_group,
@@ -81,7 +71,6 @@ from .tools_mols import (sanitize_mol,
                          get_small_compounds_all,
                          get_compounds_with_matching_elements,
                          )
-
 from .tools_mp import (mp_calc,
                        mp_calc_star,
                        tp_calc,

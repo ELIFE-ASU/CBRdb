@@ -1046,3 +1046,9 @@ def plot_eq_line(eq, data_c, render_dir='render', size=(600, 600)):
         Draw.MolToFile(mol, f'{render_dir}/product_{i}_{products_keys[i]}.png', size=size)
 
     return reactants_keys, products_keys
+
+def plot_reaction_id(id, data_r, data_c, render_dir='render', size=(600, 600)):
+    # Get the reaction from the id
+    eq = data_r.loc[data_r['id'] == id, 'reaction'].values[0]
+    # Plot the eq
+    return plot_eq_line(eq, data_c, render_dir=render_dir, size=size)
