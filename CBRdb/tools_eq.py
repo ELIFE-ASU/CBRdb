@@ -1,9 +1,12 @@
 import copy
+import os
 import re
 
 import chemparse
 import sympy as sp
 from chempy import balance_stoichiometry
+from rdkit import Chem
+from rdkit.Chem import Draw
 
 
 def strip_ionic_states(formula):
@@ -1008,3 +1011,38 @@ def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
         eq_right += f" + {inject}"
     # Update eq_line with the new equation
     return standardise_eq(f"{eq_left} <=> {eq_right}")
+
+
+def plot_eq_line(eq, data_c, render_dir='render', size=(600, 600)):
+    print(f'Input eq: {eq}', flush=True)
+
+    # Get the reactants and products from the eq
+    reactants, products = eq_to_dict(eq)
+
+    # Get the keys of reactants as a list
+    reactants_keys = list(reactants.keys())
+    reactant_values = list(reactants.values())
+    products_keys = list(products.keys())
+    products_values = list(products.values())
+
+    # Get the smiles for the reactants and products
+    reactants_smi = data_c.loc[data_c['compound_id'].isin(reactants_keys), 'smiles'].tolist()
+    products_smi = data_c.loc[data_c['compound_id'].isin(products_keys), 'smiles'].tolist()
+
+    # Make a directory
+    os.makedirs(render_dir, exist_ok=True)
+
+    # Plot the reactants and products
+    print('Reactants:', flush=True)
+    for i, smi in enumerate(reactants_smi):
+        print(f'{i}: {reactant_values[i]} x {reactants_keys[i]}, {smi}', flush=True)
+        mol = Chem.MolFromSmiles(smi)
+        Draw.MolToFile(mol, f'{render_dir}/reactant_{i}_{reactants_keys[i]}.png', size=size)
+
+    print('Products:', flush=True)
+    for i, smi in enumerate(products_smi):
+        print(f'{i}: {products_values[i]} x {products_keys[i]}, {smi}', flush=True)
+        mol = Chem.MolFromSmiles(smi)
+        Draw.MolToFile(mol, f'{render_dir}/product_{i}_{products_keys[i]}.png', size=size)
+
+    return reactants_keys, products_keys

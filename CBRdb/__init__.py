@@ -3,9 +3,9 @@ from .atlas_converter import (clean_atlas)
 from .clean_reaction_shortcuts import (find_suspect_reactions,
                                        remove_suspect_reactions)
 
-from .prune_reactions import (df_of_suspect_reactions, 
-                              suspect_reaction_subset, 
-                              quarantine_suspect_reactions_matching, 
+from .prune_reactions import (df_of_suspect_reactions,
+                              suspect_reaction_subset,
+                              quarantine_suspect_reactions_matching,
                               add_suspect_reactions_to_existing_bad_file)
 
 from .compounds_manual_add import (compounds_manual_add)
@@ -56,6 +56,7 @@ from .tools_eq import (convert_formula_to_dict,
                        compare_and_delete_keys,
                        fix_imbalance_core,
                        generate_reaction_dupemap,
+                       plot_eq_line,
                        )
 
 from .tools_files import (file_list,
