@@ -537,3 +537,11 @@ def test_mol_replacer():
     print(smi_out, flush=True)
     print(inchi_out, flush=True)
     assert smi_out == "[H]CC(=O)c1ccc(C(=O)O)cc1"
+
+
+def test_plot_eq_line():
+    print(flush=True)
+    eq = CBRdb.standardise_eq("1 C00001 + 1 C00454 <=> 1 C00009 + 1 C00215")
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
+    CBRdb.plot_eq_line(eq, data_c)
+    pass
