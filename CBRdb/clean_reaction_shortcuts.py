@@ -1,7 +1,9 @@
 import os
-from .tools_files import add_suffix_to_file
+
 import pandas as pd
 from rdkit import RDLogger
+
+from .tools_files import add_suffix_to_file
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)

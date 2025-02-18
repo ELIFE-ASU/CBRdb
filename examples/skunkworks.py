@@ -1,19 +1,6 @@
 import pandas as pd
-import chemparse
+
 import CBRdb
-import re
-import os
-
-import chemparse
-from chempy import Substance
-from chempy import balance_stoichiometry
-from sympy import symbols
-from chempy import Reaction
-
-from collections import defaultdict
-import rdkit.Chem as Chem
-
-import re
 
 
 def merge_atlas_kegg_r(atlas_file="../data/atlas_data_R.csv", kegg_file="../data/kegg_data_R.csv"):

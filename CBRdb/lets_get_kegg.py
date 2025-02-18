@@ -1,7 +1,6 @@
 import os
 import time
 
-import pandas as pd
 import requests
 
 from .tools_files import clean_empty_folders, make_custom_id
@@ -292,4 +291,3 @@ def download_data(target="R",
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
     return None
-

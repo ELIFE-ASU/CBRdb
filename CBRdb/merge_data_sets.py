@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 
 out_fmt = {'encoding': 'utf-8', 'index': False}
@@ -64,7 +62,7 @@ def dedupe_compounds(data_folder='../data'):
     removed_Rs_file = f'{data_folder}/R_IDs_bad.dat'
 
     files = dict(zip('dupemap C_meta C_main atlas_data_R kegg_data_R removed_Rs'.split(),
-                    [dupemap_file, C_meta_file, C_main_file, atlas_data_R_file, kegg_data_R_file, removed_Rs_file]))
+                     [dupemap_file, C_meta_file, C_main_file, atlas_data_R_file, kegg_data_R_file, removed_Rs_file]))
 
     # Read the duplicate map file
     dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:, 0]
@@ -93,7 +91,7 @@ def dedupe_compounds(data_folder='../data'):
 
     # Merge the compound dataset
     CBRdb_C = C_main.merge(C_meta, on='compound_id', how='left')
-    CBRdb_C.to_csv(data_folder+'/CBRdb_C.csv', encoding='utf-8', index=False)
+    CBRdb_C.to_csv(data_folder + '/CBRdb_C.csv', encoding='utf-8', index=False)
 
     # Remove reactions with compounds not found in the compound dataset
     cpd_roster = CBRdb_C['compound_id'].values
@@ -114,6 +112,7 @@ def dedupe_compounds(data_folder='../data'):
                         [CBRdb_C, C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
     return datasets
 
+
 def _remove_deadref_reactions(cpd_roster, reaction_df, removed_Rs_file):
     """Removes reactions from reaction_df which contain compounds not found in cpd_roster. Logs these reactions in removed_Rs_file."""
     if not hasattr(cpd_roster, '__iter__'):
@@ -122,7 +121,6 @@ def _remove_deadref_reactions(cpd_roster, reaction_df, removed_Rs_file):
     nf = list(set(nf[nf].index))
     nfK = reaction_df.loc[nf, ['id']].drop_duplicates().assign(reason='structure_missing').copy(deep=True)
     nfK.set_index('id').to_csv(removed_Rs_file, mode='a', index=True, header=False)
-    f = pd.read_csv(removed_Rs_file, header=0).drop_duplicates().sort_values(by=['reason','id']).set_index('id')
+    f = pd.read_csv(removed_Rs_file, header=0).drop_duplicates().sort_values(by=['reason', 'id']).set_index('id')
     f.to_csv(removed_Rs_file, header=True, mode='w')
     return reaction_df.drop(nfK.index)
-
