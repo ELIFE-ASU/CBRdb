@@ -205,6 +205,12 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         data_r_missing_data.to_csv(f"{r_file.split('.')[0]}_missing_data.csv",
                                    encoding='utf-8',
                                    index=False)
+
+    # Save the missing data to the rebalance file
+    for id in data_r_missing_data["id"].tolist():
+        f_rebalance.write(f"{id}, missing data\n")
+
+    # Remove the missing data
     data_r = data_r[~bool_missing_data]
     print_and_log(f"Number of missing formulas removed: {sum(bool_missing_data)}", f_log)
 
@@ -225,6 +231,13 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         data_r_var_list.to_csv(f"{r_file.split('.')[0]}_var_list.csv",
                                encoding='utf-8',
                                index=False)
+
+    # Save the var list data to the rebalance file
+    if not f_assume_var:
+        for id in data_r_var_list["id"].tolist():
+            f_rebalance.write(f"{id}, var list\n")
+
+    # Remove the var list data
     data_r = data_r[~bool_var_list]
     print_and_log(f"Number of var list reactions removed: {sum(bool_var_list)}", f_log)
 
@@ -324,7 +337,10 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     print_and_log(f"Number of reactions rebalanced: {len(ids_out)}", f_log)
     print_and_log(f"Number of reactions failed: {len(ids_failed)}", f_log)
-    print_and_log(f"Reactions failed: {ids_failed}", f_log)
+
+    # Write the failed ids to the rebalance file
+    for id in ids_failed:
+        f_rebalance.write(f"{id}, failed to balance\n")
 
     # Update the "reaction" column in data_r_unbalanced using eq_lines_out and ids_out
     data_r_unbalanced.loc[data_r_unbalanced["id"].isin(ids_out), "reaction"] = eq_lines_out
