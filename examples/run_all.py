@@ -28,7 +28,7 @@ if __name__ == "__main__":
         # At this point you need to manually add the reactions in C_IDs_good.dat and the compounds in C_IDs_manual.dat
     
     print("Preprocessing compounds (metadata and structure)...", flush=True)
-    C_meta, C_main = CBRdb.preprocess(target="C")  # generates kegg_data_C.csv kegg_data_C_metadata.csv + kegg_data_C_dupemap.csv
+    C_main = CBRdb.preprocess(target="C")  # generates kegg_data_C.csv kegg_data_C_metadata.csv + kegg_data_C_dupemap.csv
 
     print("Importing and standardizing ATLAS reactions...", flush=True)
     atlas_data_R = CBRdb.clean_atlas(f_exclude_kegg=True)  # generates atlas_data_R.csv

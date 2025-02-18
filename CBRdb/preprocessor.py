@@ -39,7 +39,7 @@ def load_csv_to_dict(file_path):
     return result_dict
 
 
-def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv"):
+def preprocess_kegg_c(target_dir, man_dict):
     """
     Preprocesses KEGG compound data and saves it to a specified output file.
 
@@ -94,12 +94,7 @@ def preprocess_kegg_c(target_dir, man_dict, outfile="kegg_data_C.csv"):
         "inchi_capped": arr_inchi_capped})
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id").reset_index(drop=True).drop_duplicates().rename_axis(None, axis=1)
-    # Identify duplicate structures (do not remove yet)
-    compound_mapping = _identify_duplicate_compounds(df)
-    compound_mapping.to_csv(outfile.replace('.csv', '_dupemap.csv'), encoding='utf-8')
-    # Save the dataframe
-    df.to_csv(outfile, encoding='utf-8', index=False)
-    print('Compound structural-info path: ' + outfile, flush=True)
+    print('Finished importing compound structures.', flush=True)
     return df
 
 
@@ -129,21 +124,17 @@ def _identify_duplicate_compounds(C_main):
     return compound_mapping['new_id']
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
-                               outfile='data/kegg_data_C_metadata.csv',
-                               valid_cids=None):
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', valid_cids=None):
     """
     Preprocesses KEGG compound metadata and saves it to a specified output file.
 
     Parameters:
     target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
-    outfile (str, optional): The output file path for the preprocessed metadata. Defaults to 'data/kegg_data_C_metadata.csv'.
     valid_cids (iterable, optional): If provided, a list of compound IDs to keep. Defaults to None.
 
     Returns:
     pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
     """
-    outfile = os.path.abspath(outfile)
     target_dir = os.path.abspath(target_dir)
     print('Importing compound metadata...', flush=True)
 
@@ -156,11 +147,10 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
             .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('|'.join)
         for path in paths
     }).drop('///', errors='ignore').T
-    tar_list = ['name', 'remark', 'comment', 'sequence', 'type', 'brite']
+    tar_list = ['name', 'remark', 'comment', 'sequence', 'type']
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).loc[:, tar_list].sort_index()
-    df['glycan_ids'] = df['remark'].fillna('').str.extractall(r'(G\d{5})').groupby(level=0).agg(' '.join).replace('',
-                                                                                                                  float(
-                                                                                                                      'nan'))
+    df['glycan_ids'] = (df['remark'].fillna('').str.extractall(r'(G\d{5})')
+                        .groupby(level=0).agg(' '.join).replace('',float('nan')))
     df.drop(columns='remark', inplace=True)
     df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
     if valid_cids is not None:
@@ -168,8 +158,7 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
             df = df.query('compound_id.isin(@valid_cids)')
         else:
             raise TypeError('valid_cids must be iterable')
-    df.to_csv(outfile, encoding='utf-8', index=False)
-    print(f'Compound metadata path: {outfile}', flush=True)
+    print('Finished importing compound metadata.', flush=True)
     return df
 
 
@@ -258,13 +247,15 @@ def preprocess(target="R",
         # Defines a dictionary of manual fixes whose mol files are not found in target_dir
         man_dict = load_csv_to_dict(cid_manual_file)
         # converts compound mol files to smiles strings; defines a list of CIDs to skip
-        df_main = preprocess_kegg_c(target_dir, man_dict, outfile=out_file)
-        # gets compound metadata
-        df_meta = preprocess_kegg_c_metadata(target_dir + '_full',
-                                             outfile=out_file.replace('.csv', '_metadata.csv'),
-                                             valid_cids=list(df_main['compound_id'].sort_values()))
-        print("C preprocessing done", flush=True)
-        return df_meta, df_main
+        df_main = preprocess_kegg_c(target_dir, man_dict)
+        # gets compound metadata e.g. names + classifications
+        df_meta = preprocess_kegg_c_metadata(target_dir + '_full', valid_cids=list(df_main['compound_id'].sort_values()))
+        # merges the compound data, to retain only compounds with structural info
+        df = df_main.merge(df_meta, on='compound_id', how='left').sort_values(by='compound_id').reset_index(drop=True)
+        # generates output file with compound data
+        df.to_csv(out_file, encoding='utf-8', index=False)
+        print("C preprocessing done. Compound info path:" + out_file, flush=True)
+        return df
     elif target == "R":
         df = preprocess_kegg_r(target_dir, out_file)
         print("R preprocessing done", flush=True)
