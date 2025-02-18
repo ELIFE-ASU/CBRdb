@@ -545,3 +545,11 @@ def test_plot_eq_line():
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     CBRdb.plot_eq_line(eq, data_c)
     pass
+
+
+def test_plot_reaction_id():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
+    data_r = pd.read_csv(os.path.abspath("../data/kegg_data_R.csv"))
+    CBRdb.plot_reaction_id('R00001', data_r, data_c)
+    pass
