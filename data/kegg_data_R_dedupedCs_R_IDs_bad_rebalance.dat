@@ -1,0 +1,574 @@
+# Bad IDs, reason
+R00001, missing data
+R00081, missing data
+R00095, missing data
+R00106, missing data
+R00124, missing data
+R00135, missing data
+R00283, missing data
+R00292, missing data
+R00305, missing data
+R00308, missing data
+R00361, missing data
+R00375, missing data
+R00376, missing data
+R00377, missing data
+R00378, missing data
+R00379, missing data
+R00381, missing data
+R00382, missing data
+R00435, missing data
+R00437, missing data
+R00438, missing data
+R00439, missing data
+R00440, missing data
+R00441, missing data
+R00442, missing data
+R00443, missing data
+R00444, missing data
+R00506, missing data
+R00645, missing data
+R00849, missing data
+R00890, missing data
+R01105, missing data
+R01206, missing data
+R01253, missing data
+R01374, missing data
+R01433, missing data
+R01762, missing data
+R01790, missing data
+R01791, missing data
+R01821, missing data
+R01823, missing data
+R01868, missing data
+R01966, missing data
+R01982, missing data
+R02078, missing data
+R02108, missing data
+R02120, missing data
+R02121, missing data
+R02164, missing data
+R02184, missing data
+R02185, missing data
+R02186, missing data
+R02187, missing data
+R02188, missing data
+R02189, missing data
+R02334, missing data
+R02335, missing data
+R02360, missing data
+R02361, missing data
+R02421, missing data
+R02535, missing data
+R02833, missing data
+R02886, missing data
+R02888, missing data
+R02889, missing data
+R02890, missing data
+R02950, missing data
+R03042, missing data
+R03071, missing data
+R03078, missing data
+R03115, missing data
+R03116, missing data
+R03118, missing data
+R03129, missing data
+R03186, missing data
+R03295, missing data
+R03553, missing data
+R03852, missing data
+R03912, missing data
+R03928, missing data
+R03996, missing data
+R04015, missing data
+R04193, missing data
+R04194, missing data
+R04241, missing data
+R04271, missing data
+R04297, missing data
+R04320, missing data
+R04343, missing data
+R04347, missing data
+R04422, missing data
+R04519, missing data
+R04908, missing data
+R05140, missing data
+R05624, missing data
+R05796, missing data
+R05797, missing data
+R06178, missing data
+R06704, missing data
+R06748, missing data
+R07222, missing data
+R07261, missing data
+R07282, missing data
+R07285, missing data
+R07358, missing data
+R07359, missing data
+R07361, missing data
+R07480, missing data
+R07640, missing data
+R07949, missing data
+R08612, missing data
+R08614, missing data
+R08692, missing data
+R08694, missing data
+R08715, missing data
+R08826, missing data
+R09322, missing data
+R09435, missing data
+R09436, missing data
+R09473, missing data
+R09489, missing data
+R09492, missing data
+R09493, missing data
+R09494, missing data
+R09497, missing data
+R09518, missing data
+R09540, missing data
+R09656, missing data
+R09658, missing data
+R09739, missing data
+R09994, missing data
+R10152, missing data
+R10390, missing data
+R10444, missing data
+R10512, missing data
+R10531, missing data
+R10572, missing data
+R10625, missing data
+R10784, missing data
+R10822, missing data
+R10823, missing data
+R10954, missing data
+R10975, missing data
+R10976, missing data
+R10979, missing data
+R11103, missing data
+R11168, missing data
+R11307, missing data
+R11335, missing data
+R11344, missing data
+R11397, missing data
+R11487, missing data
+R11488, missing data
+R11540, missing data
+R11587, missing data
+R11591, missing data
+R11606, missing data
+R11660, missing data
+R11745, missing data
+R11747, missing data
+R11929, missing data
+R11945, missing data
+R12212, missing data
+R12217, missing data
+R12291, missing data
+R12527, missing data
+R12529, missing data
+R12633, missing data
+R12634, missing data
+R12747, missing data
+R12791, missing data
+R12938, missing data
+R13124, missing data
+R13176, missing data
+R13224, missing data
+R13247, missing data
+R13407, missing data
+R00915, failed to balance
+R00916, failed to balance
+R02721, failed to balance
+R02854, failed to balance
+R04249, failed to balance
+R04257, failed to balance
+R04458, failed to balance
+R04795, failed to balance
+R04879, failed to balance
+R05001, failed to balance
+R05470, failed to balance
+R05472, failed to balance
+R05473, failed to balance
+R05474, failed to balance
+R05479, failed to balance
+R05480, failed to balance
+R05539, failed to balance
+R05670, failed to balance
+R05675, failed to balance
+R05840, failed to balance
+R05860, failed to balance
+R05867, failed to balance
+R05868, failed to balance
+R05871, failed to balance
+R05872, failed to balance
+R05886, failed to balance
+R05887, failed to balance
+R05888, failed to balance
+R05889, failed to balance
+R05890, failed to balance
+R05894, failed to balance
+R05896, failed to balance
+R05899, failed to balance
+R05900, failed to balance
+R06195, failed to balance
+R06287, failed to balance
+R06314, failed to balance
+R06315, failed to balance
+R06316, failed to balance
+R06317, failed to balance
+R06318, failed to balance
+R06319, failed to balance
+R06320, failed to balance
+R06321, failed to balance
+R06324, failed to balance
+R06328, failed to balance
+R06329, failed to balance
+R06330, failed to balance
+R06331, failed to balance
+R06332, failed to balance
+R06333, failed to balance
+R06334, failed to balance
+R06339, failed to balance
+R06340, failed to balance
+R06341, failed to balance
+R06347, failed to balance
+R06348, failed to balance
+R06350, failed to balance
+R06397, failed to balance
+R06445, failed to balance
+R06503, failed to balance
+R06504, failed to balance
+R06505, failed to balance
+R06548, failed to balance
+R06549, failed to balance
+R06550, failed to balance
+R06565, failed to balance
+R06579, failed to balance
+R06580, failed to balance
+R06584, failed to balance
+R06587, failed to balance
+R06598, failed to balance
+R06600, failed to balance
+R06618, failed to balance
+R06619, failed to balance
+R06651, failed to balance
+R06652, failed to balance
+R06653, failed to balance
+R06654, failed to balance
+R06656, failed to balance
+R06661, failed to balance
+R06671, failed to balance
+R06672, failed to balance
+R06673, failed to balance
+R06674, failed to balance
+R06698, failed to balance
+R06701, failed to balance
+R06702, failed to balance
+R06706, failed to balance
+R06707, failed to balance
+R06709, failed to balance
+R06710, failed to balance
+R06711, failed to balance
+R06714, failed to balance
+R06724, failed to balance
+R06725, failed to balance
+R06726, failed to balance
+R06727, failed to balance
+R06731, failed to balance
+R06732, failed to balance
+R06737, failed to balance
+R06738, failed to balance
+R06743, failed to balance
+R06744, failed to balance
+R06745, failed to balance
+R06762, failed to balance
+R06763, failed to balance
+R06766, failed to balance
+R06780, failed to balance
+R06781, failed to balance
+R06790, failed to balance
+R06791, failed to balance
+R06798, failed to balance
+R06822, failed to balance
+R06823, failed to balance
+R06825, failed to balance
+R06837, failed to balance
+R06849, failed to balance
+R06850, failed to balance
+R06880, failed to balance
+R06881, failed to balance
+R06887, failed to balance
+R06889, failed to balance
+R06900, failed to balance
+R06901, failed to balance
+R06929, failed to balance
+R06938, failed to balance
+R06955, failed to balance
+R06959, failed to balance
+R06991, failed to balance
+R06994, failed to balance
+R06995, failed to balance
+R07007, failed to balance
+R07018, failed to balance
+R07028, failed to balance
+R07030, failed to balance
+R07103, failed to balance
+R07114, failed to balance
+R07115, failed to balance
+R07118, failed to balance
+R07119, failed to balance
+R07123, failed to balance
+R07333, failed to balance
+R07436, failed to balance
+R07508, failed to balance
+R07544, failed to balance
+R07546, failed to balance
+R07549, failed to balance
+R07550, failed to balance
+R07553, failed to balance
+R07554, failed to balance
+R07556, failed to balance
+R07578, failed to balance
+R07579, failed to balance
+R07580, failed to balance
+R07581, failed to balance
+R07690, failed to balance
+R07694, failed to balance
+R07695, failed to balance
+R07717, failed to balance
+R07726, failed to balance
+R07732, failed to balance
+R07733, failed to balance
+R07742, failed to balance
+R07743, failed to balance
+R07749, failed to balance
+R07755, failed to balance
+R07756, failed to balance
+R07783, failed to balance
+R07784, failed to balance
+R07785, failed to balance
+R07803, failed to balance
+R07834, failed to balance
+R07838, failed to balance
+R07841, failed to balance
+R07842, failed to balance
+R07843, failed to balance
+R07845, failed to balance
+R07862, failed to balance
+R07901, failed to balance
+R07905, failed to balance
+R07906, failed to balance
+R07907, failed to balance
+R07908, failed to balance
+R07909, failed to balance
+R07924, failed to balance
+R07925, failed to balance
+R07940, failed to balance
+R07941, failed to balance
+R07943, failed to balance
+R07945, failed to balance
+R07994, failed to balance
+R08011, failed to balance
+R08012, failed to balance
+R08026, failed to balance
+R08027, failed to balance
+R08028, failed to balance
+R08029, failed to balance
+R08030, failed to balance
+R08031, failed to balance
+R08033, failed to balance
+R08034, failed to balance
+R08035, failed to balance
+R08040, failed to balance
+R08041, failed to balance
+R08049, failed to balance
+R08122, failed to balance
+R08123, failed to balance
+R08126, failed to balance
+R08129, failed to balance
+R08132, failed to balance
+R08133, failed to balance
+R08134, failed to balance
+R08135, failed to balance
+R08136, failed to balance
+R08138, failed to balance
+R08139, failed to balance
+R08142, failed to balance
+R08143, failed to balance
+R08155, failed to balance
+R08292, failed to balance
+R08402, failed to balance
+R08420, failed to balance
+R08423, failed to balance
+R08429, failed to balance
+R08609, failed to balance
+R08847, failed to balance
+R08866, failed to balance
+R08877, failed to balance
+R08883, failed to balance
+R08884, failed to balance
+R08885, failed to balance
+R08886, failed to balance
+R09016, failed to balance
+R09041, failed to balance
+R09043, failed to balance
+R09044, failed to balance
+R09045, failed to balance
+R09050, failed to balance
+R09051, failed to balance
+R09066, failed to balance
+R09089, failed to balance
+R09090, failed to balance
+R09102, failed to balance
+R09104, failed to balance
+R09118, failed to balance
+R09139, failed to balance
+R09142, failed to balance
+R09144, failed to balance
+R09145, failed to balance
+R09146, failed to balance
+R09147, failed to balance
+R09150, failed to balance
+R09153, failed to balance
+R09158, failed to balance
+R09181, failed to balance
+R09197, failed to balance
+R09202, failed to balance
+R09203, failed to balance
+R09330, failed to balance
+R09333, failed to balance
+R09336, failed to balance
+R09346, failed to balance
+R09347, failed to balance
+R09348, failed to balance
+R09349, failed to balance
+R09357, failed to balance
+R09360, failed to balance
+R09361, failed to balance
+R09362, failed to balance
+R09429, failed to balance
+R09430, failed to balance
+R09438, failed to balance
+R09439, failed to balance
+R09440, failed to balance
+R09457, failed to balance
+R09458, failed to balance
+R09459, failed to balance
+R09761, failed to balance
+R09762, failed to balance
+R09851, failed to balance
+R09852, failed to balance
+R09855, failed to balance
+R09919, failed to balance
+R09982, failed to balance
+R10372, failed to balance
+R10405, failed to balance
+R10406, failed to balance
+R10480, failed to balance
+R10481, failed to balance
+R10482, failed to balance
+R10483, failed to balance
+R10566, failed to balance
+R10569, failed to balance
+R10570, failed to balance
+R10571, failed to balance
+R10739, failed to balance
+R10744, failed to balance
+R10754, failed to balance
+R10756, failed to balance
+R10759, failed to balance
+R10884, failed to balance
+R10885, failed to balance
+R10886, failed to balance
+R10890, failed to balance
+R10903, failed to balance
+R11033, failed to balance
+R11066, failed to balance
+R11069, failed to balance
+R11120, failed to balance
+R11129, failed to balance
+R11131, failed to balance
+R11238, failed to balance
+R11245, failed to balance
+R11248, failed to balance
+R11254, failed to balance
+R11255, failed to balance
+R11256, failed to balance
+R11305, failed to balance
+R11308, failed to balance
+R11311, failed to balance
+R11315, failed to balance
+R11480, failed to balance
+R11683, failed to balance
+R11750, failed to balance
+R11761, failed to balance
+R11898, failed to balance
+R11900, failed to balance
+R12093, failed to balance
+R12104, failed to balance
+R12126, failed to balance
+R12135, failed to balance
+R12136, failed to balance
+R12137, failed to balance
+R12142, failed to balance
+R12145, failed to balance
+R12526, failed to balance
+R12584, failed to balance
+R12586, failed to balance
+R12628, failed to balance
+R12697, failed to balance
+R12751, failed to balance
+R12752, failed to balance
+R12830, failed to balance
+R12835, failed to balance
+R12836, failed to balance
+R12837, failed to balance
+R12839, failed to balance
+R12849, failed to balance
+R12850, failed to balance
+R12855, failed to balance
+R12856, failed to balance
+R12876, failed to balance
+R12880, failed to balance
+R12882, failed to balance
+R12884, failed to balance
+R12887, failed to balance
+R12888, failed to balance
+R12889, failed to balance
+R12890, failed to balance
+R12891, failed to balance
+R12892, failed to balance
+R12893, failed to balance
+R12957, failed to balance
+R13034, failed to balance
+R13037, failed to balance
+R13057, failed to balance
+R13074, failed to balance
+R13075, failed to balance
+R13086, failed to balance
+R13087, failed to balance
+R13098, failed to balance
+R13147, failed to balance
+R13149, failed to balance
+R13150, failed to balance
+R13151, failed to balance
+R13155, failed to balance
+R13156, failed to balance
+R13165, failed to balance
+R13192, failed to balance
+R13281, failed to balance
+R13332, failed to balance
+R13334, failed to balance
+R13335, failed to balance
+R13338, failed to balance
+R13339, failed to balance
+R13340, failed to balance
+R13341, failed to balance
+R13376, failed to balance
+R13447, failed to balance
+R13448, failed to balance
+R13449, failed to balance
+R13450, failed to balance
+R13451, failed to balance
+R13454, failed to balance
+R13455, failed to balance
