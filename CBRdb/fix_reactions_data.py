@@ -118,14 +118,13 @@ def dict_ele_contains_star(react_ele, prod_ele):
 def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        c_file="../data/kegg_data_C.csv",
                        bad_file="../data/R_IDs_bad.dat",
-                       rebalance_file="R_IDs_bad_rebalance_log.dat",
                        log_file="fix_reactions_data_log.dat",
+                       rebalance_file="R_IDs_bad_rebalance.dat",
                        f_assume_var=True,
                        f_assume_star=True,
                        f_save_intermediate=False,
                        f_parallel=True,
                        rebalance_depth=1):
-
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
 
@@ -138,8 +137,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     tmp_path = os.path.dirname(r_file)
 
     # Get the file names
-    rebalance_file = os.path.basename(r_file).split('.')[0] + f'_{rebalance_file}'
     log_file = os.path.basename(r_file).split('.')[0] + f'_{log_file}'
+    rebalance_file = os.path.basename(r_file).split('.')[0] + f'_{rebalance_file}'
 
     # Get the absolute paths
     log_file = os.path.abspath(os.path.join(tmp_path, log_file))
@@ -150,8 +149,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     f_rebalance = open(rebalance_file, "w")
 
     # Write the header
-    f_log.write("# Bad IDs, reason\n")
-    f_rebalance.write("# This file contains information on the rebalancer run\n")
+    f_log.write("# This file contains a log of information on the rebalancer run\n")
+    f_rebalance.write("# Bad IDs, reason\n")
 
     # Get the output file name
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
