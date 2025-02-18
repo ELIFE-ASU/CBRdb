@@ -471,7 +471,7 @@ def test_kitchen_sink():
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     # Rebalancer would fail on this equation
     eq = CBRdb.standardise_eq("1 C00027 + 2 C00126 <=> 2 C00001 + 2 C00125")
-    eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1)
+    eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1, None)
     print(eq_out, flush=True)
     assert eq_out == "1 C00027 + 2 C00080 + 2 C00126 <=> 2 C00001 + 2 C00125"
 
@@ -514,7 +514,7 @@ def test_rebalancer_fail():
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     # Rebalancer would fail on this equation
     eq = CBRdb.standardise_eq("1 C00001 + 1 C05195 <=> 1 C19684")
-    eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1)
+    eq_out = CBRdb.kitchen_sink(eq, data_c, data_c_1, None)
     print(eq_out, flush=True)
 
 

@@ -16,7 +16,7 @@ from .tools_eq import (get_elements_from_eq,
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
 
 
-def print_and_log(statement, file):
+def print_and_log(statement, file=None):
     """
     Prints and logs a statement.
 
@@ -28,11 +28,12 @@ def print_and_log(statement, file):
     None
     """
     print(statement, flush=True)
-    file.write(statement + "\n")
+    if file:
+        file.write(statement + "\n")
     return None
 
 
-def kitchen_sink(eq, data_c, small_compounds):
+def kitchen_sink(eq, data_c, small_compounds, f_log):
     """
     Attempts to balance a chemical equation by injecting small compounds based on element differences.
 
@@ -48,42 +49,42 @@ def kitchen_sink(eq, data_c, small_compounds):
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
 
     compounds = get_compounds_with_matching_elements(small_compounds, diff_ele_react, diff_ele_prod)
-    print(f"Compounds that might match:  {compounds}", flush=True)
+    print_and_log(f"Compounds that might match:  {compounds}", f_log)
 
     if not compounds:
-        print("No compounds found that match the element differences.", flush=True)
+        print_and_log("No compounds found that match the element differences.", f_log)
         return False
 
     eq_new = eq
     attempt = 1
     for compound in compounds:
         # Counter
-        print(f"Attempt {attempt}, {compound}", flush=True)
+        print_and_log(f"Attempt {attempt}, {compound}", f_log)
 
         # Get the elements
         _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c)
         # Check the difference
         diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-        print(f"Differences in reactants:    {diff_ele_react}", flush=True)
-        print(f"Differences in products:     {diff_ele_prod}", flush=True)
+        print_and_log(f"Differences in reactants:    {diff_ele_react}", f_log)
+        print_and_log(f"Differences in products:     {diff_ele_prod}", f_log)
 
         # Inject the compound
         eq_new = fix_imbalance_core(eq_new, diff_ele_react, diff_ele_prod, compound)
-        print(f"New equation:                {eq_new}", flush=True)
+        print_and_log(f"New equation:                {eq_new}", f_log)
 
         # Get the elements
         _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c)
 
         # Check the difference
         diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
-        print(f"Differences in reactants:    {diff_ele_react}", flush=True)
-        print(f"Differences in products:     {diff_ele_prod}", flush=True)
+        print_and_log(f"Differences in reactants:    {diff_ele_react}", f_log)
+        print_and_log(f"Differences in products:     {diff_ele_prod}", f_log)
 
         # Check if the equation is balanced by checking the differences
         if not diff_ele_react and not diff_ele_prod:
-            print("Differences null, balanced equation found!", flush=True)
+            print_and_log("Differences null, balanced equation found!", f_log)
             # Return the new equation line
-            print(f"Final equation:              {eq_new}", flush=True)
+            print_and_log(f"Final equation:              {eq_new}", f_log)
             return eq_new
 
         # Try to rebalance the equation
@@ -91,10 +92,10 @@ def kitchen_sink(eq, data_c, small_compounds):
         if eq_new is False:
             # Revert to the original equation and try the next compound
             eq_new = eq
-            print("Rebalance failed, trying next compound...", flush=True)
+            print_and_log("Rebalance failed, trying next compound...", f_log)
         else:
             # Return the new equation line
-            print(f"Final equation:              {eq_new}", flush=True)
+            print_and_log(f"Final equation:              {eq_new}", f_log)
             return eq_new
         # Increment the attempt
         attempt += 1
@@ -172,32 +173,32 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     print_and_log(f"Small compound size: 1:{data_c_1.shape}, 2:{data_c_2.shape}, 3:{data_c_3.shape}", f_log)
 
     # Load the processed reaction data
-    print("Loading the reaction data...", flush=True)
+    print_and_log("Loading the reaction data...", f_log)
     data_r = pd.read_csv(r_file)
-    print("data loaded", flush=True)
-    print(f"data columns: {data_r.columns}", flush=True)
-    print(f"data shape: {data_r.shape}", flush=True)
+    print_and_log("data loaded", f_log)
+    print_and_log(f"data columns: {data_r.columns}", f_log)
+    print_and_log(f"data shape: {data_r.shape}", f_log)
 
     # Sort by the index
     data_r = data_r.sort_values(by="id")
 
     # Filter out the bad ids, data that is shortcut/general/incomplete
-    print("Filtering out bad ids", flush=True)
+    print_and_log("Filtering out bad ids", f_log)
     bool_bad_ids = data_r["id"].isin(bad_ids)
     data_r = data_r.loc[~bool_bad_ids]
-    print(f"Number of bad ids removed: {sum(bool_bad_ids)}", flush=True)
+    print_and_log(f"Number of bad ids removed: {sum(bool_bad_ids)}", f_log)
 
     # Filter out the data that has missing formulas
-    print("Filtering out missing formulas", flush=True)
+    print_and_log("Filtering out missing formulas", f_log)
     if f_parallel:
         t0 = time.time()
         bool_missing_data = data_r['reaction'].swifter.force_parallel(enable=True).allow_dask_on_strings(
             enable=True).apply(check_missing_formulas, args=(data_c,))
-        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
+        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
     else:
         t0 = time.time()
         bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
-        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
+        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
 
     data_r_missing_data = data_r[bool_missing_data]
     if f_save_intermediate:
@@ -205,19 +206,19 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                                    encoding='utf-8',
                                    index=False)
     data_r = data_r[~bool_missing_data]
-    print(f"Number of missing formulas removed: {sum(bool_missing_data)}", flush=True)
+    print_and_log(f"Number of missing formulas removed: {sum(bool_missing_data)}", f_log)
 
     # Filter out the reactions that contain a var list
-    print("Filtering out var list", flush=True)
+    print_and_log("Filtering out var list", f_log)
     if f_parallel:
         t0 = time.time()
         bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list,
                                                                                      args=(data_c,))
-        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
+        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
     else:
         t0 = time.time()
         bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
-        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
+        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
 
     data_r_var_list = data_r[bool_var_list]
     if f_save_intermediate:
@@ -225,19 +226,19 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                                encoding='utf-8',
                                index=False)
     data_r = data_r[~bool_var_list]
-    print(f"Number of var list reactions removed: {sum(bool_var_list)}", flush=True)
+    print_and_log(f"Number of var list reactions removed: {sum(bool_var_list)}", f_log)
 
     # Filter out the data that is not balanced
-    print("Filtering out unbalanced reactions", flush=True)
+    print_and_log("Filtering out unbalanced reactions", f_log)
     if f_parallel:
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced,
                                                                                        args=(data_c,))
-        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
+        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
     else:
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
-        print(f"Time to check missing formulas: {time.time() - t0}", flush=True)
+        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
 
     # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
@@ -248,7 +249,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     # Get the data that is balanced
     data_r = data_r[~bool_unbalanced]
     # Determine the number of reactions that have been removed
-    print(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", flush=True)
+    print_and_log(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", f_log)
 
     # Get the data from the unbalanced dataframe
     ids = data_r_unbalanced["id"].tolist()
@@ -267,27 +268,27 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         # Get the id
         id = ids[i]
 
-        print(f"\nProcessing {i}/{n_ids} {id}", flush=True)
-        print(f"Original equation line: {eq_line}", flush=True)
+        print_and_log(f"\nProcessing {i}/{n_ids} {id}", f_log)
+        print_and_log(f"Original equation line: {eq_line}", f_log)
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
-        print(f"Reactants: {reactants}", flush=True)
-        print(f"Products:  {products}", flush=True)
+        print_and_log(f"Reactants: {reactants}", f_log)
+        print_and_log(f"Products:  {products}", f_log)
 
         # Check if the equation contains a '*' in either reactants or products
         if dict_ele_contains_star(react_ele, prod_ele):
             # We assume that the equation is correct and add it to the output
             if f_assume_star:
-                print(f"Assuming eq {id} is correct", flush=True)
+                print_and_log(f"Assuming eq {id} is correct", f_log)
                 ids_out.append(id)
                 eq_lines_out.append(eq_line)
                 continue
             # We assume that the equation is incorrect and skip it as we cannot fix it
             else:
-                print(f"Assume that the eq {id} is incorrect and skip it as we cannot fix it..", flush=True)
+                print_and_log(f"Assume that the eq {id} is incorrect and skip it as we cannot fix it..", f_log)
                 continue
 
         if id == 'R00263':
-            print(f"Skipping {id} due to it being malformed", flush=True)
+            print_and_log(f"Skipping {id} due to it being malformed", f_log)
             continue
 
         # Check if the equation is balanced
@@ -295,19 +296,19 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         # Equation is not balance...
         if eq_line_new is False:
             # Attempt injecting methods with the c1 compounds
-            eq_line_new = kitchen_sink(eq_line, data_c, data_c_1)
+            eq_line_new = kitchen_sink(eq_line, data_c, data_c_1, f_log)
             if eq_line_new is False:
-                print(f"Could not fix the imbalance for eq {id} using c1 list!", flush=True)
+                print_and_log(f"Could not fix the imbalance for eq {id} using c1 list!", f_log)
                 if rebalance_depth > 1:
                     # Attempt with the c2 compounds
-                    eq_line_new = kitchen_sink(eq_line, data_c, data_c_2)
+                    eq_line_new = kitchen_sink(eq_line, data_c, data_c_2, f_log)
                     if eq_line_new is False:
-                        print(f"Could not fix the imbalance for eq {id} using c2 list!", flush=True)
+                        print_and_log(f"Could not fix the imbalance for eq {id} using c2 list!", f_log)
                         if rebalance_depth > 2:
                             # Attempt with the c3 compounds
-                            eq_line_new = kitchen_sink(eq_line, data_c, data_c_3)
+                            eq_line_new = kitchen_sink(eq_line, data_c, data_c_3, f_log)
                             if eq_line_new is False:
-                                print(f"Could not fix the imbalance for eq {id} using c3 list!", flush=True)
+                                print_and_log(f"Could not fix the imbalance for eq {id} using c3 list!", f_log)
                                 ids_failed.append(id)
                                 continue
                         else:
@@ -317,36 +318,36 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                     ids_failed.append(id)
                     continue
 
-        print(f"rebalanced {id} with new equation line: {eq_line_new}", flush=True)
+        print_and_log(f"rebalanced {id} with new equation line: {eq_line_new}", f_log)
         ids_out.append(id)
         eq_lines_out.append(eq_line_new)
 
-    print(f"Number of reactions rebalanced: {len(ids_out)}", flush=True)
-    print(f"Number of reactions failed: {len(ids_failed)}", flush=True)
-    print(f"Reactions failed: {ids_failed}", flush=True)
+    print_and_log(f"Number of reactions rebalanced: {len(ids_out)}", f_log)
+    print_and_log(f"Number of reactions failed: {len(ids_failed)}", f_log)
+    print_and_log(f"Reactions failed: {ids_failed}", f_log)
 
     # Update the "reaction" column in data_r_unbalanced using eq_lines_out and ids_out
     data_r_unbalanced.loc[data_r_unbalanced["id"].isin(ids_out), "reaction"] = eq_lines_out
 
     data_r_rebalanced = data_r_unbalanced
 
-    print("Combining the data!", flush=True)
-    print(f"data_r shape: {data_r.shape}", flush=True)
-    print(f"data_r_var_list shape: {data_r_var_list.shape}", flush=True)
-    print(f"data_r_rebalanced shape: {data_r_rebalanced.shape}", flush=True)
+    print_and_log("Combining the data!", f_log)
+    print_and_log(f"data_r shape: {data_r.shape}", f_log)
+    print_and_log(f"data_r_var_list shape: {data_r_var_list.shape}", f_log)
+    print_and_log(f"data_r_rebalanced shape: {data_r_rebalanced.shape}", f_log)
 
     # Combine the data
     if f_assume_var:
         # Here we have assumed that the data_r_var_list reactions data is correct
         # This is questionable as the data may be incorrect
-        print("Merging data assuming equations with a var list data are correct...", flush=True)
+        print_and_log("Merging data assuming equations with a var list data are correct...", f_log)
         df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced])
     else:
-        print("Merging data assuming equations with a var list data are incorrect...", flush=True)
+        print_and_log("Merging data assuming equations with a var list data are incorrect...", f_log)
         df_final = pd.concat([data_r, data_r_rebalanced])
 
     # Get the final length of the data
-    print(f"Final data shape: {df_final.shape}", flush=True)
+    print_and_log(f"Final data shape: {df_final.shape}", f_log)
 
     # Sort by the index
     df_final = df_final.sort_values(by="id")
