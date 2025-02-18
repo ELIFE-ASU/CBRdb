@@ -541,7 +541,7 @@ def test_mol_replacer():
 
 def test_plot_eq_line():
     print(flush=True)
-    eq = CBRdb.standardise_eq("1 C00001 + 1 C00454 <=> 1 C00009 + 1 C00215")
+    eq = "1 C00001 + 1 C00454 <=> 1 C00009 + 1 C00215"
     data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
     CBRdb.plot_eq_line(eq, data_c)
     pass

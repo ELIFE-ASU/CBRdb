@@ -1014,7 +1014,22 @@ def fix_imbalance_core(eq_line, diff_ele_react, diff_ele_prod, inject):
 
 
 def plot_eq_line(eq, data_c, render_dir='render', size=(600, 600)):
+    """
+    Plots the reactants and products of a chemical equation.
+
+    Parameters:
+    eq (str): The chemical equation to plot.
+    data_c (pd.DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'smiles' columns.
+    render_dir (str, optional): The directory where the reaction images will be saved. Default is 'render'.
+    size (tuple, optional): The size of the images to be rendered. Default is (600, 600).
+
+    Returns:
+    tuple: A tuple containing two lists:
+           - The first list contains the keys of the reactants.
+           - The second list contains the keys of the products.
+    """
     print(f'Input eq: {eq}', flush=True)
+    eq = standardise_eq(eq)
 
     # Get the reactants and products from the eq
     reactants, products = eq_to_dict(eq)
@@ -1047,7 +1062,23 @@ def plot_eq_line(eq, data_c, render_dir='render', size=(600, 600)):
 
     return reactants_keys, products_keys
 
+
 def plot_reaction_id(id, data_r, data_c, render_dir='render', size=(600, 600)):
+    """
+    Plots the reaction corresponding to the given reaction ID.
+
+    Parameters:
+    id (int): The reaction ID to plot.
+    data_r (pd.DataFrame): A pandas DataFrame containing reaction data with 'id' and 'reaction' columns.
+    data_c (pd.DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'smiles' columns.
+    render_dir (str, optional): The directory where the reaction images will be saved. Default is 'render'.
+    size (tuple, optional): The size of the images to be rendered. Default is (600, 600).
+
+    Returns:
+    tuple: A tuple containing two lists:
+           - The first list contains the keys of the reactants.
+           - The second list contains the keys of the products.
+    """
     # Get the reaction from the id
     eq = data_r.loc[data_r['id'] == id, 'reaction'].values[0]
     # Plot the eq
