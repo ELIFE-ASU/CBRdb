@@ -26,7 +26,7 @@ def compounds_manual_add(molless_path='../data/C_IDs_bad.dat',
     good_file = os.path.abspath(good_file)
 
     data = pd.read_csv(molless_path, skipinitialspace=True).query('reason != "invalid"')
-    data = data["# Bad IDs"].drop_duplicates().tolist()
+    data = data['id'].drop_duplicates().tolist()
     print("data loaded", flush=True)
     print("data head", data[:4], flush=True)
 
@@ -106,7 +106,7 @@ def compounds_manual_add(molless_path='../data/C_IDs_bad.dat',
                 # append the good list
                 good_list.append(id)
 
-    # Now we have a list of all the reactions
+    # Now we have a list of all the compounds
     good_list = list(set(good_list))
     good_list.sort()
     print(f"Good list: {good_list}", flush=True)
