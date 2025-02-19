@@ -111,8 +111,8 @@ def _identify_duplicate_compounds(C_main):
     id_num = C_main.reset_index()['compound_id'].str.lstrip('C').astype(int)
     count_back_from = id_num.loc[id_num.diff().idxmax()] - 1
     possible_dupes = (
-        C_main.query('~smiles.str.contains("*", regex=False) & smiles.duplicated(keep=False)').reset_index()
-        .groupby('smiles')['compound_id'].apply(list).reset_index(drop=True)
+        C_main.query('~smiles.str.contains("*", regex=False) & smiles.duplicated(keep=False)').reset_index().sort_values(by=['smiles','compound_id'])
+        .groupby('smiles')['compound_id'].apply(list).apply(sorted).reset_index(drop=True)
         .explode().reset_index(name='id_old').rename({'index': 'id_new'}, axis=1))
     possible_dupes['id_new'] = 'C' + (count_back_from - possible_dupes['id_new']).astype(str)
     possible_dupes = dict(zip(possible_dupes['id_old'], possible_dupes['id_new']))
