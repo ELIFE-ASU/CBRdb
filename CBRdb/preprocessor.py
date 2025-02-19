@@ -124,34 +124,43 @@ def _identify_duplicate_compounds(C_main):
     return compound_mapping['new_id']
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', valid_cids=None):
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', valid_cids=None, 
+                               tar_list = ['name', 'remark', 'comment', 'sequence', 'type']):
     """
     Preprocesses KEGG compound metadata and saves it to a specified output file.
 
     Parameters:
     target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
     valid_cids (iterable, optional): If provided, a list of compound IDs to keep. Defaults to None.
+    tar_list (iterable, optional): The list of metadata fields to keep. Defaults to ['name', 'remark', 'comment', 'sequence', 'type'].
 
     Returns:
     pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
     """
     target_dir = os.path.abspath(target_dir)
-    print('Importing compound metadata...', flush=True)
 
-    paths = [os.path.join(root, file) for root, _, files in os.walk(target_dir) for file in files if
-             file.endswith('.data')]
+    if valid_cids is not None:
+        print(f'Importing metadata for {len(valid_cids)} compounds...', flush=True)
+        paths = [os.path.join(root, file) for root, _, files in os.walk(target_dir) for file in files if
+                file.endswith('.data') and file.split('.')[0] in valid_cids]
+    else:
+        print(f'Importing compound metadata...', flush=True)
+        paths = [os.path.join(root, file) for root, _, files in os.walk(target_dir) for file in files if
+                file.endswith('.data')]
 
     df = pd.DataFrame({
         os.path.basename(path).split(".")[0]:
             pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line'])
-            .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('|'.join)
-        for path in paths
-    }).drop('///', errors='ignore').T
-    tar_list = ['name', 'remark', 'comment', 'sequence', 'type']
+            .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('~'.join)
+        for path in paths}).drop('///', errors='ignore').T
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).loc[:, tar_list].sort_index()
-    df['glycan_ids'] = (df['remark'].fillna('').str.extractall(r'(G\d{5})')
-                        .groupby(level=0).agg(' '.join).replace('',float('nan')))
-    df.drop(columns='remark', inplace=True)
+    
+    if 'remark' in tar_list:
+        df['glycan_ids'] = (df['remark'].fillna('').str.extractall(r'(G\d{5})')
+                            .groupby(level=0).agg(' '.join).replace('',float('nan')))
+        df['drug_ids'] = (df['remark'].fillna('').str.extractall(r'(D\d{5})')
+                            .groupby(level=0).agg(' '.join).replace('',float('nan')))
+        df.drop(columns='remark', inplace=True)
     df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
     if valid_cids is not None:
         if hasattr(valid_cids, '__iter__'):
@@ -252,6 +261,8 @@ def preprocess(target="R",
         df_meta = preprocess_kegg_c_metadata(target_dir + '_full', valid_cids=list(df_main['compound_id'].sort_values()))
         # merges the compound data, to retain only compounds with structural info
         df = df_main.merge(df_meta, on='compound_id', how='left').sort_values(by='compound_id').reset_index(drop=True)
+        # log compounds we could seek structural info for
+        _ = log_compounds_for_followup(df)
         # generates output file with compound data
         df.to_csv(out_file, encoding='utf-8', index=False)
         print("C preprocessing done. Compound info path:" + out_file, flush=True)
@@ -260,3 +271,19 @@ def preprocess(target="R",
         df = preprocess_kegg_r(target_dir, out_file)
         print("R preprocessing done", flush=True)
         return df
+
+
+def log_compounds_for_followup(df):
+    """ Logs compounds without smiles strings or mol files, whose metadata suggests we might want to seek structures elsewhere """
+    extant = set(df['compound_id'])
+    k = [i.split('/')[-2] for i in file_list_all('../../data/kegg_data_C_full') if i.endswith('.data') & (i.split('/')[-2] not in extant)]
+    tar_list=['name', 'sequence', 'type', 'formula', 'remark', 'reaction', 'comment', 'brite', 'dblinks']
+    compounds_manual_add_query = """sequence.isna() & type.isna() & glycan_ids.isna() & reaction.notna() \
+                & ~name.str.lower().str.contains("protein|globin|doxin|glycan|lase|peptide|rna|dna|steroid|lipid|lignin", na=False) \
+                & ~comment.fillna('').str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False) \
+                & ~formula.str.contains("X", na=False) & ~brite.str.contains("rotein|nzyme|eptide", na=False)"""
+    missing_promising = preprocess_kegg_c_metadata(valid_cids=sorted(k), tar_list=tar_list).query(compounds_manual_add_query)
+    kwds = missing_promising['name'].fillna('').str.strip('[|]|(|)').str.split().explode().dropna()
+    missing_promising = missing_promising.drop(index=kwds[kwds.str.endswith('ase')].index, errors='ignore').drop(['sequence','type','glycan_ids','brite'], axis=1)
+    missing_promising.to_csv('../data/C_IDs_good.dat', encoding='utf-8', index=False)
+    return missing_promising
