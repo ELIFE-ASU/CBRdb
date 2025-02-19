@@ -23,8 +23,8 @@ def load_bad_entries(target_dir_c):
     list: A list of filenames that are flagged as bad entries.
     """
     target_dir_c = os.path.abspath(target_dir_c)
-    files = os.listdir(target_dir_c)
-    files_full = [os.path.join(target_dir_c, f, f + ".mol") for f in files if not f.startswith('.')]
+    files = sorted([f for f in os.listdir(target_dir_c) if not f.startswith('.')])
+    files_full = [os.path.join(target_dir_c, f, f + ".mol") for f in files]
     flags = tp_calc(check_for_x_group, files_full)
     return [elem for elem, flag in zip(files, flags) if flag]
 
