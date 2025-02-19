@@ -10,7 +10,8 @@ from .fix_reactions_data import (fix_reactions_data, kitchen_sink, dict_ele_cont
 from .lets_get_kegg import (download_data)
 from .merge_data_sets import (dedupe_compounds, merge_duplicate_reactions)
 from .preprocessor import (preprocess)
-from .prune_reactions import (df_of_suspect_reactions,
+from .prune_reactions import (iteratively_prune_entries,
+                              df_of_suspect_reactions,
                               suspect_reaction_subset,
                               quarantine_suspect_reactions_matching,
                               add_suspect_reactions_to_existing_bad_file)

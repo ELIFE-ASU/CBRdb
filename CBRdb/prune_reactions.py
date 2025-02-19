@@ -1,5 +1,7 @@
 import pandas as pd 
 
+from .preprocessor import _identify_duplicate_compounds
+
 def all_entries(dbs):
     kegg_rns = dbs['kegg_data_R'].set_index('id')['reaction']
     atlas_rns = dbs['atlas_data_R'].set_index('id')['reaction']
@@ -77,10 +79,48 @@ def quarantine_suspect_reactions_matching(dbs, sus, matching="shortcut|structure
     dbs['quarantine_categories'] = matching
     dbs['quarantined'] = (dbs['kegg_data_R'].merge(dbs['atlas_data_R'], how='outer', on='id')
                           .query('id.isin(@to_quarantine)').copy(deep=True))
-    dbs['kegg_data_R_raw'] = dbs['kegg_data_R'].copy(deep=True)
-    dbs['atlas_data_R_raw'] = dbs['atlas_data_R'].copy(deep=True)
+    dbs['kegg_data_R_orig'] = dbs['kegg_data_R'].copy(deep=True)
+    dbs['atlas_data_R_orig'] = dbs['atlas_data_R'].copy(deep=True)
     dbs['kegg_data_R'] = dbs['kegg_data_R'].query('~id.isin(@to_quarantine)')
     dbs['atlas_data_R'] = dbs['atlas_data_R'].query('~id.isin(@to_quarantine)')
+    return dbs
+
+def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="shortcut|structure_missing"):
+    """ prunes reactions before attempting to dedupe compounds. """
+    # turn datasets into a dictionary
+    dbs = {'kegg_data_R': kegg_data_R, 'atlas_data_R': atlas_data_R, 'kegg_data_C': C_main}
+    dbs['CBRdb_C'] = dbs['kegg_data_C'].copy(deep=True)
+
+    sus = df_of_suspect_reactions(dbs) # identify suspect reactions
+    sus = add_suspect_reactions_to_existing_bad_file(sus) #add to log and import log
+
+    # remove reactions matching quarantine specs
+    dbs = quarantine_suspect_reactions_matching(dbs, sus, matching=to_quarantine)
+
+    # note what compounds are actually used in remaining reactions
+    all_rns, all_cps = all_entries(dbs)
+
+    # a few compounds were only used in those reactions; remove those. kegg_data_C retains quarantined entries
+    all_rns, all_cps = all_entries(dbs)
+    dbs['CBRdb_C'] = dbs['CBRdb_C'].query('compound_id.isin(@all_cps)')
+
+    # now identify and log duplicate compounds among what remains
+    dbs['C_dupemap'] = _identify_duplicate_compounds(dbs['CBRdb_C'])
+    dbs['C_dupemap'].to_csv('../data/kegg_data_C_dupemap.csv', encoding='utf-8')
+
+    # replace compound entries with dupe names
+    dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap'])
+    dbs['CBRdb_C'] = dbs['CBRdb_C'].sort_values(by='compound_id').drop_duplicates(subset='compound_id', keep='first')
+    dbs['CBRdb_C'].to_csv('../CBRdb_C.csv', encoding='utf-8', index=False)
+    
+    # replace compound IDs in reaction dfs. kegg_data_R_orig and atlas_data_R_orig retain original entries.
+    dbs['kegg_data_R']['reaction'] = dbs['kegg_data_R']['reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+    dbs['atlas_data_R']['reaction'] = dbs['atlas_data_R']['reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+
+    # write CSV output files for the reaction balancer to read in.
+    for k in ['kegg_data_R', 'atlas_data_R']:
+        dbs[k].to_csv(f'../data/{k}_dedupedCs.csv', encoding='utf-8', index=False)
+
     return dbs
 
 #Usage:
