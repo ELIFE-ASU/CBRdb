@@ -44,9 +44,9 @@ if __name__ == "__main__":
 
     print("Fixing the reactions data...", flush=True) 
     dbs['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_dedupedCs.csv",
-                                                                 c_file="../data/kegg_data_C_deduped.csv")  
+                                                                c_file="../CBRdb_C.csv")
     dbs['atlas_data_R_processed'] = CBRdb.fix_reactions_data(r_file=atlas_reactions_data + "_dedupedCs.csv",
-                                                                 c_file="../data/kegg_data_C_deduped.csv")  
+                                                                 c_file="../CBRdb_C.csv")
 
     print("Combining and deduplicating the reactions data...", flush=True)
     dbs['reactions_joined'] = pd.concat(objs=[dbs['kegg_data_R_processed'], dbs['atlas_data_R_processed']], ignore_index=True)

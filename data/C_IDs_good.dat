@@ -1,61 +1,100 @@
-# Good compound IDs to follow up on
-C00028
-C00030
-C00138
-C00139
-C00174
-C00205
-C00215
-C00338
-C00340
-C00391
-C00435
-C00464
-C00496
-C00505
-C00662
-C00667
-C00701
-C00759
-C00923
-C00924
-C00934
-C00991
-C00995
-C00996
-C00997
-C00998
-C00999
-C01000
-C01022
-C01070
-C01071
-C01074
-C01166
-C01355
-C01493
-C01547
-C01579
-C01599
-C01609
-C01629
-C01667
-C01708
-C02069
-C02244
-C02288
-C02456
-C02672
-C02682
-C02683
-C02684
-C02685
-C02729
-C02745
-C02756
-C02790
-C02866
-C02869
-C03025
-C03029
-C03103
+compound_id,name,formula,reaction,comment,dblinks,drug_ids
+C00338,Lipopolysaccharide;~LPS,,R01994 R01995 R01996 R01997 R06054,,PubChem: 3631~ChEBI: 16412,
+C00391,Calmodulin,,R05193,,PubChem: 3681,
+C00496,Ubiquitin,,R02418 R03876 R05193,,CAS: 60267-61-0~PubChem: 3779,
+C00759,Caldesmon,,R02884 R02885,Generic compound in reaction hierarchy,PubChem: 4021,
+C00934,Sugar phosphate,,R00804 R03076,Generic compound in reaction hierarchy,PubChem: 4186~ChEBI: 33447,
+C00991,alpha-D-Aldose 1-phosphate;~beta-L-Aldose 1-phosphate;~Monosaccharide 1-phosphate,,R03142 R03143 R03149 R03570 R03986 R08845,Generic compound in reaction hierarchy~Both alpha-D-aldose and beta-L-aldose usually have the same anomeric configuration,PubChem: 4237,
+C00995,Ferricytochrome b1,,R03146,Heme type: Heme B [CPD:C00032],PubChem: 4241~ChEBI: 16748,
+C00996,Ferricytochrome b5,,R00100 R01115 R01803 R02222 R03147 R03814 R04501 R04571~R05733 R05734 R05740 R06519 R06525 R06526 R07215 R07486~R07491 R07509 R07933 R08539 R10057 R10926 R11001 R11002~R11003 R11005 R11006 R11009 R11010 R11011 R11012 R11043~R11044 R11059 R11060 R11110 R11111 R11644 R11645 R12167~R12168 R12169 R12170 R12171 R12172 R12173 R12205 R12233~R12234 R12355 R12368 R12369 R12370 R12372 R12373 R12374~R12377 R12378 R12379 R12403 R12416 R13058 R13059,,CAS: 9035-39-6~PubChem: 4242~ChEBI: 18097,
+C00997,Ferricytochrome c2,,R00082 R00108 R00784 R09500,,CAS: 9035-43-2~PubChem: 4243~ChEBI: 16448,
+C00998,Ferrocytochrome b1,,R03146,Heme type: Heme B [CPD:C00032],PubChem: 4244~ChEBI: 16762,
+C00999,Ferrocytochrome b5,,R00100 R01115 R01803 R02222 R03147 R03814 R04501 R04571~R05733 R05734 R05740 R06519 R06525 R06526 R07215 R07486~R07491 R07509 R07933 R08539 R10057 R10926 R11001 R11002~R11003 R11005 R11006 R11009 R11010 R11011 R11012 R11043~R11044 R11059 R11060 R11110 R11111 R11644 R11645 R12167~R12168 R12169 R12170 R12171 R12172 R12173 R12205 R12233~R12234 R12355 R12368 R12369 R12370 R12372 R12373 R12374~R12377 R12378 R12379 R12403 R12416 R13058 R13059,,PubChem: 4245,
+C01000,Ferrocytochrome c2,,R00082 R00108 R00784 R09500,,PubChem: 4246~ChEBI: 16707,
+C01022,Caldesmon phosphate,,R02884 R02885,Generic compound in reaction hierarchy,PubChem: 4267,
+C01070,Ferricytochrome c-553,,R00198 R03215,,PubChem: 4309~ChEBI: 16951,
+C01071,Ferrocytochrome c-553,,R00198 R03215,,PubChem: 4310~ChEBI: 15856,
+C01493,Farnesol,,R08145,"Generic compound in reaction hierarchy~2-trans,6-trans-Farnesol [CPD:C01126]~2-cis,6-trans-Farnesol [CPD:C03220]",CAS: 4602-84-0~PubChem: 4663~ChEBI: 28600~KNApSAcK: C00003132~NIKKAJI: J8.753J,
+C01547,ADP-aldose,,R03142,,PubChem: 4706~ChEBI: 17193,
+C01579,Flavonoid,,R03615,Generic compound in reaction hierarchy,PubChem: 4735~ChEBI: 47916,
+C01599,NDP-aldose,,R03143,Generic compound in reaction hierarchy,PubChem: 4753,
+C01629,Wax ester,,R02042 R09474,Generic compound in reaction hierarchy,PubChem: 4779~ChEBI: 10036,
+C02244,Aliphatic amide,,R02826,Generic compound in reaction hierarchy,PubChem: 5307~ChEBI: 29348,
+C02288,Reduced insulin,,R02824,,PubChem: 5344~ChEBI: 5932,
+C02456,Phosphorhodopsin,,R02903,Generic compound in reaction hierarchy,PubChem: 5476,
+C02729,O-Phosphoprotamine,,R03632,,PubChem: 5691,
+C03025,Reduced plastocyanin,,R03817 R08409 R09542,,PubChem: 5931,
+C03029,Transferrin[Fe(II)]2,,R04123 R04124,,PubChem: 5934,
+C03162,Oxidized plastocyanin,,R03817 R08409 R09542,,PubChem: 6047,
+C03179,Transferrin[Fe(III)]2,,R04123 R04155,,PubChem: 6061,
+C03245,ADP-D-ribosyl-acceptor;~(ADP-D-ribosyl)n-acceptor;~(ADP-D-ribosyl)n+1-acceptor,,R04176,,PubChem: 6115,
+C03330,(Ubiquitin)n-calmodulin,,R05193,,PubChem: 6177,
+C03491,Cyclic alcohol,,R09742,Generic compound in reaction hierarchy,PubChem: 6303~ChEBI: 3993,
+C03565,2''-Nucleotidylgentamicin,,R02432,Generic compound in reaction hierarchy,PubChem: 6357~ChEBI: 16528,
+C03708,N-Acetyl-O-acetylneuraminate,,R01810,Generic compound in reaction hierarchy~N-Acetyl-4-O-acetylneuraminate [CPD:C04015]~N-Acetyl-7-O-acetylneuraminate [CPD:C04016]~N-Acetyl-9-O-acetylneuraminate [CPD:C04017],PubChem: 6476~ChEBI: 29065 7237,
+C03806,Substituted beta-amino acid,,R03743,Generic compound in reaction hierarchy,PubChem: 6555,
+C03859,D-Glucosyllipopolysaccharide,,R01994,,PubChem: 6595,
+C04090,Ubiquitin C-terminal thiolester,,R02418,Generic compound in reaction hierarchy,PubChem: 6782,
+C04266,alpha-D-Glucosyllipopolysaccharide,,R01995,,PubChem: 6931,
+C04473,3-alpha-D-Galactosyl-[lipopolysaccharide glucose],,R01997,,PubChem: 7094~ChEBI: 27734,
+C04539,N-Acetyl-D-glucosaminyllipopolysaccharide,,R01996,Generic compound in reaction hierarchy,PubChem: 7145,
+C04566,Membrane-derived-oligosaccharide D-glucose,,R04511,Generic compound in reaction hierarchy,PubChem: 7169,
+C04809,Membrane-derived-oligosaccharide 6-(glycerophospho)-D-glucose,,R04511,Generic compound in reaction hierarchy,PubChem: 7371,
+C05114,Mucopolysaccharide,,R00423,Generic compound in reaction hierarchy,PubChem: 7539~ChEBI: 37395,
+C05227,UDP-sugar;~UDP-monosaccharide,,R03986 R08845,Generic compound in reaction hierarchy,PubChem: 7624~ChEBI: 17297,
+C05309,Semiquinone;~Semiquinone radical;~Semidione;~Benzosemiquinone,,R00083 R02364,"Generic compound in reaction hierarchy~Including p-Benzosemiquinone [CPD:C02389], o-Benzosemiquinone [CPD:C05060] and related compounds",PubChem: 7691~ChEBI: 15817,
+C05357,Oxidized azurin;~Azurinox,,R00785 R02675 R05751 R09480 R11194 R12133 R12134 R12653,,PubChem: 7734~ChEBI: 7833,
+C05358,Reduced azurin;~Azurinred,,R00785 R02675 R05751 R09480 R11194 R12133 R12134 R12653,,PubChem: 7735~ChEBI: 8787,
+C05383,Aminosugar,,R04299,Generic compound in reaction hierarchy,PubChem: 7757~ChEBI: 28963,
+C05524,Aminoacyl-L-methionine,,R00657,Generic compound in reaction hierarchy,PubChem: 7868,
+C05693,R;~Methyl group acceptor,,R04939 R05657 R09180,Generic compound in reaction hierarchy,PubChem: 8000~ChEBI: 8735,
+C05694,CH3-R;~Methyl-acceptor,,R04939 R05657 R09180,Generic compound in reaction hierarchy,PubChem: 8001~ChEBI: 3274,
+C05779,Apoferritin,,R09422,,CAS: 9013-31-4~PubChem: 8074~ChEBI: 2784,
+C05780,Apotransferrin,,R04124 R04155,,PubChem: 8075~ChEBI: 2786,
+C05783,Cytochrome a,,R00312,,PubChem: 8078,
+C05996,Branched chain fatty acid,,R02663 R03175 R04098,Generic compound in reaction hierarchy,PubChem: 8270~ChEBI: 35819,
+C06016,Pentosan,,R01474 R03079 R04937 R04938,Homopolysaccharide which yield pentoses on hydrolysis.,PubChem: 8288~ChEBI: 15447,
+C06059,Cyclic amidine,,R01400,Generic compound in reaction hierarchy,PubChem: 8329,
+C06060,Amidine,,R06138,Generic compound in reaction hierarchy~Compound group such as: Benzamidine [CDP:C01784],PubChem: 8330~ChEBI: 35359,
+C06084,Hopanoid,,R02876,Generic compound in reaction hierarchy,PubChem: 8350~ChEBI: 51963,
+C06085,Triterpenoid,,R03201,Generic compound in reaction hierarchy,PubChem: 8351~ChEBI: 36615,
+C06109,Cytochrome P-450 oxidized form,,R05102,Generic compound in reaction hierarchy,PubChem: 8371~ChEBI: 4057,
+C06110,Cytochrome P-450 reduced form,,R05102,Generic compound in reaction hierarchy,PubChem: 8372~ChEBI: 4058,
+C06129,Ceramidepentasaccharide,,R04644 R04645 R05106,Generic compound in reaction hierarchy,PubChem: 8386,
+C06259,Ferrocytochrome b,,R00792,,PubChem: 8498~ChEBI: 5034,
+C06260,Ferricytochrome b,,R00792,,PubChem: 8499~ChEBI: 5022,
+C06741,Feruloyl-polysaccharide,,R07292,Generic compound in reaction hierarchy,PubChem: 8963,
+C06744,3-Deoxyoctulosonyl-lipopolysaccharide,,R06054,Generic compound in reaction hierarchy,PubChem: 8966~ChEBI: 20011,
+C07291,Dihydrofurano derivative,,R05741,Generic compound in reaction hierarchy,PubChem: 9500,
+C07299,Cutin,,R05793,,PubChem: 9507~ChEBI: 23417,
+C07300,Cutin monomer,,R05793,,PubChem: 9508,
+C07305,Products of ATP breakdown,,R05744 R07643 R10011,,PubChem: 9513,
+C10905,Activated methyl group,,R02592 R04774 R05512,,PubChem: 13088~ChEBI: 228465,
+C11349,Amino group donor,,R05512,Formula: NH2,PubChem: 13524,
+C11477,Sugar,,R00804 R01237 R03076,Generic compound in reaction hierarchy,PubChem: 13647,
+C11524,Diphospho-myo-inositol polyphosphate,,R05777,Generic compound in reaction hierarchy,PubChem: 13692,
+C11525,myo-Inositol polyphosphate,,R05777,Generic compound in reaction hierarchy,PubChem: 13693~ChEBI: 18087,
+C15585,myo-Inositol phosphate,,R07343,Generic compound in reaction hierarchy,PubChem: 17396577,
+C15590,Acylglycerol,,R03754,Generic compound in reaction hierarchy,PubChem: 17396582~ChEBI: 17408,
+C15592,Pyranose,,R07347,Generic compound in reaction hierarchy,PubChem: 17396584~ChEBI: 79986,
+C15594,Pyranoside,,R07348,Generic compound in reaction hierarchy,PubChem: 17396586~ChEBI: 75504,
+C15601,Glyceollin,,R07356 R07357,Generic compound in reaction hierarchy,CAS: 66241-09-6~PubChem: 17396593~ChEBI: 16470,
+C16002,Oxidized reactive black 5,,R07612,,PubChem: 47205313~ChEBI: 80232,
+C16830,D-Aldonolactone,,R02847,Generic compound in reaction hierarchy,PubChem: 96023354~NIKKAJI: J1.174F,
+C17627,Prenyl diphosphate;~Prenol pyrophosphate,,R03541,Generic compound in reaction hierarchy,PubChem: 96023971~ChEBI: 16057,
+C17936,Phaeomelanin,,R08849,,CAS: 12627-61-1~PubChem: 96024157~ChEBI: 81393,
+C18233,Ferricytochrome cL;~Oxidized cytochrome cL;~Cytochrome cL,,R01146 R09127 R09128 R10713,Generic compound in reaction hierarchy~oxidized form of Cytochrome c-L [KO:K16255],CAS: 93195-88-1~PubChem: 103061415~ChEBI: 81596,
+C18234,Ferrocytochrome cL;~Reduced cytochrome cL,,R01146 R09127 R09128 R10713,Generic compound in reaction hierarchy~reduced form of Cytochrome c-L [KO:K16255],PubChem: 103061416~ChEBI: 81597,
+C19608,Ferritin,,R09422,A major iron storage protein,CAS: 9007-73-2~PubChem: 124490277~ChEBI: 82594,
+C19630,Diketone,,R09469,Generic compound in reaction hierarchy,PubChem: 135626114,
+C19645,Acceptor;~Aglycon,,R09428,"Generic compound in reaction hierarchy~Acceptor of glycoside~Including alcohols [CPD:C00069], phenols [CPD:C15584], carboxylic acids [CPD:C00060], amines [CPD:C00706] and thiols [CPD:C00145]",PubChem: 124490296,
+C19646,Acceptor beta-D-glucuronoside,,R09428,Generic compound in reaction hierarchy~Including O-Glucuronoside [CPD:C03033] and other glucuronosides,PubChem: 124490297,
+C19671,Amicyanin;~Oxidized amicyanin,,R00606,,PubChem: 135626139,
+C19672,Reduced amicyanin,,R00606,,PubChem: 135626140,
+C19861,3-Hydroxy fatty acid,,R09741,Generic compound in reaction hierarchy,PubChem: 135626328,
+C19862,Cyclic ketone,,R09742,Generic compound in reaction hierarchy,PubChem: 135626329,
+C20655,Aldopyranose,,R10428 R10429,Generic compound in reaction hierarchy,PubChem: 172232378,
+C20832,Hydroperoxyicosatetraenoate,,R10761 R10766,Generic compound in reaction hierarchy,PubChem: 254741298,
+C20833,Oxoicosatetraenoate,,R10761,Generic compound in reaction hierarchy,PubChem: 254741299,
+C20837,Hydroxyepoxyicosatrienoate,,R10766,Generic compound in reaction hierarchy,PubChem: 254741303,
+C21758,Hepatotoxins,,R11904 R11905,Generic compound,PubChem: 354264352,
