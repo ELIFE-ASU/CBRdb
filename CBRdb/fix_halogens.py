@@ -8,7 +8,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_mols import standardize_mol, check_for_x_group, get_properties
-from .tools_files import make_custom_id
+from .tools_files import make_custom_id, reaction_csv
 from .tools_mp import tp_calc, mp_calc
 
 
@@ -287,7 +287,7 @@ def fix_halogen_reactions(cids_dict,
 
     if int_file is not None:
         print(f"Saving intermediate file {int_file}", flush=True)
-        df_halogens_exp.to_csv(int_file, encoding='utf-8', index=False)
+        reaction_csv(df_halogens_exp, int_file)
 
     # Merge the dataframes
     df = pd.concat([df_reactions, df_halogens_exp], ignore_index=True)
@@ -298,5 +298,5 @@ def fix_halogen_reactions(cids_dict,
     # Sort the dataframe by the ID
     df = df.sort_values(by="id").reset_index(drop=True)
     # Save the dataframe
-    df.to_csv(out_file, index=False, encoding='utf-8')
+    reaction_csv(df, out_file)
     return df
