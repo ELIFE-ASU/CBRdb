@@ -6,8 +6,8 @@ from .fix_halogens import (fix_halogen_compounds,
                            )
 from .fix_reactions_data import (fix_reactions_data, kitchen_sink, dict_ele_contains_star)
 from .lets_get_kegg import (download_data)
-from .merge_data_sets import (dedupe_compounds, merge_duplicate_reactions)
-from .preprocessor import (preprocess)
+from .merge_data_sets import (merge_duplicate_reactions)
+from .preprocessor import (preprocess, identify_duplicate_compounds, log_compounds_for_followup)
 from .prune_reactions import (iteratively_prune_entries,
                               df_of_suspect_reactions,
                               suspect_reaction_subset,

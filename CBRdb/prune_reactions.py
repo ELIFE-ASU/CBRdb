@@ -1,6 +1,6 @@
 import pandas as pd 
 
-from .preprocessor import _identify_duplicate_compounds
+from .preprocessor import identify_duplicate_compounds
 from .tools_files import reaction_csv
 
 def all_entries(dbs):
@@ -106,7 +106,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     dbs['CBRdb_C'] = dbs['CBRdb_C'].query('compound_id.isin(@all_cps)')
 
     # now identify and log duplicate compounds among what remains
-    dbs['C_dupemap'] = _identify_duplicate_compounds(dbs['CBRdb_C'])
+    dbs['C_dupemap'] = identify_duplicate_compounds(dbs['CBRdb_C'])
     dbs['C_dupemap'].to_csv('../data/kegg_data_C_dupemap.csv', encoding='utf-8')
 
     # replace compound entries with dupe names
