@@ -10,7 +10,7 @@ from .tools_mols import compound_super_safe_load, get_properties
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from .tools_files import file_list_all, delete_files_substring
+from .tools_files import file_list_all, delete_files_substring, reaction_csv
 from .tools_eq import standardise_eq
 from .tools_mp import tp_calc, mp_calc
 
@@ -220,13 +220,14 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
                 'rclass': r"(\bRC\d{5}\b  \bC\d{5}_C\d{5})", 'dblinks': r"( \d{5})", 'entry': 'Overall'}
     [df.update(df[k].str.findall(v).map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')) for k, v in
      patterns.items()]
+    df.loc[:,'rclass'] = df.loc[:,'rclass'].str.replace('  ', '__')
 
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
     df['overall'] = df['overall'].replace('', float('nan'))
     df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme', 'equation'])
           .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1)).sort_values(by='id')
-    df.to_csv(outfile, encoding='utf-8', index=False)
+    reaction_csv(df, outfile)
     print('Reaction info path: ' + outfile, flush=True)
     return df
 
