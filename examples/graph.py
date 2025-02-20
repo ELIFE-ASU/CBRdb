@@ -95,6 +95,15 @@ def generate_edges_from_reactions(reaction_list, graph, f_print=True):
 
 
 def draw_graph(graph):
+    """
+    Draws the given graph using NetworkX and Matplotlib.
+
+    Parameters:
+    graph (nx.Graph): A NetworkX graph to be drawn.
+
+    Returns:
+    None
+    """
     # pos = nx.spring_layout(graph)
     # nx.draw(graph, pos, with_labels=True, node_size=700)
     nx.draw(graph, node_size=10)

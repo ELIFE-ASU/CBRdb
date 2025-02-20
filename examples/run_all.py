@@ -3,6 +3,7 @@ try:
 except ImportError:
     import sys
     import os
+
     sys.path.append(os.path.abspath('../'))
     import CBRdb
 
@@ -32,24 +33,30 @@ if __name__ == "__main__":
     kegg_data_R = CBRdb.preprocess(target="R")  # generates kegg_data_R.csv
 
     print("Instantiating specific halogen compounds from generic ones...", flush=True)
-    cids_dict, smis_dict = CBRdb.fix_halogen_compounds()    # turn generic halogens in the C data into specific halogens
-    C_main = CBRdb.merge_halogen_compounds(cids_dict, smis_dict)    # merge these into the C data, modifies kegg_data_C.csv
+    cids_dict, smis_dict = CBRdb.fix_halogen_compounds()  # turn generic halogens in the C data into specific halogens
+    C_main = CBRdb.merge_halogen_compounds(cids_dict,
+                                           smis_dict)  # merge these into the C data, modifies kegg_data_C.csv
 
     print("Fixing halogen reactions in KEGG and ATLAS...", flush=True)
-    kegg_data_R = CBRdb.fix_halogen_reactions(cids_dict, r_id_file=kegg_reactions_data + ".csv")  # modifies kegg_data_R.csv
-    atlas_data_R = CBRdb.fix_halogen_reactions(cids_dict, r_id_file=atlas_reactions_data + ".csv")  # modifies atlas_data_R.csv
+    kegg_data_R = CBRdb.fix_halogen_reactions(cids_dict,
+                                              r_id_file=kegg_reactions_data + ".csv")  # modifies kegg_data_R.csv
+    atlas_data_R = CBRdb.fix_halogen_reactions(cids_dict,
+                                               r_id_file=atlas_reactions_data + ".csv")  # modifies atlas_data_R.csv
 
-    print("Finding and removing suspect KEGG reactions + de-duping compound dataset for compounds and reactions...", flush=True)
-    dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="shortcut|structure_missing") #unclear|incomplete|general
+    print("Finding and removing suspect KEGG reactions + de-duping compound dataset for compounds and reactions...",
+          flush=True)
+    dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main,
+                                          to_quarantine="shortcut|structure_missing")  # unclear|incomplete|general
 
-    print("Fixing the reactions data...", flush=True) 
+    print("Fixing the reactions data...", flush=True)
     dbs['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_dedupedCs.csv",
-                                                                c_file="../CBRdb_C.csv")
+                                                            c_file="../CBRdb_C.csv")
     dbs['atlas_data_R_processed'] = CBRdb.fix_reactions_data(r_file=atlas_reactions_data + "_dedupedCs.csv",
-                                                                 c_file="../CBRdb_C.csv")
+                                                             c_file="../CBRdb_C.csv")
 
     print("Combining and deduplicating the reactions data...", flush=True)
-    dbs['reactions_joined'] = pd.concat(objs=[dbs['kegg_data_R_processed'], dbs['atlas_data_R_processed']], ignore_index=True)
+    dbs['reactions_joined'] = pd.concat(objs=[dbs['kegg_data_R_processed'], dbs['atlas_data_R_processed']],
+                                        ignore_index=True)
     dbs['r_dupemap'] = CBRdb.tools_eq.generate_reaction_dupemap(dbs['reactions_joined'], prefix='T')
     dbs['CBRdb_R'] = CBRdb.merge_duplicate_reactions(dbs['reactions_joined'], dbs['r_dupemap'])
     CBRdb.reaction_csv(dbs['reactions_merged'], "../CBRdb_R.csv")
