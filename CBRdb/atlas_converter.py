@@ -4,7 +4,7 @@ import warnings
 import pandas as pd
 
 from .tools_eq import standardise_eq
-
+from .tools_files import reaction_csv
 
 def cleanup_eq_line(eq_line):
     """
@@ -73,6 +73,6 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
         df = df.query('kegg_id.isna()').drop('kegg_id', axis=1)
 
     # Write the data to a file
-    df.to_csv(out_file, encoding='utf-8', index=False)
+    reaction_csv(df, out_file)
     print("data written to file", flush=True)
     return df
