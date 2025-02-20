@@ -33,7 +33,7 @@ def merge_duplicate_reactions(df, r_dupemap):
         'module': unique_str_sep,
         'name': all_provided,
         'comment': all_provided,
-        'rclass': lambda x: ' | '.join(set(x.str.findall(r'(RC\d+  C\d+_C\d+)').sum())),
+        'rclass': lambda x: ' '.join(sorted(list(set(x.str.findall(r'(RC\d{5}__C\d{5}_C\d{5}})').sum())))),
     }
 
     # Group by the new reaction IDs and aggregate the data
@@ -66,12 +66,6 @@ def dedupe_compounds(data_folder='../data'):
 
     # Read the duplicate map file
     dupemap = pd.read_csv(dupemap_file, header=0, index_col=0).iloc[:, 0]
-
-    # Read and process the metadata file
-    C_meta = (pd.read_csv(C_meta_file, header=0).assign(
-        compound_id=lambda x: x['compound_id'].replace(dupemap))
-              .drop_duplicates(subset='compound_id', keep='first')
-              .sort_values(by='compound_id'))
 
     # Read and process the main compound file
     C_main = (pd.read_csv(C_main_file, header=0).assign(
@@ -112,34 +106,3 @@ def dedupe_compounds(data_folder='../data'):
                         [CBRdb_C, C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
     return datasets
 
-
-def _remove_deadref_reactions(cpd_roster, reaction_df, removed_Rs_file):
-    """
-    Removes reactions from the reaction_df which contain compounds not found in cpd_roster.
-    Logs these reactions in removed_Rs_file.
-
-    Parameters:
-    cpd_roster (iterable): An iterable of valid compound IDs.
-    reaction_df (pd.DataFrame): The DataFrame containing reaction data.
-    removed_Rs_file (str): The file path where removed reactions will be logged.
-
-    Returns:
-    pd.DataFrame: The DataFrame with reactions containing invalid compounds removed.
-    """
-    if not hasattr(cpd_roster, '__iter__'):
-        raise TypeError('cpd_roster must be an iterable of valid compound IDs.')
-
-    # Find reactions with compounds not in cpd_roster
-    nf = ~reaction_df['reaction'].str.findall(r'(\bC\d{5}\b)').explode().isin(cpd_roster)
-    nf = list(set(nf[nf].index))
-
-    # Log the removed reactions
-    nfK = reaction_df.loc[nf, ['id']].drop_duplicates().assign(reason='structure_missing').copy(deep=True)
-    nfK.set_index('id').to_csv(removed_Rs_file, mode='a', index=True, header=False)
-
-    # Read and sort the log file
-    f = pd.read_csv(removed_Rs_file, header=0).drop_duplicates().sort_values(by=['reason', 'id']).set_index('id')
-    f.to_csv(removed_Rs_file, header=True, mode='w')
-
-    # Return the DataFrame with invalid reactions removed
-    return reaction_df.drop(nfK.index)
