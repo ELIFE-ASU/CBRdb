@@ -7,6 +7,16 @@ import CBRdb
 
 
 def assert_dicts_equal(d1, d2):
+    """
+    Asserts that two dictionaries are equal by comparing their keys and values.
+
+    Parameters:
+    d1 (dict): The first dictionary to compare.
+    d2 (dict): The second dictionary to compare.
+
+    Raises:
+    AssertionError: If the dictionaries do not have the same keys or if any corresponding values differ.
+    """
     # Check that both have the same set of keys
     assert d1.keys() == d2.keys(), f"Key sets differ: {d1.keys()} != {d2.keys()}"
 
