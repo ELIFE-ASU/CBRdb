@@ -1,6 +1,7 @@
 import pandas as pd 
 
 from .preprocessor import _identify_duplicate_compounds
+from .tools_files import reaction_csv
 
 def all_entries(dbs):
     kegg_rns = dbs['kegg_data_R'].set_index('id')['reaction']
@@ -119,7 +120,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
 
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
-        dbs[k].to_csv(f'../data/{k}_dedupedCs.csv', encoding='utf-8', index=False)
+        reaction_csv(dbs[k], f'../data/{k}_dedupedCs.csv')
 
     return dbs
 
