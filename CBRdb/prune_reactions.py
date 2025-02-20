@@ -112,11 +112,11 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     # replace compound entries with dupe names
     dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap'])
     dbs['CBRdb_C'] = dbs['CBRdb_C'].sort_values(by='compound_id').drop_duplicates(subset='compound_id', keep='first')
-    dbs['CBRdb_C'].to_csv('../CBRdb_C.csv', encoding='utf-8', index=False)
+    dbs['CBRdb_C'].to_csv('../CBRdb_C.csv', encoding='utf-8', index=False, float_format='%.3f')
     
     # replace compound IDs in reaction dfs. kegg_data_R_orig and atlas_data_R_orig retain original entries.
-    dbs['kegg_data_R']['reaction'] = dbs['kegg_data_R']['reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
-    dbs['atlas_data_R']['reaction'] = dbs['atlas_data_R']['reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+    dbs['kegg_data_R'].loc[:,'reaction'] = dbs['kegg_data_R'].loc[:,'reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+    dbs['atlas_data_R'].loc[:,'reaction'] = dbs['atlas_data_R'].loc[:,'reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
 
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
@@ -124,9 +124,3 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
 
     return dbs
 
-#Usage:
-#dbs = CBRdb.dedupe_compounds()  #after deduping...
-#sus = CBRdb.df_of_suspect_reactions(dbs) # identify suspect reactions
-#sus = CBRdb.add_suspect_reactions_to_existing_bad_file(sus) #optional: add to log and import log
-#dbs = CBRdb.quarantine_suspect_reactions_matching(dbs, sus, matching="shortcut|structure_missing")
-#write CSVs for intermediate output files as desired, otherwise continue to use DFs
