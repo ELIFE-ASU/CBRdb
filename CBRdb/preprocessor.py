@@ -204,11 +204,12 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     for col in df.columns.difference(['comment']):
         df[col] = df[col].str.replace('  ;  ', ' ')  # ensure comment field structure is retained for parsing
     df['comment'] = df['comment'].str.replace('  ;  ', ';')
+
     # Store observed KO definitions in a file; old versions of this are used to annotate JGI (meta)genomes.
     ko_defs = df['orthology'].dropna().drop_duplicates()
     ko_defs = pd.Series(dict(zip(ko_defs.str.findall(r"(\bK\d{5}\b)").explode(),
                                  ko_defs.str.split(r"\bK\d{5}\b").apply(lambda x: x[1:]).explode())))
-    ko_defs.sort_index().to_csv(outfile.replace('.csv', '_kodefs.csv'), encoding='utf-8')
+    ko_defs.sort_index().str.strip().to_csv(outfile.replace('.csv', '_kodefs.csv'), encoding='utf-8', header=None)
     del ko_defs
 
     # Extract reaction attributes and linkages
