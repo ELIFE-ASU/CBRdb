@@ -168,7 +168,7 @@ def merge_halogen_compounds(cids_dict,
         "smiles_capped": arr_smiles_capped,
         "inchi_capped": arr_inchi_capped, })
     if int_file is not None:
-        df.to_csv(int_file, encoding='utf-8', index=False)
+        df.to_csv(int_file, encoding='utf-8', index=False, float_format='%.3f')
 
     # Load the compounds data
     df_old = pd.read_csv(c_id_file)
@@ -180,7 +180,7 @@ def merge_halogen_compounds(cids_dict,
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id")
     # Save the dataframe
-    df.to_csv(out_file, index=False, encoding='utf-8')
+    df.to_csv(out_file, index=False, encoding='utf-8', float_format='%.3f')
     print("Done!", flush=True)
     return df
 

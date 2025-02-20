@@ -265,7 +265,7 @@ def preprocess(target="R",
         # log compounds we could seek structural info for
         _ = log_compounds_for_followup(df)
         # generates output file with compound data
-        df.to_csv(out_file, encoding='utf-8', index=False)
+        df.to_csv(out_file, encoding='utf-8', index=False, float_format='%.3f')
         print("C preprocessing done. Compound info path:" + out_file, flush=True)
         return df
     elif target == "R":
