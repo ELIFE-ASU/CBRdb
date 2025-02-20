@@ -4,20 +4,20 @@ Compound data shape: (18716, 14)
 Small compound size: 1:(64, 14), 2:(45, 14), 3:(58, 14)
 Loading the reaction data...
 data loaded
-data columns: Index(['id', 'reaction', 'ec', 'rclass', 'name', 'pathway', 'orthology',
-       'rhea', 'comment', 'module', 'remark', 'overall'],
+data columns: Index(['id', 'reaction', 'ec', 'module', 'orthology', 'pathway', 'rclass',
+       'rhea', 'comment', 'name', 'overall', 'remark'],
       dtype='object')
 data shape: (10509, 12)
 Filtering out bad ids
 Number of bad ids removed: 825
 Filtering out missing formulas
-Time to check missing formulas: 6.096120119094849
+Time to check missing formulas: 6.937212944030762
 Number of missing formulas removed: 177
 Filtering out var list
-Time to check missing formulas: 20.57723379135132
+Time to check missing formulas: 22.0131618976593
 Number of var list reactions removed: 39
 Filtering out unbalanced reactions
-Time to check missing formulas: 33.43721103668213
+Time to check missing formulas: 23.952605962753296
 Number of unbalanced reactions: 806
 
 Processing 0/806 R00017
@@ -75,22 +75,22 @@ Reactants: {'C62H88CoN13O14P': 1}
 Products:  {'C62H90CoN13O15P': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 14, 'H': 88}
-Differences in products:     {'O': 15, 'H': 90}
+Differences in reactants:    {'H': 88, 'O': 14}
+Differences in products:     {'H': 90, 'O': 15}
 New equation:                1 C00541 + 1 C01328 <=> 1 C00992
 Differences in reactants:    {'H': 89}
 Differences in products:     {'H': 90}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 14, 'H': 88}
-Differences in products:     {'O': 15, 'H': 90}
+Differences in reactants:    {'H': 88, 'O': 14}
+Differences in products:     {'H': 90, 'O': 15}
 New equation:                1 C00541 + 1 C16844 <=> 1 C00992
 Differences in reactants:    {'H': 89}
 Differences in products:     {'H': 90}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 14, 'H': 88}
-Differences in products:     {'O': 15, 'H': 90}
+Differences in reactants:    {'H': 88, 'O': 14}
+Differences in products:     {'H': 90, 'O': 15}
 New equation:                1 C00001 + 1 C00541 <=> 1 C00992
 Differences in reactants:    {}
 Differences in products:     {}
@@ -1871,15 +1871,15 @@ Reactants: {'C15H24N2O17P2': 1, 'C26H30O8': 1}
 Products:  {'C9H14N2O12P2': 1, 'C32H42O14': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 25, 'H': 54}
-Differences in products:     {'O': 26, 'H': 56}
+Differences in reactants:    {'H': 54, 'O': 25}
+Differences in products:     {'H': 56, 'O': 26}
 New equation:                1 C00029 + 1 C01328 + 1 C03514 <=> 1 C00015 + 1 C06740
 Differences in reactants:    {'H': 55}
 Differences in products:     {'H': 56}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 25, 'H': 54}
-Differences in products:     {'O': 26, 'H': 56}
+Differences in reactants:    {'H': 54, 'O': 25}
+Differences in products:     {'H': 56, 'O': 26}
 New equation:                1 C00029 + 1 C03514 + 1 C16844 <=> 1 C00015 + 1 C06740
 Differences in reactants:    {'H': 55}
 Differences in products:     {'H': 56}
@@ -2253,22 +2253,22 @@ Reactants: {'C10H14N5O13P3': 1}
 Products:  {'H4O7P2': 1, 'C10H12N5O7P': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 13, 'H': 14}
-Differences in products:     {'O': 14, 'H': 16}
+Differences in reactants:    {'H': 14, 'O': 13}
+Differences in products:     {'H': 16, 'O': 14}
 New equation:                1 C01328 + 1 C07024 <=> 1 C00013 + 1 C07025
 Differences in reactants:    {'H': 15}
 Differences in products:     {'H': 16}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 13, 'H': 14}
-Differences in products:     {'O': 14, 'H': 16}
+Differences in reactants:    {'H': 14, 'O': 13}
+Differences in products:     {'H': 16, 'O': 14}
 New equation:                1 C07024 + 1 C16844 <=> 1 C00013 + 1 C07025
 Differences in reactants:    {'H': 15}
 Differences in products:     {'H': 16}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 13, 'H': 14}
-Differences in products:     {'O': 14, 'H': 16}
+Differences in reactants:    {'H': 14, 'O': 13}
+Differences in products:     {'H': 16, 'O': 14}
 New equation:                1 C00001 + 1 C07024 <=> 1 C00013 + 1 C07025
 Differences in reactants:    {}
 Differences in products:     {}
@@ -3478,22 +3478,22 @@ Reactants: {'C8H15NO': 1}
 Products:  {'C8H13NO2': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 1, 'H': 15}
-Differences in products:     {'O': 2, 'H': 13}
+Differences in reactants:    {'H': 15, 'O': 1}
+Differences in products:     {'H': 13, 'O': 2}
 New equation:                1 C12440 <=> 1 C01328 + 1 C06177
-Differences in reactants:    {'O': 1, 'H': 15}
-Differences in products:     {'O': 3, 'H': 14}
+Differences in reactants:    {'H': 15, 'O': 1}
+Differences in products:     {'H': 14, 'O': 3}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 1, 'H': 15}
-Differences in products:     {'O': 2, 'H': 13}
+Differences in reactants:    {'H': 15, 'O': 1}
+Differences in products:     {'H': 13, 'O': 2}
 New equation:                1 C12440 <=> 1 C06177 + 1 C16844
-Differences in reactants:    {'O': 1, 'H': 15}
-Differences in products:     {'O': 3, 'H': 14}
+Differences in reactants:    {'H': 15, 'O': 1}
+Differences in products:     {'H': 14, 'O': 3}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 1, 'H': 15}
-Differences in products:     {'O': 2, 'H': 13}
+Differences in reactants:    {'H': 15, 'O': 1}
+Differences in products:     {'H': 13, 'O': 2}
 New equation:                1 C12440 <=> 1 C00001 + 1 C06177
 Differences in reactants:    {'O': 1}
 Differences in products:     {'O': 3}
@@ -3657,22 +3657,22 @@ Reactants: {'C12H14O3': 1, 'C9H6ClNO4': 1}
 Products:  {'C21H18ClNO6': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 7, 'H': 20}
-Differences in products:     {'O': 6, 'H': 18}
+Differences in reactants:    {'H': 20, 'O': 7}
+Differences in products:     {'H': 18, 'O': 6}
 New equation:                1 C12458 + 1 C12469 <=> 1 C01328 + 1 C12471
 Differences in reactants:    {'H': 20}
 Differences in products:     {'H': 19}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 7, 'H': 20}
-Differences in products:     {'O': 6, 'H': 18}
+Differences in reactants:    {'H': 20, 'O': 7}
+Differences in products:     {'H': 18, 'O': 6}
 New equation:                1 C12458 + 1 C12469 <=> 1 C12471 + 1 C16844
 Differences in reactants:    {'H': 20}
 Differences in products:     {'H': 19}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 7, 'H': 20}
-Differences in products:     {'O': 6, 'H': 18}
+Differences in reactants:    {'H': 20, 'O': 7}
+Differences in products:     {'H': 18, 'O': 6}
 New equation:                1 C12458 + 1 C12469 <=> 1 C00001 + 1 C12471
 Differences in reactants:    {}
 Differences in products:     {}
@@ -4049,8 +4049,8 @@ Reactants: {'C35H43NO11': 1}
 Products:  {'C34H41NO11': 1}
 Compounds that might match:  ['C01438']
 Attempt 1, C01438
-Differences in reactants:    {'H': 43, 'C': 35}
-Differences in products:     {'H': 41, 'C': 34}
+Differences in reactants:    {'C': 35, 'H': 43}
+Differences in products:     {'C': 34, 'H': 41}
 New equation:                1 C14722 <=> 1 C01438 + 1 C14724
 Differences in reactants:    {'H': 43}
 Differences in products:     {'H': 45}
@@ -5337,8 +5337,8 @@ Reactants: {'C7H8N4O2': 1}
 Products:  {'C6H6N4O2': 1}
 Compounds that might match:  ['C01438']
 Attempt 1, C01438
-Differences in reactants:    {'H': 8, 'C': 7}
-Differences in products:     {'H': 6, 'C': 6}
+Differences in reactants:    {'C': 7, 'H': 8}
+Differences in products:     {'C': 6, 'H': 6}
 New equation:                1 C13747 <=> 1 C01438 + 1 C16358
 Differences in reactants:    {'H': 8}
 Differences in products:     {'H': 10}
@@ -5521,22 +5521,22 @@ Reactants: {'C7H9N3O2': 1}
 Products:  {'C7H11N3O': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 2, 'H': 9}
-Differences in products:     {'O': 1, 'H': 11}
+Differences in reactants:    {'H': 9, 'O': 2}
+Differences in products:     {'H': 11, 'O': 1}
 New equation:                1 C01328 + 1 C16396 <=> 1 C16399
-Differences in reactants:    {'O': 3, 'H': 10}
-Differences in products:     {'O': 1, 'H': 11}
+Differences in reactants:    {'H': 10, 'O': 3}
+Differences in products:     {'H': 11, 'O': 1}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 2, 'H': 9}
-Differences in products:     {'O': 1, 'H': 11}
+Differences in reactants:    {'H': 9, 'O': 2}
+Differences in products:     {'H': 11, 'O': 1}
 New equation:                1 C16396 + 1 C16844 <=> 1 C16399
-Differences in reactants:    {'O': 3, 'H': 10}
-Differences in products:     {'O': 1, 'H': 11}
+Differences in reactants:    {'H': 10, 'O': 3}
+Differences in products:     {'H': 11, 'O': 1}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 2, 'H': 9}
-Differences in products:     {'O': 1, 'H': 11}
+Differences in reactants:    {'H': 9, 'O': 2}
+Differences in products:     {'H': 11, 'O': 1}
 New equation:                1 C00001 + 1 C16396 <=> 1 C16399
 Differences in reactants:    {'O': 3}
 Differences in products:     {'O': 1}
@@ -7399,22 +7399,22 @@ Reactants: {'C9H11NO2': 1}
 Products:  {'C9H9NO3': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 2, 'H': 11}
-Differences in products:     {'O': 3, 'H': 9}
+Differences in reactants:    {'H': 11, 'O': 2}
+Differences in products:     {'H': 9, 'O': 3}
 New equation:                1 C19565 <=> 1 C01328 + 1 C19569
-Differences in reactants:    {'O': 2, 'H': 11}
-Differences in products:     {'O': 4, 'H': 10}
+Differences in reactants:    {'H': 11, 'O': 2}
+Differences in products:     {'H': 10, 'O': 4}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 2, 'H': 11}
-Differences in products:     {'O': 3, 'H': 9}
+Differences in reactants:    {'H': 11, 'O': 2}
+Differences in products:     {'H': 9, 'O': 3}
 New equation:                1 C19565 <=> 1 C16844 + 1 C19569
-Differences in reactants:    {'O': 2, 'H': 11}
-Differences in products:     {'O': 4, 'H': 10}
+Differences in reactants:    {'H': 11, 'O': 2}
+Differences in products:     {'H': 10, 'O': 4}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 2, 'H': 11}
-Differences in products:     {'O': 3, 'H': 9}
+Differences in reactants:    {'H': 11, 'O': 2}
+Differences in products:     {'H': 9, 'O': 3}
 New equation:                1 C19565 <=> 1 C00001 + 1 C19569
 Differences in reactants:    {'O': 2}
 Differences in products:     {'O': 4}
@@ -7455,22 +7455,22 @@ Reactants: {'C9H13NO2': 1}
 Products:  {'C9H11NO3': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 2, 'H': 13}
-Differences in products:     {'O': 3, 'H': 11}
+Differences in reactants:    {'H': 13, 'O': 2}
+Differences in products:     {'H': 11, 'O': 3}
 New equation:                1 C19582 <=> 1 C01328 + 1 C19579
-Differences in reactants:    {'O': 2, 'H': 13}
-Differences in products:     {'O': 4, 'H': 12}
+Differences in reactants:    {'H': 13, 'O': 2}
+Differences in products:     {'H': 12, 'O': 4}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 2, 'H': 13}
-Differences in products:     {'O': 3, 'H': 11}
+Differences in reactants:    {'H': 13, 'O': 2}
+Differences in products:     {'H': 11, 'O': 3}
 New equation:                1 C19582 <=> 1 C16844 + 1 C19579
-Differences in reactants:    {'O': 2, 'H': 13}
-Differences in products:     {'O': 4, 'H': 12}
+Differences in reactants:    {'H': 13, 'O': 2}
+Differences in products:     {'H': 12, 'O': 4}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 2, 'H': 13}
-Differences in products:     {'O': 3, 'H': 11}
+Differences in reactants:    {'H': 13, 'O': 2}
+Differences in products:     {'H': 11, 'O': 3}
 New equation:                1 C19582 <=> 1 C00001 + 1 C19579
 Differences in reactants:    {'O': 2}
 Differences in products:     {'O': 4}
@@ -7817,8 +7817,8 @@ Reactants: {'C25H32ClNO6': 1}
 Products:  {'C26H34ClNO6': 1}
 Compounds that might match:  ['C01438']
 Attempt 1, C01438
-Differences in reactants:    {'H': 32, 'C': 25}
-Differences in products:     {'H': 34, 'C': 26}
+Differences in reactants:    {'C': 25, 'H': 32}
+Differences in products:     {'C': 26, 'H': 34}
 New equation:                1 C01438 + 1 C20134 <=> 1 C20135
 Differences in reactants:    {'H': 36}
 Differences in products:     {'H': 34}
@@ -8081,22 +8081,22 @@ Reactants: {'C28H39NO3': 1}
 Products:  {'C28H37NO4': 1}
 Compounds that might match:  ['C01328', 'C16844', 'C00001']
 Attempt 1, C01328
-Differences in reactants:    {'O': 3, 'H': 39}
-Differences in products:     {'O': 4, 'H': 37}
+Differences in reactants:    {'H': 39, 'O': 3}
+Differences in products:     {'H': 37, 'O': 4}
 New equation:                1 C20536 <=> 1 C01328 + 1 C20586
-Differences in reactants:    {'O': 3, 'H': 39}
-Differences in products:     {'O': 5, 'H': 38}
+Differences in reactants:    {'H': 39, 'O': 3}
+Differences in products:     {'H': 38, 'O': 5}
 Rebalance failed, trying next compound...
 Attempt 2, C16844
-Differences in reactants:    {'O': 3, 'H': 39}
-Differences in products:     {'O': 4, 'H': 37}
+Differences in reactants:    {'H': 39, 'O': 3}
+Differences in products:     {'H': 37, 'O': 4}
 New equation:                1 C20536 <=> 1 C16844 + 1 C20586
-Differences in reactants:    {'O': 3, 'H': 39}
-Differences in products:     {'O': 5, 'H': 38}
+Differences in reactants:    {'H': 39, 'O': 3}
+Differences in products:     {'H': 38, 'O': 5}
 Rebalance failed, trying next compound...
 Attempt 3, C00001
-Differences in reactants:    {'O': 3, 'H': 39}
-Differences in products:     {'O': 4, 'H': 37}
+Differences in reactants:    {'H': 39, 'O': 3}
+Differences in products:     {'H': 37, 'O': 4}
 New equation:                1 C20536 <=> 1 C00001 + 1 C20586
 Differences in reactants:    {'O': 3}
 Differences in products:     {'O': 5}
@@ -8399,8 +8399,8 @@ Reactants: {'H2O': 1, 'C20H36O7P2': 1}
 Products:  {'H4O7P2': 1, 'C19H32O': 1}
 Compounds that might match:  ['C01438']
 Attempt 1, C01438
-Differences in reactants:    {'H': 38, 'C': 20}
-Differences in products:     {'H': 36, 'C': 19}
+Differences in reactants:    {'C': 20, 'H': 38}
+Differences in products:     {'C': 19, 'H': 36}
 New equation:                1 C00001 + 1 C00353 <=> 1 C00013 + 1 C01438 + 1 C20924
 Differences in reactants:    {'H': 38}
 Differences in products:     {'H': 40}
