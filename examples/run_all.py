@@ -51,7 +51,7 @@ if __name__ == "__main__":
     print("Combining and deduplicating the reactions data...", flush=True)
     dbs['reactions_joined'] = pd.concat(objs=[dbs['kegg_data_R_processed'], dbs['atlas_data_R_processed']], ignore_index=True)
     dbs['r_dupemap'] = CBRdb.tools_eq.generate_reaction_dupemap(dbs['reactions_joined'], prefix='T')
-    dbs['reactions_merged'] = CBRdb.merge_duplicate_reactions(dbs['reactions_joined'], dbs['r_dupemap'])
-    dbs['reactions_merged'].to_csv("../CBRdb_R.csv", encoding='utf-8', index=False)
+    dbs['CBRdb_R'] = CBRdb.merge_duplicate_reactions(dbs['reactions_joined'], dbs['r_dupemap'])
+    CBRdb.reaction_csv(dbs['reactions_merged'], "../CBRdb_R.csv")
 
     print("Program finished", flush=True)
