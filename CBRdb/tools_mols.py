@@ -338,11 +338,15 @@ def compound_super_safe_load(file):
     mol = Chem.MolFromMolFile(file, sanitize=False, removeHs=False)
     # Remove the temporary files
     if flag_r:
-        try: remove_filepath(f_load_r)
-        except: pass
+        try:
+            remove_filepath(f_load_r)
+        except:
+            pass
     if flag_p:
-        try: remove_filepath(f_load_p)
-        except: pass
+        try:
+            remove_filepath(f_load_p)
+        except:
+            pass
     return mol
 
 

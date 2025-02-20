@@ -1,33 +1,39 @@
-import pandas as pd 
+import pandas as pd
 
 from .preprocessor import identify_duplicate_compounds
 from .tools_files import reaction_csv
+
 
 def all_entries(dbs):
     kegg_rns = dbs['kegg_data_R'].set_index('id')['reaction']
     atlas_rns = dbs['atlas_data_R'].set_index('id')['reaction']
     all_rns = pd.concat([kegg_rns, atlas_rns]).str.findall(r"(C\d{5})").map(set)
     all_cps = set(dbs['CBRdb_C']['compound_id'])
-    return(all_rns, all_cps)
+    return (all_rns, all_cps)
+
 
 def all_kegg_comments(dbs):
     kegg_cmts = dbs['kegg_data_R'].set_index('id')['comment'].str.replace("reaction;see", "reaction (see")
     kegg_cmts = kegg_cmts.str.split(';').explode().dropna().to_frame()
     kegg_cmts['rn_refs'] = kegg_cmts['comment'].str.upper().str.findall(r"(R\d{5})").map(set).sub(
         kegg_cmts.index.map(lambda x: {x}))
-    kegg_cmts.at['R10693','comment'] = 'part of '+kegg_cmts.at['R10693','comment']
+    kegg_cmts.at['R10693', 'comment'] = 'part of ' + kegg_cmts.at['R10693', 'comment']
     return kegg_cmts
+
 
 def list_reactions_with_halogen_dupes(dbs):
     all_rns, all_cps = all_entries(dbs)
-    cps_duped = dbs['CBRdb_C'].query('compound_id.str.contains("C99") & smiles.duplicated(keep=False)')['compound_id'].values
+    cps_duped = dbs['CBRdb_C'].query('compound_id.str.contains("C99") & smiles.duplicated(keep=False)')[
+        'compound_id'].values
     rns = all_rns[~all_rns.map(lambda x: x.isdisjoint(cps_duped))].index.drop_duplicates()
     return rns
+
 
 def list_reactions_missing_structures(dbs):
     all_rns, all_cps = all_entries(dbs)
     rns = all_rns[~all_rns.map(lambda x: x.issubset(all_cps))].index.drop_duplicates()
     return rns
+
 
 def list_reactions_with(dbs, phrase):
     kegg_cmts = all_kegg_comments(dbs)
@@ -35,18 +41,21 @@ def list_reactions_with(dbs, phrase):
     rns = kegg_cmts.query(query).index.drop_duplicates()
     return rns
 
-def list_multistep_parts(dbs): #KEEP THESE
+
+def list_multistep_parts(dbs):  # KEEP THESE
     cmts = all_kegg_comments(dbs)['comment']
     rns = cmts[cmts.str.contains(" of ") & cmts.str.contains("step")].index.drop_duplicates()
     return rns
 
+
 def list_multistep_enumerated(dbs):
     reactions_overall = dbs['kegg_data_R'].set_index('id')['overall'].dropna().index
-    reactions_multistep_parts = list_multistep_parts(dbs) #KEEP THESE
+    reactions_multistep_parts = list_multistep_parts(dbs)  # KEEP THESE
     rns = all_kegg_comments(dbs).drop(reactions_multistep_parts).query(
         'rn_refs.str.len()>1 & comment.str.contains("step") & ~comment.str.contains("possibl|probabl|similar")')
-    rns = rns.index.union(reactions_overall).drop_duplicates().union({'R10671'}) # false negative: "similar" in line
+    rns = rns.index.union(reactions_overall).drop_duplicates().union({'R10671'})  # false negative: "similar" in line
     return rns
+
 
 def df_of_suspect_reactions(dbs):
     reactions_general = list_reactions_with(dbs, 'general reaction')
@@ -54,17 +63,20 @@ def df_of_suspect_reactions(dbs):
     reactions_missing_structures = list_reactions_missing_structures(dbs)
     reactions_multistep = list_multistep_enumerated(dbs)
     reactions_unclear = list_reactions_with(dbs, 'unclear reaction')
-    sus = {'general': reactions_general, 
-           'incomplete': reactions_incomplete, 
-           'unclear': reactions_unclear, 
-           'structure_missing': reactions_missing_structures, 
+    sus = {'general': reactions_general,
+           'incomplete': reactions_incomplete,
+           'unclear': reactions_unclear,
+           'structure_missing': reactions_missing_structures,
            'shortcut': reactions_multistep}
-    sus = pd.concat([pd.Series(index=v, data=len(v)*[k]) for k, v in sus.items()])
+    sus = pd.concat([pd.Series(index=v, data=len(v) * [k]) for k, v in sus.items()])
     sus = sus.groupby(level=0).apply(list).map(lambda x: '+'.join(sorted(x))).to_frame('reason')
     return sus
 
+
 def suspect_reaction_subset(sus, matching):
-    return sus.map(lambda x: x.split('+')).explode('reason').query("reason.str.contains(@matching)").index.drop_duplicates()
+    return sus.map(lambda x: x.split('+')).explode('reason').query(
+        "reason.str.contains(@matching)").index.drop_duplicates()
+
 
 def add_suspect_reactions_to_existing_bad_file(sus_new, R_IDs_bad_file="../data/R_IDs_bad.dat"):
     sus_old = pd.read_csv(R_IDs_bad_file, header=0, index_col=0)['reason'].str.split('+').explode()
@@ -73,6 +85,7 @@ def add_suspect_reactions_to_existing_bad_file(sus_new, R_IDs_bad_file="../data/
                  .apply(lambda x: sorted(list(set(x)))).map('+'.join).to_frame('reason')).sort_index()
     sus_combo.to_csv(R_IDs_bad_file)
     return sus_combo
+
 
 def quarantine_suspect_reactions_matching(dbs, sus, matching="shortcut|structure_missing"):
     to_quarantine = suspect_reaction_subset(sus, matching)
@@ -86,14 +99,15 @@ def quarantine_suspect_reactions_matching(dbs, sus, matching="shortcut|structure
     dbs['atlas_data_R'] = dbs['atlas_data_R'].query('~id.isin(@to_quarantine)')
     return dbs
 
+
 def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="shortcut|structure_missing"):
     """ prunes reactions before attempting to dedupe compounds. """
     # turn datasets into a dictionary
     dbs = {'kegg_data_R': kegg_data_R, 'atlas_data_R': atlas_data_R, 'kegg_data_C': C_main}
     dbs['CBRdb_C'] = dbs['kegg_data_C'].copy(deep=True)
 
-    sus = df_of_suspect_reactions(dbs) # identify suspect reactions
-    sus = add_suspect_reactions_to_existing_bad_file(sus) #add to log and import log
+    sus = df_of_suspect_reactions(dbs)  # identify suspect reactions
+    sus = add_suspect_reactions_to_existing_bad_file(sus)  # add to log and import log
 
     # remove reactions matching quarantine specs
     dbs = quarantine_suspect_reactions_matching(dbs, sus, matching=to_quarantine)
@@ -113,14 +127,15 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap'])
     dbs['CBRdb_C'] = dbs['CBRdb_C'].sort_values(by='compound_id').drop_duplicates(subset='compound_id', keep='first')
     dbs['CBRdb_C'].to_csv('../CBRdb_C.csv', encoding='utf-8', index=False, float_format='%.3f')
-    
+
     # replace compound IDs in reaction dfs. kegg_data_R_orig and atlas_data_R_orig retain original entries.
-    dbs['kegg_data_R'].loc[:,'reaction'] = dbs['kegg_data_R'].loc[:,'reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
-    dbs['atlas_data_R'].loc[:,'reaction'] = dbs['atlas_data_R'].loc[:,'reaction'].str.split(expand=True).replace(dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+    dbs['kegg_data_R'].loc[:, 'reaction'] = dbs['kegg_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
+        dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+    dbs['atlas_data_R'].loc[:, 'reaction'] = dbs['atlas_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
+        dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
 
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
         reaction_csv(dbs[k], f'../data/{k}_dedupedCs.csv')
 
     return dbs
-

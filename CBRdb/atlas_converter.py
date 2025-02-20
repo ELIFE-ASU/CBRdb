@@ -1,10 +1,10 @@
 import os
-import warnings
 
 import pandas as pd
 
 from .tools_eq import standardise_eq
 from .tools_files import reaction_csv
+
 
 def cleanup_eq_line(eq_line):
     """
