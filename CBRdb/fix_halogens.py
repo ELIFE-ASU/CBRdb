@@ -56,9 +56,10 @@ def fix_halogen_compounds(
     f_print (bool): Flag to print debug information. Default is True.
 
     Returns:
-    tuple: A tuple containing two dictionaries:
+    tuple: A tuple containing two dictionaries and a DataFrame:
         - cids_dict (dict): A dictionary mapping original compound IDs to new compound IDs.
         - smis_dict (dict): A dictionary mapping original compound IDs to their SMILES representations.
+        - specific_halogens (DataFrame): A DataFrame summarizing the above halogen compounds.
     """
     # Prepare the full path of the files
     target_dir_c = os.path.abspath(target_dir_c)
@@ -114,7 +115,12 @@ def fix_halogen_compounds(
     if f_print:
         print(f"cids_dict {cids_dict}", flush=True)
         print(f"Added {idx} new compounds", flush=True)
-    return cids_dict, smis_dict
+    specific_halogens = (pd.DataFrame({'compound_id': cids_dict, 'smiles': smis_dict})
+                .explode(['compound_id', 'smiles'])
+                .assign(elem=lambda x: x['smiles'].str.findall('F|Cl|Br|I').explode(),
+                        is_new=lambda x: x['compound_id'].str.startswith('C9'))
+                .reset_index(names='generic_id'))
+    return cids_dict, smis_dict, specific_halogens
 
 
 def merge_halogen_compounds(cids_dict,
