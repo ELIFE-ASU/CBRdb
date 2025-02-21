@@ -1,6 +1,8 @@
 import os
 import shutil
+
 import pandas as pd
+
 
 def file_list(mypath=None):
     """
@@ -183,17 +185,17 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str):
     str : The file address where the CSV was saved.
     """
     df = df_R.copy(deep=True)
-    file_address  = os.path.abspath(file_address)
+    file_address = os.path.abspath(file_address)
     params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f'}
     listlike_cols = df.columns.intersection(['ec', 'rclass', 'pathway', 'orthology', 'rhea', 'module'])
-    col_order = ['id', 'reaction'] + sorted(list(listlike_cols)) + sorted(df.columns.difference(listlike_cols.union(['id', 'reaction'])))
+    col_order = ['id', 'reaction'] + sorted(list(listlike_cols)) + sorted(
+        df.columns.difference(listlike_cols.union(['id', 'reaction'])))
     for col in listlike_cols:
         first_entry = df[col].dropna().iloc[0]
         if type(first_entry) is str:
-            df.loc[:,col] = df.loc[:,col].str.replace('  ','__').str.split(' ')
+            df.loc[:, col] = df.loc[:, col].str.replace('  ', '__').str.split(' ')
         if hasattr(first_entry, '__iter__'):
-            df.loc[:,col] = df.loc[:,col].map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')
-    df = df.sort_values(by='id').reset_index(drop=True).loc[:,col_order]
+            df.loc[:, col] = df.loc[:, col].map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')
+    df = df.sort_values(by='id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
     return file_address
-

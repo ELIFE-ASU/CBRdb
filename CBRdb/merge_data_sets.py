@@ -105,4 +105,3 @@ def dedupe_compounds(data_folder='../data'):
     datasets = dict(zip('CBRdb_C C_meta C_main atlas_data_R kegg_data_R dupemap'.split(),
                         [CBRdb_C, C_meta, C_main, atlas_data_R, kegg_data_R, dupemap]))
     return datasets
-
