@@ -265,7 +265,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     dbs['C_dupemap'] = identify_duplicate_compounds(dbs['CBRdb_C'])
 
     # replace compound entries with dupe names
-    dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap'])
+    dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap']['new_id'])
     dbs['CBRdb_C'] = dbs['CBRdb_C'].sort_values(by='compound_id').drop_duplicates(subset='compound_id', keep='first')
     dbs['CBRdb_C'].to_csv('../CBRdb_C.csv', encoding='utf-8', index=False, float_format='%.3f')
 

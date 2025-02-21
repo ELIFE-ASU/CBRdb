@@ -52,7 +52,7 @@ def identify_duplicate_compounds(C_main):
     C_main (pd.DataFrame): The main DataFrame containing compound data with 'compound_id' and 'smiles' columns.
 
     Returns:
-    pd.Series: A Series mapping old compound IDs to new unique compound IDs.
+    pd.DataFrame: A DataFrame mapping old compound IDs to new unique compound IDs.
     """
     id_num = C_main.reset_index()['compound_id'].str.lstrip('C').astype(int)
     count_back_from = id_num.loc[id_num.diff().idxmax()] - 1
@@ -69,5 +69,5 @@ def identify_duplicate_compounds(C_main):
     compound_mapping = (compound_mapping.str.split().explode().rename('old_id')
                         .reset_index().rename({0: 'new_id'}, axis=1).set_index('old_id'))
     compound_mapping.to_csv('../data/kegg_data_C_dupemap.csv', encoding='utf-8')
-    return compound_mapping['new_id']
+    return compound_mapping
 

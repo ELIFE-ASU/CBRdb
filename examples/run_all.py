@@ -46,7 +46,7 @@ if __name__ == "__main__":
     print("Finding and removing suspect KEGG reactions + de-duping compound dataset for compounds and reactions...",
           flush=True)
     dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main,
-                                          to_quarantine="shortcut|structure_missing")  # unclear|incomplete|general
+                                          to_quarantine="shortcut|structure_missing")
 
     print("Fixing the reactions data...", flush=True)
     dbs['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_dedupedCs.csv",
@@ -59,6 +59,6 @@ if __name__ == "__main__":
                                         ignore_index=True)
     dbs['r_dupemap'] = CBRdb.tools_eq.generate_reaction_dupemap(dbs['reactions_joined'], prefix='T')
     dbs['CBRdb_R'] = CBRdb.merge_duplicate_reactions(dbs['reactions_joined'], dbs['r_dupemap'])
-    CBRdb.reaction_csv(dbs['reactions_merged'], "../CBRdb_R.csv")
+    CBRdb.reaction_csv(dbs['CBRdb_R'], "../CBRdb_R.csv")
 
     print("Program finished", flush=True)
