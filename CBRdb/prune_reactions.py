@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .preprocessor import identify_duplicate_compounds
+from .merge_data_sets import identify_duplicate_compounds
 from .tools_files import reaction_csv
 
 
