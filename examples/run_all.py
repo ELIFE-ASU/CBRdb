@@ -26,16 +26,16 @@ if __name__ == "__main__":
     print("Preprocessing compounds (metadata and structure)...", flush=True)
     C_main = CBRdb.preprocess(target="C")  # generates kegg_data_C.csv
 
+    print("Instantiating specific halogen compounds from generic ones...", flush=True)
+    cids_dict, smis_dict = CBRdb.fix_halogen_compounds()  # turn generic halogens in the C data into specific halogens
+    C_main = CBRdb.merge_halogen_compounds(cids_dict,
+                                           smis_dict)  # merge these into the C data, modifies kegg_data_C.csv
+    
     print("Importing and standardizing ATLAS reactions...", flush=True)
     atlas_data_R = CBRdb.clean_atlas(f_exclude_kegg=True)  # generates atlas_data_R.csv
 
     print("Preprocessing KEGG reactions...", flush=True)
     kegg_data_R = CBRdb.preprocess(target="R")  # generates kegg_data_R.csv
-
-    print("Instantiating specific halogen compounds from generic ones...", flush=True)
-    cids_dict, smis_dict = CBRdb.fix_halogen_compounds()  # turn generic halogens in the C data into specific halogens
-    C_main = CBRdb.merge_halogen_compounds(cids_dict,
-                                           smis_dict)  # merge these into the C data, modifies kegg_data_C.csv
 
     print("Fixing halogen reactions in KEGG and ATLAS...", flush=True)
     kegg_data_R = CBRdb.fix_halogen_reactions(cids_dict,
