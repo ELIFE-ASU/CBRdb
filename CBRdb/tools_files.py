@@ -199,3 +199,21 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str):
     df = df.sort_values(by='id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
     return file_address
+
+
+def count_df_entries(dict_of_dbs, pipeline_stage):
+    """
+    Counts the number of unique IDs in a dictionary containing reaction and/or compound DataFrames.
+
+    Parameters:
+    dict_of_dbs (pd.DataFrame): dictionary containing DataFrames of reactions and/or compounds.
+    pipeline_stage (str): stage of the pipeline where the count is being done. 
+
+    Returns:
+    pd.DataFrame: DataFrame containing the number of unique IDs in each DataFrame within the dict.
+    """
+    id_cols = ['id', 'compound_id']
+    dbs = {i: j for i,j in dict_of_dbs.items() if type(j)==pd.DataFrame and len(j.columns.intersection(id_cols))>0}
+    dbs = pd.Series({i: len(j[j.columns.intersection(id_cols)].drop_duplicates().index) for i,j in dbs.items()}).to_frame(name=pipeline_stage)
+    return(dbs)
+
