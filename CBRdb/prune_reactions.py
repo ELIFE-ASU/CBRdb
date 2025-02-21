@@ -263,7 +263,6 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
 
     # now identify and log duplicate compounds among what remains
     dbs['C_dupemap'] = identify_duplicate_compounds(dbs['CBRdb_C'])
-    dbs['C_dupemap'].to_csv('../data/kegg_data_C_dupemap.csv', encoding='utf-8')
 
     # replace compound entries with dupe names
     dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap'])
