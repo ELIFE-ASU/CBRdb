@@ -301,12 +301,13 @@ def check_for_x_group(target_file):
     return False
 
 
-def compound_super_safe_load(file):
+def compound_super_safe_load(file, verbose=True):
     """
     Safely loads a compound from a file, handling special cases such as R groups and problem groups.
 
     Parameters:
     file (str): The path to the file containing the compound.
+    verbose (bool): Whether to print flagged compounds when found. Default is True.
 
     Returns:
     rdkit.Chem.rdchem.Mol or None: The loaded molecule, or None if the file contains an 'X' group.
@@ -314,14 +315,20 @@ def compound_super_safe_load(file):
     # Init flags
     f_load_r = None
     f_load_p = None
+    
+    def _vprint(str, flush):
+        if verbose:
+            print(str, flush=flush)
+        else: pass
+
     if check_for_x_group(file):
-        print(f"X group found {file}", flush=True)
+        _vprint(f"X group found {file}", flush=True)
         return None
 
     # Check for R groups
     flag_r = check_for_r_group(file)
     if flag_r:
-        print(f"R group found {file}", flush=True)
+        _vprint(f"R group found {file}", flush=True)
         f_load_r = file.split(".")[0] + "_r.mol"
         replace_r_group(file, f_load_r)
         file = f_load_r
@@ -329,7 +336,7 @@ def compound_super_safe_load(file):
     # Check for problem groups
     flag_p = check_for_problem_group(file)
     if flag_p:
-        print(f"Problem group found {file}", flush=True)
+        _vprint(f"Problem group found {file}", flush=True)
         f_load_p = file.split(".")[0] + "_p.mol"
         replace_problem_group(file, f_load_p)
         file = f_load_p
