@@ -33,7 +33,7 @@ def merge_duplicate_reactions(df, r_dupemap):
         'module': unique_str_sep,
         'name': all_provided,
         'comment': all_provided,
-        'rclass': lambda x: ' '.join(sorted(list(set(x.str.findall(r'(RC\d{5}__C\d{5}_C\d{5}})').sum())))),
+        'rclass': lambda x: ' '.join(sorted(list(set(x.str.findall(r'(RC\d{5}__C\d{5}_C\d{5})').sum())))),
     }
 
     # Group by the new reaction IDs and aggregate the data
