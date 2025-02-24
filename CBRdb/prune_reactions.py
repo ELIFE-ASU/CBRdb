@@ -222,8 +222,7 @@ def quarantine_suspect_reactions_matching(dbs, sus, matching="shortcut|structure
     to_quarantine = suspect_reaction_subset(sus, matching)
     dbs['sus'] = sus
     dbs['quarantine_categories'] = matching
-    dbs['quarantined'] = (dbs['kegg_data_R'].merge(dbs['atlas_data_R'], how='outer', on='id')
-                          .query('id.isin(@to_quarantine)').copy(deep=True))
+    dbs['quarantined'] = pd.concat([dbs['kegg_data_R'], dbs['atlas_data_R']]).query('id.isin(@to_quarantine)').copy(deep=True)
     dbs['kegg_data_R_orig'] = dbs['kegg_data_R'].copy(deep=True)
     dbs['atlas_data_R_orig'] = dbs['atlas_data_R'].copy(deep=True)
     dbs['kegg_data_R'] = dbs['kegg_data_R'].query('~id.isin(@to_quarantine)')
