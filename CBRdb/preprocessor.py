@@ -103,7 +103,7 @@ def preprocess_kegg_c(target_dir, man_dict):
 def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', valid_cids=None,
                                tar_list=['name', 'remark', 'comment', 'sequence', 'type']):
     """
-    Preprocesses KEGG compound metadata and saves it to a specified output file.
+    Preprocesses KEGG compound metadata.
 
     Parameters:
     target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
