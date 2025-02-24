@@ -125,7 +125,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        f_assume_star=True,
                        f_save_intermediate=False,
                        f_parallel=True,
-                       rebalance_depth=1):
+                       rebalance_depth=1,
+                       bad_criterion='shortcut|structure_missing'):
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
 
@@ -157,9 +158,9 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
 
     # Read the bad reactions file
-    with open(bad_file, "r") as f:
-        bad_data = f.read()
-    bad_ids = [line.split(',')[0].strip() for line in bad_data.split("\n")[1:]]
+
+    bad_ids = pd.read_csv(bad_file, index_col=0).query('reason.str.contains(@bad_criterion)').index.tolist() 
+    
 
     # Load the processed compound data
     print_and_log("Loading the compound data...", f_log)
