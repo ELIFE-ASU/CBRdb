@@ -10,7 +10,7 @@ lg.setLevel(RDLogger.CRITICAL)
 from .tools_mols import standardize_mol, check_for_x_group, get_properties
 from .tools_files import make_custom_id, reaction_csv
 from .tools_mp import tp_calc, mp_calc
-
+from .tools_eq import convert_formula_to_dict, standardise_eq
 
 def load_bad_entries(target_dir_c):
     """
@@ -306,3 +306,55 @@ def fix_halogen_reactions(cids_dict,
     # Save the dataframe
     reaction_csv(df, out_file)
     return df
+
+
+def fix_halogen_reactions_without_existing_halogens(df_R, C_main, specific_halogens):
+    
+    # make sure all reactions have same ID convention
+    if df_R['id'].str.startswith("R").all():
+        prefix, idx_base = 'R', 99000
+    elif df_R['id'].str.startswith("A").all():
+        prefix, idx_base = 'A', 990000
+    else:
+        raise ValueError("multiple ID formats found; standardize ID format before attempting to assign new IDs")
+
+    halogen_elements = ['F','Cl','Br','I']
+    halogen_cps = (C_main.set_index('compound_id')['formula']
+                .map(lambda x: ' '.join(set(convert_formula_to_dict(x).keys()).intersection(halogen_elements)))
+                .replace('',None)).dropna().str.split()
+
+    # subset reactions with generic halogens
+    halogen_reactions = df_R.loc[df_R['reaction'].str.contains("|".join(specific_halogens['generic_id']))].copy(deep=True)
+    halogen_reactions['generics_used'] = halogen_reactions['reaction'].str.findall("|".join(specific_halogens['generic_id'])+'|<=>').map(' '.join)
+    halogen_reactions['generic_both_sides'] = halogen_reactions['generics_used'].str.split('<=>').map(len)==2
+    halogen_reactions['no_extant_found'] = halogen_reactions['reaction'].str.findall("|".join(halogen_cps.index)).map(len)==0
+
+    # alert user if existing halogen compounds are found - element(s) of these compounds should inform element(s) of specific compounds. 
+    if not halogen_reactions['no_extant_found'].all():
+        print('existing halogen compounds found in: ', ' '.join(halogen_reactions[~halogen_reactions['no_extant_found']]['id']))
+    
+    # most of the reactions with generic halogens have only generics. enumerate these by element, keeping element consistent within a given reaction.
+    halogen_grps = halogen_reactions.query('generic_both_sides & no_extant_found').assign(generics_used=lambda x: x.generics_used.str.findall(r'C\d{5}'))
+    halogen_defs = specific_halogens.set_index(['generic_id','elem'])['compound_id']
+    halogen_grps['specifics_used'] = halogen_grps['generics_used'].map(lambda x: [dict(zip(x, halogen_defs.loc[x,el])) for el in halogen_elements])
+    halogen_grps = halogen_grps.explode('specifics_used').reset_index(drop=True)
+
+    # replace generics with specifics.
+    for i, row in halogen_grps.iterrows():
+        for gen, spec in row['specifics_used'].items():
+            halogen_grps.at[i, 'reaction'] = halogen_grps.at[i, 'reaction'].replace(gen, spec)
+
+    # standardize reaction format and remove reactions already found elsewhere in the reaction database.
+    halogen_grps['reaction'] = halogen_grps['reaction'].map(standardise_eq)
+    halogen_grps = halogen_grps.query('~reaction.isin(@df_R.reaction)').reset_index(drop=True)
+    
+    # remove generic halogen reactions from the database
+    df_R = df_R.query('~id.isin(@halogen_grps.id)').reset_index(drop=True)
+
+    # assign new IDs to generic halogen reactions
+    halogen_grps['id'] = prefix + (halogen_grps.index + idx_base).astype(str)
+    
+    # append these new reactions to the existing reaction database.
+    df_R = pd.concat([df_R, halogen_grps[df_R.columns]], ignore_index=True).sort_values(by='id').reset_index(drop=True)
+
+    return df_R
