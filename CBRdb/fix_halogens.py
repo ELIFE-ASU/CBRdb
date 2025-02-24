@@ -277,7 +277,7 @@ def fix_halogen_reactions(cids_dict,
                 if f_print:
                     print(f"{k}: Replacing compound {val}", flush=True)
                 for j in range(len(cids_dict[val])):
-                    eq_re = eq_re.replace(val, cids_dict[val][j])
+                    eq_re = eq.replace(val, cids_dict[val][j])
                     new_id = make_custom_id(idx_base + idx, prefix=prefix)
                     if f_print:
                         print(f"{j}: Replacing Halogen {val} with {cids_dict[val][j]}", flush=True)
