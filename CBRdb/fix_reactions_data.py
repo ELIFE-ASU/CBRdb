@@ -152,7 +152,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Write the header
     f_log.write("# This file contains a log of information on the rebalancer run\n")
-    f_rebalance.write("# Bad IDs, reason\n")
+    f_rebalance.write("id, reason\n")
 
     # Get the output file name
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
@@ -356,10 +356,10 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         # Here we have assumed that the data_r_var_list reactions data is correct
         # This is questionable as the data may be incorrect
         print_and_log("Merging data assuming equations with a var list data are correct...", f_log)
-        df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced])
+        df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced]).query('~id.isin(@ids_failed')
     else:
         print_and_log("Merging data assuming equations with a var list data are incorrect...", f_log)
-        df_final = pd.concat([data_r, data_r_rebalanced])
+        df_final = pd.concat([data_r, data_r_rebalanced]).query('~id.isin(@ids_failed')
 
     # Get the final length of the data
     print_and_log(f"Final data shape: {df_final.shape}", f_log)
