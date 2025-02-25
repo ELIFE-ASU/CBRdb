@@ -158,9 +158,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
 
     # Read the bad reactions file
-
     bad_ids = pd.read_csv(bad_file, index_col=0).query('reason.str.contains(@bad_criterion)').index.tolist() 
-    
 
     # Load the processed compound data
     print_and_log("Loading the compound data...", f_log)
@@ -221,11 +219,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list,
                                                                                      args=(data_c,))
-        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
+        print_and_log(f"Time to check var list: {time.time() - t0}", f_log)
     else:
         t0 = time.time()
         bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
-        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
+        print_and_log(f"Time to check var list: {time.time() - t0}", f_log)
 
     data_r_var_list = data_r[bool_var_list]
     if f_save_intermediate:
@@ -248,11 +246,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced,
                                                                                        args=(data_c,))
-        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
+        print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
     else:
         t0 = time.time()
         bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
-        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
+        print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
 
     # Get the data that is unbalanced
     data_r_unbalanced = data_r[bool_unbalanced]
