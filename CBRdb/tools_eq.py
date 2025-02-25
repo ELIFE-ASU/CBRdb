@@ -279,7 +279,7 @@ def eq_to_dict(eq):
            - The first dictionary represents the reactants.
            - The second dictionary represents the products.
     """
-    return map(side_to_dict, eq.split('<=>'))
+    return tuple(map(side_to_dict, eq.split('<=>')))
 
 
 def dict_to_side(d):
