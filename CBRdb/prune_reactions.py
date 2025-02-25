@@ -270,9 +270,9 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
 
     # replace compound IDs in reaction dfs. kegg_data_R_orig and atlas_data_R_orig retain original entries.
     dbs['kegg_data_R'].loc[:, 'reaction'] = dbs['kegg_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
-        dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+        dbs['C_dupemap']['new_id']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
     dbs['atlas_data_R'].loc[:, 'reaction'] = dbs['atlas_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
-        dbs['C_dupemap']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+        dbs['C_dupemap']['new_id']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
 
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
