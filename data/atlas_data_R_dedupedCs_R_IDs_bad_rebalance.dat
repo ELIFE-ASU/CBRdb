@@ -1,18 +1,4 @@
 # Bad IDs, reason
-A139665, missing data
-A140067, missing data
-A140068, missing data
-A142023, missing data
-A142069, missing data
-A142150, missing data
-A142155, missing data
-A142156, missing data
-A146330, missing data
-A146699, missing data
-A147785, missing data
-A149015, missing data
-A149016, missing data
-A149017, missing data
 A000023, failed to balance
 A000024, failed to balance
 A000025, failed to balance
@@ -2327,6 +2313,7 @@ A139608, failed to balance
 A139609, failed to balance
 A139623, failed to balance
 A139628, failed to balance
+A139665, failed to balance
 A139666, failed to balance
 A139667, failed to balance
 A139679, failed to balance
@@ -2347,6 +2334,8 @@ A140030, failed to balance
 A140041, failed to balance
 A140042, failed to balance
 A140043, failed to balance
+A140067, failed to balance
+A140068, failed to balance
 A140112, failed to balance
 A140117, failed to balance
 A140118, failed to balance
@@ -2651,9 +2640,11 @@ A141954, failed to balance
 A141974, failed to balance
 A142021, failed to balance
 A142022, failed to balance
+A142023, failed to balance
 A142025, failed to balance
 A142029, failed to balance
 A142030, failed to balance
+A142069, failed to balance
 A142072, failed to balance
 A142111, failed to balance
 A142117, failed to balance
@@ -2673,7 +2664,10 @@ A142146, failed to balance
 A142147, failed to balance
 A142148, failed to balance
 A142149, failed to balance
+A142150, failed to balance
 A142152, failed to balance
+A142155, failed to balance
+A142156, failed to balance
 A142163, failed to balance
 A142165, failed to balance
 A142169, failed to balance
