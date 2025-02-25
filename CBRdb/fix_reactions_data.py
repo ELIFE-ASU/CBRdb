@@ -158,7 +158,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
 
     # Read the bad reactions file
-    bad_ids = pd.read_csv(bad_file, index_col=0).query('reason.str.contains(@bad_criterion)').index.tolist() 
+    bad_ids = pd.read_csv(bad_file, index_col=0).query('reason.str.contains(@bad_criterion)').index.tolist()
 
     # Load the processed compound data
     print_and_log("Loading the compound data...", f_log)

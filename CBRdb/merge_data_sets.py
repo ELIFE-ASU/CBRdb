@@ -1,7 +1,6 @@
 import pandas as pd
 
 out_fmt = {'encoding': 'utf-8', 'index': False}
-from .tools_files import add_suffix_to_file
 
 
 def merge_duplicate_reactions(df, r_dupemap):
@@ -70,4 +69,3 @@ def identify_duplicate_compounds(C_main):
                         .reset_index().rename({0: 'new_id'}, axis=1).set_index('old_id'))
     compound_mapping.to_csv('../data/kegg_data_C_dupemap.csv', encoding='utf-8')
     return compound_mapping
-

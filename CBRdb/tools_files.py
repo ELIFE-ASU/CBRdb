@@ -213,7 +213,8 @@ def count_df_entries(dict_of_dbs, pipeline_stage):
     pd.DataFrame: DataFrame containing the number of unique IDs in each DataFrame within the dict.
     """
     id_cols = ['id', 'compound_id']
-    dbs = {i: j for i,j in dict_of_dbs.items() if type(j)==pd.DataFrame and len(j.columns.intersection(id_cols))>0}
-    dbs = pd.Series({i: len(j[j.columns.intersection(id_cols)].drop_duplicates().index) for i,j in dbs.items()}).to_frame(name=pipeline_stage)
-    return(dbs)
-
+    dbs = {i: j for i, j in dict_of_dbs.items() if type(j) == pd.DataFrame and len(j.columns.intersection(id_cols)) > 0}
+    dbs = pd.Series(
+        {i: len(j[j.columns.intersection(id_cols)].drop_duplicates().index) for i, j in dbs.items()}).to_frame(
+        name=pipeline_stage)
+    return dbs

@@ -315,11 +315,12 @@ def compound_super_safe_load(file, verbose=True):
     # Init flags
     f_load_r = None
     f_load_p = None
-    
+
     def _vprint(str, flush):
         if verbose:
             print(str, flush=flush)
-        else: pass
+        else:
+            pass
 
     if check_for_x_group(file):
         _vprint(f"X group found {file}", flush=True)

@@ -98,10 +98,9 @@ def preprocess_kegg_c(target_dir, man_dict):
     return df
 
 
-
-
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', valid_cids=None,
-                               tar_list=['name', 'remark', 'comment', 'sequence', 'type']):
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
+                               valid_cids=None,
+                               tar_list=None):
     """
     Preprocesses KEGG compound metadata.
 
@@ -113,6 +112,9 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', valid_c
     Returns:
     pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
     """
+    if tar_list is None:
+        tar_list = ['name', 'remark', 'comment', 'sequence', 'type']
+
     target_dir = os.path.abspath(target_dir)
 
     if valid_cids is not None:
@@ -189,7 +191,8 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     del ko_defs
 
     # Extract reaction attributes and linkages
-    df['reaction'] = df['equation'].str.replace('(side 1', '').str.replace('(side 2', '').apply(standardise_eq)  # standardize reaction formatting
+    df['reaction'] = df['equation'].str.replace('(side 1', '').str.replace('(side 2', '').apply(
+        standardise_eq)  # standardize reaction formatting
     df['ec'] = df['enzyme'].fillna(' ').str.split().map(
         lambda x: ' '.join(sorted(list(x))))  # combine all ECs, including partials
 

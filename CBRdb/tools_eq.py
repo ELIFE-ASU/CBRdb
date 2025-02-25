@@ -146,9 +146,9 @@ def compare_dict_values(dict1, dict2):
            - The second dictionary contains key-value pairs from dict2 where the values differ from dict1.
     """
     diff_in_dict1 = sort_dict_by_keys({key: (dict1.get(key) or 0) for key in set(dict1) | set(dict2) if
-                     (dict1.get(key) or 0) != (dict2.get(key) or 0)})
+                                       (dict1.get(key) or 0) != (dict2.get(key) or 0)})
     diff_in_dict2 = sort_dict_by_keys({key: (dict2.get(key) or 0) for key in set(dict1) | set(dict2) if
-                     (dict1.get(key) or 0) != (dict2.get(key) or 0)})
+                                       (dict1.get(key) or 0) != (dict2.get(key) or 0)})
     return diff_in_dict1, diff_in_dict2
 
 
