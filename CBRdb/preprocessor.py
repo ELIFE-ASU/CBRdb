@@ -189,7 +189,7 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     del ko_defs
 
     # Extract reaction attributes and linkages
-    df['reaction'] = df['equation'].apply(standardise_eq)  # standardize reaction formatting
+    df['reaction'] = df['equation'].str.replace('(side 1', '').str.replace('(side 2', '').apply(standardise_eq)  # standardize reaction formatting
     df['ec'] = df['enzyme'].fillna(' ').str.split().map(
         lambda x: ' '.join(sorted(list(x))))  # combine all ECs, including partials
 
