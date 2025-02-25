@@ -145,10 +145,10 @@ def compare_dict_values(dict1, dict2):
            - The first dictionary contains key-value pairs from dict1 where the values differ from dict2.
            - The second dictionary contains key-value pairs from dict2 where the values differ from dict1.
     """
-    diff_in_dict1 = {key: (dict1.get(key) or 0) for key in set(dict1) | set(dict2) if
-                     (dict1.get(key) or 0) != (dict2.get(key) or 0)}
-    diff_in_dict2 = {key: (dict2.get(key) or 0) for key in set(dict1) | set(dict2) if
-                     (dict1.get(key) or 0) != (dict2.get(key) or 0)}
+    diff_in_dict1 = sort_dict_by_keys({key: (dict1.get(key) or 0) for key in set(dict1) | set(dict2) if
+                     (dict1.get(key) or 0) != (dict2.get(key) or 0)})
+    diff_in_dict2 = sort_dict_by_keys({key: (dict2.get(key) or 0) for key in set(dict1) | set(dict2) if
+                     (dict1.get(key) or 0) != (dict2.get(key) or 0)})
     return diff_in_dict1, diff_in_dict2
 
 
@@ -555,7 +555,7 @@ def check_missing_formulas(eq, c_data):
     reactants, products = eq_to_dict(eq)
     ids = list(reactants.keys()) + list(products.keys())
     formulas = get_formulas_from_ids(ids, c_data)
-    return len(formulas) != len(ids)
+    return len(formulas) != len(set(ids))
 
 
 def full_check_eq_unbalanced(eq, c_data):
