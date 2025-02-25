@@ -38,7 +38,7 @@ conda install conda-forge::numpy conda-forge::sympy conda-forge::matplotlib cond
 ```
 Then install CBRdb:
 ```
-pip install git+https://github.com/ELIFE-ASU/CBRdb.git@v1.0.0
+pip install git+https://github.com/ELIFE-ASU/CBRdb.git@v1.1.0
 ```
 
 ## References
