@@ -1,9 +1,10 @@
 import os
 import time
+import pandas as pd
 
 import requests
 
-from .tools_files import clean_empty_folders, make_custom_id
+from .tools_files import clean_empty_folders, make_custom_id, file_list_all
 from .tools_requests import prepare_session
 
 
@@ -233,13 +234,15 @@ def get_kegg(target_dir,
 
 
 def get_kegg_all(target_dir="kegg_data",
-                 target="C"):
+                 target="C",
+                 skip=None):
     """
     Retrieves all data from the KEGG database for a specified target and saves it to the specified directory.
 
     Parameters:
     target_dir (str, optional): The directory to save the downloaded data. Defaults to "kegg_data".
     target (str, optional): The target type to download from the KEGG database. Can be "D", "D_full", "C", "C_full", or "R". Defaults to "C".
+    skip (list, optional): A list of IDs to force skip during the download process. Defaults to None.
 
     Returns:
     None
@@ -261,6 +264,10 @@ def get_kegg_all(target_dir="kegg_data",
 
     print(f"Total number of current entries {len(valid_ids)}", flush=True)
 
+    if skip is not None:
+        valid_ids = sorted([id for id in valid_ids if id not in skip])
+        print(f"Checking data for {len(valid_ids)} entries", flush=True)
+
     # Get the data
     get_kegg(os.path.abspath(target_dir + f"_{target}"),
              session,
@@ -270,16 +277,18 @@ def get_kegg_all(target_dir="kegg_data",
 
 
 def download_data(target="R",
-                  target_dir=r"../../data/kegg_data"):
+                  target_dir=r"../../data/kegg_data",
+                  skip=None):
     """
     Downloads and cleans KEGG data for a specified target.
 
     Parameters:
     target (str, optional): The target type to download from the KEGG database. Defaults to "R".
     target_dir (str, optional): The directory to save the downloaded data. Defaults to "../../data/kegg_data".
+    skip (list, optional): A list of IDs to force skip during the download process. Defaults to None.
 
     Returns:
-    None
+    pd.DataFrame: A DataFrame containing the entries found in the downloaded data.
     """
     target_dir = os.path.abspath(target_dir)
     if not os.path.exists(f"{target_dir}_{target}"):
@@ -287,7 +296,51 @@ def download_data(target="R",
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
     # Get the data
-    get_kegg_all(target_dir=target_dir, target=target)
+    get_kegg_all(target_dir=target_dir, target=target, skip=skip)
     # Clean the data
     clean_empty_folders(f"{target_dir}_{target}")
-    return None
+    # Note attributes found
+    entries = [f for f in file_list_all(f"{target_dir}_{target}") if not os.path.basename(f).startswith('.')]
+    if target in ['R', 'C_full']:
+        entries = log_attributes_found(f"{target_dir}_{target}")
+    elif target == 'C':
+        entries = pd.DataFrame({f.split('/')[-2]: {'mol_file': f} for f in entries if f.endswith('.mol')}).T
+    else:
+        entries = pd.DataFrame({f.split('/')[-2]: {'file': f} for f in entries}).T
+    return entries
+
+
+def log_attributes_found(target_dir = r'../../data/kegg_data_C_full'):
+    """
+    Checks .data files for available attributes. 
+    For compounds, ATOM and BOND fields ID molless files before calling API. BRACKET helps ID n/m/x/y/z/w coefficients.
+
+    Parameters:
+    target_dir (str): The directory containing the .data files.
+
+    Returns:
+    pd.DataFrame: a boolean DataFrame keyed on database entry IDs.
+    """
+    today = time.strftime('%Y%m%d')
+    out_file = os.path.abspath(f'{target_dir}_attributes_{today}.csv')
+    paths = {f.split('/')[-2]: f for f in file_list_all(target_dir) if f.endswith('.data')}
+
+    compound_fields = ['ATOM', 'BOND', 'BRACKET', 'BRITE', 'COMMENT', 'DBLINKS', 'ENTRY',
+       'ENZYME', 'EXACT_MASS', 'FORMULA', 'GENE', 'MODULE', 'MOL_WEIGHT',
+       'NAME', 'NETWORK', 'ORGANISM', 'ORIGINAL', 'PATHWAY', 'REACTION',
+       'REMARK', 'REPEAT', 'SEQUENCE', '  TYPE']
+    reaction_fields = ['DEFINITION', 'ENTRY', 'EQUATION', 'ENZYME', 'BRITE', 'RCLASS', 'NAME',
+       'PATHWAY', 'ORTHOLOGY', 'DBLINKS', 'COMMENT', 'MODULE', 'AUTHORS',
+       'REFERENCE', 'JOURNAL', 'TITLE', 'REMARK']
+
+    print('Logging attributes found in data files...')
+    has_field = dict()
+    for id, path in paths.items():
+        txt = open(path, 'r').read()
+        has_field[id] = {s.strip(): txt.__contains__(f'\n{s}') for s in compound_fields+reaction_fields}
+    
+    df = pd.DataFrame(has_field).T
+    df = df[df[df].dropna(axis=1, how='all').count().sort_values(ascending=False).index].sort_index()
+
+    df.astype(int).to_csv(out_file)
+    return(df.assign(path=paths))

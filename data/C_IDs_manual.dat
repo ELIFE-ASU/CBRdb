@@ -4,6 +4,7 @@ C00030, *([H])[H]
 C00174, *
 C00205, *
 C00215, *
+C00282, [H][H]
 C00505, O[C@]3(C)[C@H](NC)[C@@H](O)[C@@H](O[C@H]2[C@H](N)C[C@H](N)[C@@H](O[C@H]1O[C@H](C(NC)C)CC[C@H]1N)[C@@H]2O)OC3
 C00701, *
 C00923, CC1=C(C2=CC3=NC(=CC4=NC(=CC5=C(C(=C([N-]5)C=C1[N-]2)C)CCC(=O)O)C(=C4C)CCC(=O)O)C(=C3C=C)C)C.[Fe+5]

@@ -98,23 +98,20 @@ def preprocess_kegg_c(target_dir, man_dict):
     return df
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', 
                                valid_cids=None,
-                               tar_list=None):
+                               keep_only=None):
     """
     Preprocesses KEGG compound metadata.
 
     Parameters:
     target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
-    valid_cids (iterable, optional): If provided, a list of compound IDs to keep. Defaults to None.
-    tar_list (iterable, optional): The list of metadata fields to keep. Defaults to ['name', 'remark', 'comment', 'sequence', 'type'].
+    valid_cids (iterable, optional): If provided, a list of compound IDs to keep. Defaults to None (keep all entries).
+    keep_only (list, optional): A list of metadata fields to keep. Defaults to None (keep all fields).
 
     Returns:
     pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
     """
-    if tar_list is None:
-        tar_list = ['name', 'remark', 'comment', 'sequence', 'type']
-
     target_dir = os.path.abspath(target_dir)
 
     if valid_cids is not None:
@@ -131,20 +128,35 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
             pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line'])
             .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('~'.join)
         for path in paths}).drop('///', errors='ignore').T
-    df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).loc[:, tar_list].sort_index()
+    df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).sort_index()
+    
+    if keep_only is not None:
+        if set(keep_only).issubset(set(df.columns)):
+            df.drop(columns=df.columns.difference(keep_only), inplace=True, errors='ignore')
+        elif len(df.columns.intersection(keep_only))>0:
+            print(f'Requested field not found: {set(keep_only).difference(set(df.columns))}', flush=True)
+            print(f'Keeping other fields: {set(keep_only).intersection(set(df.columns))}', flush=True)
+            df.drop(columns=set(df.columns).difference(keep_only), inplace=True, errors='ignore')
+        else:
+            print(f'No requested fields found. Defaulting to keeping all metadata.', flush=True)
 
-    if 'remark' in tar_list:
+    if 'remark' in df.columns:
         df['glycan_ids'] = (df['remark'].fillna('').str.extractall(r'(G\d{5})')
                             .groupby(level=0).agg(' '.join).replace('', float('nan')))
         df['drug_ids'] = (df['remark'].fillna('').str.extractall(r'(D\d{5})')
                           .groupby(level=0).agg(' '.join).replace('', float('nan')))
         df.drop(columns='remark', inplace=True)
+
+    if 'brite' in df.columns:
+        df['brite'] = df['brite'].str.lower().findall('protein|peptide|enzyme').map(set).map(sorted).map(' '.join)
+    
     df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
+    
     if valid_cids is not None:
-        if hasattr(valid_cids, '__iter__'):
+        if hasattr(valid_cids, '__iter__') and len(set(df['compound_id'].values).intersection(valid_cids))>0:
             df = df.query('compound_id.isin(@valid_cids)')
         else:
-            raise TypeError('valid_cids must be iterable')
+            print(f'valid CIDs must be iterable and overlapping with IDs in metadata. Keeping all entries.', flush=True)
     print('Finished importing compound metadata.', flush=True)
     return df
 
@@ -241,8 +253,8 @@ def preprocess(target="R",
         # gets compound metadata e.g. names + classifications
         df_meta = preprocess_kegg_c_metadata(target_dir + '_full',
                                              valid_cids=list(df_main['compound_id'].sort_values()))
-        # merges the compound data, to retain only compounds with structural info
-        df = df_main.merge(df_meta, on='compound_id', how='left').sort_values(by='compound_id').reset_index(drop=True)
+        # merges the compound data
+        df = df_main.merge(df_meta, on='compound_id', how='outer').sort_values(by='compound_id').reset_index(drop=True)
         # log compounds we could seek structural info for
         _ = log_compounds_for_followup(df)
         # generates output file with compound data
@@ -273,7 +285,7 @@ def log_compounds_for_followup(df):
          i.endswith('.data') & (i.split('/')[-2] not in extant)]
 
     # Define the list of metadata fields to keep
-    tar_list = ['name', 'sequence', 'type', 'formula', 'remark', 'reaction', 'comment', 'brite', 'dblinks']
+    keep_only = ['name', 'sequence', 'type', 'formula', 'remark', 'reaction', 'comment', 'brite', 'dblinks']
 
     # Define the query to identify promising compounds for manual addition
     compounds_manual_add_query = """sequence.isna() & type.isna() & glycan_ids.isna() & reaction.notna() \
@@ -282,7 +294,7 @@ def log_compounds_for_followup(df):
                                 & ~formula.str.contains("X", na=False) & ~brite.str.contains("rotein|nzyme|eptide", na=False)"""
 
     # Preprocess the KEGG compound metadata and apply the query to identify promising compounds
-    missing_promising = preprocess_kegg_c_metadata(valid_cids=sorted(k), tar_list=tar_list).query(
+    missing_promising = preprocess_kegg_c_metadata(valid_cids=sorted(k), keep_only=keep_only).query(
         compounds_manual_add_query)
 
     # Extract keywords from the 'name' field and drop rows with names ending in 'ase'
