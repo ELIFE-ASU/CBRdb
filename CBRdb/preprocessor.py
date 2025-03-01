@@ -98,7 +98,7 @@ def preprocess_kegg_c(target_dir, man_dict):
     return df
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', 
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
                                valid_cids=None,
                                keep_only=None):
     """
@@ -129,11 +129,11 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
             .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('~'.join)
         for path in paths}).drop('///', errors='ignore').T
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).sort_index()
-    
+
     if keep_only is not None:
         if set(keep_only).issubset(set(df.columns)):
             df.drop(columns=df.columns.difference(keep_only), inplace=True, errors='ignore')
-        elif len(df.columns.intersection(keep_only))>0:
+        elif len(df.columns.intersection(keep_only)) > 0:
             print(f'Requested field not found: {set(keep_only).difference(set(df.columns))}', flush=True)
             print(f'Keeping other fields: {set(keep_only).intersection(set(df.columns))}', flush=True)
             df.drop(columns=set(df.columns).difference(keep_only), inplace=True, errors='ignore')
@@ -149,11 +149,11 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
 
     if 'brite' in df.columns:
         df['brite'] = df['brite'].str.lower().findall('protein|peptide|enzyme').map(set).map(sorted).map(' '.join)
-    
+
     df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
-    
+
     if valid_cids is not None:
-        if hasattr(valid_cids, '__iter__') and len(set(df['compound_id'].values).intersection(valid_cids))>0:
+        if hasattr(valid_cids, '__iter__') and len(set(df['compound_id'].values).intersection(valid_cids)) > 0:
             df = df.query('compound_id.isin(@valid_cids)')
         else:
             print(f'valid CIDs must be iterable and overlapping with IDs in metadata. Keeping all entries.', flush=True)

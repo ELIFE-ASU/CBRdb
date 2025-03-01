@@ -310,7 +310,7 @@ def download_data(target="R",
     return entries
 
 
-def log_attributes_found(target_dir = r'../../data/kegg_data_C_full'):
+def log_attributes_found(target_dir=r'../../data/kegg_data_C_full'):
     """
     Checks .data files for available attributes. 
     For compounds, ATOM and BOND fields ID molless files before calling API. BRACKET helps ID n/m/x/y/z/w coefficients.
@@ -326,21 +326,21 @@ def log_attributes_found(target_dir = r'../../data/kegg_data_C_full'):
     paths = {f.split('/')[-2]: f for f in file_list_all(target_dir) if f.endswith('.data')}
 
     compound_fields = ['ATOM', 'BOND', 'BRACKET', 'BRITE', 'COMMENT', 'DBLINKS', 'ENTRY',
-       'ENZYME', 'EXACT_MASS', 'FORMULA', 'GENE', 'MODULE', 'MOL_WEIGHT',
-       'NAME', 'NETWORK', 'ORGANISM', 'ORIGINAL', 'PATHWAY', 'REACTION',
-       'REMARK', 'REPEAT', 'SEQUENCE', '  TYPE']
+                       'ENZYME', 'EXACT_MASS', 'FORMULA', 'GENE', 'MODULE', 'MOL_WEIGHT',
+                       'NAME', 'NETWORK', 'ORGANISM', 'ORIGINAL', 'PATHWAY', 'REACTION',
+                       'REMARK', 'REPEAT', 'SEQUENCE', '  TYPE']
     reaction_fields = ['DEFINITION', 'ENTRY', 'EQUATION', 'ENZYME', 'BRITE', 'RCLASS', 'NAME',
-       'PATHWAY', 'ORTHOLOGY', 'DBLINKS', 'COMMENT', 'MODULE', 'AUTHORS',
-       'REFERENCE', 'JOURNAL', 'TITLE', 'REMARK']
+                       'PATHWAY', 'ORTHOLOGY', 'DBLINKS', 'COMMENT', 'MODULE', 'AUTHORS',
+                       'REFERENCE', 'JOURNAL', 'TITLE', 'REMARK']
 
     print('Logging attributes found in data files...')
     has_field = dict()
     for id, path in paths.items():
         txt = open(path, 'r').read()
-        has_field[id] = {s.strip(): txt.__contains__(f'\n{s}') for s in compound_fields+reaction_fields}
-    
+        has_field[id] = {s.strip(): txt.__contains__(f'\n{s}') for s in compound_fields + reaction_fields}
+
     df = pd.DataFrame(has_field).T
     df = df[df[df].dropna(axis=1, how='all').count().sort_values(ascending=False).index].sort_index()
 
     df.astype(int).to_csv(out_file)
-    return(df.assign(path=paths))
+    return df.assign(path=paths)
