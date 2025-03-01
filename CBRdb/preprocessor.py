@@ -107,7 +107,7 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     Parameters:
     target_dir (str, optional): The directory containing the KEGG compound metadata files. Defaults to '../../data/kegg_data_C_full'.
     valid_cids (iterable, optional): If provided, a list of compound IDs to keep. Defaults to None (keep all entries).
-    keep_only (list, optional): A list of metadata fields to keep. Defaults to None (keep all fields).
+    keep_only (list, optional): A list of metadata fields to keep. Defaults to None; if none, apply standard filtering.
 
     Returns:
     pd.DataFrame: A DataFrame containing the preprocessed compound metadata.
@@ -130,7 +130,31 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         for path in paths}).drop('///', errors='ignore').T
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).sort_index()
 
-    if keep_only is not None:
+    if keep_only is None:
+        drop_cols = ['brite', 'mol_weight', 'gene', 'organism', 'network', 'atom',
+                    'original', 'repeat', 'bond', 'repeat', 'bracket', 'remark',
+                    'enzyme', 'entry', 'module', 'pathway', 'reaction', 'exact_mass']
+          
+        if 'remark' in df.columns:
+            df['glycan_ids'] = (df['remark'].fillna('').str.extractall(r'(G\d{5})')
+                                .groupby(level=0).agg(' '.join).replace('', float('nan')))
+            df['drug_ids'] = (df['remark'].fillna('').str.extractall(r'(D\d{5})')
+                            .groupby(level=0).agg(' '.join).replace('', float('nan')))
+
+        if 'brite' in df.columns:
+                is_peptide = df['brite'].fillna('').str.findall("Peptide").map(lambda x: ''.join(set(x)))
+                is_peptide = is_peptide[is_peptide=='Peptide']
+                if 'type' in df.columns:
+                    df['type'] = df['type'].fillna(is_peptide)
+                else: 
+                    df['type'] = is_peptide
+
+        if 'atom' in df.columns:
+            df['has_mol'] = ~df['atom'].convert_dtypes().isna()
+    
+        df.drop(columns=drop_cols, inplace=True, errors='ignore')
+
+    elif keep_only is not None:
         if set(keep_only).issubset(set(df.columns)):
             df.drop(columns=df.columns.difference(keep_only), inplace=True, errors='ignore')
         elif len(df.columns.intersection(keep_only))>0:
@@ -295,7 +319,10 @@ def log_compounds_for_followup(df):
                                 & ~comment.fillna('').str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False) \
                                 & ~formula.str.contains("X", na=False) & \
                                 & ~orig_form.fillna('').str.contains("X")"""
+                                & ~formula.str.contains("X", na=False) & \
+                                & ~orig_form.fillna('').str.contains("X")"""
     # Preprocess the KEGG compound metadata and apply the query to identify promising compounds
+    missing_promising = df.query(compounds_manual_add_query)
     missing_promising = df.query(compounds_manual_add_query)
     # Extract keywords from the 'name' field and drop rows with names ending in 'ase'
     kwds = missing_promising['name'].fillna('').str.strip('[|]|(|)').str.split().explode().dropna()
