@@ -98,7 +98,7 @@ def preprocess_kegg_c(target_dir, man_dict):
     return df
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', 
                                valid_cids=None,
                                keep_only=None):
     """
@@ -133,7 +133,7 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     if keep_only is not None:
         if set(keep_only).issubset(set(df.columns)):
             df.drop(columns=df.columns.difference(keep_only), inplace=True, errors='ignore')
-        elif len(df.columns.intersection(keep_only)) > 0:
+        elif len(df.columns.intersection(keep_only))>0:
             print(f'Requested field not found: {set(keep_only).difference(set(df.columns))}', flush=True)
             print(f'Keeping other fields: {set(keep_only).intersection(set(df.columns))}', flush=True)
             df.drop(columns=set(df.columns).difference(keep_only), inplace=True, errors='ignore')
@@ -148,7 +148,19 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         df.drop(columns='remark', inplace=True)
 
     if 'brite' in df.columns:
-        df['brite'] = df['brite'].str.lower().findall('protein|peptide|enzyme').map(set).map(sorted).map(' '.join)
+        is_peptide = df['brite'].fillna('').str.findall("Peptide").map(lambda x: ''.join(set(x)))
+        is_peptide = is_peptide[is_peptide=='Peptide']
+        if 'type' in df.columns:
+            df['type'] = df['type'].fillna(is_peptide)
+        else: 
+            df['type'] = is_peptide
+
+    if 'atom' in df.columns:
+        df['has_mol'] = ~df['atom'].convert_dtypes().isna()
+        df.drop(columns='atom', inplace=True)
+    
+    drop_cols = ['brite', 'mol_weight', 'gene', 'organism', 'network', 'original', 'repeat', 'bond', 'repeat', 'bracket']
+    df.drop(columns=drop_cols, inplace=True, errors='ignore')
 
     df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
 
@@ -251,13 +263,13 @@ def preprocess(target="R",
         # converts compound mol files to smiles strings; defines a list of CIDs to skip
         df_main = preprocess_kegg_c(target_dir, man_dict)
         # gets compound metadata e.g. names + classifications
-        df_meta = preprocess_kegg_c_metadata(target_dir + '_full',
-                                             valid_cids=list(df_main['compound_id'].sort_values()))
+        df_meta = preprocess_kegg_c_metadata(target_dir + '_full', 
+                                                valid_cids=list(df_main['compound_id'].sort_values())
+                                                ).rename({'formula': 'orig_form'}, axis=1)
         # merges the compound data
         df = df_main.merge(df_meta, on='compound_id', how='outer').sort_values(by='compound_id').reset_index(drop=True)
-        # log compounds we could seek structural info for
-        _ = log_compounds_for_followup(df)
         # generates output file with compound data
+        print("Making file with compound info...", flush=True)
         df.to_csv(out_file, encoding='utf-8', index=False, float_format='%.3f')
         print("C preprocessing done. Compound info path:" + out_file, flush=True)
         return df
@@ -277,32 +289,20 @@ def log_compounds_for_followup(df):
     Returns:
     pd.DataFrame: A DataFrame of compounds that are missing but promising for follow-up.
     """
-    # Get the set of existing compound IDs
-    extant = set(df['compound_id'])
-
-    # Get the list of compound IDs from the metadata files that are not in the existing set
-    k = [i.split('/')[-2] for i in file_list_all('../../data/kegg_data_C_full') if
-         i.endswith('.data') & (i.split('/')[-2] not in extant)]
-
-    # Define the list of metadata fields to keep
-    keep_only = ['name', 'sequence', 'type', 'formula', 'remark', 'reaction', 'comment', 'brite', 'dblinks']
-
     # Define the query to identify promising compounds for manual addition
     compounds_manual_add_query = """sequence.isna() & type.isna() & glycan_ids.isna() & reaction.notna() \
                                 & ~name.str.lower().str.contains("protein|globin|doxin|glycan|lase|peptide|rna|dna|steroid|lipid|lignin", na=False) \
                                 & ~comment.fillna('').str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False) \
-                                & ~formula.str.contains("X", na=False) & ~brite.str.contains("rotein|nzyme|eptide", na=False)"""
-
+                                & ~formula.str.contains("X", na=False) & \
+                                & ~orig_form.fillna('').str.contains("X")"""
     # Preprocess the KEGG compound metadata and apply the query to identify promising compounds
-    missing_promising = preprocess_kegg_c_metadata(valid_cids=sorted(k), keep_only=keep_only).query(
-        compounds_manual_add_query)
-
+    missing_promising = df.query(compounds_manual_add_query)
     # Extract keywords from the 'name' field and drop rows with names ending in 'ase'
     kwds = missing_promising['name'].fillna('').str.strip('[|]|(|)').str.split().explode().dropna()
     missing_promising = missing_promising.drop(index=kwds[kwds.str.endswith('ase')].index, errors='ignore').drop(
-        ['sequence', 'type', 'glycan_ids', 'brite'], axis=1)
-
+            ['sequence', 'type', 'glycan_ids', 'brite'], axis=1)
     # Save the promising compounds to a CSV file
+    missing_promising = missing_promising.dropna(how='all', axis=1).reset_index()
     missing_promising.to_csv('../data/C_IDs_good.dat', encoding='utf-8', index=False)
 
     return missing_promising
