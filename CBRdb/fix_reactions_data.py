@@ -4,7 +4,9 @@ import time
 import pandas as pd
 import swifter
 
-from .tools_eq import (get_elements_from_eq,
+from .tools_eq import (convert_formula_to_dict,
+                       side_to_dict,
+                       get_elements_from_eq,
                        compare_dict_values,
                        standardise_eq,
                        check_contains_var_list,
@@ -374,3 +376,40 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     f_rebalance.close()
 
     return df_final
+
+def filter_reactions_pandas(data_r, data_c):
+    """ WIP: pandas version of pre-balancing steps above. """
+
+    formula_dict_ser = data_c['formula'].map(convert_formula_to_dict).dropna()
+    cpd_has_star = formula_dict_ser.map(lambda x: '*' in x)
+    sides = data_r['reaction'].str.split('<=>', expand=True).map(side_to_dict)
+    rn_cpd_not_found = ~ sides.map(lambda x: x.keys()).stack().explode().isin(formula_dict_ser.index).groupby(level=0).all()
+    rn_cpd_starred = sides.map(lambda x: x.keys()).stack().explode().isin(cpd_has_star[cpd_has_star].index).groupby(level=0).any()
+    rn_coeff_non_num = ~ sides.map(lambda x: all([str(i).isnumeric() for i in x.values()])).all(axis=1)
+    poss_balanceable = sides.mask(rn_coeff_non_num).mask(rn_cpd_not_found).mask(rn_cpd_starred).dropna()
+    star_poss_balanced = rn_cpd_starred.mask(rn_coeff_non_num).fillna(False) #IMPORTANT: only consider assuming balanced if no non-num coefficients
+
+    # calculate current stoichiometry
+    reactant_cps, product_cps = [i.apply(pd.Series).T for _,i in sides.mask(rn_coeff_non_num).mask(rn_cpd_not_found).dropna().items()]
+    formula_table = formula_dict_ser.apply(pd.Series).fillna(0).astype(int)
+    formulas_used = formula_table.loc[reactant_cps.index.union(product_cps.index)].copy(deep=True)
+    formulas_used = formulas_used.loc[:,formulas_used.sum().gt(0)]
+    formulas_used_T = formulas_used.T
+
+    reactant_els, product_els = dict(), dict()
+    for id, reactants in reactant_cps.items():
+        coeffs = reactants.dropna()
+        reactant_els[id] = (coeffs * formulas_used_T.loc[:,coeffs.index]).sum(axis=1)
+    for id, products in product_cps.items():
+        coeffs = products.dropna()
+        product_els[id] = (coeffs * formulas_used_T.loc[:,coeffs.index]).sum(axis=1)
+    reactant_els = pd.DataFrame(reactant_els).T.astype(int)
+    product_els = pd.DataFrame(product_els).T.astype(int)
+
+    stars = (product_els+reactant_els)['*'].gt(0)
+    balanced_wrt_nonstar_els = (product_els[stars] - reactant_els[stars]).drop(columns='*').sum(axis=1).eq(0)
+    nostars_r = reactant_els.loc[rn_cpd_starred.index.intersection(reactant_els.index)]
+    nostars_p = product_els.loc[rn_cpd_starred.index.intersection(product_els.index)]
+    balanced_no_star_used = (nostars_r == nostars_p).all(axis=1)
+
+    return None
