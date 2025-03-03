@@ -377,39 +377,45 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     return df_final
 
+
 def filter_reactions_pandas(data_r, data_c):
     """ WIP: pandas version of pre-balancing steps above. """
-
+    # Series of dicts of chemical formulas
     formula_dict_ser = data_c['formula'].map(convert_formula_to_dict).dropna()
+    # List of compounds with '*' in formula
     cpd_has_star = formula_dict_ser.map(lambda x: '*' in x)
+    # DataFrame of dicts of reactants and products
     sides = data_r['reaction'].str.split('<=>', expand=True).map(side_to_dict)
-    rn_cpd_not_found = ~ sides.map(lambda x: x.keys()).stack().explode().isin(formula_dict_ser.index).groupby(level=0).all()
-    rn_cpd_starred = sides.map(lambda x: x.keys()).stack().explode().isin(cpd_has_star[cpd_has_star].index).groupby(level=0).any()
-    rn_coeff_non_num = ~ sides.map(lambda x: all([str(i).isnumeric() for i in x.values()])).all(axis=1)
-    poss_balanceable = sides.mask(rn_coeff_non_num).mask(rn_cpd_not_found).mask(rn_cpd_starred).dropna()
-    star_poss_balanced = rn_cpd_starred.mask(rn_coeff_non_num).fillna(False) #IMPORTANT: only consider assuming balanced if no non-num coefficients
+    # Function to get a GroupBy object returning whether reaction participants are in a listlike object
+    cpd_group_attrs = lambda lstlike: sides.map(lambda x: x.keys()).stack().explode().isin(lstlike).groupby(level=0)
+    # DataFrame of reaction attributes
+    rn_attrs = pd.DataFrame({'cpd_not_found': ~ cpd_group_attrs(formula_dict_ser.index).all(),
+                            'cpd_starred': cpd_group_attrs(formula_dict_ser[cpd_has_star].index).any(),
+                            'coeff_non_num': ~ sides.map(lambda x: all([str(i).isnumeric() for i in x.values()])).all(axis=1)})
+    rn_attrs['rebalanceable'] = ~ rn_attrs.any(axis=1)
 
-    # calculate current stoichiometry
-    reactant_cps, product_cps = [i.apply(pd.Series).T for _,i in sides.mask(rn_coeff_non_num).mask(rn_cpd_not_found).dropna().items()]
-    formula_table = formula_dict_ser.apply(pd.Series).fillna(0).astype(int)
-    formulas_used = formula_table.loc[reactant_cps.index.union(product_cps.index)].copy(deep=True)
-    formulas_used = formulas_used.loc[:,formulas_used.sum().gt(0)]
-    formulas_used_T = formulas_used.T
+    # DataTable of each side, indicating the numeric coefficient (value) for each compound (row) in each reaction (column)
+    reactant_cps, product_cps = [i.drop(rn_attrs.query('cpd_not_found or coeff_non_num').index).apply(pd.Series).T for _,i in sides.items()]
+    # DataTable indicating, for each compound (column), the count (value) of each element (row)
+    formula_table = formula_dict_ser.loc[reactant_cps.index.union(product_cps.index)].apply(pd.Series).fillna(0).astype(int).T
 
+    # calculate stoichiometry of each reaction as currently written
     reactant_els, product_els = dict(), dict()
-    for id, reactants in reactant_cps.items():
-        coeffs = reactants.dropna()
-        reactant_els[id] = (coeffs * formulas_used_T.loc[:,coeffs.index]).sum(axis=1)
+    for id, reactants in reactant_cps.items(): # for each reaction
+        coeffs = reactants.dropna() # access reactant IDs and coefficients
+        reactant_els[id] = (coeffs * formula_table[coeffs.index]).sum(axis=1) # sum elements
     for id, products in product_cps.items():
         coeffs = products.dropna()
-        product_els[id] = (coeffs * formulas_used_T.loc[:,coeffs.index]).sum(axis=1)
+        product_els[id] = (coeffs * formula_table[coeffs.index]).sum(axis=1)
     reactant_els = pd.DataFrame(reactant_els).T.astype(int)
     product_els = pd.DataFrame(product_els).T.astype(int)
+    
+    # ID whether reaction is balanced, balanceable, or (to inform treatment of starred reactions) balanced except for *
+    rn_attrs['is_balanced'] = (product_els == reactant_els).all(axis=1)
+    rn_attrs['to_rebalance'] = rn_attrs['is_balanced'].eq(False) & rn_attrs['rebalanceable'].eq(True)
+    rn_attrs['is_balanced_except_star'] = (product_els == reactant_els).drop(columns='*').all(axis=1) & rn_attrs['is_balanced'].eq(False)
 
-    stars = (product_els+reactant_els)['*'].gt(0)
-    balanced_wrt_nonstar_els = (product_els[stars] - reactant_els[stars]).drop(columns='*').sum(axis=1).eq(0)
-    nostars_r = reactant_els.loc[rn_cpd_starred.index.intersection(reactant_els.index)]
-    nostars_p = product_els.loc[rn_cpd_starred.index.intersection(product_els.index)]
-    balanced_no_star_used = (nostars_r == nostars_p).all(axis=1)
-
-    return None
+    dfs = {'reactant_cps': reactant_cps, 'product_cps': product_cps,
+            'reactant_els': reactant_els, 'product_els': product_els,
+            'rn_attrs': rn_attrs, 'formula_table': formula_table}
+    return dfs
