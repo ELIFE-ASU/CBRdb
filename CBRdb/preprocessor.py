@@ -130,28 +130,40 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         for path in paths}).drop('///', errors='ignore').T
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).sort_index()
 
+    keep_cols = 'compound_id,comment,dblinks,exact_mass,orig_form,name,sequence,type,glycan_ids,drug_ids,atom'.split(',')
+
     if keep_only is not None:
         if set(keep_only).issubset(set(df.columns)):
-            df.drop(columns=df.columns.difference(keep_only), inplace=True, errors='ignore')
+            return(df.drop(columns=df.columns.difference(keep_only), inplace=True, errors='ignore'))
         elif len(df.columns.intersection(keep_only)) > 0:
             print(f'Requested field not found: {set(keep_only).difference(set(df.columns))}', flush=True)
             print(f'Keeping other fields: {set(keep_only).intersection(set(df.columns))}', flush=True)
-            df.drop(columns=set(df.columns).difference(keep_only), inplace=True, errors='ignore')
+            return(df.drop(columns=set(df.columns).difference(keep_only), inplace=True, errors='ignore'))
         else:
-            print(f'No requested fields found. Defaulting to keeping all metadata.', flush=True)
+            print(f'No requested fields found. Defaulting to keeping the following metadata:\n{', '.join(keep_cols)}', flush=True)
 
     if 'remark' in df.columns:
         df['glycan_ids'] = (df['remark'].fillna('').str.extractall(r'(G\d{5})')
                             .groupby(level=0).agg(' '.join).replace('', float('nan')))
         df['drug_ids'] = (df['remark'].fillna('').str.extractall(r'(D\d{5})')
                           .groupby(level=0).agg(' '.join).replace('', float('nan')))
-        df.drop(columns='remark', inplace=True)
 
     if 'brite' in df.columns:
-        df['brite'] = df['brite'].str.lower().str.findall('protein|peptide|enzyme').map(lambda x: ' '.join(sorted(list(set(x)))))
+        df['brite'] = df['brite'].str.lower().str.findall('protein|peptide|enzyme').fillna('').map(lambda x: ' '.join(sorted(list(set(x)))))
+        if 'type' in df.columns:
+            try:
+                df['type'] = (df['type'].fillna('').str.lower() + ' ' + df['brite']).str.strip().str.split().map(lambda x: ' '.join(sorted(list(set(x)))))
+                df.drop(columns='brite', inplace=True)
+            except:
+                df['type'] = df['type'].notna() or df['brite'].notna()
+    
+    df = df.sort_index().reset_index().rename(columns={'index': 'compound_id', 'formula': 'orig_form', 'atom': 'has_mol'}).rename_axis(None, axis=1)
+    for col in ['has_mol', 'sequence']:
+        df[col] = ~df[col].isna()
 
-    df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
-
+    keep_cols = 'compound_id,comment,dblinks,exact_mass,orig_form,name,sequence,type,glycan_ids,drug_ids,atom'.split(',')
+    df.drop(columns=df.columns.difference(keep_cols), inplace=True, errors='ignore')
+    
     if valid_cids is not None:
         if hasattr(valid_cids, '__iter__') and len(set(df['compound_id'].values).intersection(valid_cids)) > 0:
             df = df.query('compound_id.isin(@valid_cids)')
@@ -255,8 +267,6 @@ def preprocess(target="R",
                                              valid_cids=list(df_main['compound_id'].sort_values()))
         # merges the compound data
         df = df_main.merge(df_meta, on='compound_id', how='outer').sort_values(by='compound_id').reset_index(drop=True)
-        # log compounds we could seek structural info for
-        _ = log_compounds_for_followup(df)
         # generates output file with compound data
         df.to_csv(out_file, encoding='utf-8', index=False, float_format='%.3f')
         print("C preprocessing done. Compound info path:" + out_file, flush=True)
