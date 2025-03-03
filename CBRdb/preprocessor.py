@@ -148,7 +148,7 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         df.drop(columns='remark', inplace=True)
 
     if 'brite' in df.columns:
-        df['brite'] = df['brite'].str.lower().findall('protein|peptide|enzyme').map(set).map(sorted).map(' '.join)
+        df['brite'] = df['brite'].str.lower().str.findall('protein|peptide|enzyme').map(lambda x: ' '.join(sorted(list(set(x)))))
 
     df = df.sort_index().reset_index().rename(columns={'index': 'compound_id'}).rename_axis(None, axis=1)
 
