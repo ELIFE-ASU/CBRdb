@@ -200,6 +200,26 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str):
     df.to_csv(file_address, **params)
     return file_address
 
+def compound_csv(df_C: pd.DataFrame, file_address: str):
+    """
+    Prints a reaction dataframe to CSV file, in standardized format.
+
+    Parameters:
+    df_C (pd.DataFrame): The compound DataFrame to be printed as a CSV.
+    file_address (str): The file address i.e. where to save the CSV.
+
+    Returns:
+    str : The file address where the CSV was saved.
+    """
+    df = df_C.copy(deep=True)
+    file_address = os.path.abspath(file_address)
+    params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f'}
+    first_cols = ['compound_id', 'smiles', 'formula', 'molecular_weight', 'n_heavy_atoms', 'n_chiral_centers', 'nickname']
+    col_order = [i for i in first_cols if i in df.columns] + sorted(list(df.columns.difference(first_cols)), reverse=True)
+    df = df.sort_values(by='compound_id').reset_index(drop=True).loc[:, col_order]
+    df.to_csv(file_address, **params)
+    return file_address
+
 
 def count_df_entries(dict_of_dbs, pipeline_stage):
     """
