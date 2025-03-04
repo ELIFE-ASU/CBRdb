@@ -134,11 +134,11 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
 
     if keep_only is not None:
         if set(keep_only).issubset(set(df.columns)):
-            return(df.drop(columns=df.columns.difference(keep_only), inplace=True, errors='ignore'))
+            return(df.drop(columns=df.columns.difference(keep_only), errors='ignore'))
         elif len(df.columns.intersection(keep_only)) > 0:
             print(f'Requested field not found: {set(keep_only).difference(set(df.columns))}', flush=True)
             print(f'Keeping other fields: {set(keep_only).intersection(set(df.columns))}', flush=True)
-            return(df.drop(columns=set(df.columns).difference(keep_only), inplace=True, errors='ignore'))
+            return(df.drop(columns=set(df.columns).difference(keep_only), errors='ignore'))
         else:
             print(f'No requested fields found. Defaulting to keeping the following metadata:\n{', '.join(keep_cols)}', flush=True)
 
@@ -298,21 +298,23 @@ def log_compounds_for_followup(df):
     keep_only = ['name', 'sequence', 'type', 'formula', 'remark', 'reaction', 'comment', 'brite', 'dblinks']
 
     # Define the query to identify promising compounds for manual addition
-    compounds_manual_add_query = """sequence.isna() & type.isna() & glycan_ids.isna() & reaction.notna() \
+    compounds_manual_add_query = """sequence.isna() & type.isna() & ~remark.str.count(r"Same as: 	G").eq(0) & reaction.notna() \
                                 & ~name.str.lower().str.contains("protein|globin|doxin|glycan|lase|peptide|rna|dna|steroid|lipid|lignin", na=False) \
                                 & ~comment.fillna('').str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False) \
                                 & ~formula.str.contains("X", na=False) & ~brite.str.contains("rotein|nzyme|eptide", na=False)"""
 
     # Preprocess the KEGG compound metadata and apply the query to identify promising compounds
     missing_promising = preprocess_kegg_c_metadata(valid_cids=sorted(k), keep_only=keep_only).query(
-        compounds_manual_add_query)
+        compounds_manual_add_query).rename_axis('compound_id').sort_index().reset_index()
 
     # Extract keywords from the 'name' field and drop rows with names ending in 'ase'
     kwds = missing_promising['name'].fillna('').str.strip('[|]|(|)').str.split().explode().dropna()
     missing_promising = missing_promising.drop(index=kwds[kwds.str.endswith('ase')].index, errors='ignore').drop(
-        ['sequence', 'type', 'glycan_ids', 'brite'], axis=1)
+        ['sequence', 'type', 'remark', 'brite'], axis=1)
+    cols = 'compound_id,name,formula,reaction,comment,dblinks'.split(',')
+    missing_promising = missing_promising.loc[:,cols]
 
-    # Save the promising compounds to a CSV file
+    # Save the promising compounds to a file
     missing_promising.to_csv('../data/C_IDs_good.dat', encoding='utf-8', index=False)
 
     return missing_promising
