@@ -211,6 +211,7 @@ def merge_halogen_compounds_pd(C_main, specific_halogens, out_file="../data/kegg
     property_names = ['smiles', 'smiles_capped', 'inchi_capped', 'formula', 'molecular_weight', 'n_heavy_atoms', 'n_chiral_centers']
     property_values = new_halogens['smiles'].map(Chem.MolFromSmiles).map(get_properties)
     halogen_properties = property_values.map(lambda x: dict(zip(property_names, x))).apply(pd.Series).reset_index()
+    halogen_properties['smiles'] = new_halogens['smiles'].reset_index(drop=True)
     # Merge into compound database
     C_main = pd.concat([C_main, halogen_properties], ignore_index=True)
     # Write output file(s)
