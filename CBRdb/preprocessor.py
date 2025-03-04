@@ -130,17 +130,23 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         for path in paths}).drop('///', errors='ignore').T
     df = df.set_axis(df.columns.str.strip().str.lower(), axis=1).sort_index()
 
-    keep_cols = 'compound_id,comment,dblinks,exact_mass,orig_form,name,sequence,type,glycan_ids,drug_ids,atom'.split(',')
-
     if keep_only is not None:
+        if 'brite' in df.columns and 'brite' in keep_only:
+            df['brite'] = df['brite'].str.lower().str.findall('protein|peptide|enzyme').fillna('').map(lambda x: ' '.join(sorted(list(set(x)))))
+            if 'type' in df.columns:
+                try:
+                    df['type'] = (df['type'].fillna('').str.lower() + ' ' + df['brite']).str.strip().str.split().map(lambda x: ' '.join(sorted(list(set(x)))))
+                except:
+                    df['type'] = df['type'].notna() or df['brite'].notna()
         if set(keep_only).issubset(set(df.columns)):
-            return(df.drop(columns=df.columns.difference(keep_only), errors='ignore'))
+            return df.drop(columns=df.columns.difference(keep_only), errors='ignore')
         elif len(df.columns.intersection(keep_only)) > 0:
             print(f'Requested field not found: {set(keep_only).difference(set(df.columns))}', flush=True)
             print(f'Keeping other fields: {set(keep_only).intersection(set(df.columns))}', flush=True)
-            return(df.drop(columns=set(df.columns).difference(keep_only), errors='ignore'))
+            return df.drop(columns=set(df.columns).difference(keep_only), errors='ignore')
         else:
-            print(f'No requested fields found. Defaulting to keeping the following metadata:\n{', '.join(keep_cols)}', flush=True)
+            print(f'No requested fields found. Defaulting to keeping all metadata.', flush=True)
+            return df
 
     if 'remark' in df.columns:
         df['glycan_ids'] = (df['remark'].fillna('').str.extractall(r'(G\d{5})')
@@ -148,21 +154,11 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         df['drug_ids'] = (df['remark'].fillna('').str.extractall(r'(D\d{5})')
                           .groupby(level=0).agg(' '.join).replace('', float('nan')))
 
-    if 'brite' in df.columns:
-        df['brite'] = df['brite'].str.lower().str.findall('protein|peptide|enzyme').fillna('').map(lambda x: ' '.join(sorted(list(set(x)))))
-        if 'type' in df.columns:
-            try:
-                df['type'] = (df['type'].fillna('').str.lower() + ' ' + df['brite']).str.strip().str.split().map(lambda x: ' '.join(sorted(list(set(x)))))
-                df.drop(columns='brite', inplace=True)
-            except:
-                df['type'] = df['type'].notna() or df['brite'].notna()
-    
-    df = df.sort_index().reset_index().rename(columns={'index': 'compound_id', 'formula': 'orig_form', 'atom': 'has_mol'}).rename_axis(None, axis=1)
-    for col in ['has_mol', 'sequence']:
-        df[col] = ~df[col].isna()
-
-    keep_cols = 'compound_id,comment,dblinks,exact_mass,orig_form,name,sequence,type,glycan_ids,drug_ids,atom'.split(',')
-    df.drop(columns=df.columns.difference(keep_cols), inplace=True, errors='ignore')
+    df = df.sort_index().reset_index().rename(columns={'index': 'compound_id', 'formula': 'kegg_formula', 'mol_weight': 'kegg_mol_weight'}).rename_axis(None, axis=1)
+    default_keep_cols =  'compound_id,comment,dblinks,kegg_mol_weight,kegg_formula,name,glycan_ids,drug_ids'.split(',')
+    df.drop(columns=df.columns.difference(default_keep_cols), inplace=True, errors='ignore')
+    df['kegg_mol_weight'] = df['kegg_mol_weight'].astype(float)
+    df['nickname'] = df['name'].fillna('').map(lambda x: x.split(';~')[0])
     
     if valid_cids is not None:
         if hasattr(valid_cids, '__iter__') and len(set(df['compound_id'].values).intersection(valid_cids)) > 0:
