@@ -216,7 +216,7 @@ def merge_halogen_compounds_pd(C_main, specific_halogens, out_file="../data/kegg
     # Write output file(s)
     if int_file is not None:
         halogen_properties.to_csv(int_file, index=False, encoding='utf-8', float_format='%.3f')
-    C_main.to_csv(out_file, index=False, encoding='utf-8', float_format='%.3f')
+    C_main.sort_values(by='compound_id').to_csv(out_file, index=False, encoding='utf-8', float_format='%.3f')
     return C_main
 
 
