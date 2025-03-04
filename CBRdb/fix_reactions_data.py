@@ -415,7 +415,7 @@ def filter_reactions_pandas(data_r, data_c):
     # ID whether reaction is balanced, balanceable, or (to inform treatment of starred reactions) balanced except for *
     rn_attrs['is_balanced'] = (product_els == reactant_els).all(axis=1)
     rn_attrs['to_rebalance'] = rn_attrs['is_balanced'].eq(False) & rn_attrs['rebalanceable'].eq(True)
-    rn_attrs['is_balanced_except_star'] = (product_els == reactant_els).drop(columns='*').all(axis=1) & rn_attrs['is_balanced'].eq(False)
+    rn_attrs['is_balanced_except_star'] = (product_els == reactant_els).drop(columns='*', errors='ignore').all(axis=1) & rn_attrs['is_balanced'].eq(False)
 
     # pd.Series listing sets of formulas for each side of the reaction; can use Series.apply(balance_stoichiometry) to check in bulk
     formula_sides = pd.Series(sides.loc[rn_attrs['to_rebalance']].map(lambda x: set(data_c.formula.loc[x.keys()])).T.to_dict(orient='list'))
