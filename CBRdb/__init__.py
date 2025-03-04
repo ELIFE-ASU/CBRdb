@@ -2,8 +2,9 @@ from .atlas_converter import (clean_atlas)
 from .compounds_manual_add import (compounds_manual_add)
 from .fix_halogens import (fix_halogen_compounds,
                            merge_halogen_compounds,
+                           merge_halogen_compounds_pd,
                            fix_halogen_reactions,
-                           fix_halogen_reactions_without_existing_halogens
+                           fix_halogen_reactions_without_existing_halogens,
                            )
 from .fix_reactions_data import (fix_reactions_data, 
                                  kitchen_sink, 
