@@ -63,6 +63,7 @@ from .tools_files import (file_list,
                           delete_files_substring,
                           add_suffix_to_file,
                           reaction_csv,
+                          compound_csv,
                           count_df_entries
                           )
 from .tools_mols import (sanitize_mol,
