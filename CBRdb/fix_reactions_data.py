@@ -389,7 +389,7 @@ def filter_reactions_pandas(data_r, data_c):
         formula_dict = lambda x: x.formula.map(convert_formula_to_dict),
         starred = lambda x: x.formula_dict.map(lambda y: '*' in y),
         n_elements = lambda x: x.formula_dict.map(len),
-        formal_charge = lambda x: (x.smiles.map(Chem.MolFromSmiles) # returns None for 7 IDs
+        formal_charge = lambda x: (x.smiles.map(Chem.MolFromSmiles) # returns None for 7 CBRdb_C IDs
                                    .map(standardize_mol, na_action='ignore')
                                    .map(Chem.GetFormalCharge, na_action='ignore')
                                    .fillna(0).astype(int))) # when standardized from file, all 7 have charge=0
@@ -495,3 +495,23 @@ def get_charge_balanced_injections_1el(data_c, dfs):
                 single_el_diffs.loc[solvable.index, 'left_side'] = solvable['diff'] > 0
 
     return single_el_diffs.dropna()
+
+
+def get_charge_balanced_injections_OH(data_c, dfs):
+    solutions = pd.DataFrame(columns=['el_sym', 'diff', 'formal_charge', 'compound_id', 'left_side', 'count'])
+    diffs = dfs['el_diff_groups'][dfs['el_diff_groups']['*'].eq(0)]
+    sum_all_atoms = diffs.abs().sum(axis=1)
+    diffs = diffs.loc[diffs.query('H.ne(0) & O.ne(0)')[['H','O']].sum(axis=1).abs().eq(sum_all_atoms)][['H','O']].reset_index(level=1, drop=True)
+    diffs['formal_charge'] = dfs['rns']['charge_R-L'].loc[diffs.index.get_level_values(0)].values
+    H2O_solves = diffs.query('formal_charge.eq(0) & H == 2*O')
+    H2O2_solves = diffs.query('H==O & formal_charge.eq(0) & H%2==0')
+    solutions = pd.DataFrame()
+    if len(H2O_solves.index)>0:
+        H2O_solves = H2O_solves.assign( el_sym = 'H2O', diff = lambda x: x.O, compound_id = 'C00001', 
+                                       left_side = lambda x: x.H.gt(0), count = lambda x: x.O.abs()).drop(['H','O'], axis=1)
+        solutions = pd.concat([solutions, H2O_solves])
+    if len(H2O2_solves.index)>0:
+        H2O2_solves = H2O2_solves.assign(el_sym = 'H2O2', diff = lambda x: (x.O/2).astype(int), compound_id = 'C00027', 
+                                         left_side= lambda x: x['diff'].gt(0), count = lambda x: x['diff'].abs()).drop(['H','O'], axis=1)
+        solutions = pd.concat([solutions, H2O2_solves])
+    return solutions
