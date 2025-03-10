@@ -360,6 +360,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         # This is questionable as the data may be incorrect
         print_and_log("Merging data assuming equations with a var list data are correct...", f_log)
         df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced]).query('~id.isin(@ids_failed')
+        if len(data_r_var_list.index)>0:
+            df_final['var_coeff'] = df_final['id'].isin(data_r_var_list['id'])
     else:
         print_and_log("Merging data assuming equations with a var list data are incorrect...", f_log)
         df_final = pd.concat([data_r, data_r_rebalanced]).query('~id.isin(@ids_failed')
