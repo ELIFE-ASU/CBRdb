@@ -3,6 +3,7 @@ import time
 
 import pandas as pd
 import swifter
+from rdkit import Chem as Chem
 
 from .tools_eq import (convert_formula_to_dict,
                        side_to_dict,
