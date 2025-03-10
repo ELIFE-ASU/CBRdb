@@ -10,7 +10,9 @@ from .fix_reactions_data import (fix_reactions_data,
                                  kitchen_sink,
                                  dict_ele_contains_star,
                                  filter_reactions_pandas,
-                                 get_charge_balanced_injections_1el)
+                                 get_charge_balanced_injections_1el,
+                                 get_charge_balanced_injections_OH,
+                                 )
 from .lets_get_kegg import (download_data)
 from .merge_data_sets import (merge_duplicate_reactions,
                               identify_duplicate_compounds)
