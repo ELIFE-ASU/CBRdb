@@ -20,13 +20,17 @@ if __name__ == "__main__":
     if f_download:
         print("Downloading all the data, the mol files and the (full) web pages", flush=True)
         C_attrs = CBRdb.download_data(target="C_full")
-        C_attrs.query('~ATOM|~BOND')[[]].rename_axis('id').assign(reason='molless').to_csv('../data/C_ids_bad.dat', mode='a')
-        pd.read_csv('../data/C_ids_bad.dat').drop_duplicates().sort_values(by='id').to_csv('../data/C_ids_bad.dat', index=False)
+        C_attrs.query('~ATOM|~BOND')[[]].rename_axis('id').assign(reason='molless').to_csv('../data/C_ids_bad.dat',
+                                                                                           mode='a')
+        pd.read_csv('../data/C_ids_bad.dat').drop_duplicates().sort_values(by='id').to_csv('../data/C_ids_bad.dat',
+                                                                                           index=False)
         C_mols = CBRdb.download_data(target="C", skip=C_attrs.query('~ATOM|~BOND').index)
         R_attrs = CBRdb.download_data(target="R")
     else:
         C_attrs = CBRdb.lets_get_kegg.log_attributes_found('../../data/kegg_data_C_full')
-        C_mols = pd.DataFrame({f.split('/')[-2]: {'mol_file': f} for f in CBRdb.file_list_all('../../data/kegg_data_C') if f.endswith('.mol')}).T
+        C_mols = pd.DataFrame(
+            {f.split('/')[-2]: {'mol_file': f} for f in CBRdb.file_list_all('../../data/kegg_data_C') if
+             f.endswith('.mol')}).T
         R_attrs = CBRdb.lets_get_kegg.log_attributes_found('../../data/kegg_data_R')
 
     print("Preprocessing compounds (metadata and structure)...", flush=True)

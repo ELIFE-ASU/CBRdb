@@ -390,46 +390,51 @@ def filter_reactions_pandas(data_r, data_c):
     cpd_group_attrs = lambda lstlike: sides.map(lambda x: x.keys()).stack().explode().isin(lstlike).groupby(level=0)
     # DataFrame of reaction attributes
     rn_attrs = pd.DataFrame({'bool_missing_data': ~ cpd_group_attrs(formula_dict_ser.index).all(),
-                            'cpd_starred': cpd_group_attrs(formula_dict_ser[cpd_has_star].index).any(),
-                            'bool_var_list': ~ sides.map(lambda x: all([str(i).isnumeric() for i in x.values()])).all(axis=1)})
+                             'cpd_starred': cpd_group_attrs(formula_dict_ser[cpd_has_star].index).any(),
+                             'bool_var_list': ~ sides.map(lambda x: all([str(i).isnumeric() for i in x.values()])).all(
+                                 axis=1)})
     rn_attrs['rebalanceable'] = ~ rn_attrs.any(axis=1)
 
     # DataTable of each side, indicating the numeric coefficient (value) for each compound (row) in each reaction (column)
     reactant_cps, product_cps = [i.drop(rn_attrs.query('bool_missing_data or bool_var_list').index)
-                                 .apply(pd.Series).T for _,i in sides.items()]
+                                 .apply(pd.Series).T for _, i in sides.items()]
     # DataTable indicating, for each compound (column), the count (value) of each element (row)
     formula_table = (formula_dict_ser.loc[reactant_cps.index.union(product_cps.index)]
                      .apply(pd.Series).fillna(0).astype(int).T)
 
     # calculate stoichiometry of each reaction as currently written
     reactant_els, product_els = dict(), dict()
-    for id, reactants in reactant_cps.items(): # for each reaction
-        coeffs = reactants.dropna() # access reactant IDs and coefficients
-        reactant_els[id] = (coeffs * formula_table[coeffs.index]).sum(axis=1) # sum elements
+    for id, reactants in reactant_cps.items():  # for each reaction
+        coeffs = reactants.dropna()  # access reactant IDs and coefficients
+        reactant_els[id] = (coeffs * formula_table[coeffs.index]).sum(axis=1)  # sum elements
     for id, products in product_cps.items():
         coeffs = products.dropna()
         product_els[id] = (coeffs * formula_table[coeffs.index]).sum(axis=1)
     reactant_els = pd.DataFrame(reactant_els).T.astype(int)
     product_els = pd.DataFrame(product_els).T.astype(int)
-    
+
     # ID whether reaction is balanced, balanceable, or (to inform treatment of starred reactions) balanced except for *
     rn_attrs['is_balanced'] = (product_els == reactant_els).all(axis=1)
     rn_attrs['to_rebalance'] = rn_attrs['is_balanced'].eq(False) & rn_attrs['rebalanceable'].eq(True)
-    rn_attrs['is_balanced_except_star'] = (product_els == reactant_els).drop(columns='*', errors='ignore').all(axis=1) & rn_attrs['is_balanced'].eq(False)
+    rn_attrs['is_balanced_except_star'] = (product_els == reactant_els).drop(columns='*', errors='ignore').all(axis=1) & \
+                                          rn_attrs['is_balanced'].eq(False)
 
     # pd.Series listing sets of formulas for each side of the reaction; can use Series.apply(balance_stoichiometry) to check in bulk
-    formula_sides = pd.Series(sides.loc[rn_attrs['to_rebalance']].map(lambda x: set(data_c.formula.loc[x.keys()])).T.to_dict(orient='list'))
+    formula_sides = pd.Series(
+        sides.loc[rn_attrs['to_rebalance']].map(lambda x: set(data_c.formula.loc[x.keys()])).T.to_dict(orient='list'))
 
     # DataFrame of element count diffs; same count diff might indicate same compound-injector solution, saving iterations
     observed_el_diffs = (reactant_els - product_els).loc[rn_attrs.query('to_rebalance').index]
-    observed_el_diffs['group_num'] = (observed_el_diffs.astype(str)+' ').groupby(by=list(observed_el_diffs.columns)).ngroup()
+    observed_el_diffs['group_num'] = (observed_el_diffs.astype(str) + ' ').groupby(
+        by=list(observed_el_diffs.columns)).ngroup()
     observed_el_diffs['group_size'] = observed_el_diffs['group_num'].map(observed_el_diffs['group_num'].value_counts())
-    observed_el_diffs = observed_el_diffs.sort_values(by=['group_size', 'group_num'], ascending=[False,True]).drop('group_size', axis=1).set_index('group_num', append=True)
-    
+    observed_el_diffs = observed_el_diffs.sort_values(by=['group_size', 'group_num'], ascending=[False, True]).drop(
+        'group_size', axis=1).set_index('group_num', append=True)
+
     dfs = {'reactant_cps': reactant_cps, 'product_cps': product_cps,
-            'reactant_els': reactant_els, 'product_els': product_els,
-            'rns': rn_attrs, 'formula_table': formula_table,
-            'sides': sides, 'formula_sides': formula_sides,
-            'el_diff_groups': observed_el_diffs}
-    
+           'reactant_els': reactant_els, 'product_els': product_els,
+           'rns': rn_attrs, 'formula_table': formula_table,
+           'sides': sides, 'formula_sides': formula_sides,
+           'el_diff_groups': observed_el_diffs}
+
     return dfs

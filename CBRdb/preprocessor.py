@@ -98,7 +98,7 @@ def preprocess_kegg_c(target_dir, man_dict):
     return df
 
 
-def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full', 
+def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
                                valid_cids=None,
                                keep_only=None):
     """
@@ -132,10 +132,12 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
 
     if keep_only is not None:
         if 'brite' in df.columns and 'brite' in keep_only:
-            df['brite'] = df['brite'].str.lower().str.findall('protein|peptide|enzyme').fillna('').map(lambda x: ' '.join(sorted(list(set(x)))))
+            df['brite'] = df['brite'].str.lower().str.findall('protein|peptide|enzyme').fillna('').map(
+                lambda x: ' '.join(sorted(list(set(x)))))
             if 'type' in df.columns:
                 try:
-                    df['type'] = (df['type'].fillna('').str.lower() + ' ' + df['brite']).str.strip().str.split().map(lambda x: ' '.join(sorted(list(set(x)))))
+                    df['type'] = (df['type'].fillna('').str.lower() + ' ' + df['brite']).str.strip().str.split().map(
+                        lambda x: ' '.join(sorted(list(set(x)))))
                 except:
                     df['type'] = df['type'].notna() or df['brite'].notna()
         if set(keep_only).issubset(set(df.columns)):
@@ -154,12 +156,14 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         df['drug_ids'] = (df['remark'].fillna('').str.extractall(r'(D\d{5})')
                           .groupby(level=0).agg(' '.join).replace('', float('nan')))
 
-    df = df.sort_index().reset_index().rename(columns={'index': 'compound_id', 'formula': 'kegg_formula', 'mol_weight': 'kegg_mol_weight'}).rename_axis(None, axis=1)
-    default_keep_cols =  'compound_id,comment,dblinks,kegg_mol_weight,kegg_formula,name,glycan_ids,drug_ids'.split(',')
+    df = df.sort_index().reset_index().rename(
+        columns={'index': 'compound_id', 'formula': 'kegg_formula', 'mol_weight': 'kegg_mol_weight'}).rename_axis(None,
+                                                                                                                  axis=1)
+    default_keep_cols = 'compound_id,comment,dblinks,kegg_mol_weight,kegg_formula,name,glycan_ids,drug_ids'.split(',')
     df.drop(columns=df.columns.difference(default_keep_cols), inplace=True, errors='ignore')
     df['kegg_mol_weight'] = df['kegg_mol_weight'].astype(float)
     df['nickname'] = df['name'].fillna('').map(lambda x: x.split(';~')[0])
-    
+
     if valid_cids is not None:
         if hasattr(valid_cids, '__iter__') and len(set(df['compound_id'].values).intersection(valid_cids)) > 0:
             df = df.query('compound_id.isin(@valid_cids)')
@@ -308,7 +312,7 @@ def log_compounds_for_followup(df):
     missing_promising = missing_promising.drop(index=kwds[kwds.str.endswith('ase')].index, errors='ignore').drop(
         ['sequence', 'type', 'remark', 'brite'], axis=1)
     cols = 'compound_id,name,formula,reaction,comment,dblinks'.split(',')
-    missing_promising = missing_promising.loc[:,cols]
+    missing_promising = missing_promising.loc[:, cols]
 
     # Save the promising compounds to a file
     missing_promising.to_csv('../data/C_IDs_good.dat', encoding='utf-8', index=False)
