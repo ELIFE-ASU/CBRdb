@@ -5,6 +5,7 @@ from ase.atoms import Atoms
 from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
 from ase.io import read
+from ase.units import Hartree
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
@@ -250,6 +251,8 @@ def calculate_free_energy(mol,
                           xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
                           basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
                           calc_extra='TIGHTOPT FREQ',
+                          f_solv=False,
+                          f_disp=False,
                           nprocs=10):
     # Good settings r2SCAN-3c def2-QZVP
     # Expensive settings wB97X aug-cc-pVTZ
@@ -285,8 +288,8 @@ def calculate_free_energy(mol,
                             xc=xc,
                             basis_set=basis_set,
                             nprocs=nprocs,
-                            f_solv=False,
-                            f_disp=False,
+                            f_solv=f_solv,
+                            f_disp=f_disp,
                             calc_extra=calc_extra,
                             )
 
@@ -295,17 +298,13 @@ def calculate_free_energy(mol,
 
     # Perform the calculation
     _ = atoms.get_potential_energy()
-
     # Read the output file to extract the free energy
     with open(orca_file, 'r') as f:
-        lines = f.readlines()
-    energy = None
-
-    # search backwards for the last occurrence of 'Final Gibbs free energy'
-    lines.reverse()
-    for line in lines:
-        if 'Final Gibbs free energy' in line:
-            energy = float(line.split('energy')[1])
-            break
+        for line in reversed(f.readlines()):
+            if 'Final Gibbs free energy' in line:
+                energy = float(line.split('...')[-1].split('Eh')[0])
+                # Convert from Hartree to eV
+                energy *= Hartree
+                break
 
     return energy

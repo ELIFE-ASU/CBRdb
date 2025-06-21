@@ -22,6 +22,7 @@ from .prune_reactions import (iteratively_prune_entries,
                               suspect_reaction_subset,
                               quarantine_suspect_reactions_matching,
                               add_suspect_reactions_to_existing_bad_file)
+from .tools_atoms import (calculate_free_energy)
 from .tools_eq import (convert_formula_to_dict,
                        get_formulas_from_eq,
                        convert_ids_to_formulas,
