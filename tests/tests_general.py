@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 from rdkit import Chem as Chem
-
+import numpy as np
 import CBRdb
 
 
@@ -558,3 +558,14 @@ def test_plot_reaction_id():
     data_r = pd.read_csv(os.path.abspath("../data/kegg_data_R.csv"))
     CBRdb.plot_reaction_id('R00001', data_r, data_c)
     pass
+
+
+def test_calculate_free_energy():
+    print(flush=True)
+    smi = "O"
+    mol = Chem.MolFromSmiles(smi)
+    energy = CBRdb.calculate_free_energy(mol)
+    print(energy, flush=True)
+    ref_energy = -2079.599881931978
+    assert np.allclose(energy, ref_energy,
+                       atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
