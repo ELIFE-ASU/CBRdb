@@ -561,11 +561,27 @@ def test_plot_reaction_id():
 
 
 def test_calculate_free_energy():
+    """
+    Test the `calculate_free_energy` function from the `CBRdb` module.
+
+    This test verifies that the calculated Gibbs free energy for a given molecule
+    matches the expected reference value within a specified tolerance.
+
+    Steps:
+    1. Create a molecule object from its SMILES representation.
+    2. Calculate the Gibbs free energy using the `calculate_free_energy` function.
+    3. Compare the calculated energy to the reference value using `np.allclose`.
+
+    Raises:
+    -------
+    AssertionError:
+        If the calculated energy does not match the reference energy within the specified tolerance.
+    """
     print(flush=True)
-    smi = "O"
-    mol = Chem.MolFromSmiles(smi)
-    energy = CBRdb.calculate_free_energy(mol)
+    smi = "O"  # SMILES representation of the molecule (water in this case)
+    mol = Chem.MolFromSmiles(smi)  # Convert SMILES to an RDKit molecule object
+    energy = CBRdb.calculate_free_energy(mol)  # Calculate the Gibbs free energy
     print(energy, flush=True)
-    ref_energy = -2079.599881931978
+    ref_energy = -2079.599881931978  # Reference Gibbs free energy value
     assert np.allclose(energy, ref_energy,
                        atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
