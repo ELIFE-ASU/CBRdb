@@ -6,7 +6,7 @@ from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
 from ase.io import read
 from ase.units import Hartree
-from rdkit import Chem
+from rdkit import Chem as Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.rdchem import Mol
@@ -34,6 +34,7 @@ def smi_to_atoms(smiles: str) -> Atoms:
         If SMILES parsing fails.
     """
     mol = Chem.MolFromSmiles(smiles, sanitize=True)
+    mol = Chem.AddHs(mol)
     mol = standardize_mol(mol)
     if mol is None:
         raise ValueError(f"Failed to parse SMILES string: {smiles}")
@@ -58,6 +59,7 @@ def mol_to_atoms(mol: Mol, optimise: bool = True) -> Atoms:
         Atoms object representing the molecule.
     """
     mol = standardize_mol(mol)
+    mol = Chem.AddHs(mol)
     # If optimisation is enabled, embed and optimise the molecule using RDKit
     if optimise:
         AllChem.EmbedMolecule(mol, maxAttempts=5000, useRandomCoords=True, randomSeed=0xf00d)
@@ -165,8 +167,8 @@ def orca_calc_preset(orca_path=None,
                      xc='wB97X',
                      charge=0,
                      multiplicity=1,
-                     basis_set='aug-cc-pVTZ',  # 'cc-pVDZ', '6-31+G(d,p)',
-                     n_procs=1,
+                     basis_set='def2-SVP',
+                     n_procs=10,
                      f_solv=False,
                      f_disp=False,
                      atom_list=None,
@@ -174,69 +176,72 @@ def orca_calc_preset(orca_path=None,
                      blocks_extra=None,
                      scf_option=None):
     """
-    Set up an ORCA quantum chemistry calculation with specified parameters.
+    Create and configure an ORCA calculator preset for quantum chemistry calculations.
 
     Parameters:
     -----------
     orca_path : str, optional
-        Path to the ORCA executable. If None, the path is read from the environment variable 'ORCA_PATH'.
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
     directory : str, optional
-        Directory where the ORCA calculation files will be stored. If None, a temporary directory is created.
+        Directory where the calculation will be performed. Defaults to a temporary directory.
     calc_type : str, optional
         Type of calculation to perform (e.g., 'DFT', 'MP2', 'CCSD', 'QM/XTB2'). Default is 'DFT'.
     xc : str, optional
-        Exchange-correlation functional to use in the calculation (default is 'B3LYP').
+        Exchange-correlation functional to use. Default is 'wB97X'.
     charge : int, optional
-        Formal charge of the molecule (default is 0).
+        Total charge of the system. Default is 0.
     multiplicity : int, optional
-        Spin multiplicity of the molecule (default is 1).
+        Spin multiplicity of the system. Default is 1.
     basis_set : str, optional
-        Basis set to use in the calculation (default is '6-311G').
-    nprocs : int, optional
-        Number of processors to use for the calculation (default is 1).
+        Basis set to use for the calculation. Default is 'def2-SVP'.
+    n_procs : int, optional
+        Number of processors to use. Default is 10.
     f_solv : bool or str, optional
-        Solvation model to use. If True, water is used as the solvent. Alternatively, a string specifying the solvent can be provided.
-        If False, no solvation is applied (default is True).
+        Solvent model to use. If True, defaults to 'WATER'. Default is False (no solvent).
     f_disp : bool or str, optional
-        Dispersion correction to use. If True, D4 dispersion is used. Alternatively, a string specifying the dispersion model can be provided.
-        If False, no correction is applied (default is True).
+        Dispersion correction to use. If True, defaults to 'D4'. Default is False (no dispersion correction).
     atom_list : list, optional
-        List of atoms to include in QM/MM calculations. Only used if `calc_type` is 'QM/XTB2' (default is None).
+        List of atoms for QM/MM calculations. Only used if `calc_type` is 'QM/XTB2'. Default is None.
     calc_extra : str, optional
-        Additional calculation options for ORCA (default is None).
+        Additional calculation options to include in the ORCA input. Default is None.
     blocks_extra : str, optional
-        Additional input blocks for ORCA (default is None).
+        Additional ORCA input blocks to include. Default is None.
     scf_option : str, optional
-        Additional SCF options for ORCA (default is None).
+        Additional SCF options to include in the ORCA input. Default is None.
 
     Returns:
     --------
-    ase.calculators.orca.ORCA
+    ORCA
         Configured ORCA calculator object.
     """
     if orca_path is None:
         # Try and read the path from the environment
         orca_path = os.environ.get('ORCA_PATH')
     if directory is None:
+        # Create a temporary directory for the calculation
         directory = os.path.join(tempfile.mkdtemp(), 'orca')
 
+    # Create an ORCA profile with the specified command
     profile = OrcaProfile(command=orca_path)
 
+    # Configure the number of processors
     if n_procs > 1:
         inpt_procs = '%pal nprocs {} end'.format(n_procs)
     else:
         inpt_procs = ''
 
+    # Configure the solvent model
     if f_solv is not None and f_solv is not False:
         if f_solv:
             f_solv = 'WATER'
         inpt_solv = '''
-                             %CPCM SMD TRUE
-                                 SMDSOLVENT "{}"
-                             END'''.format(f_solv)
+                                              %CPCM SMD TRUE
+                                                  SMDSOLVENT "{}"
+                                              END'''.format(f_solv)
     else:
         inpt_solv = ''
 
+    # Configure the dispersion correction
     if f_disp is None or f_disp is False:
         inpt_disp = ''
     else:
@@ -244,18 +249,22 @@ def orca_calc_preset(orca_path=None,
             f_disp = 'D4'
         inpt_disp = f_disp
 
+    # Configure QM/MM atom list for QM/XTB2 calculations
     if atom_list is not None and calc_type == 'QM/XTB2':
         inpt_xtb = '''
-                             %QMMM QMATOMS {{}} END END
-                             '''.format(str(atom_list).strip('[').strip(']'))
+                                              %QMMM QMATOMS {{}} END END
+                                              '''.format(str(atom_list).strip('[').strip(']'))
     else:
         inpt_xtb = ''
 
+    # Add any additional input blocks
     if blocks_extra is None:
         blocks_extra = ''
 
+    # Combine all input blocks
     inpt_blocks = inpt_procs + inpt_solv + blocks_extra
 
+    # Configure the main calculation input based on the calculation type
     if calc_type == 'DFT':
         inpt_simple = '{} {} {}'.format(xc, inpt_disp, basis_set)
     elif calc_type == 'MP2':
@@ -268,14 +277,15 @@ def orca_calc_preset(orca_path=None,
     else:
         inpt_simple = '{} {}'.format(calc_type, basis_set)
 
-    # Add the SCF option
+    # Add the SCF option if provided
     if scf_option is not None:
         inpt_simple += ' ' + scf_option
 
-    # Add the extra options
+    # Add any extra calculation options
     if calc_extra is not None:
         inpt_simple += ' ' + calc_extra
 
+    # Create and return the ORCA calculator object
     calc = ORCA(
         profile=profile,
         charge=charge,
@@ -287,95 +297,239 @@ def orca_calc_preset(orca_path=None,
     return calc
 
 
-def calculate_free_energy(mol,
-                          orca_path=None,
-                          xc='wB97X',
-                          basis_set='aug-cc-pVTZ',
-                          calc_extra='TIGHTOPT FREQ',
-                          f_solv=False,
-                          f_disp=False,
-                          nprocs=10):
+def optimise_atoms(atoms, calc_settings=None):
     """
-    Calculate the Gibbs free energy of a molecule using the ORCA quantum chemistry package.
+    Optimise the geometry of an ASE Atoms object using the ORCA quantum chemistry package.
 
     Parameters:
     -----------
-    mol : rdkit.Chem.rdchem.Mol
-        The RDKit molecule object to calculate the free energy for.
+    atoms : ase.Atoms
+        The ASE Atoms object representing the molecule to be optimised.
+    calc_settings : dict, optional
+        A dictionary of settings for the ORCA calculator. If None, defaults to {'calc_extra': 'TIGHTOPT'}.
+
+    Returns:
+    --------
+    ase.Atoms
+        The optimised ASE Atoms object, loaded from the ORCA output file.
+    """
+    if calc_settings is None:
+        # Default calculation settings if none are provided
+        calc_settings = {'calc_extra': 'TIGHTOPT'}
+
+    # Create a temporary directory for the calculation
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Set up the ORCA calculator with the specified parameters
+        calc = orca_calc_preset(directory=temp_dir, **calc_settings)
+
+        # Assign the calculator to the molecule
+        atoms.calc = calc
+
+        # Trigger the calculation to optimise the geometry
+        _ = atoms.get_potential_energy()
+
+        # Load the optimised geometry from the ORCA output file
+        orca_file = os.path.join(temp_dir, "orca.xyz")
+        return read(orca_file, format="xyz")
+
+
+def calculate_ccsd_energy(atoms,
+                          orca_path=None,
+                          charge=0,
+                          multiplicity=1,
+                          basis_set='aug-cc-pVTZ',
+                          n_procs=10):
+    """
+    Calculate the CCSD (Coupled Cluster with Single and Double excitations) energy of a molecule.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        The ASE Atoms object representing the molecule for which the energy is calculated.
     orca_path : str, optional
-        Path to the ORCA executable. If None, the path is read from the environment variable 'ORCA_PATH'.
-    xc : str, optional
-        Exchange-correlation functional to use in the calculation (default is 'r2SCAN-3c').
+        Path to the ORCA executable. If None, the function attempts to read it from the environment variable 'ORCA_PATH'.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
     basis_set : str, optional
-        Basis set to use in the calculation (default is 'def2-QZVP').
-    calc_extra : str, optional
-        Additional calculation options for ORCA (default is 'TIGHTOPT FREQ').
-    f_solv : bool or str, optional
-        Solvation model to use. If False, no solvation is applied. If True, water is used as the solvent.
-        Alternatively, a string specifying the solvent can be provided (default is False).
-    f_disp : bool or str, optional
-        Dispersion correction to use. If False, no correction is applied. If True, D4 dispersion is used.
-        Alternatively, a string specifying the dispersion model can be provided (default is False).
-    nprocs : int, optional
-        Number of processors to use for the calculation (default is 10).
+        Basis set to use for the calculation. Default is 'aug-cc-pVTZ'.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
 
     Returns:
     --------
     float
-        The Gibbs free energy of the molecule in electron volts (eV).
-
-    Raises:
-    -------
-    ValueError
-        If the ORCA output file does not contain the final Gibbs free energy.
-
-    Notes:
-    ------
-    - The molecule is sanitized and converted to an ASE Atoms object before the calculation.
-    - A temporary directory is created for the ORCA calculation, which is cleaned up after execution.
-    - The free energy is extracted from the ORCA output file and converted from Hartree to eV.
+        The CCSD energy of the molecule in eV.
     """
-
     # If no ORCA path is provided, try to read it from the environment variable
     if orca_path is None:
         orca_path = os.environ.get('ORCA_PATH')
     else:
         orca_path = os.path.abspath(orca_path)
 
-    # Add explicit hydrogens to the molecule and sanitize it
-    mol = Chem.AddHs(mol)
-    Chem.SanitizeMol(mol)
-
-    # Get the formal charge of the molecule
-    charge = get_charge(mol)
-
-    # Get the spin multiplicity of the molecule
-    multiplicity = get_spin_multiplicity(mol)
-
-    # Convert the RDKit molecule to an ASE Atoms object
-    atoms = mol_to_atoms(mol)
-
     # Create a temporary directory for the ORCA calculation
-    temp_dir = tempfile.mkdtemp()
-    orca_file = os.path.join(temp_dir, 'orca.out')
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Set up the ORCA calculator with the specified parameters
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                calc_type='CCSD',
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                basis_set=basis_set,
+                                n_procs=n_procs)
+        # Attach the ORCA calculator to the ASE Atoms object
+        atoms.calc = calc
 
-    # Set up the ORCA calculator with the specified parameters
-    calc = orca_calc_preset(orca_path=orca_path, directory=temp_dir, xc=xc, charge=charge, multiplicity=multiplicity,
-                            basis_set=basis_set, n_procs=nprocs, f_solv=f_solv, f_disp=f_disp, calc_extra=calc_extra)
+        # Perform the energy calculation
+        energy = atoms.get_potential_energy()
 
-    # Attach the ORCA calculator to the ASE Atoms object
-    atoms.calc = calc
+        return energy
 
-    # Perform the energy calculation
-    _ = atoms.get_potential_energy()
 
-    # Read the ORCA output file to extract the final Gibbs free energy
-    with open(orca_file, 'r') as f:
-        for line in reversed(f.readlines()):
-            if 'Final Gibbs free energy' in line:
-                energy = float(line.split('...')[-1].split('Eh')[0])
-                # Convert the energy from Hartree to eV
-                energy *= Hartree
-                break
+def calculate_free_energy(atoms,
+                          charge=0,
+                          multiplicity=1,
+                          orca_path=None,
+                          xc='wB97X',
+                          basis_set='def2-SVP',
+                          calc_extra='TIGHTOPT FREQ',
+                          f_solv=False,
+                          f_disp=False,
+                          n_procs=10,
+                          ccsd_energy=False,
+                          atom_list=None,
+                          blocks_extra=None,
+                          scf_option=None):
+    """
+    Calculate the Gibbs free energy of a molecule using the ORCA quantum chemistry package.
 
-    return energy
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        The ASE Atoms object representing the molecule.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, the function attempts to read it from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use. Default is 'wB97X'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-SVP'.
+    calc_extra : str, optional
+        Additional calculation options for ORCA. Default is 'TIGHTOPT FREQ'.
+    f_solv : bool or str, optional
+        Solvent model to use. If True, defaults to 'WATER'. Default is False (no solvent).
+    f_disp : bool or str, optional
+        Dispersion correction to use. If True, defaults to 'D4'. Default is False (no dispersion correction).
+    n_procs : int, optional
+        Number of processors to use. Default is 10.
+    ccsd_energy : bool, optional
+        Whether to include CCSD energy correction. Default is False.
+    atom_list : list, optional
+        List of atoms for QM/MM calculations. Default is None.
+    blocks_extra : str, optional
+        Additional ORCA input blocks. Default is None.
+    scf_option : str, optional
+        Additional SCF options for ORCA. Default is None.
+
+    Returns:
+    --------
+    float
+        The Gibbs free energy of the molecule in eV.
+    """
+    # If no ORCA path is provided, try to read it from the environment variable
+    if orca_path is None:
+        orca_path = os.environ.get('ORCA_PATH')
+    else:
+        orca_path = os.path.abspath(orca_path)
+
+    # Remove 'FREQ' from calc_extra for geometry optimization
+    opti_calc_extra = calc_extra.replace('FREQ', '').strip()
+    # Ensure the atoms object is optimized before calculating the free energy
+    atoms = optimise_atoms(atoms, calc_settings={'xc': xc,
+                                                 'basis_set': basis_set,
+                                                 'calc_extra': opti_calc_extra,
+                                                 'charge': charge,
+                                                 'multiplicity': multiplicity,
+                                                 'n_procs': n_procs,
+                                                 'f_solv': f_solv,
+                                                 'f_disp': f_disp,
+                                                 'atom_list': atom_list,
+                                                 'blocks_extra': blocks_extra,
+                                                 'scf_option': scf_option})
+
+    # Remove 'TIGHTOPT' and 'OPT' from calc_extra for frequency calculation
+    freq_calc_extra = calc_extra.replace('TIGHTOPT', '').replace('OPT', '').strip()
+    # Create a temporary directory for the ORCA calculation
+    with tempfile.TemporaryDirectory() as temp_dir:
+        orca_file = os.path.join(temp_dir, 'orca.out')
+
+        # Set up the ORCA calculator with the specified parameters
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                xc=xc,
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                basis_set=basis_set,
+                                n_procs=n_procs,
+                                f_solv=f_solv,
+                                f_disp=f_disp,
+                                calc_extra=freq_calc_extra,
+                                atom_list=atom_list,
+                                blocks_extra=blocks_extra,
+                                scf_option=scf_option)
+
+        # Attach the ORCA calculator to the ASE Atoms object
+        atoms.calc = calc
+
+        # Perform the energy calculation
+        _ = atoms.get_potential_energy()
+
+        # If CCSD energy is requested, calculate the correction
+        if ccsd_energy:
+            # Calculate the CCSD energy
+            ccsd_energy = calculate_ccsd_energy(atoms,
+                                                orca_path=orca_path,
+                                                charge=charge,
+                                                multiplicity=multiplicity,
+                                                basis_set=basis_set,
+                                                n_procs=n_procs)
+
+            # Read the ORCA output file to extract the DFT Gibbs free energy
+            with open(orca_file, 'r') as f:
+                for line in reversed(f.readlines()):
+                    if 'G-E(el)' in line:
+                        g_e_ele = float(line.split('...')[-1].split('Eh')[0])
+                        # Convert the energy from Hartree to eV
+                        g_e_ele *= Hartree
+                        break
+
+            # Find the solvent free energy correction
+            if f_solv:
+                # Find the Free-energy (cav+disp) from the ORCA output file
+                with open(orca_file, 'r') as f:
+                    for line in reversed(f.readlines()):
+                        if 'Free-energy (cav+disp)' in line:
+                            g_e_solv = float(line.split(':')[-1].split('Eh')[0])
+                            # Convert the energy from Hartree to eV
+                            g_e_solv *= Hartree
+                            break
+                return ccsd_energy + g_e_ele + g_e_solv
+            else:
+                # If no solvent correction is applied, return the CCSD energy
+                return ccsd_energy + g_e_ele
+
+        else:
+            # Read the ORCA output file to extract the final Gibbs free energy
+            with open(orca_file, 'r') as f:
+                for line in reversed(f.readlines()):
+                    if 'Final Gibbs free energy' in line:
+                        energy = float(line.split('...')[-1].split('Eh')[0])
+                        # Convert the energy from Hartree to eV
+                        energy *= Hartree
+                        break
+
+        return energy
