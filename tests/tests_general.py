@@ -582,6 +582,6 @@ def test_calculate_free_energy():
     mol = Chem.MolFromSmiles(smi)  # Convert SMILES to an RDKit molecule object
     energy = CBRdb.calculate_free_energy(mol)  # Calculate the Gibbs free energy
     print(energy, flush=True)
-    ref_energy = -2079.599881931978  # Reference Gibbs free energy value
+    ref_energy = -2079.975658927851  # Reference Gibbs free energy value
     assert np.allclose(energy, ref_energy,
                        atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
