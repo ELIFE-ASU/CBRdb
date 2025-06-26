@@ -162,13 +162,13 @@ def standardise_smiles(smi):
 def orca_calc_preset(orca_path=None,
                      directory=None,
                      calc_type='DFT',
-                     xc='B3LYP',
+                     xc='wB97X',
                      charge=0,
                      multiplicity=1,
-                     basis_set='6-311G',  # 'cc-pVDZ', '6-31+G(d,p)',
-                     nprocs=1,
-                     f_solv=True,
-                     f_disp=True,
+                     basis_set='aug-cc-pVTZ',  # 'cc-pVDZ', '6-31+G(d,p)',
+                     n_procs=1,
+                     f_solv=False,
+                     f_disp=False,
                      atom_list=None,
                      calc_extra=None,
                      blocks_extra=None,
@@ -222,8 +222,8 @@ def orca_calc_preset(orca_path=None,
 
     profile = OrcaProfile(command=orca_path)
 
-    if nprocs > 1:
-        inpt_procs = '%pal nprocs {} end'.format(nprocs)
+    if n_procs > 1:
+        inpt_procs = '%pal nprocs {} end'.format(n_procs)
     else:
         inpt_procs = ''
 
@@ -289,8 +289,8 @@ def orca_calc_preset(orca_path=None,
 
 def calculate_free_energy(mol,
                           orca_path=None,
-                          xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
-                          basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
+                          xc='wB97X',
+                          basis_set='aug-cc-pVTZ',
                           calc_extra='TIGHTOPT FREQ',
                           f_solv=False,
                           f_disp=False,
@@ -360,16 +360,8 @@ def calculate_free_energy(mol,
     orca_file = os.path.join(temp_dir, 'orca.out')
 
     # Set up the ORCA calculator with the specified parameters
-    calc = orca_calc_preset(orca_path=orca_path,
-                            directory=temp_dir,
-                            charge=charge,
-                            multiplicity=multiplicity,
-                            xc=xc,
-                            basis_set=basis_set,
-                            nprocs=nprocs,
-                            f_solv=f_solv,
-                            f_disp=f_disp,
-                            calc_extra=calc_extra)
+    calc = orca_calc_preset(orca_path=orca_path, directory=temp_dir, xc=xc, charge=charge, multiplicity=multiplicity,
+                            basis_set=basis_set, n_procs=nprocs, f_solv=f_solv, f_disp=f_disp, calc_extra=calc_extra)
 
     # Attach the ORCA calculator to the ASE Atoms object
     atoms.calc = calc
