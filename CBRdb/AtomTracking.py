@@ -1,9 +1,11 @@
-
 import argparse
 import sys
 import os
 import pandas as pd
 from rdkit import Chem
+from rdkit.Chem import Draw
+from rdkit.Chem.Draw import IPythonConsole  # enables rich display in Jupyter
+import matplotlib.pyplot as plt
 from rxnmapper import RXNMapper
 
 # -------------------- Helper Functions (moved up) --------------------
@@ -61,6 +63,28 @@ def remove_atom_map_numbers(mol):
         atom.SetAtomMapNum(0)
     return Chem.MolToSmiles(mol, canonical=True, isomericSmiles=True)
 
+def visualize_mapped_rxn(mapped_rxn_smiles, reaction_id, save_images=False):
+    """
+    Visualize the mapped reaction SMILES. If save_images is True, saves the image
+    in a folder named 'Reactions Visualizations' in the same directory as the output CSV,
+    using the reaction ID as the filename.
+    """
+    try:
+        rxn = Chem.rdChemReactions.ReactionFromSmarts(mapped_rxn_smiles, useSmiles=True)
+        img = Draw.ReactionToImage(rxn, subImgSize=(600, 600))
+        vis_dir = os.path.join(os.path.dirname(output_file), "Reactions Visualizations")
+        os.makedirs(vis_dir, exist_ok=True)
+        img_path = os.path.join(vis_dir, f"{reaction_id}.png")
+        plt.imshow(img)
+        plt.axis('off')
+        plt.title(f"Reaction ID: {reaction_id}")
+        plt.tight_layout()
+        plt.savefig(img_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f"[INFO] Saved reaction visualization to {img_path}")
+    except Exception as e:
+        print(f"[ERROR] Could not visualize reaction {reaction_id}: {e}")
+
 # lookup_compound_id must be defined after df_canonical_index is available
 lookup_compound_id = None
 
@@ -115,12 +139,14 @@ def get_or_build_canonical_index(df_molecules, output_file):
         return df_index
 
 # -------------------- Inputs --------------------
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--row_index', type=int, required=True)
 parser.add_argument('--static_cofactors', action='store_true', help='Ignores Cofactors based on a static list')
 parser.add_argument('--dynamic_cofactors', action='store_true', help='Ignores Compounds present on both sides.')
 parser.add_argument('--highest_CCC', action='store_true', help='Select substrate with highest number of chiral centers')
 parser.add_argument('--lowest_CCC', action='store_true', help='Select substrate with lowest number of chiral centers')
+parser.add_argument('--visualize', action='store_true', help='If set, visualize the mapped reaction for this row index')
 args = parser.parse_args()
 
 reactions_file = 'CBRdb_R.csv'
@@ -366,6 +392,10 @@ try:
     else:
         product_cid = 'NotFound'
         print(f"[DEBUG] Atom not found in any product.")
+
+    # Visualize if flag is set
+    if args.visualize:
+        visualize_mapped_rxn(atom_mapped_rxn, selected_id, save_images=True)
 except Exception as e:
     print(f"Mapping error for {selected_id}: {e}")
     product_cid = 'Error'
@@ -394,7 +424,7 @@ output_row = pd.DataFrame([{
     )
 }])
 
-if os.path.exists(output_file):
+if os.path.exists(output_file)and os.path.getsize(output_file) > 0:
     df_existing = pd.read_csv(output_file)
     df_combined = pd.concat([df_existing, output_row], ignore_index=True)
     df_combined = df_combined.sort_values(by='reaction_id').reset_index(drop=True)
