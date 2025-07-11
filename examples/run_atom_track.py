@@ -1,12 +1,12 @@
 import argparse
-import sys
 import os
+import sys
+
 import pandas as pd
 from rdkit import Chem
-from rdkit.Chem import Draw
-import matplotlib.pyplot as plt
 from rxnmapper import RXNMapper
-import re
+
+import CBRdb
 
 if __name__ == "__main__":
     # lookup_compound_id must be defined after df_canonical_index is available
@@ -32,8 +32,8 @@ if __name__ == "__main__":
     output_file = os.path.join(script_dir, 'CBRdb_AtomTracking.csv')
 
     try:
-        reactions_file_path = find_file(reactions_file)
-        molecule_ref_path = find_file(molecule_reference_file)
+        reactions_file_path = CBRdb.find_file(reactions_file)
+        molecule_ref_path = CBRdb.find_file(molecule_reference_file)
     except FileNotFoundError as e:
         print(e)
         sys.exit(1)
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         print(f"Row index {args.row_index} out of bounds.")
         sys.exit(1)
 
-    df_canonical_index = get_or_build_canonical_index(df_molecules, canonical_index_file)
+    df_canonical_index = CBRdb.get_or_build_canonical_index(df_molecules, canonical_index_file)
 
     selected_row = df_input_reactions.iloc[args.row_index]
     selected_id = selected_row['id']
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     }
 
     if args.dynamic_cofactors:
-        substrate_ids, product_ids = omit_shared_compounds(substrate_ids, product_ids)
+        substrate_ids, product_ids = CBRdb.omit_shared_compounds(substrate_ids, product_ids)
 
     substrate_smiles = '.'.join(
         [compound_smiles_map.get(cid, '') for cid in substrate_ids if cid in compound_smiles_map])
@@ -139,18 +139,18 @@ if __name__ == "__main__":
     # --- Remove stoichiometry numbers from reaction string ---
 
     # Save reaction after removing stoichiometry
-    reaction_no_stoich = remove_stoichiometry(raw_reaction)
+    reaction_no_stoich = CBRdb.remove_stoichiometry(raw_reaction)
 
     # Show cofactor-filtered reaction if either static or dynamic cofactor flag is set
     remove_cofactors_flag = args.static_cofactors or args.dynamic_cofactors
-    reaction_after_cofactor = get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids,
-                                                             remove_cofactors_flag)
+    reaction_after_cofactor = CBRdb.get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids,
+                                                                   remove_cofactors_flag)
 
     if static_cofactors:
         cofactor_smiles = set()
         for cid in cofactor_ids:
             if cid in compound_smiles_map:
-                canonical = canonicalize_smiles(compound_smiles_map[cid])
+                canonical = CBRdb.canonicalize_smiles(compound_smiles_map[cid])
                 if canonical:
                     cofactor_smiles.add(canonical)
 
@@ -160,13 +160,13 @@ if __name__ == "__main__":
                 return ""
             return '.'.join([
                 smi for smi in smiles_string.strip().split('.')
-                if canonicalize_smiles(smi) not in cofactor_smiles
+                if CBRdb.canonicalize_smiles(smi) not in cofactor_smiles
             ])
 
 
         substrate_smiles = filter_cofactors(substrate_smiles)
         product_smiles = filter_cofactors(product_smiles)
-    substrate_mols = smiles_to_mols(substrate_smiles)
+    substrate_mols = CBRdb.smiles_to_mols(substrate_smiles)
 
     if not substrate_mols:
         print(f"No non-cofactor substrates found for reaction {selected_id}. Halting.")
@@ -174,11 +174,11 @@ if __name__ == "__main__":
 
     if args.highest_CCC:
         # Highest chiral center count, break ties with highest heavy atom count
-        mol_idx = max(range(len(substrate_mols)), key=selection_key_highest)
+        mol_idx = max(range(len(substrate_mols)), key=CBRdb.selection_key_highest)
         reason = 'highest chiral center count'
     elif args.lowest_CCC:
         # Lowest chiral center count, break ties with highest heavy atom count
-        mol_idx = min(range(len(substrate_mols)), key=selection_key_lowest)
+        mol_idx = min(range(len(substrate_mols)), key=CBRdb.selection_key_lowest)
         reason = 'lowest chiral center count'
     else:
         mol_idx = max(range(len(substrate_mols)), key=lambda i: substrate_mols[i].GetNumHeavyAtoms())
@@ -186,7 +186,7 @@ if __name__ == "__main__":
 
     mol = substrate_mols[mol_idx]
     atom_idx = max(range(mol.GetNumAtoms()), key=lambda i: mol.GetAtomWithIdx(i).GetDegree())
-    substrate_mols[mol_idx] = label_atom(substrate_mols[mol_idx], atom_idx, 1)
+    substrate_mols[mol_idx] = CBRdb.label_atom(substrate_mols[mol_idx], atom_idx, 1)
 
     print(f"[DEBUG] Selected molecule index: {mol_idx}, atom index: {atom_idx}, selection reason: {reason}")
 
@@ -199,12 +199,12 @@ if __name__ == "__main__":
         mapped_rxn = rxn_mapper.get_attention_guided_atom_maps([reaction_smiles])[0]['mapped_rxn']
         atom_mapped_rxn = mapped_rxn  # Always set this
         _, product_part = mapped_rxn.split('>>')
-        product_mols = smiles_to_mols(product_part)
-        matched = trace_atom(1, product_mols)
+        product_mols = CBRdb.smiles_to_mols(product_part)
+        matched = CBRdb.trace_atom(1, product_mols)
 
         if matched:
-            clean_smiles = remove_atom_map_numbers(matched)
-            product_cid = lookup_compound_id(clean_smiles)
+            clean_smiles = CBRdb.remove_atom_map_numbers(matched)
+            product_cid = CBRdb.lookup_compound_id(clean_smiles)
             print(f"[DEBUG] Matched Product SMILES: {clean_smiles} → {product_cid}")
         else:
             product_cid = 'NotFound'
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
         # Visualize if flag is set
         if args.visualize:
-            visualize_mapped_rxn(atom_mapped_rxn, selected_id, save_images=True)
+            CBRdb.visualize_mapped_rxn(atom_mapped_rxn, selected_id, save_images=True)
     except Exception as e:
         print(f"Mapping error for {selected_id}: {e}")
         product_cid = 'Error'
@@ -220,8 +220,8 @@ if __name__ == "__main__":
 
     # -------------------- Get Substrate ID --------------------
     selected_mol = substrate_mols[mol_idx]
-    selected_clean = remove_atom_map_numbers(selected_mol)
-    substrate_cid = lookup_compound_id(selected_clean)
+    selected_clean = CBRdb.remove_atom_map_numbers(selected_mol)
+    substrate_cid = CBRdb.lookup_compound_id(selected_clean)
     print(f"[DEBUG] Selected Substrate SMILES: {selected_clean} → {substrate_cid}")
 
     # -------------------- Save Output --------------------

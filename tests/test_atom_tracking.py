@@ -1,13 +1,13 @@
-import pytest
 from rdkit import Chem
 
-from AtomTracking4CBRdb import (
+from CBRdb import (
     canonicalize_smiles,
     smiles_to_mols,
     label_atom,
     trace_atom,
     remove_atom_map_numbers,
 )
+
 
 def test_canonicalize_smiles_valid():
     """
@@ -19,6 +19,7 @@ def test_canonicalize_smiles_valid():
     smi = "[C:1](O)C"
     result = canonicalize_smiles(smi)
     assert result == canonicalize_smiles("COC") or result == canonicalize_smiles("CCO")
+
 
 def test_canonicalize_smiles_invalid():
     """
@@ -35,6 +36,7 @@ def test_canonicalize_smiles_invalid():
     assert canonicalize_smiles(None) is None
     assert canonicalize_smiles("not_a_smiles") is None
 
+
 def test_smiles_to_mols_single():
     """
     Test the `smiles_to_mols` function with a single SMILES string.
@@ -46,6 +48,7 @@ def test_smiles_to_mols_single():
     mols = smiles_to_mols("CCO")
     assert len(mols) == 1
     assert isinstance(mols[0], Chem.Mol)
+
 
 def test_smiles_to_mols_multiple():
     """
@@ -59,6 +62,7 @@ def test_smiles_to_mols_multiple():
     mols = smiles_to_mols("CCO.CN")
     assert len(mols) == 2
     assert all(isinstance(m, Chem.Mol) for m in mols)
+
 
 def test_smiles_to_mols_invalid_fragment():
     """
@@ -74,6 +78,7 @@ def test_smiles_to_mols_invalid_fragment():
     mols = smiles_to_mols("CCO.not_a_smiles")
     assert len(mols) == 1
     assert Chem.MolToSmiles(mols[0]) == Chem.MolToSmiles(Chem.MolFromSmiles("CCO"))
+
 
 def test_label_atom_and_trace_atom():
     """
@@ -107,6 +112,7 @@ def test_label_atom_and_trace_atom():
     assert result is not None
     assert any(atom.GetAtomMapNum() == 42 for atom in result.GetAtoms())
 
+
 def test_trace_atom_not_found():
     """
     Test that trace_atom returns None when the specified atom index does not exist in the molecule.
@@ -118,6 +124,7 @@ def test_trace_atom_not_found():
     mols = [mol]
     assert trace_atom(99, mols) is None
 
+
 def test_remove_atom_map_numbers():
     """
     Test the remove_atom_map_numbers function to ensure that it removes atom map numbers from a molecule.
@@ -128,6 +135,7 @@ def test_remove_atom_map_numbers():
     # Should be canonical and have no atom map numbers
     assert ":" not in result
     assert result == canonicalize_smiles("CCO")
+
 
 def test_remove_atom_map_numbers_none():
     """
