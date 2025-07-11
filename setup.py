@@ -29,6 +29,7 @@ setup(
         'chemparse',
         'swifter',
         'ase',
+        'rxnmapper',
     ],
     extras_require={
         'dev': [

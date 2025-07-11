@@ -4,7 +4,6 @@ import os
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Draw
-from rdkit.Chem.Draw import IPythonConsole  # enables rich display in Jupyter
 import matplotlib.pyplot as plt
 from rxnmapper import RXNMapper
 
