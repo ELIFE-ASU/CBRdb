@@ -359,18 +359,20 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         # Here we have assumed that the data_r_var_list reactions data is correct
         # This is questionable as the data may be incorrect
         print_and_log("Merging data assuming equations with a var list data are correct...", f_log)
-        df_final = pd.concat([data_r, data_r_var_list, data_r_rebalanced]).query('~id.isin(@ids_failed')
-        if len(data_r_var_list.index)>0:
-            df_final['var_coeff'] = df_final['id'].isin(data_r_var_list['id'])
+        to_concat = [data_r, data_r_var_list, data_r_rebalanced]
     else:
         print_and_log("Merging data assuming equations with a var list data are incorrect...", f_log)
-        df_final = pd.concat([data_r, data_r_rebalanced]).query('~id.isin(@ids_failed')
+        to_concat = [data_r, data_r_rebalanced]
+
+    df_final = pd.concat(to_concat).set_index('id').drop(ids_failed, errors='ignore')
+    if f_assume_var and len(data_r_var_list.index)>0:
+            df_final['var_coeff'] = df_final.index.isin(data_r_var_list['id'])
 
     # Get the final length of the data
     print_and_log(f"Final data shape: {df_final.shape}", f_log)
 
     # Sort by the index
-    df_final = df_final.sort_values(by="id")
+    df_final = df_final.sort_index().reset_index()
     # Write the data to a file
     df_final.to_csv(out_eq_file, encoding='utf-8', index=False)
 
@@ -381,9 +383,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     return df_final
 
 
-def filter_reactions_pandas(data_r, data_c, f_log=None):
-    
-    t = lambda x: print(time.strftime('%I:%M:%S %p'), end='\t')
+def compound_lookup_tables(data_c, f_log=None):
 
     # DataFrame of compound attributes relevant for balancing reactions
     print_and_log('making "cpd_data": DataFrame of compound attributes relevant for balancing reactions', f_log)
@@ -395,6 +395,21 @@ def filter_reactions_pandas(data_r, data_c, f_log=None):
                                    .map(standardize_mol, na_action='ignore')
                                    .map(Chem.GetFormalCharge, na_action='ignore')
                                    .fillna(0).astype(int))) # when standardized from file, all 7 have charge=0
+
+    # DataTable indicating, for each compound (column), the count (value) of each element (row)
+    print_and_log('making "formula_table": matrix-like DataFrame of element counts for each compound', f_log)
+    formula_table = cpd_data['formula_dict'].apply(pd.Series).fillna(0).astype(int).T
+    
+    return cpd_data, formula_table
+
+
+def filter_reactions_pandas(data_r, data_c, formula_table=None, f_log=None):
+    
+    # DataFrame of compound attributes relevant for balancing reactions
+    if set(['formula_dict', 'starred', 'formal_charge']).issubset(set(data_c.columns)) and formula_table is not None:
+        cpd_data = data_c
+    else:
+        cpd_data, formula_table = compound_lookup_tables(data_c, f_log=f_log)
 
     # DataFrame of dicts of reactants and products
     print_and_log('making "sides": DataFrame of reactant and product dicts', f_log)
@@ -413,11 +428,6 @@ def filter_reactions_pandas(data_r, data_c, f_log=None):
     print_and_log('making "reactant_cps", "product_cps": shows L+R sides as matrix-like DataFrame of coefficients for each compound in each reaction', f_log)
     reactant_cps, product_cps = [i.drop(rn_attrs.query('bool_missing_data or bool_var_list').index)
                                  .apply(pd.Series).T for _, i in sides.items()]
-
-    # DataTable indicating, for each compound (column), the count (value) of each element (row)
-    print_and_log('making "formula_table": matrix-like DataFrame of element counts for each compound', f_log)
-    formula_table = (cpd_data['formula_dict'].loc[reactant_cps.index.union(product_cps.index)]
-                     .apply(pd.Series).fillna(0).astype(int).T)
 
     # calculate stoichiometry of each reaction as currently written
     print_and_log('making "reactant_els", "product_els": matrix-like DataFrames of current element counts for each reaction', f_log)
