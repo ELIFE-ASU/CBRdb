@@ -187,15 +187,21 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str):
     df = df_R.copy(deep=True)
     file_address = os.path.abspath(file_address)
     params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f'}
+
+    if df.index.name == 'id' or 'id' not in df.columns:
+        df = df.reset_index(drop=False, names='id')
+
     listlike_cols = df.columns.intersection(['ec', 'rclass', 'pathway', 'orthology', 'rhea', 'module'])
     col_order = ['id', 'reaction'] + sorted(list(listlike_cols)) + sorted(
         df.columns.difference(listlike_cols.union(['id', 'reaction'])))
+
     for col in listlike_cols:
         first_entry = df[col].dropna().iloc[0]
         if type(first_entry) is str:
             df.loc[:, col] = df.loc[:, col].str.replace('  ', '__').str.split(' ')
         if hasattr(first_entry, '__iter__'):
             df.loc[:, col] = df.loc[:, col].map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')
+
     df = df.sort_values(by='id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
     return file_address
@@ -203,7 +209,7 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str):
 
 def compound_csv(df_C: pd.DataFrame, file_address: str):
     """
-    Prints a reaction dataframe to CSV file, in standardized format.
+    Prints a compound dataframe to CSV file, in standardized format.
 
     Parameters:
     df_C (pd.DataFrame): The compound DataFrame to be printed as a CSV.
@@ -215,10 +221,15 @@ def compound_csv(df_C: pd.DataFrame, file_address: str):
     df = df_C.copy(deep=True)
     file_address = os.path.abspath(file_address)
     params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f'}
+
+    if df.index.name == 'compound_id' or 'compound_id' not in df.columns:
+        df = df.reset_index(drop=False, names='compound_id')
+
     first_cols = ['compound_id', 'smiles', 'formula', 'molecular_weight', 'n_heavy_atoms', 'n_chiral_centers',
-                  'smiles_capped', 'inchi_capped', 'name', 'comment', 'glycan_ids', 'drug_ids']
+                  'smiles_capped', 'inchi_capped', 'name', 'comment', 'glycan_ids', 'drug_ids', 'CBRdb_R_ids']
     col_order = [i for i in first_cols if i in df.columns] + sorted(list(df.columns.difference(first_cols)),
                                                                     reverse=True)
+
     df = df.sort_values(by='compound_id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
     return file_address

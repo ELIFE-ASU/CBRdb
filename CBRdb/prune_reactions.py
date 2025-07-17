@@ -1,7 +1,7 @@
 import pandas as pd
 
 from .merge_data_sets import identify_duplicate_compounds
-from .tools_files import reaction_csv
+from .tools_files import reaction_csv, compound_csv
 
 
 def all_entries(dbs):
@@ -274,8 +274,8 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
 
     # replace compound entries with dupe names
     dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap']['new_id'])
+    # de-duplicate compounds
     dbs['CBRdb_C'] = dbs['CBRdb_C'].sort_values(by='compound_id').drop_duplicates(subset='compound_id', keep='first')
-    dbs['CBRdb_C'].to_csv('../CBRdb_C.csv', encoding='utf-8', index=False, float_format='%.3f')
 
     # replace compound IDs in reaction dfs. kegg_data_R_orig and atlas_data_R_orig retain original entries.
     dbs['kegg_data_R'].loc[:, 'reaction'] = dbs['kegg_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
@@ -286,5 +286,6 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
         reaction_csv(dbs[k], f'../data/{k}_dedupedCs.csv')
+    compound_csv(dbs['CBRdb_C'], '../CBRdb_C.csv')
 
     return dbs
