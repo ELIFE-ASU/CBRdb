@@ -117,21 +117,29 @@ def list_multistep_parts(dbs):
     return rns
 
 
-def list_multistep_enumerated(dbs):
+def list_multistep_enumerated(dbs, verbose=False):
     """
     Identifies reactions that are part of multistep processes and enumerates them.
 
     Parameters:
     dbs (dict): A dictionary containing the following key:
                 - 'kegg_data_R': A pandas DataFrame with KEGG reaction data.
-
+    verbose (bool): If True, saves a file enumerating each reaction's constituent steps. Default is False.
     Returns:
     pd.Index: An index of reaction IDs that are part of multistep processes.
     """
+    if dbs['kegg_data_R'].index.name == 'id':
+        dbs['kegg_data_R'].reset_index(inplace=True)
     reactions_overall = dbs['kegg_data_R'].set_index('id')['overall'].dropna().index
-    reactions_multistep_parts = list_multistep_parts(dbs)  # KEEP THESE
+    reactions_multistep_parts = list_multistep_parts(dbs)  # KEEP THESE 
     rns = all_kegg_comments(dbs).drop(reactions_multistep_parts).query(
         'rn_refs.str.len()>1 & comment.str.contains("step") & ~comment.str.contains("possibl|probabl|similar")')
+    if verbose:
+        multistep_enum = pd.concat([dbs['kegg_data_R'].set_index('id').loc[['R10671'], ['comment']],
+                                     dbs['kegg_data_R'].set_index('id').loc[reactions_overall, ['comment']],
+                                     rns])
+        multistep_enum['rn_refs'] = multistep_enum['rn_refs'].map(lambda x: ' '.join(list(x)), na_action='ignore')
+        multistep_enum.to_csv('../data/multistep_enumerated.csv', encoding='utf-8')
     rns = rns.index.union(reactions_overall).drop_duplicates().union({'R10671'})  # false negative: "similar" in line
     return rns
 
