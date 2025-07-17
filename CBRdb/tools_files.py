@@ -173,20 +173,21 @@ def add_suffix_to_file(fname, suffix):
     return f"{dn}/{fn}_{suffix}{ext}"  # Return the new file name with the suffix added
 
 
-def reaction_csv(df_R: pd.DataFrame, file_address: str):
+def reaction_csv(df_R: pd.DataFrame, file_address: str, compression='infer'):
     """
     Prints a reaction dataframe to CSV file, in standardized format.
 
     Parameters:
     df_R (pd.DataFrame): The reaction DataFrame to be printed as a CSV.
     file_address (str): The file address i.e. where to save the CSV.
+    compression (str): Compression mode. Default is 'infer'; see pandas.DataFrame.to_csv docs for details.
 
     Returns:
     str : The file address where the CSV was saved.
     """
     df = df_R.copy(deep=True)
     file_address = os.path.abspath(file_address)
-    params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f'}
+    params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f', 'compression': compression}
 
     if df.index.name == 'id' or 'id' not in df.columns:
         df = df.reset_index(drop=False, names='id')
@@ -207,20 +208,21 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str):
     return file_address
 
 
-def compound_csv(df_C: pd.DataFrame, file_address: str):
+def compound_csv(df_C: pd.DataFrame, file_address: str, compression='infer'):
     """
     Prints a compound dataframe to CSV file, in standardized format.
 
     Parameters:
     df_C (pd.DataFrame): The compound DataFrame to be printed as a CSV.
     file_address (str): The file address i.e. where to save the CSV.
+    compression (str): Compression mode. Default is 'infer'; see pandas.DataFrame.to_csv docs for details.
 
     Returns:
     str : The file address where the CSV was saved.
     """
     df = df_C.copy(deep=True)
     file_address = os.path.abspath(file_address)
-    params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f'}
+    params = {'encoding': 'utf-8', 'index': False, 'float_format': '%.3f', 'compression': compression}
 
     if df.index.name == 'compound_id' or 'compound_id' not in df.columns:
         df = df.reset_index(drop=False, names='compound_id')
