@@ -12,11 +12,12 @@ from .fix_reactions_data import (fix_reactions_data,
                                  filter_reactions_pandas,
                                  get_charge_balanced_injections_1el,
                                  get_charge_balanced_injections_OH,
-                                 compound_lookup_tables
+                                 compound_lookup_tables,
                                  )
 from .lets_get_kegg import (download_data)
 from .merge_data_sets import (merge_duplicate_reactions,
-                              identify_duplicate_compounds)
+                              identify_duplicate_compounds,
+                              add_R_col_to_C_file)
 from .preprocessor import (preprocess, log_compounds_for_followup)
 from .prune_reactions import (iteratively_prune_entries,
                               df_of_suspect_reactions,

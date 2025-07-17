@@ -70,5 +70,6 @@ if __name__ == "__main__":
     dbs['r_dupemap'] = CBRdb.tools_eq.generate_reaction_dupemap(dbs['reactions_joined'], prefix='T')
     dbs['CBRdb_R'] = CBRdb.merge_duplicate_reactions(dbs['reactions_joined'], dbs['r_dupemap'])
     CBRdb.reaction_csv(dbs['CBRdb_R'], "../CBRdb_R.csv")
+    CBRdb.add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp='../CBRdb_R.csv')
 
     print("Program finished", flush=True)
