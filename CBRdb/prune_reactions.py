@@ -257,6 +257,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     dbs['CBRdb_C'] = dbs['kegg_data_C'].copy(deep=True)
 
     sus = df_of_suspect_reactions(dbs)  # identify suspect reactions
+    sus = add_sus_reaction_dupes(sus, dbs)  # add reactions whose equations match that of a suspect reaction
     sus = add_suspect_reactions_to_existing_bad_file(sus)  # add to log and import log
 
     # remove reactions matching quarantine specs
@@ -289,3 +290,28 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     compound_csv(dbs['CBRdb_C'], '../CBRdb_C.csv')
 
     return dbs
+
+
+def add_sus_reaction_dupes(sus, dbs):
+    sort_sides = lambda df: df['reaction'].str.split(' <=> ').map(lambda x: ' <=> '.join(sorted(x)))
+
+    # Add equations for suspect Atlas reactions (above func only checks for missing structures))
+    sus = sus.join(dbs['atlas_data_R'].set_index('id')[['reaction']])
+    # Add equations for suspect KEGG reactions (also checks for multi-step, incomplete, etc.)
+    sus.update(dbs['kegg_data_R'].set_index('id')[['reaction']])
+
+    # Sort sides to remove directionality-only differences
+    sus['reaction'] = sort_sides(sus)
+    # Do the same for Atlas and KEGG reactions
+    atlas_eqs = sort_sides(dbs['atlas_data_R'].set_index('id'))
+    kegg_eqs = sort_sides(dbs['kegg_data_R'].set_index('id'))
+    # Consider the not-yet-suspect reactions
+    pre_sus_reactions = pd.concat([atlas_eqs, kegg_eqs]).drop(sus.index)
+    # For each equation, find matching not-yet-suspect reactions
+    pre_sus_reactions = pre_sus_reactions.reset_index().groupby('reaction')['id'].apply(list)
+    # If a suspect reaction's equation matches a not-yet-suspect reaction's equation, add it to the suspect list
+    s = 'matches'
+    sus[s] = sus.reaction.map(pre_sus_reactions)
+    sus = pd.concat([sus, sus.dropna(subset=s).explode(s).set_index(s).rename_axis('id')])
+    sus = sus.drop(columns=['reaction', s])
+    return sus
