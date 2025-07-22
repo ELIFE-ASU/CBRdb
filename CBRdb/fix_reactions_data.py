@@ -7,6 +7,7 @@ from rdkit import Chem as Chem
 
 from .tools_eq import (convert_formula_to_dict,
                        side_to_dict,
+                       eq_to_dict,
                        get_elements_from_eq,
                        compare_dict_values,
                        standardise_eq,
@@ -17,7 +18,7 @@ from .tools_eq import (convert_formula_to_dict,
                        fix_imbalance_core,
                        )
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements, standardize_mol)
-
+from .tools_files import reaction_csv, compound_csv
 
 def print_and_log(statement, file=None):
     """
@@ -383,6 +384,44 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     return df_final
 
 
+def balance_simple_cases(R_main, C_main, name='kegg', compression='infer', data_c=None, formula_table=None, dfs=None):
+
+    if R_main.index.name != 'id': 
+        R_main = R_main.set_index('id')
+    if C_main.index.name != 'compound_id':
+        C_main = C_main.set_index('compound_id')
+    if data_c is None or formula_table is None:
+        # If no precomputed compound data is provided, compute it
+        data_c, formula_table = compound_lookup_tables(C_main)
+    if type(dfs) is not dict:
+        dfs = dict()
+  
+    dfs = filter_reactions_pandas(data_r=R_main, data_c=data_c, formula_table=formula_table, f_log=None, dfs=dfs)
+
+    injections_1el = get_charge_balanced_injections_1el(data_c = dfs['cpd_data'], dfs = dfs)
+    injections_OH = get_charge_balanced_injections_OH(data_c = dfs['cpd_data'], dfs = dfs)
+
+    inj_df = pd.concat([injections_1el.join(R_main[['reaction']]), injections_OH.join(R_main[['reaction']])])
+    inj_df['compounds'] = inj_df['reaction'].str.findall(r'([C]\d{5})')
+
+    left_injections = inj_df.query('left_side').assign(
+        reaction_inj = lambda x: (x['count'].astype(str) + ' ' + x['compound_id'] + ' + ' + x['reaction'])
+        .map(standardise_eq))
+    right_injections = inj_df.query('left_side.eq(False)').assign(
+        reaction_inj = lambda x: (x['reaction'] + ' + ' + x['count'].astype(str) + ' ' + x['compound_id'])
+        .map(standardise_eq))
+
+    now_balanced = pd.concat([left_injections['reaction_inj'], right_injections['reaction_inj']]).rename('reaction').to_frame()
+    R_main.update(now_balanced)
+
+    file_address = f'../data/{name}_simple_balanced.csv'
+    reaction_csv(df_R = R_main, file_address=file_address, compression=compression)
+
+    case_records = dict(dfs=dfs, inj_df=inj_df, now_balanced=now_balanced, file_address=file_address)
+
+    return case_records
+
+
 def compound_lookup_tables(data_c, f_log=None):
 
     # DataFrame of compound attributes relevant for balancing reactions
@@ -403,46 +442,92 @@ def compound_lookup_tables(data_c, f_log=None):
     return cpd_data, formula_table
 
 
-def filter_reactions_pandas(data_r, data_c, formula_table=None, f_log=None):
+def filter_reactions_pandas(data_r, data_c, formula_table=None, f_log=None, dfs=None):
+    """
+    Filters reactions data to identify those that can be balanced, and prepares data for stoichiometric calculations.
+
+    Parameters:
+    data_r (pd.DataFrame): DataFrame containing reaction data.
+    data_c (pd.DataFrame): DataFrame containing compound data.
+    formula_table (pd.DataFrame, optional): Precomputed DataFrame of element counts for compounds.
+    f_log (file object, optional): File object for logging.
+    dfs (dict, optional): Dictionary to store processed DataFrames and other relevant information.
+
+    Returns:
+    dict: A dictionary containing processed DataFrames and other relevant information.
+    """
+    # Instantiate a dict for results
+    if dfs is None:
+        dfs = dict()
+    if type(dfs) is not dict:
+        raise TypeError('dfs must be a dict, not {}'.format(type(dfs)))
+    if data_c.index.name != 'compound_id' or 'compound_id' in data_c.columns:
+        # Ensure that the compound DataFrame has 'compound_id' as the index
+        data_c = data_c.set_index('compound_id')
     
-    # DataFrame of compound attributes relevant for balancing reactions
+    # Generate a DataFrame of compound attributes relevant for balancing reactions
     if set(['formula_dict', 'starred', 'formal_charge']).issubset(set(data_c.columns)) and formula_table is not None:
-        cpd_data = data_c
+        cpd_data = data_c.copy(deep=True)
     else:
         cpd_data, formula_table = compound_lookup_tables(data_c, f_log=f_log)
 
-    # DataFrame of dicts of reactants and products
-    print_and_log('making "sides": DataFrame of reactant and product dicts', f_log)
-    sides = data_r['reaction'].str.split('<=>', expand=True).map(side_to_dict)
-    # Function to get a GroupBy object returning whether reaction participants are in a listlike object
-    cpd_group_attrs = lambda lstlike: sides.map(lambda x: x.keys()).stack().explode().isin(lstlike).groupby(level=0)
+    # Set compound and reaction IDs as indices for faster subsetting
+    if 'compound_id' in cpd_data.columns:
+        cpd_data = cpd_data.set_index('compound_id')
+    if 'id' in data_r.columns:
+        data_r = data_r.set_index('id')
+    dfs.update({'cpd_data': cpd_data})
+    
+    ft = formula_table.T
+    dfs.update({'formula_table': formula_table})
 
-    # DataFrame of reaction attributes
-    print_and_log('making "rns": DataFrame of reaction attributes e.g. missing data, starred compounds, vars-as-coefficients', f_log)
-    rn_attrs = pd.DataFrame({'bool_missing_data': ~ cpd_group_attrs(cpd_data.index).all(),
-                            'cpd_starred': cpd_group_attrs(cpd_data.query('starred').index).any(),
-                            'bool_var_list': ~ sides.map(lambda x: all([str(i).isnumeric() for i in x.values()])).all(axis=1)})
+    # Get each reaction as a dict of reactants and products
+    equations = data_r['reaction'].map(eq_to_dict)
+    sides = pd.DataFrame(equations.tolist(), index=equations.index).rename(columns={0:'L', 1:'R'})
+    dfs.update({'sides': sides})
+
+    # Left side compound IDs and coefficients
+    lsc = sides['L'].map(lambda x: x.items()).explode()
+    lsc = pd.DataFrame(lsc.tolist(), index=lsc.index, columns=['compound_id', 'coeff'])
+
+    # Right side compound IDs and coefficients
+    rsc = sides['R'].map(lambda x: x.items()).explode()
+    rsc = pd.DataFrame(rsc.tolist(), index=rsc.index, columns=['compound_id', 'coeff'])
+
+    # Label reactions with var coefficients; can't get stoichiometry for them
+    has_var_coeff = pd.concat([rsc.coeff, lsc.coeff]).map(type).eq(str).groupby(level=0).any()
+    rsc = rsc.mask(has_var_coeff).dropna(how='any')
+    lsc = lsc.mask(has_var_coeff).dropna(how='any')
+    dfs.update({'reactant_cps': lsc, 'product_cps': rsc})
+
+    # To prep for L-R comparison in charge balance, map compound IDs to formal charges
+    left_charge = lsc['compound_id'].map(cpd_data['formal_charge']) * lsc['coeff']
+    right_charge = rsc['compound_id'].map(cpd_data['formal_charge']) * rsc['coeff']
+    left_charge = left_charge.groupby(level=0).sum()
+    right_charge = right_charge.groupby(level=0).sum()
+
+    # To prep for L-R comparison in element counts, map compound IDs to element counts
+    lse = lsc.reset_index().merge(ft, left_on='compound_id', right_index=True, how='left').drop(columns='compound_id').set_index('id')
+    rse = rsc.reset_index().merge(ft, left_on='compound_id', right_index=True, how='left').drop(columns='compound_id').set_index('id')
+
+    # Multiply element counts by compound coefficients
+    lse.update(lse.iloc[:, 1:].apply(lambda x: x * lse['coeff'], axis=0))
+    rse.update(rse.iloc[:, 1:].apply(lambda x: x * rse['coeff'], axis=0))
+
+    # Sum the element counts for each reaction
+    reactant_els = lse.groupby(level=0).sum().drop(columns='coeff')
+    product_els = rse.groupby(level=0).sum().drop(columns='coeff')
+    dfs.update({'reactant_els': reactant_els, 'product_els': product_els})
+
+    # Log reaction attributes
+    print_and_log('making "rns": DataFrame of reaction attributes', f_log)
+    all_structures_found = dfs['sides'].stack().explode().isin(cpd_data.index).groupby(level=0).all()
+    no_var_coefficients = dfs['sides'].map(lambda x: all(type(v) is not str for v in x.values())).all(axis=1)
+    has_starred_compound = dfs['sides'].stack().explode().isin(cpd_data.query('starred').index).groupby(level=0).any()
+    rn_attrs = pd.DataFrame({'bool_missing_data': ~ all_structures_found,
+                                'cpd_starred': has_starred_compound,
+                                'bool_var_list': ~ no_var_coefficients})
     rn_attrs['rebalanceable'] = ~ rn_attrs.any(axis=1)
-
-    # DataFrame for each side, indicating the numeric coefficient (value) for each compound (row) in each reaction (column)
-    print_and_log('making "reactant_cps", "product_cps": shows L+R sides as matrix-like DataFrame of coefficients for each compound in each reaction', f_log)
-    reactant_cps, product_cps = [i.drop(rn_attrs.query('bool_missing_data or bool_var_list').index)
-                                 .apply(pd.Series).T for _, i in sides.items()]
-
-    # calculate stoichiometry of each reaction as currently written
-    print_and_log('making "reactant_els", "product_els": matrix-like DataFrames of current element counts for each reaction', f_log)
-    reactant_els, product_els = dict(), dict()
-    for id, reactants in reactant_cps.items():  # for each reaction
-        coeffs = reactants.dropna()  # access reactant IDs and coefficients
-        reactant_els[id] = (coeffs * formula_table[coeffs.index]).sum(axis=1)  # sum elements
-    for id, products in product_cps.items():
-        coeffs = products.dropna()
-        product_els[id] = (coeffs * formula_table[coeffs.index]).sum(axis=1)
-    reactant_els = pd.DataFrame(reactant_els).T.astype(int)
-    product_els = pd.DataFrame(product_els).T.astype(int)
-
-    # ID whether reaction is balanced, balanceable, or (to inform treatment of starred reactions) balanced except for *
-    print_and_log('using "reactant_els and "product_els" to add columns to DataFrame "rns":', f_log)
     print_and_log('  * is_balanced: whether the reaction is balanced as written', f_log)
     rn_attrs['is_balanced'] = (product_els == reactant_els).all(axis=1)
     print_and_log('  * to_rebalance: unbalanced reactions that lack missing data, starred compounds, or vars-as-coefficients', f_log)
@@ -450,14 +535,14 @@ def filter_reactions_pandas(data_r, data_c, formula_table=None, f_log=None):
     print_and_log('  * is_balanced_except_star: reactions for which "*" is the only imbalanced element', f_log)
     rn_attrs['is_balanced_except_star'] = (product_els == reactant_els).drop(columns='*', errors='ignore').all(axis=1) & \
                                           rn_attrs['is_balanced'].eq(False)
-    print_and_log('  * charge_R-L: charge (im)balance across the reaction (charge_R - charge_L). If positive, right needs (-) or left needs (+)', f_log)
-    rn_attrs['charge_R-L'] = ((product_cps.T * cpd_data['formal_charge'].loc[product_cps.index]).sum(axis=1) -
-                            (reactant_cps.T * cpd_data['formal_charge'].loc[reactant_cps.index]).sum(axis=1)).astype(int)
-
+    #print_and_log('  * charge_R-L: charge (im)balance across the reaction (charge_R - charge_L). If positive, right needs (-) or left needs (+)', f_log)
+    rn_attrs['charge_R-L'] = right_charge - left_charge
+    dfs.update({'rns': rn_attrs})
     # pd.Series listing sets of formulas for each side of the reaction; can use Series.apply chempy.balance_stoichiometry to check in bulk.
     print_and_log('making "formula_sides": pd.Series listing sets of formulas for to-rebalance reactions above.', f_log)
     formula_sides = pd.Series(
         sides.loc[rn_attrs['to_rebalance']].map(lambda x: set(data_c.formula.loc[x.keys()])).T.to_dict(orient='list'))
+    dfs.update({'formula_sides': formula_sides})
 
     # DataFrame of element count diffs (R - L); same count diff might indicate same set of compound-injector solutions, saving iterations
     print_and_log('making "el_diff_groups": DataFrame assigning group numbers to reactions based on their element-count diff (R - L).', f_log)
@@ -466,14 +551,7 @@ def filter_reactions_pandas(data_r, data_c, formula_table=None, f_log=None):
     observed_el_diffs['group_size'] = observed_el_diffs['group_num'].map(observed_el_diffs['group_num'].value_counts())
     observed_el_diffs = observed_el_diffs.sort_values(by=['group_size', 'group_num'], ascending=[False, True]).drop(
         'group_size', axis=1).set_index('group_num', append=True)
-
-    print_and_log('Combining all dataframes into a dict.', f_log)
-    dfs = {'reactant_cps': reactant_cps, 'product_cps': product_cps,
-           'reactant_els': reactant_els, 'product_els': product_els,
-           'rns': rn_attrs, 'formula_table': formula_table,
-           'sides': sides, 'formula_sides': formula_sides,
-           'cpd_data': cpd_data, 
-           'el_diff_groups': observed_el_diffs}
+    dfs.update({'el_diff_groups': observed_el_diffs})
 
     print_and_log(f'Entries: {list(dfs.keys())}', f_log)
     return dfs

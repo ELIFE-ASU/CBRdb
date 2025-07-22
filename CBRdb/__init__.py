@@ -7,6 +7,7 @@ from .fix_halogens import (fix_halogen_compounds,
                            fix_halogen_reactions_without_existing_halogens,
                            )
 from .fix_reactions_data import (fix_reactions_data,
+                                 balance_simple_cases,
                                  kitchen_sink,
                                  dict_ele_contains_star,
                                  filter_reactions_pandas,
