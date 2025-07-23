@@ -588,10 +588,27 @@ def test_calculate_free_energy():
 
 
 def test_to_smarts_rxn_line():
-    print(flush=True)
-    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
-    eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
+    """
+    Test the `to_smarts_rxn_line` function from the `CBRdb` module.
 
-    r_smarts = CBRdb.to_smarts_rxn_line(eq, data_c)
+    This test verifies that the function correctly converts a chemical equation
+    into a SMARTS reaction line.
+
+    Steps:
+    1. Load compound data from a CSV file.
+    2. Define a chemical equation with reactants and products.
+    3. Convert the equation into a SMARTS reaction line using `to_smarts_rxn_line`.
+    4. Assert that the generated SMARTS reaction line matches the expected value.
+
+    Raises:
+    -------
+    AssertionError:
+        If the generated SMARTS reaction line does not match the expected value.
+    """
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))  # Load compound data
+    eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"  # Define chemical equation
+
+    r_smarts = CBRdb.to_smarts_rxn_line(eq, data_c)  # Convert equation to SMARTS reaction line
     print(r_smarts, flush=True)
-    assert r_smarts == '2[Mn+2].1OO.2[H+]>>2[Mn+3].2[H]O[H]'
+    assert r_smarts == '2[Mn+2].1OO.2[H+]>>2[Mn+3].2[H]O[H]'  # Verify the result

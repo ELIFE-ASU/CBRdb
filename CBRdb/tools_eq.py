@@ -1086,6 +1086,27 @@ def plot_reaction_id(id, data_r, data_c, render_dir='render', size=(600, 600)):
 
 
 def to_smarts_rxn_line(eq, data_c):
+    """
+    Converts a chemical equation into a SMARTS reaction line.
+
+    Parameters:
+    -----------
+    eq : str
+        A string representing a chemical equation, with reactants and products separated by '<=>'.
+    data_c : pandas.DataFrame
+        A DataFrame containing compound data with 'compound_id' and 'smiles' columns.
+
+    Returns:
+    --------
+    str
+        A SMARTS reaction line in the format 'reactants>>products', where reactants and products are represented
+        as concatenated SMARTS strings.
+
+    Notes:
+    ------
+    - The function retrieves SMILES strings for reactants and products from the `data_c` DataFrame.
+    - Reactants and products are combined into SMARTS strings using their stoichiometric coefficients.
+    """
     reactants, products = eq_to_dict(eq)
 
     # Get SMILES for reactants and products
