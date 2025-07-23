@@ -18,14 +18,27 @@ from .fix_reactions_data import (fix_reactions_data,
 from .lets_get_kegg import (download_data)
 from .merge_data_sets import (merge_duplicate_reactions,
                               identify_duplicate_compounds,
-                              add_R_col_to_C_file)
+                              add_R_col_to_C_file,
+                              )
 from .preprocessor import (preprocess, log_compounds_for_followup)
 from .prune_reactions import (iteratively_prune_entries,
                               df_of_suspect_reactions,
                               suspect_reaction_subset,
                               quarantine_suspect_reactions_matching,
-                              add_suspect_reactions_to_existing_bad_file)
+                              add_suspect_reactions_to_existing_bad_file,
+                              )
 from .tools_atoms import (calculate_free_energy)
+from .tools_complexity import (count_unique_bonds,
+                               molecular_weight,
+                               bertz_complexity,
+                               wiener_index,
+                               balaban_index,
+                               randic_index,
+                               kirchhoff_index,
+                               spacial_score,
+                               get_mol_descriptors,
+                               get_chirality,
+                               )
 # from .tools_atom_tracking import (canonicalize_smiles,
 #                                   smiles_to_mols,
 #                                   label_atom,
