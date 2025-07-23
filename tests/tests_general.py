@@ -585,3 +585,13 @@ def test_calculate_free_energy():
     ref_energy = -2079.975658927851  # Reference Gibbs free energy value
     assert np.allclose(energy, ref_energy,
                        atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
+
+
+def test_to_smarts_rxn_line():
+    print(flush=True)
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
+    eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
+
+    r_smarts = CBRdb.to_smarts_rxn_line(eq, data_c)
+    print(r_smarts, flush=True)
+    assert r_smarts == '2[Mn+2].1OO.2[H+]>>2[Mn+3].2[H]O[H]'
