@@ -1083,3 +1083,17 @@ def plot_reaction_id(id, data_r, data_c, render_dir='render', size=(600, 600)):
     eq = data_r.loc[data_r['id'] == id, 'reaction'].values[0]
     # Plot the eq
     return plot_eq_line(eq, data_c, render_dir=render_dir, size=size)
+
+
+def to_smarts_rxn_line(eq, data_c):
+    reactants, products = eq_to_dict(eq)
+
+    # Get SMILES for reactants and products
+    reactants_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in reactants}
+    products_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in products}
+
+    # Combine SMILES into SMARTS strings
+    reactants_smarts = ".".join(f"{reactants[k]}{v}" for k, v in reactants_smiles.items())
+    products_smarts = ".".join(f"{products[k]}{v}" for k, v in products_smiles.items())
+
+    return f"{reactants_smarts}>>{products_smarts}"

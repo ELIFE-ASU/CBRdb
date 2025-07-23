@@ -89,6 +89,7 @@ from .tools_eq import (convert_formula_to_dict,
                        generate_reaction_dupemap,
                        plot_eq_line,
                        plot_reaction_id,
+                       to_smarts_rxn_line,
                        )
 from .tools_files import (file_list,
                           file_list_all,
