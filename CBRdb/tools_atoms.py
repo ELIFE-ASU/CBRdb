@@ -1,6 +1,8 @@
 import os
+import re
 import tempfile
 
+import pandas as pd
 from ase.atoms import Atoms
 from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
@@ -533,3 +535,270 @@ def calculate_free_energy(atoms,
                         break
 
         return energy
+
+
+def load_ir_data(filename):
+    """
+    Load IR spectrum data from ORCA output file into a pandas DataFrame.
+
+    Args:
+        filename (str): Path to the IR frequency output file
+
+    Returns:
+        pd.DataFrame: DataFrame containing Mode, Frequency (cm^-1), Epsilon, and Intensity
+    """
+    # Read the file
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+
+    # Find the start of the IR spectrum data
+    start_idx = None
+    for i, line in enumerate(lines):
+        if 'Mode   freq       eps      Int' in line:
+            start_idx = i + 2  # Skip header and separator line
+            break
+
+    if start_idx is None:
+        raise ValueError("Could not find IR spectrum data in the file")
+
+    # Extract data
+    data = []
+    for i in range(start_idx, len(lines)):
+        line = lines[i].strip()
+        if not line or line.startswith('*') or line.startswith('The first'):
+            break
+
+        # Parse the line using regex to handle varying whitespace
+        match = re.match(r'\s*(\d+):\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)', line)
+        if match:
+            mode = int(match.group(1))
+            freq = float(match.group(2))
+            eps = float(match.group(3))
+            intensity = float(match.group(4))
+            data.append([mode, freq, eps, intensity])
+
+    # Create DataFrame
+    df = pd.DataFrame(data, columns=['Mode', 'Frequency (cm^-1)', 'Epsilon', 'Intensity (km/mol)'])
+
+    return df
+
+
+def load_raman_data(filename):
+    """
+    Load Raman spectrum data from ORCA output file into a pandas DataFrame.
+
+    Args:
+        filename (str): Path to the Raman frequency output file
+
+    Returns:
+        pd.DataFrame: DataFrame containing Mode, Frequency, Activity, and Depolarisation
+    """
+    # Read the file
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+
+    # Find the start of the Raman spectrum data
+    start_idx = None
+    for i, line in enumerate(lines):
+        if 'Mode    freq (cm**-1)   Activity   Depolarization' in line:
+            start_idx = i + 2  # Skip header and separator line
+            break
+
+    if start_idx is None:
+        raise ValueError("Could not find Raman spectrum data in the file")
+
+    # Extract data
+    data = []
+    for i in range(start_idx, len(lines)):
+        line = lines[i].strip()
+        if not line or line.startswith('The first'):
+            break
+
+        # Parse the line using regex to handle varying whitespace
+        match = re.match(r'\s*(\d+):\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)', line)
+        if match:
+            mode = int(match.group(1))
+            freq = float(match.group(2))
+            activity = float(match.group(3))
+            depolarization = float(match.group(4))
+            data.append([mode, freq, activity, depolarization])
+
+    # Create DataFrame
+    df = pd.DataFrame(data, columns=['Mode', 'Frequency (cm^-1)', 'Intensity (km/mol)', 'Depolarization'])
+
+    return df
+
+
+def load_vib_data(filename):
+    """
+    Load vibrational spectrum data from a file into a pandas DataFrame.
+
+    Parameters:
+    -----------
+    filename : str
+        Path to the file containing vibrational spectrum data.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A DataFrame containing the following columns:
+        - 'Mode': Mode number (int).
+        - 'Frequency (cm^-1)': Frequency in inverse centimeters (float).
+        - 'Epsilon': Default value set to 1.0 (float).
+        - 'Intensity (km/mol)': Default value set to 1.0 (float).
+
+    Raises:
+    -------
+    ValueError
+        If the vibrational spectrum data cannot be found in the file.
+    """
+    # Read the file
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+
+    # Find the start of the IR spectrum data
+    start_idx = None
+    for i, line in enumerate(lines):
+        if 'Mode   freq       eps      Int' in line:
+            start_idx = i + 2  # Skip header and separator line
+            break
+
+    if start_idx is None:
+        raise ValueError("Could not find IR spectrum data in the file")
+
+    # Extract data
+    data = []
+    for i in range(start_idx, len(lines)):
+        line = lines[i].strip()
+        if not line or line.startswith('*') or line.startswith('The first'):
+            break
+
+        # Parse the line using regex to handle varying whitespace
+        match = re.match(r'\s*(\d+):\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)', line)
+        if match:
+            mode = int(match.group(1))  # Mode number
+            freq = float(match.group(2))  # Frequency in cm^-1
+            eps = 1.0  # Default epsilon value
+            intensity = 1.0  # Default intensity value
+            data.append([mode, freq, eps, intensity])
+
+    # Create DataFrame
+    df = pd.DataFrame(data, columns=['Mode', 'Frequency (cm^-1)', 'Epsilon', 'Intensity (km/mol)'])
+
+    return df
+
+
+def calculate_vib_spectrum(mol,
+                           orca_path=None,
+                           xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
+                           basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
+                           calc_type='ir',
+                           n_procs=10):
+    """
+    Perform a vibrational spectrum calculation using ORCA.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.Mol
+        The RDKit molecule object to be used for the calculation.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, the path is read from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use in the calculation. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set to use in the calculation. Default is 'def2-QZVP'.
+    calc_type : str, optional
+        Type of vibrational spectrum to calculate. Must be one of 'ir', 'raman', or 'vib'. Default is 'ir'.
+    nprocs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A DataFrame containing the vibrational spectrum data, with columns depending on the calculation type:
+        - For 'ir': Mode, Frequency (cm^-1), Epsilon, Intensity (km/mol).
+        - For 'raman': Mode, Frequency (cm^-1), Intensity (km/mol), Depolarization.
+        - For 'vib': Mode, Frequency (cm^-1), Epsilon, Intensity (km/mol).
+
+    Raises:
+    -------
+    AssertionError
+        If `calc_type` is not one of 'ir', 'raman', or 'vib'.
+    ValueError
+        If the calculation type is invalid.
+    """
+    # Ensure the calculation type is valid
+    assert calc_type in ['ir', 'raman', 'vib'], "calc_type must be either ir, raman, or vib"
+
+    # Determine the ORCA path
+    if orca_path is None:
+        # Try to read the path from the environment variable
+        orca_path = os.environ.get('ORCA_PATH')
+    else:
+        # Convert the provided path to an absolute path
+        orca_path = os.path.abspath(orca_path)
+
+    # Add hydrogens to the molecule and sanitize it
+    mol = Chem.AddHs(mol)
+    Chem.SanitizeMol(mol)
+
+    # Get the formal charge of the molecule
+    charge = get_charge(mol)
+
+    # Get the spin multiplicity of the molecule
+    multiplicity = get_spin_multiplicity(mol)
+
+    # Convert the RDKit molecule to an ASE Atoms object
+    atoms = mol_to_atoms(mol)
+
+    # Create a temporary working directory
+    with tempfile.TemporaryDirectory() as temp_dir:
+        orca_file = os.path.join(temp_dir, 'orca.out')
+
+        # Set up calculation-specific parameters
+        calc_extra = None
+        blocks_extra = None
+        if calc_type == 'ir' or calc_type == 'vib':
+            calc_extra = 'TIGHTOPT FREQ'
+        elif calc_type == 'raman':
+            calc_extra = 'TIGHTOPT FREQ'
+            blocks_extra = '''
+                %ELPROP
+                    POLAR 1
+                END'''
+
+        # Set up the ORCA calculator with the specified parameters
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                xc=xc,
+                                basis_set=basis_set,
+                                n_procs=n_procs,
+                                f_solv=False,
+                                f_disp=False,
+                                calc_extra=calc_extra,
+                                blocks_extra=blocks_extra,
+                                )
+
+        # Attach the calculator to the ASE Atoms object
+        atoms.calc = calc
+
+        # Perform the calculation (this will write the output to the ORCA file)
+        _ = atoms.get_potential_energy()
+
+        # Load the vibrational spectrum data based on the calculation type
+        if calc_type == 'ir':
+            # Load IR spectrum data
+            data = load_ir_data(orca_file)
+        elif calc_type == 'raman':
+            # Load Raman spectrum data
+            data = load_raman_data(orca_file)
+        elif calc_type == 'vib':
+            # Load vibrational spectrum data
+            data = load_vib_data(orca_file)
+        else:
+            # Raise an error if the calculation type is invalid
+            raise ValueError("calc_type must be either ir, raman, or vib")
+
+        return data

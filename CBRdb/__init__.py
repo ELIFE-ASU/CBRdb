@@ -27,7 +27,7 @@ from .prune_reactions import (iteratively_prune_entries,
                               quarantine_suspect_reactions_matching,
                               add_suspect_reactions_to_existing_bad_file,
                               )
-from .tools_atoms import (calculate_free_energy)
+from .tools_atoms import (calculate_free_energy, calculate_vib_spectrum)
 from .tools_complexity import (count_unique_bonds,
                                molecular_weight,
                                bertz,
