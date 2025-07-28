@@ -697,6 +697,38 @@ def calculate_vib_spectrum(mol,
                            f_solv=False,
                            f_disp=False,
                            n_procs=10):
+    """
+    Calculate vibrational spectrum data (IR, Raman, and vibrational modes) for a molecule using ORCA.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.rdchem.Mol
+        RDKit molecule object to be analyzed.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, attempts to read from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-QZVP'.
+    tight_opt : bool, optional
+        Whether to use tight geometry optimization. Default is False.
+    tight_scf : bool, optional
+        Whether to use tight SCF convergence. Default is False.
+    f_solv : bool or str, optional
+        Solvent model to use. If True, defaults to 'WATER'. Default is False (no solvent).
+    f_disp : bool or str, optional
+        Dispersion correction to use. If True, defaults to 'D4'. Default is False (no dispersion correction).
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+
+    Returns:
+    --------
+    tuple(pd.DataFrame, pd.DataFrame, pd.DataFrame)
+        A tuple containing three pandas DataFrames:
+        - IR spectrum data
+        - Raman spectrum data
+        - Vibrational spectrum data
+    """
     # Determine the ORCA path
     if orca_path is None:
         # Try to read the path from the environment variable
@@ -737,9 +769,9 @@ def calculate_vib_spectrum(mol,
             calc_extra = f'{opt_option} FREQ'
 
         blocks_extra = '''
-            %ELPROP
-                POLAR 1
-            END'''
+                              %ELPROP
+                                  POLAR 1
+                              END'''
 
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
