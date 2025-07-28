@@ -285,8 +285,8 @@ def optimise_atoms(atoms,
                    charge=0,
                    multiplicity=1,
                    orca_path=None,
-                   xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
-                   basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
+                   xc='r2SCAN-3c',
+                   basis_set='def2-QZVP',
                    tight_opt=False,
                    tight_scf=False,
                    f_solv=False,
@@ -567,7 +567,7 @@ def calculate_ccsd_energy(atoms,
                           charge=0,
                           multiplicity=1,
                           orca_path=None,
-                          basis_set='def2-QZVP',
+                          basis_set='def2-TZVPP',
                           n_procs=10):
     # If no ORCA path is provided, try to read it from the environment variable
     if orca_path is None:
@@ -589,9 +589,7 @@ def calculate_ccsd_energy(atoms,
         atoms.calc = calc
 
         # Perform the energy calculation
-        energy = atoms.get_potential_energy()
-
-        return energy
+        return atoms.get_potential_energy()
 
 
 def calculate_free_energy(atoms,

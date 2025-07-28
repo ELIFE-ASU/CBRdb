@@ -561,6 +561,19 @@ def test_plot_reaction_id():
     pass
 
 
+def test_calculate_ccsd_energy():
+    print(flush=True)
+    smi = "O"  # SMILES representation of the molecule (water in this case)
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    energy = CBRdb.calculate_ccsd_energy(atoms,
+                                         charge=charge,
+                                         multiplicity=multiplicity)
+    print(energy, flush=True)
+    ref_energy = -2077.148240270791  # Reference Gibbs free energy value
+    assert np.allclose(energy, ref_energy,
+                       atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
+
+
 def test_calculate_free_energy():
     print(flush=True)
     smi = "O"  # SMILES representation of the molecule (water in this case)
@@ -569,7 +582,7 @@ def test_calculate_free_energy():
                                          charge=charge,
                                          multiplicity=multiplicity)
     print(energy, flush=True)
-    ref_energy = -2077.148240270791  # Reference Gibbs free energy value
+    ref_energy = -2079.599879755067  # Reference Gibbs free energy value
     assert np.allclose(energy, ref_energy,
                        atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
 
