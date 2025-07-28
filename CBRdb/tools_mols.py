@@ -1,19 +1,18 @@
 import os
 import re
-import traceback
 
 import chemparse
 import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
-from rdkit.Chem import Descriptors
-from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_files import remove_filepath
+from .tools_complexity import get_all_mol_descriptors
+from .tools_mp import mp_calc
 
 
 def sanitize_mol(mol):
@@ -80,50 +79,6 @@ def fix_r_group(mol, target="[H:0]", re="*"):
     return standardize_mol(mol)
 
 
-def get_chirality(mol):
-    """
-    Determines the number of chiral centers in the given molecule.
-
-    Parameters:
-    mol (rdkit.Chem.Mol): The molecule to be analyzed.
-
-    Returns:
-    int: The number of chiral centers in the molecule.
-    float: NaN if an error occurs during the analysis.
-    """
-    try:
-        return len(
-            Chem.FindMolChiralCenters(mol,
-                                      useLegacyImplementation=False,
-                                      includeUnassigned=True,
-                                      includeCIP=False))
-    except:
-        return float('NaN')
-
-
-def get_mol_descriptors_all(mol, missing_val=None):
-    """
-    Calculates all molecular descriptors for a given molecule.
-
-    This function iterates over all available molecular descriptors in RDKit,
-    calculates each descriptor for the provided molecule, and stores the results
-    in a dictionary. If a descriptor calculation fails, a specified missing value
-    is assigned.
-
-    :param mol: An RDKit molecule object.
-    :param missing_val: The value to assign if a descriptor calculation fails. Default is None.
-    :return: A dictionary with descriptor names as keys and their calculated values as values.
-    """
-    res = {}
-    for nm, fn in Descriptors._descList:
-        try:
-            res[nm] = fn(mol)
-        except:
-            traceback.print_exc()
-            res[nm] = missing_val
-    return res
-
-
 def mol_replacer_smi(smi, target="[H]"):
     """
     Replaces all occurrences of the '*' atom in the given SMILES string with the specified target atom or group.
@@ -166,24 +121,6 @@ def mol_replacer(mol, target="[H]"):
     mol_re = Chem.ReplaceSubstructs(mol, star, tar, replaceAll=True)
 
     return mol_re[0]
-
-
-def get_mol_descriptors(mol):
-    """
-    Calculates various molecular descriptors for the given molecule.
-
-    Parameters:
-    mol (rdkit.Chem.Mol): The molecule to be analyzed.
-
-    Returns:
-    tuple: A tuple containing the molecular formula (str), exact molecular weight (float),
-           number of heavy atoms (int), and number of chiral centers (int or float).
-    """
-    mol = sanitize_mol(mol)
-    return (rdMolDescriptors.CalcMolFormula(mol),
-            rdMolDescriptors.CalcExactMolWt(mol),
-            rdMolDescriptors.CalcNumHeavyAtoms(mol),
-            get_chirality(mol))
 
 
 def check_for_r_group(target_file, re_target=None):
@@ -358,30 +295,34 @@ def compound_super_safe_load(file, verbose=True):
     return mol
 
 
-def get_properties(mol):
-    """
-    Standardizes a molecule, fixes R groups, converts it to SMILES, and calculates molecular descriptors.
-
-    Parameters:
-    mol (rdkit.Chem.rdchem.Mol): The molecule to process.
-
-    Returns:
-    list: A list containing the SMILES string, molecular formula, molecular weight, number of heavy atoms, and number of chiral centers.
-    """
+def _get_properties(mol):
     # Standardize and embed the molecule
     mol = standardize_mol(mol)
     # Fix the fix r group so that it can be converted to smiles
     mol = fix_r_group(mol)
-    # Convert the molecule to SMILES string
-    smi = Chem.MolToSmiles(mol)
     # Get H capped molecule
-    mol_capped = mol_replacer(mol)
-    smi_capped = Chem.MolToSmiles(mol_capped)
-    inchi_capped = Chem.MolToInchi(mol_capped)
-
+    mol_capped = standardize_mol(mol_replacer(mol))
+    # Make sure the molecule is fully saturated with hydrogens
+    mol_capped = Chem.AddHs(mol_capped)
+    store_dict = {"smiles": Chem.MolToSmiles(mol),
+                  "inchi": Chem.MolToInchi(mol),
+                  "smiles_capped": Chem.MolToSmiles(mol_capped),
+                  "inchi_capped": Chem.MolToInchi(mol_capped)}
     # Calculate the molecular descriptors
-    formula, mw, n_heavy, nc = get_mol_descriptors(mol)
-    return [smi, smi_capped, inchi_capped, formula, mw, n_heavy, nc]
+    desc_dict = get_all_mol_descriptors(mol_capped)
+    # combine the descriptors with the capped SMILES and InChI
+    store_dict.update(desc_dict)
+    return store_dict
+
+
+def get_properties(mols):
+    properties_list = mp_calc(_get_properties, mols)
+
+    result = {}
+    if properties_list:
+        for key in properties_list[0]:
+            result[key] = [prop[key] for prop in properties_list]
+    return result
 
 
 def filter_compounds_without_star(dataframe):

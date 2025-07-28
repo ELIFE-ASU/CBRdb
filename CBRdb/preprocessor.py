@@ -12,7 +12,7 @@ lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_files import file_list_all, delete_files_substring, reaction_csv
 from .tools_eq import standardise_eq
-from .tools_mp import tp_calc, mp_calc
+from .tools_mp import tp_calc
 
 
 def load_csv_to_dict(file_path):
@@ -77,21 +77,12 @@ def preprocess_kegg_c(target_dir, man_dict):
     arr_cid += [cid for cid, smiles in man_dict.items()]
 
     # Get the properties
-    properties = mp_calc(get_properties, mols)
-
-    # Unpack the properties into the arrays
-    arr_smiles, arr_smiles_capped, arr_inchi_capped, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
+    df_dict = {"compound_id": arr_cid}
+    # Add properties to the dictionary
+    df_dict.update(get_properties(mols))
 
     # Create a dataframe
-    df = pd.DataFrame(data={
-        "compound_id": arr_cid,
-        "smiles": arr_smiles,
-        "formula": arr_formula,
-        "molecular_weight": arr_mw,
-        "n_heavy_atoms": arr_n_heavy,
-        "n_chiral_centers": arr_nc,
-        "smiles_capped": arr_smiles_capped,
-        "inchi_capped": arr_inchi_capped})
+    df = pd.DataFrame(data=df_dict)
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id").reset_index(drop=True).drop_duplicates().rename_axis(None, axis=1)
     print('Finished importing compound structures.', flush=True)

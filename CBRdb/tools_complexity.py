@@ -68,7 +68,7 @@ def molecular_weight(mol: Mol) -> float:
     return Descriptors.MolWt(mol)
 
 
-def bertz_complexity(mol: Mol) -> float:
+def bertz(mol: Mol) -> float:
     """
     Calculates the Bertz complexity of a molecule.
 
@@ -700,3 +700,27 @@ def mc2(mol: Mol) -> int:
 
     # Count non-divalent atoms not in C=O-X double bonds
     return sum(1 for atom in mol.GetAtoms() if atom.GetDegree() != 2 and atom.GetIdx() not in double_bond_set)
+
+
+def get_all_mol_descriptors(mol):
+    out_dict = {'formula': rdMolDescriptors.CalcMolFormula(mol),
+                "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol),
+                "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol),
+                'unique_bonds': count_unique_bonds(mol),
+                'bertz': bertz(mol),
+                'wiener_index': wiener_index(mol),
+                'balaban_index': balaban_index(mol),
+                'randic_index': randic_index(mol),
+                'kirchhoff_index': kirchhoff_index(mol),
+                'spacial_score': spacial_score(mol),
+                'chirality': get_chirality(mol),
+                'fcfp4': fcfp4(mol),
+                'bottcher': bottcher(mol),
+                'proudfoot': proudfoot(mol),
+                'mc1': mc1(mol),
+                'mc2': mc2(mol)}
+
+    batch_dict = get_mol_descriptors(mol)
+    # combine the descriptors into a single dictionary
+    out_dict.update(batch_dict)
+    return out_dict

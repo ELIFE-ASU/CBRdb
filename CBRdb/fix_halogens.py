@@ -9,7 +9,7 @@ lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_mols import standardize_mol, check_for_x_group, get_properties
 from .tools_files import make_custom_id, reaction_csv
-from .tools_mp import tp_calc, mp_calc
+from .tools_mp import tp_calc
 from .tools_eq import convert_formula_to_dict, standardise_eq
 
 
@@ -160,20 +160,12 @@ def merge_halogen_compounds(cids_dict,
 
     mols = [Chem.MolFromSmiles(smi) for smi in smis_list]
     # Get the properties
-    properties = mp_calc(get_properties, mols)
-    # Unpack the properties into the arrays
-    arr_smiles, arr_smiles_capped, arr_inchi_capped, arr_formula, arr_mw, arr_n_heavy, arr_nc = zip(*properties)
+    df_dict = {"compound_id": cids_list}
+    # Add properties to the dictionary
+    df_dict.update(get_properties(mols))
 
     # Create a dataframe
-    df = pd.DataFrame(data={
-        "compound_id": cids_list,
-        "smiles": smis_list,
-        "formula": arr_formula,
-        "molecular_weight": arr_mw,
-        "n_heavy_atoms": arr_n_heavy,
-        "n_chiral_centers": arr_nc,
-        "smiles_capped": arr_smiles_capped,
-        "inchi_capped": arr_inchi_capped, })
+    df = pd.DataFrame(data=df_dict)
     if int_file is not None:
         df.to_csv(int_file, encoding='utf-8', index=False, float_format='%.3f')
 
@@ -201,7 +193,7 @@ def merge_halogen_compounds_pd(C_main, specific_halogens, out_file="../data/kegg
     specific_halogens (pd.DataFrame): A pandas DataFrame containing specific halogen compounds extrapolated from generic ones, from fix_halogen_compounds.
     out_file (str, optional): File name to which output csv should be written. Defaults to "../data/kegg_data_C.csv".
     int_file (str, optional): Path to the intermediate file where new halogen compounds will be saved. Default is None.
-    
+
     Returns:
     pd.DataFrame: The updated DataFrame with new halogen compounds merged in.
     """
