@@ -3,7 +3,6 @@ import re
 import tempfile
 
 import pandas as pd
-from ase import Atoms
 from ase.atoms import Atoms
 from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
@@ -282,16 +281,54 @@ def orca_calc_preset(orca_path=None,
     return calc
 
 
-def optimise_atoms(atoms, calc_settings=None):
-    if calc_settings is None:
-        # Default calculation settings if none are provided
-        calc_settings = {'calc_extra': 'TIGHTOPT'}
+def optimise_atoms(atoms,
+                   charge=0,
+                   multiplicity=1,
+                   orca_path=None,
+                   xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
+                   basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
+                   tight_opt=False,
+                   tight_scf=False,
+                   f_solv=False,
+                   f_disp=False,
+                   n_procs=10):
+    # Determine the ORCA path
+    if orca_path is None:
+        # Try to read the path from the environment variable
+        orca_path = os.environ.get('ORCA_PATH')
+    else:
+        # Convert the provided path to an absolute path
+        orca_path = os.path.abspath(orca_path)
 
-    # Create a temporary directory for the calculation
+    if tight_opt:
+        # Set up geometry optimization and frequency calculation parameters
+        opt_option = 'TIGHTOPT'
+    else:
+        # Set up frequency calculation parameters only
+        opt_option = 'OPT'
+
+    if tight_scf:
+        # Set up tight SCF convergence parameters
+        calc_extra = f'{opt_option} TIGHTSCF'
+    else:
+        # Use default SCF convergence parameters
+        calc_extra = f'{opt_option}'
+
+    # Create a temporary working directory
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Set up the ORCA calculator with the specified parameters
-        calc = orca_calc_preset(directory=temp_dir, **calc_settings)
+        orca_file = os.path.join(temp_dir, "orca.xyz")
 
+        # Set up the ORCA calculator with the specified parameters
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                xc=xc,
+                                basis_set=basis_set,
+                                n_procs=n_procs,
+                                f_solv=f_solv,
+                                f_disp=f_disp,
+                                calc_extra=calc_extra)
         # Assign the calculator to the molecule
         atoms.calc = calc
 
@@ -299,148 +336,7 @@ def optimise_atoms(atoms, calc_settings=None):
         _ = atoms.get_potential_energy()
 
         # Load the optimised geometry from the ORCA output file
-        orca_file = os.path.join(temp_dir, "orca.xyz")
         return read(orca_file, format="xyz")
-
-
-def calculate_ccsd_energy(atoms,
-                          orca_path=None,
-                          charge=0,
-                          multiplicity=1,
-                          basis_set='aug-cc-pVTZ',
-                          n_procs=10):
-    # If no ORCA path is provided, try to read it from the environment variable
-    if orca_path is None:
-        orca_path = os.environ.get('ORCA_PATH')
-    else:
-        orca_path = os.path.abspath(orca_path)
-
-    # Create a temporary directory for the ORCA calculation
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Set up the ORCA calculator with the specified parameters
-        calc = orca_calc_preset(orca_path=orca_path,
-                                directory=temp_dir,
-                                calc_type='CCSD',
-                                charge=charge,
-                                multiplicity=multiplicity,
-                                basis_set=basis_set,
-                                n_procs=n_procs)
-        # Attach the ORCA calculator to the ASE Atoms object
-        atoms.calc = calc
-
-        # Perform the energy calculation
-        energy = atoms.get_potential_energy()
-
-        return energy
-
-
-def calculate_free_energy(atoms,
-                          charge=0,
-                          multiplicity=1,
-                          orca_path=None,
-                          xc='wB97X',
-                          basis_set='def2-SVP',
-                          calc_extra='TIGHTOPT FREQ',
-                          f_solv=False,
-                          f_disp=False,
-                          n_procs=10,
-                          ccsd_energy=False,
-                          atom_list=None,
-                          blocks_extra=None,
-                          scf_option=None):
-    # If no ORCA path is provided, try to read it from the environment variable
-    if orca_path is None:
-        orca_path = os.environ.get('ORCA_PATH')
-    else:
-        orca_path = os.path.abspath(orca_path)
-
-    # Remove 'FREQ' from calc_extra for geometry optimization
-    opti_calc_extra = calc_extra.replace('FREQ', '').strip()
-    # Ensure the atoms object is optimized before calculating the free energy
-    atoms = optimise_atoms(atoms, calc_settings={'xc': xc,
-                                                 'basis_set': basis_set,
-                                                 'calc_extra': opti_calc_extra,
-                                                 'charge': charge,
-                                                 'multiplicity': multiplicity,
-                                                 'n_procs': n_procs,
-                                                 'f_solv': f_solv,
-                                                 'f_disp': f_disp,
-                                                 'atom_list': atom_list,
-                                                 'blocks_extra': blocks_extra,
-                                                 'scf_option': scf_option})
-
-    # Remove 'TIGHTOPT' and 'OPT' from calc_extra for frequency calculation
-    freq_calc_extra = calc_extra.replace('TIGHTOPT', '').replace('OPT', '').strip()
-    # Create a temporary directory for the ORCA calculation
-    with tempfile.TemporaryDirectory() as temp_dir:
-        orca_file = os.path.join(temp_dir, 'orca.out')
-
-        # Set up the ORCA calculator with the specified parameters
-        calc = orca_calc_preset(orca_path=orca_path,
-                                directory=temp_dir,
-                                xc=xc,
-                                charge=charge,
-                                multiplicity=multiplicity,
-                                basis_set=basis_set,
-                                n_procs=n_procs,
-                                f_solv=f_solv,
-                                f_disp=f_disp,
-                                calc_extra=freq_calc_extra,
-                                atom_list=atom_list,
-                                blocks_extra=blocks_extra,
-                                scf_option=scf_option)
-
-        # Attach the ORCA calculator to the ASE Atoms object
-        atoms.calc = calc
-
-        # Perform the energy calculation
-        _ = atoms.get_potential_energy()
-
-        # If CCSD energy is requested, calculate the correction
-        if ccsd_energy:
-            # Calculate the CCSD energy
-            ccsd_energy = calculate_ccsd_energy(atoms,
-                                                orca_path=orca_path,
-                                                charge=charge,
-                                                multiplicity=multiplicity,
-                                                basis_set=basis_set,
-                                                n_procs=n_procs)
-
-            # Read the ORCA output file to extract the DFT Gibbs free energy
-            with open(orca_file, 'r') as f:
-                for line in reversed(f.readlines()):
-                    if 'G-E(el)' in line:
-                        g_e_ele = float(line.split('...')[-1].split('Eh')[0])
-                        # Convert the energy from Hartree to eV
-                        g_e_ele *= Hartree
-                        break
-
-            # Find the solvent free energy correction
-            if f_solv:
-                # Find the Free-energy (cav+disp) from the ORCA output file
-                with open(orca_file, 'r') as f:
-                    for line in reversed(f.readlines()):
-                        if 'Free-energy (cav+disp)' in line:
-                            g_e_solv = float(line.split(':')[-1].split('Eh')[0])
-                            # Convert the energy from Hartree to eV
-                            g_e_solv *= Hartree
-                            break
-                return ccsd_energy + g_e_ele + g_e_solv
-            else:
-                # If no solvent correction is applied, return the CCSD energy
-                return ccsd_energy + g_e_ele
-
-        else:
-            # Read the ORCA output file to extract the final Gibbs free energy
-            with open(orca_file, 'r') as f:
-                for line in reversed(f.readlines()):
-                    if 'Final Gibbs free energy' in line:
-                        energy = float(line.split('...')[-1].split('Eh')[0])
-                        # Convert the energy from Hartree to eV
-                        energy *= Hartree
-                        break
-
-        return energy
 
 
 def load_ir_data(filename):
@@ -598,8 +494,8 @@ def calculate_vib_spectrum(atoms,
                            charge=0,
                            multiplicity=1,
                            orca_path=None,
-                           xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
-                           basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
+                           xc='r2SCAN-3c',
+                           basis_set='def2-QZVP',
                            tight_opt=False,
                            tight_scf=False,
                            f_solv=False,
@@ -613,28 +509,28 @@ def calculate_vib_spectrum(atoms,
         # Convert the provided path to an absolute path
         orca_path = os.path.abspath(orca_path)
 
+    if tight_opt:
+        # Set up geometry optimization and frequency calculation parameters
+        opt_option = 'TIGHTOPT'
+    else:
+        # Set up frequency calculation parameters only
+        opt_option = 'OPT'
+
+    if tight_scf:
+        # Set up tight SCF convergence parameters
+        calc_extra = f'{opt_option} TIGHTSCF FREQ'
+    else:
+        # Use default SCF convergence parameters
+        calc_extra = f'{opt_option} FREQ'
+
+    blocks_extra = '''
+                          %ELPROP
+                              POLAR 1
+                          END'''
+
     # Create a temporary working directory
     with tempfile.TemporaryDirectory() as temp_dir:
         orca_file = os.path.join(temp_dir, 'orca.out')
-
-        if tight_opt:
-            # Set up geometry optimization and frequency calculation parameters
-            opt_option = 'TIGHTOPT'
-        else:
-            # Set up frequency calculation parameters only
-            opt_option = 'OPT'
-
-        if tight_scf:
-            # Set up tight SCF convergence parameters
-            calc_extra = f'{opt_option} TIGHTSCF FREQ'
-        else:
-            # Use default SCF convergence parameters
-            calc_extra = f'{opt_option} FREQ'
-
-        blocks_extra = '''
-                              %ELPROP
-                                  POLAR 1
-                              END'''
 
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
@@ -665,3 +561,141 @@ def calculate_vib_spectrum(atoms,
         data_vib = load_vib_data(orca_file)
 
         return data_ir, data_raman, data_vib
+
+
+def calculate_ccsd_energy(atoms,
+                          charge=0,
+                          multiplicity=1,
+                          orca_path=None,
+                          basis_set='def2-QZVP',
+                          n_procs=10):
+    # If no ORCA path is provided, try to read it from the environment variable
+    if orca_path is None:
+        orca_path = os.environ.get('ORCA_PATH')
+    else:
+        orca_path = os.path.abspath(orca_path)
+
+    # Create a temporary directory for the ORCA calculation
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Set up the ORCA calculator with the specified parameters
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                calc_type='CCSD',
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                basis_set=basis_set,
+                                n_procs=n_procs)
+        # Attach the ORCA calculator to the ASE Atoms object
+        atoms.calc = calc
+
+        # Perform the energy calculation
+        energy = atoms.get_potential_energy()
+
+        return energy
+
+
+def calculate_free_energy(atoms,
+                          charge=0,
+                          multiplicity=1,
+                          orca_path=None,
+                          xc='r2SCAN-3c',
+                          basis_set='def2-QZVP',
+                          tight_opt=False,
+                          tight_scf=False,
+                          f_solv=False,
+                          f_disp=False,
+                          n_procs=10,
+                          ccsd_energy=False):
+    # Determine the ORCA path
+    if orca_path is None:
+        # Try to read the path from the environment variable
+        orca_path = os.environ.get('ORCA_PATH')
+    else:
+        # Convert the provided path to an absolute path
+        orca_path = os.path.abspath(orca_path)
+
+    if tight_opt:
+        # Set up geometry optimization and frequency calculation parameters
+        opt_option = 'TIGHTOPT'
+    else:
+        # Set up frequency calculation parameters only
+        opt_option = 'OPT'
+
+    if tight_scf:
+        # Set up tight SCF convergence parameters
+        calc_extra = f'{opt_option} TIGHTSCF FREQ'
+    else:
+        # Use default SCF convergence parameters
+        calc_extra = f'{opt_option} FREQ'
+
+
+    if ccsd_energy:
+        # Calculate the CCSD energy
+        ccsd_energy = calculate_ccsd_energy(atoms,
+                                            orca_path=orca_path,
+                                            charge=charge,
+                                            multiplicity=multiplicity,
+                                            basis_set=basis_set,
+                                            n_procs=n_procs)
+    else:
+        ccsd_energy = None
+
+    # Create a temporary directory for the ORCA calculation
+    with tempfile.TemporaryDirectory() as temp_dir:
+        orca_file = os.path.join(temp_dir, 'orca.out')
+
+        # Set up the ORCA calculator with the specified parameters
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                xc=xc,
+                                basis_set=basis_set,
+                                n_procs=n_procs,
+                                f_solv=f_solv,
+                                f_disp=f_disp,
+                                calc_extra=calc_extra)
+
+        # Attach the ORCA calculator to the ASE Atoms object
+        atoms.calc = calc
+
+        # Perform the energy calculation
+        _ = atoms.get_potential_energy()
+
+        # If CCSD energy is requested, calculate the correction
+        if ccsd_energy:
+            # Read the ORCA output file to extract the DFT Gibbs free energy
+            with open(orca_file, 'r') as f:
+                for line in reversed(f.readlines()):
+                    if 'G-E(el)' in line:
+                        g_e_ele = float(line.split('...')[-1].split('Eh')[0])
+                        # Convert the energy from Hartree to eV
+                        g_e_ele *= Hartree
+                        break
+
+            # Find the solvent free energy correction
+            if f_solv:
+                # Find the Free-energy (cav+disp) from the ORCA output file
+                with open(orca_file, 'r') as f:
+                    for line in reversed(f.readlines()):
+                        if 'Free-energy (cav+disp)' in line:
+                            g_e_solv = float(line.split(':')[-1].split('Eh')[0])
+                            # Convert the energy from Hartree to eV
+                            g_e_solv *= Hartree
+                            break
+                return ccsd_energy + g_e_ele + g_e_solv
+            else:
+                # If no solvent correction is applied, return the CCSD energy
+                return ccsd_energy + g_e_ele
+
+        else:
+            # Read the ORCA output file to extract the final Gibbs free energy
+            with open(orca_file, 'r') as f:
+                for line in reversed(f.readlines()):
+                    if 'Final Gibbs free energy' in line:
+                        energy = float(line.split('...')[-1].split('Eh')[0])
+                        # Convert the energy from Hartree to eV
+                        energy *= Hartree
+                        break
+
+        return energy

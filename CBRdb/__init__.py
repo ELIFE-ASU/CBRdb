@@ -31,8 +31,12 @@ from .tools_atoms import (smi_to_atoms,
                           get_charge,
                           get_spin_multiplicity,
                           mol_to_atoms,
+                          orca_calc_preset,
+                          optimise_atoms,
+                          calculate_vib_spectrum,
                           calculate_free_energy,
-                          calculate_vib_spectrum)
+                          calculate_ccsd_energy,
+                          calculate_free_energy)
 from .tools_complexity import (count_unique_bonds,
                                molecular_weight,
                                bertz,
