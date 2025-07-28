@@ -587,6 +587,18 @@ def test_calculate_free_energy():
                        atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
 
 
+def test_optimise_atoms():
+    smi = "O"  # SMILES representation of the molecule (water in this case)
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    atoms = CBRdb.optimise_atoms(atoms, charge=charge, multiplicity=multiplicity)
+    pos = atoms.get_positions()
+    print("Optimized positions:", pos, flush=True)
+    ref_pos = [[0.02628414, -2.70228834, 4.02632285],
+               [0.83770207, -3.11418435, 3.72496985],
+               [-0.50718621, -3.43022732, 4.3494073]]
+    assert np.allclose(atoms.get_positions(), ref_pos)
+
+
 def test_calculate_vib_spectrum():
     smi = "O"  # SMILES representation of the molecule (water in this case)
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
