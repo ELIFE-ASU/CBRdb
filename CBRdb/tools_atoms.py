@@ -626,7 +626,6 @@ def calculate_free_energy(atoms,
         # Use default SCF convergence parameters
         calc_extra = f'{opt_option} FREQ'
 
-
     if ccsd_energy:
         # Calculate the CCSD energy
         ccsd_energy = calculate_ccsd_energy(atoms,
@@ -696,4 +695,24 @@ def calculate_free_energy(atoms,
                         energy *= Hartree
                         break
 
-        return energy
+        with open(orca_file, 'r') as f:
+            # Get the enthalpy from the ORCA output file
+            enthalpy = None
+            for line in reversed(f.readlines()):
+                if 'Total enthalpy' in line:
+                    enthalpy = float(line.split('...')[-1].split('Eh')[0])
+                    # Convert the enthalpy from Hartree to eV
+                    enthalpy *= Hartree
+                    break
+
+        with open(orca_file, 'r') as f:
+            # Get the entropy from the ORCA output file
+            entropy = None
+            for line in reversed(f.readlines()):
+                if 'Total entropy correction' in line:
+                    entropy = float(line.split('...')[-1].split('Eh')[0])
+                    # Convert the entropy from Hartree to eV
+                    entropy *= Hartree
+                    break
+
+        return energy, enthalpy, entropy
