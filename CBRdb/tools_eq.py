@@ -1086,19 +1086,32 @@ def plot_reaction_id(id, data_r, data_c, render_dir='render', size=(600, 600)):
 
 
 def to_smarts_rxn_line(eq, data_c, add_stoich=False):
+    """
+    Converts a chemical equation into a SMARTS reaction line.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+    data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'smiles' columns.
+    add_stoich (bool, optional): Flag to indicate whether to include stoichiometry in the SMARTS strings. Default is False.
+
+    Returns:
+    str: A SMARTS reaction line in the format 'reactants>>products'.
+    """
+    # Convert the equation into dictionaries of reactants and products
     reactants, products = eq_to_dict(eq)
 
-    # Get SMILES for reactants and products
+    # Get SMILES strings for reactants and products based on their compound IDs
     reactants_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in reactants}
     products_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in products}
 
     if add_stoich:
-        # Combine SMILES into SMARTS strings
+        # Combine SMILES strings with stoichiometry into SMARTS strings
         reactants_smarts = ".".join(f"{reactants[k]}{v}" for k, v in reactants_smiles.items())
         products_smarts = ".".join(f"{products[k]}{v}" for k, v in products_smiles.items())
     else:
-        # Combine SMILES into SMARTS strings without stoichiometry
+        # Combine SMILES strings into SMARTS strings without stoichiometry
         reactants_smarts = ".".join(reactants_smiles.values())
         products_smarts = ".".join(products_smiles.values())
 
+    # Return the SMARTS reaction line
     return f"{reactants_smarts}>>{products_smarts}"
