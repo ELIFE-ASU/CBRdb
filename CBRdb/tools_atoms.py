@@ -692,44 +692,11 @@ def calculate_vib_spectrum(mol,
                            orca_path=None,
                            xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
                            basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
-                           calc_type='ir',
+                           tight_opt=False,
+                           tight_scf=False,
+                           f_solv=False,
+                           f_disp=False,
                            n_procs=10):
-    """
-    Perform a vibrational spectrum calculation using ORCA.
-
-    Parameters:
-    -----------
-    mol : rdkit.Chem.Mol
-        The RDKit molecule object to be used for the calculation.
-    orca_path : str, optional
-        Path to the ORCA executable. If None, the path is read from the environment variable 'ORCA_PATH'.
-    xc : str, optional
-        Exchange-correlation functional to use in the calculation. Default is 'r2SCAN-3c'.
-    basis_set : str, optional
-        Basis set to use in the calculation. Default is 'def2-QZVP'.
-    calc_type : str, optional
-        Type of vibrational spectrum to calculate. Must be one of 'ir', 'raman', or 'vib'. Default is 'ir'.
-    nprocs : int, optional
-        Number of processors to use for the calculation. Default is 10.
-
-    Returns:
-    --------
-    pd.DataFrame
-        A DataFrame containing the vibrational spectrum data, with columns depending on the calculation type:
-        - For 'ir': Mode, Frequency (cm^-1), Epsilon, Intensity (km/mol).
-        - For 'raman': Mode, Frequency (cm^-1), Intensity (km/mol), Depolarization.
-        - For 'vib': Mode, Frequency (cm^-1), Epsilon, Intensity (km/mol).
-
-    Raises:
-    -------
-    AssertionError
-        If `calc_type` is not one of 'ir', 'raman', or 'vib'.
-    ValueError
-        If the calculation type is invalid.
-    """
-    # Ensure the calculation type is valid
-    assert calc_type in ['ir', 'raman', 'vib'], "calc_type must be either ir, raman, or vib"
-
     # Determine the ORCA path
     if orca_path is None:
         # Try to read the path from the environment variable
@@ -755,17 +722,24 @@ def calculate_vib_spectrum(mol,
     with tempfile.TemporaryDirectory() as temp_dir:
         orca_file = os.path.join(temp_dir, 'orca.out')
 
-        # Set up calculation-specific parameters
-        calc_extra = None
-        blocks_extra = None
-        if calc_type == 'ir' or calc_type == 'vib':
-            calc_extra = 'TIGHTOPT FREQ'
-        elif calc_type == 'raman':
-            calc_extra = 'TIGHTOPT FREQ'
-            blocks_extra = '''
-                %ELPROP
-                    POLAR 1
-                END'''
+        if tight_opt:
+            # Set up geometry optimization and frequency calculation parameters
+            opt_option = 'TIGHTOPT'
+        else:
+            # Set up frequency calculation parameters only
+            opt_option = 'OPT'
+
+        if tight_scf:
+            # Set up tight SCF convergence parameters
+            calc_extra = f'{opt_option} TIGHTSCF FREQ'
+        else:
+            # Use default SCF convergence parameters
+            calc_extra = f'{opt_option} FREQ'
+
+        blocks_extra = '''
+            %ELPROP
+                POLAR 1
+            END'''
 
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
@@ -775,11 +749,10 @@ def calculate_vib_spectrum(mol,
                                 xc=xc,
                                 basis_set=basis_set,
                                 n_procs=n_procs,
-                                f_solv=False,
-                                f_disp=False,
+                                f_solv=f_solv,
+                                f_disp=f_disp,
                                 calc_extra=calc_extra,
-                                blocks_extra=blocks_extra,
-                                )
+                                blocks_extra=blocks_extra)
 
         # Attach the calculator to the ASE Atoms object
         atoms.calc = calc
@@ -787,18 +760,13 @@ def calculate_vib_spectrum(mol,
         # Perform the calculation (this will write the output to the ORCA file)
         _ = atoms.get_potential_energy()
 
-        # Load the vibrational spectrum data based on the calculation type
-        if calc_type == 'ir':
-            # Load IR spectrum data
-            data = load_ir_data(orca_file)
-        elif calc_type == 'raman':
-            # Load Raman spectrum data
-            data = load_raman_data(orca_file)
-        elif calc_type == 'vib':
-            # Load vibrational spectrum data
-            data = load_vib_data(orca_file)
-        else:
-            # Raise an error if the calculation type is invalid
-            raise ValueError("calc_type must be either ir, raman, or vib")
+        # Load IR spectrum data
+        data_ir = load_ir_data(orca_file)
 
-        return data
+        # Load Raman spectrum data
+        data_raman = load_raman_data(orca_file)
+
+        # Load vibrational spectrum data
+        data_vib = load_vib_data(orca_file)
+
+        return data_ir, data_raman, data_vib

@@ -588,6 +588,15 @@ def test_calculate_free_energy():
                        atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
 
 
+def test_calculate_vib_spectrum():
+    smi = "O"  # SMILES representation of the molecule (water in this case)
+    mol = Chem.MolFromSmiles(smi)  # Convert SMILES to an RDKit molecule object
+    data_ir, data_raman, data_vib = CBRdb.calculate_vib_spectrum(mol)
+    print(data_ir, flush=True)
+    print(data_raman, flush=True)
+    print(data_vib, flush=True)
+
+
 def test_to_smarts_rxn_line():
     """
     Test the `to_smarts_rxn_line` function from the `CBRdb` module.
@@ -617,7 +626,6 @@ def test_to_smarts_rxn_line():
     r_smarts = CBRdb.to_smarts_rxn_line(eq, data_c, add_stoich=False)  # Convert equation to SMARTS reaction line
     print(r_smarts, flush=True)
     assert r_smarts == '[Mn+2].OO.[H+]>>[Mn+3].[H]O[H]'  # Verify the result
-
 
 
 def test_get_properties():
