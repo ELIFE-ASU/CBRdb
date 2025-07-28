@@ -1,8 +1,9 @@
 import os
 
+import numpy as np
 import pandas as pd
 from rdkit import Chem as Chem
-import numpy as np
+
 import CBRdb
 
 
@@ -612,3 +613,18 @@ def test_to_smarts_rxn_line():
     r_smarts = CBRdb.to_smarts_rxn_line(eq, data_c)  # Convert equation to SMARTS reaction line
     print(r_smarts, flush=True)
     assert r_smarts == '2[Mn+2].1OO.2[H+]>>2[Mn+3].2[H]O[H]'  # Verify the result
+
+
+def test_get_properties():
+    smis_list = [
+        "O",  # Water
+        "CC(=O)O",  # Acetic acid
+        "C1=CC=CC=C1",  # Benzene
+        "C1CCCCC1",  # Cyclohexane
+        "C1=CC=C(C=C1)C(=O)O"  # Benzoic acid
+    ]
+    mols = [(Chem.MolFromSmiles(smi)) for smi in smis_list]
+
+    # Get the properties
+    properties = CBRdb.get_properties(mols)
+    print(properties)
