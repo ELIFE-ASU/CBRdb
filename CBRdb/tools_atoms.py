@@ -3,6 +3,7 @@ import re
 import tempfile
 
 import pandas as pd
+from ase import Atoms
 from ase.atoms import Atoms
 from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
@@ -16,32 +17,14 @@ from rdkit.Chem.rdchem import Mol
 from .tools_mols import standardize_mol
 
 
-def smi_to_atoms(smiles: str) -> Atoms:
-    """
-    Convert a SMILES string to an ASE Atoms object via an SDF file.
-
-    Parameters:
-    -----------
-    smiles : str
-        SMILES string representing the molecule.
-
-    Returns:
-    --------
-    Atoms
-        Atoms object representing the molecule.
-
-    Raises:
-    -------
-    ValueError
-        If SMILES parsing fails.
-    """
+def smi_to_atoms(smiles: str) -> tuple[Atoms, int, int]:
     mol = Chem.MolFromSmiles(smiles, sanitize=True)
     mol = Chem.AddHs(mol)
     mol = standardize_mol(mol)
     if mol is None:
         raise ValueError(f"Failed to parse SMILES string: {smiles}")
 
-    return mol_to_atoms(mol)
+    return mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(mol)
 
 
 def mol_to_atoms(mol: Mol, optimise: bool = True) -> Atoms:
@@ -300,21 +283,6 @@ def orca_calc_preset(orca_path=None,
 
 
 def optimise_atoms(atoms, calc_settings=None):
-    """
-    Optimise the geometry of an ASE Atoms object using the ORCA quantum chemistry package.
-
-    Parameters:
-    -----------
-    atoms : ase.Atoms
-        The ASE Atoms object representing the molecule to be optimised.
-    calc_settings : dict, optional
-        A dictionary of settings for the ORCA calculator. If None, defaults to {'calc_extra': 'TIGHTOPT'}.
-
-    Returns:
-    --------
-    ase.Atoms
-        The optimised ASE Atoms object, loaded from the ORCA output file.
-    """
     if calc_settings is None:
         # Default calculation settings if none are provided
         calc_settings = {'calc_extra': 'TIGHTOPT'}
@@ -341,29 +309,6 @@ def calculate_ccsd_energy(atoms,
                           multiplicity=1,
                           basis_set='aug-cc-pVTZ',
                           n_procs=10):
-    """
-    Calculate the CCSD (Coupled Cluster with Single and Double excitations) energy of a molecule.
-
-    Parameters:
-    -----------
-    atoms : ase.Atoms
-        The ASE Atoms object representing the molecule for which the energy is calculated.
-    orca_path : str, optional
-        Path to the ORCA executable. If None, the function attempts to read it from the environment variable 'ORCA_PATH'.
-    charge : int, optional
-        Total charge of the molecule. Default is 0.
-    multiplicity : int, optional
-        Spin multiplicity of the molecule. Default is 1.
-    basis_set : str, optional
-        Basis set to use for the calculation. Default is 'aug-cc-pVTZ'.
-    n_procs : int, optional
-        Number of processors to use for the calculation. Default is 10.
-
-    Returns:
-    --------
-    float
-        The CCSD energy of the molecule in eV.
-    """
     # If no ORCA path is provided, try to read it from the environment variable
     if orca_path is None:
         orca_path = os.environ.get('ORCA_PATH')
@@ -403,45 +348,6 @@ def calculate_free_energy(atoms,
                           atom_list=None,
                           blocks_extra=None,
                           scf_option=None):
-    """
-    Calculate the Gibbs free energy of a molecule using the ORCA quantum chemistry package.
-
-    Parameters:
-    -----------
-    atoms : ase.Atoms
-        The ASE Atoms object representing the molecule.
-    charge : int, optional
-        Total charge of the molecule. Default is 0.
-    multiplicity : int, optional
-        Spin multiplicity of the molecule. Default is 1.
-    orca_path : str, optional
-        Path to the ORCA executable. If None, the function attempts to read it from the environment variable 'ORCA_PATH'.
-    xc : str, optional
-        Exchange-correlation functional to use. Default is 'wB97X'.
-    basis_set : str, optional
-        Basis set to use for the calculation. Default is 'def2-SVP'.
-    calc_extra : str, optional
-        Additional calculation options for ORCA. Default is 'TIGHTOPT FREQ'.
-    f_solv : bool or str, optional
-        Solvent model to use. If True, defaults to 'WATER'. Default is False (no solvent).
-    f_disp : bool or str, optional
-        Dispersion correction to use. If True, defaults to 'D4'. Default is False (no dispersion correction).
-    n_procs : int, optional
-        Number of processors to use. Default is 10.
-    ccsd_energy : bool, optional
-        Whether to include CCSD energy correction. Default is False.
-    atom_list : list, optional
-        List of atoms for QM/MM calculations. Default is None.
-    blocks_extra : str, optional
-        Additional ORCA input blocks. Default is None.
-    scf_option : str, optional
-        Additional SCF options for ORCA. Default is None.
-
-    Returns:
-    --------
-    float
-        The Gibbs free energy of the molecule in eV.
-    """
     # If no ORCA path is provided, try to read it from the environment variable
     if orca_path is None:
         orca_path = os.environ.get('ORCA_PATH')
@@ -688,7 +594,9 @@ def load_vib_data(filename):
     return df
 
 
-def calculate_vib_spectrum(mol,
+def calculate_vib_spectrum(atoms,
+                           charge=0,
+                           multiplicity=1,
                            orca_path=None,
                            xc='r2SCAN-3c',  # wB97X def2-TZVP def2/J RIJCOSX
                            basis_set='def2-QZVP',  # def2-QZVP H–Rn aug-cc-pVTZ H–Ar, Sc–Kr, Ag, Au
@@ -697,38 +605,6 @@ def calculate_vib_spectrum(mol,
                            f_solv=False,
                            f_disp=False,
                            n_procs=10):
-    """
-    Calculate vibrational spectrum data (IR, Raman, and vibrational modes) for a molecule using ORCA.
-
-    Parameters:
-    -----------
-    mol : rdkit.Chem.rdchem.Mol
-        RDKit molecule object to be analyzed.
-    orca_path : str, optional
-        Path to the ORCA executable. If None, attempts to read from the environment variable 'ORCA_PATH'.
-    xc : str, optional
-        Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
-    basis_set : str, optional
-        Basis set to use for the calculation. Default is 'def2-QZVP'.
-    tight_opt : bool, optional
-        Whether to use tight geometry optimization. Default is False.
-    tight_scf : bool, optional
-        Whether to use tight SCF convergence. Default is False.
-    f_solv : bool or str, optional
-        Solvent model to use. If True, defaults to 'WATER'. Default is False (no solvent).
-    f_disp : bool or str, optional
-        Dispersion correction to use. If True, defaults to 'D4'. Default is False (no dispersion correction).
-    n_procs : int, optional
-        Number of processors to use for the calculation. Default is 10.
-
-    Returns:
-    --------
-    tuple(pd.DataFrame, pd.DataFrame, pd.DataFrame)
-        A tuple containing three pandas DataFrames:
-        - IR spectrum data
-        - Raman spectrum data
-        - Vibrational spectrum data
-    """
     # Determine the ORCA path
     if orca_path is None:
         # Try to read the path from the environment variable
@@ -736,19 +612,6 @@ def calculate_vib_spectrum(mol,
     else:
         # Convert the provided path to an absolute path
         orca_path = os.path.abspath(orca_path)
-
-    # Add hydrogens to the molecule and sanitize it
-    mol = Chem.AddHs(mol)
-    Chem.SanitizeMol(mol)
-
-    # Get the formal charge of the molecule
-    charge = get_charge(mol)
-
-    # Get the spin multiplicity of the molecule
-    multiplicity = get_spin_multiplicity(mol)
-
-    # Convert the RDKit molecule to an ASE Atoms object
-    atoms = mol_to_atoms(mol)
 
     # Create a temporary working directory
     with tempfile.TemporaryDirectory() as temp_dir:
