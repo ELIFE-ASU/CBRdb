@@ -1,13 +1,17 @@
+import math
 import traceback
+from collections import defaultdict
 from typing import Dict, Any, Optional
 
 import networkx as nx
 import numpy as np
 import rdkit
 from rdkit import Chem
+from rdkit import DataStructs
 from rdkit.Chem import AllChem as Chem
-from rdkit.Chem import Descriptors
+from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.GraphDescriptors import BertzCT
+from rdkit.Chem.SpacialScore import SPS
 from rdkit.Chem.rdchem import Mol
 
 
@@ -202,7 +206,7 @@ def spacial_score(mol: Mol, normalise: bool = False) -> float:
     return rdkit.Chem.SpacialScore.SPS(mol, normalise)
 
 
-def get_mol_descriptors(mol: Mol, missing_val: Optional[Any] = None) -> Dict[str, Any]:
+def get_mol_descriptors(mol: Mol, missingval: Optional[Any] = None) -> Dict[str, Any]:
     """
     Calculates molecular descriptors for a given molecule. Please note that there are a lot of descriptors.
 
@@ -214,7 +218,7 @@ def get_mol_descriptors(mol: Mol, missing_val: Optional[Any] = None) -> Dict[str
     is assigned.
 
     :param mol: An RDKit molecule object.
-    :param missing_val: The value to assign if a descriptor calculation fails. Default is None.
+    :param missingval: The value to assign if a descriptor calculation fails. Default is None.
     :return: A dictionary with descriptor names as keys and their calculated values as values.
     """
     res = {}
@@ -223,8 +227,45 @@ def get_mol_descriptors(mol: Mol, missing_val: Optional[Any] = None) -> Dict[str
             res[nm] = fn(mol)
         except:
             traceback.print_exc()
-            res[nm] = missing_val
+            res[nm] = missingval
     return res
+
+
+def tanimoto_similarity(mol1: Mol, mol2: Mol) -> float:
+    """
+    Calculates the Tanimoto similarity between two molecules.
+
+    Tanimoto similarity is a measure of the similarity between two sets of
+    molecular fingerprints. It is commonly used in cheminformatics to compare
+    the structural similarity of molecules.
+
+    :param mol1: An RDKit molecule object representing the first molecule.
+    :param mol2: An RDKit molecule object representing the second molecule.
+    :return: The Tanimoto similarity between the two molecules.
+    """
+    fpgen = Chem.GetRDKitFPGenerator()
+    fp1 = fpgen.GetFingerprint(mol1)
+    fp2 = fpgen.GetFingerprint(mol2)
+    return DataStructs.TanimotoSimilarity(fp1, fp2)
+
+
+def dice_morgan_similarity(mol1: Mol, mol2: Mol, radius: int = 3) -> float:
+    """
+    Calculates the Dice similarity between two molecules using Morgan fingerprints.
+
+    Dice similarity is a measure of the similarity between two sets of
+    molecular fingerprints. It is commonly used in cheminformatics to compare
+    the structural similarity of molecules.
+
+    :param mol1: An RDKit molecule object representing the first molecule.
+    :param mol2: An RDKit molecule object representing the second molecule.
+    :param radius: The radius parameter for the Morgan fingerprint. Default is 3.
+    :return: The Dice similarity between the two molecules.
+    """
+    fpgen = Chem.GetMorganGenerator(radius=radius)
+    fp1 = fpgen.GetSparseCountFingerprint(mol1)
+    fp2 = fpgen.GetSparseCountFingerprint(mol2)
+    return DataStructs.DiceSimilarity(fp1, fp2)
 
 
 def get_chirality(mol: Mol) -> int:
@@ -244,3 +285,418 @@ def get_chirality(mol: Mol) -> int:
                                        includeUnassigned=True,
                                        includeCIP=False))
     return nc
+
+
+def fcfp4(mol: Mol) -> int:
+    """
+    Generates the FCFP_4 fingerprint (functional-based ECFP4) for a molecule.
+
+    https://doi.org/10.1021/ci0503558
+
+    This function computes the FCFP_4 fingerprint of a molecule using RDKit's
+    Morgan fingerprinting method. The fingerprint is generated with a radius of 2
+    and 2048 bits, focusing on functional groups by setting `useFeatures=True`.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.rdchem.Mol
+        The RDKit molecule object for which the FCFP_4 fingerprint is to be generated.
+
+    Returns:
+    --------
+    int
+        The number of bits set to 1 in the generated FCFP_4 fingerprint.
+    """
+    # Generate the FCFP_4 fingerprint with functional group focus
+    fp = Chem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048, useFeatures=True)
+    # Return the number of bits set to 1
+    return fp.GetNumOnBits()
+
+
+def _determine_atom_substituents(atom_id, mol, distance_matrix):
+    """
+    Determines the substituents of an atom in a molecule.
+
+    This function identifies the substituents (neighboring atoms and their shells)
+    for a given atom in a molecule based on the distance matrix. It also tracks
+    shared neighbors and the maximum shell distance for each substituent.
+
+    Parameters:
+    ----------
+    atom_id : int
+        The index of the atom in the molecule for which substituents are to be determined.
+    mol : rdkit.Chem.rdchem.Mol
+        The RDKit molecule object containing the atom.
+    distance_matrix : np.ndarray
+        The distance matrix of the molecule, where each element represents the
+        shortest path distance between two atoms.
+
+    Returns:
+    -------
+    tuple
+        A tuple containing:
+        - subs (defaultdict): A dictionary mapping substituent indices to lists of atom indices.
+        - shared_neighbors (defaultdict): A dictionary tracking how many substituents each atom is involved in.
+        - max_shell (defaultdict): A dictionary mapping substituent indices to their maximum shell distance.
+    """
+    atom_paths = distance_matrix[atom_id]
+    # Determine the direct neighbors of the atom
+    neighbors = [n for n, i in enumerate(atom_paths) if i == 1]
+    # Store the ids of the neighbors (substituents)
+    subs = defaultdict(list)
+    # Track in how many substituents an atom is involved (can happen in rings)
+    shared_neighbors = defaultdict(int)
+    # Determine the max path length for each substituent
+    max_shell = defaultdict(int)
+    for n in neighbors:
+        subs[n].append(n)
+        shared_neighbors[n] += 1
+        max_shell[n] = 0
+    # Second shell of neighbors
+    min_dist = 2
+    # Max distance from atom
+    max_dist = int(np.max(atom_paths))
+    for d in range(min_dist, max_dist + 1):
+        new_shell = [n for n, i in enumerate(atom_paths) if i == d]
+        for a_idx in new_shell:
+            atom = mol.GetAtomWithIdx(a_idx)
+            # Find neighbors of the current atom that are part of the substituent already
+            for n in atom.GetNeighbors():
+                n_idx = n.GetIdx()
+                for k, v in subs.items():
+                    # Check if the neighbor is in the substituent, not in the same shell,
+                    # and the current atom hasn't been added yet
+                    if n_idx in v and n_idx not in new_shell and a_idx not in v:
+                        subs[k].append(a_idx)
+                        shared_neighbors[a_idx] += 1
+                        max_shell[k] = d
+
+    return subs, shared_neighbors, max_shell
+
+
+def _get_chemical_non_equivs(atom: Chem.rdchem.Atom, mol: Mol) -> float:
+    """
+    Calculates the chemical non-equivalence of an atom in a molecule.
+
+    This function determines the number of unique substituent groups attached to an atom
+    in a molecule. It uses the distance matrix of the molecule and the atom's substituents
+    to identify unique groups based on their atomic symbols.
+
+    Parameters:
+    ----------
+    atom : Chem.rdchem.Atom
+        The RDKit atom object for which chemical non-equivalence is to be calculated.
+    mol : Mol
+        The RDKit molecule object containing the atom.
+
+    Returns:
+    -------
+    float
+        The number of unique substituent groups attached to the atom.
+    """
+    # Initialize a list to store substituents for up to 4 groups
+    substituents = [[] for _ in range(4)]
+
+    # Get the distance matrix of the molecule
+    distance_matrix = Chem.GetDistanceMatrix(mol)
+
+    # Determine the substituents of the atom
+    atom_substituents = _determine_atom_substituents(atom.GetIdx(), mol, distance_matrix)[0]
+    try:
+        # Populate the substituents list with atomic symbols of neighboring atoms
+        for item, key in enumerate(atom_substituents):
+            for subatom in atom_substituents[key]:
+                substituents[item].append(mol.GetAtomWithIdx(subatom).GetSymbol())
+
+        # Calculate the number of unique substituent groups
+        return float(len(set(tuple(sub) for sub in substituents if sub)))
+    except Exception as e:
+        print(f"Error calculating chemical non-equivalence for atom {atom.GetIdx()}: {e}")
+        print(traceback.format_exc())
+        return 0.0
+
+
+def _get_bottcher_local_diversity(atom: Chem.rdchem.Atom) -> float:
+    """
+    Calculates the Bottcher local diversity of an atom.
+
+    This function determines the diversity of an atom based on the unique
+    neighboring atom types. It adds an additional value of 1.0 if the atom's
+    own type is not present among its neighbors.
+
+    Parameters:
+    ----------
+    atom : Chem.rdchem.Atom
+        The RDKit atom object for which the Bottcher local diversity is to be calculated.
+
+    Returns:
+    -------
+    float
+        The Bottcher local diversity score of the atom.
+    """
+    # Get the set of unique symbols of neighboring atoms
+    neighbors = {neighbor.GetSymbol() for neighbor in atom.GetNeighbors()}
+    # Calculate diversity, adding 1.0 if the atom's symbol is not in its neighbors
+    return len(neighbors) + (1.0 if atom.GetSymbol() not in neighbors else 0.0)
+
+
+def _get_num_isomeric_possibilities(atom: Chem.rdchem.Atom) -> float:
+    """
+    Determines the number of isomeric possibilities for an atom.
+
+    This function checks if the atom has a '_CIPCode' property, which indicates
+    the presence of stereochemical information. If the property exists, the atom
+    has two isomeric possibilities (e.g., R/S or E/Z). Otherwise, it has only one.
+
+    Parameters:
+    ----------
+    atom : Chem.rdchem.Atom
+        The RDKit atom object for which the number of isomeric possibilities is to be determined.
+
+    Returns:
+    -------
+    float
+        The number of isomeric possibilities: 2.0 if the '_CIPCode' property exists, otherwise 1.0.
+    """
+    return 2.0 if atom.HasProp('_CIPCode') else 1.0
+
+
+def _get_num_valence_electrons(atom: Chem.rdchem.Atom, pt: Chem.rdchem.PeriodicTable) -> float:
+    """
+    Calculates the number of valence electrons for a given atom.
+
+    This function uses the periodic table to determine the number of outer-shell
+    (valence) electrons for the specified atom based on its atomic number.
+
+    Parameters:
+    ----------
+    atom : Chem.rdchem.Atom
+        The RDKit atom object for which the number of valence electrons is to be calculated.
+    pt : Chem.rdchem.PeriodicTable
+        The RDKit periodic table object used to retrieve atomic properties.
+
+    Returns:
+    -------
+    float
+        The number of valence electrons for the given atom.
+    """
+    return float(pt.GetNOuterElecs(pt.GetAtomicNumber(atom.GetSymbol())))
+
+
+def _get_bottcher_bond_index(atom: Chem.rdchem.Atom) -> float:
+    """
+    Calculates the Bottcher bond index for a given atom.
+
+    This function computes a ranking value based on the bond types connected to the atom.
+    Each bond type is assigned a specific weight, and additional adjustments are made
+    for aromatic bonds involving carbon or nitrogen atoms.
+
+    Parameters:
+    ----------
+    atom : Chem.rdchem.Atom
+        The RDKit atom object for which the Bottcher bond index is to be calculated.
+
+    Returns:
+    -------
+    float
+        The Bottcher bond index for the given atom.
+
+    Raises:
+    ------
+    ValueError
+        If an unsupported bond type is encountered.
+    """
+    b_sub_i_ranking = 0.0
+    bond_weights = {
+        'SINGLE': 1.0,
+        'DOUBLE': 2.0,
+        'TRIPLE': 3.0,
+        'QUADRUPLE': 4.0,
+        'QUINTUPLE': 5.0,
+        'HEXTUPLE': 6.0
+    }
+    bonds = [str(bond.GetBondType()) for bond in atom.GetBonds()]
+    for bond in bonds:
+        b_sub_i_ranking += bond_weights.get(bond, 0.0)
+        if bond not in bond_weights and bond != 'AROMATIC':
+            raise ValueError(f"Unsupported bond type {bond}")
+
+    if 'AROMATIC' in bonds:
+        if atom.GetSymbol() == 'C':
+            b_sub_i_ranking += 3.0
+        elif atom.GetSymbol() == 'N':
+            b_sub_i_ranking += 2.0
+    return b_sub_i_ranking
+
+
+def bottcher(mol: Mol) -> float:
+    """
+    Calculates the Bottcher complexity of a molecule.
+
+    https://github.com/boskovicgroup/bottchercomplexity
+    https://doi.org/10.1021/acs.jcim.5b00723
+
+    The Bottcher complexity is a molecular descriptor that quantifies the structural
+    complexity of a molecule. It considers factors such as chemical non-equivalence,
+    local diversity, isomeric possibilities, valence electrons, and bond indices
+    for each atom in the molecule.
+
+    Parameters:
+    ----------
+    mol : rdkit.Chem.rdchem.Mol
+        The RDKit molecule object for which the Bottcher complexity is to be calculated.
+
+    Returns:
+    -------
+    float
+        The Bottcher complexity of the molecule.
+    """
+    complexity = 0.0
+    # Assign stereochemistry to the molecule
+    Chem.AssignStereochemistry(mol, cleanIt=True, force=True, flagPossibleStereoCenters=True)
+    pt = Chem.GetPeriodicTable()
+
+    # Filter atoms to correct for symmetry
+    atoms_corrected_for_symmetry = []
+    atom_stereo_classes = set()
+    for atom in mol.GetAtoms():
+        cip_rank = atom.GetProp('_CIPRank')
+        if cip_rank not in atom_stereo_classes:
+            atoms_corrected_for_symmetry.append(atom)
+            atom_stereo_classes.add(cip_rank)
+
+    # Calculate complexity
+    for atom in atoms_corrected_for_symmetry:
+        d = _get_chemical_non_equivs(atom, mol)  # Chemical non-equivalence
+        e = _get_bottcher_local_diversity(atom)  # Local diversity
+        s = _get_num_isomeric_possibilities(atom)  # Isomeric possibilities
+        v = _get_num_valence_electrons(atom, pt)  # Number of valence electrons
+        b = _get_bottcher_bond_index(atom)  # Bond index
+        # Update complexity using the calculated factors
+        complexity += d * e * s * math.log(v * b, 2)
+
+    return complexity
+
+
+def proudfoot(mol: Mol) -> float:
+    """
+    Calculates the Proudfoot complexity of a molecule.
+
+    https://doi.org/10.1016/j.bmcl.2017.03.008
+
+    The Proudfoot complexity is a molecular descriptor that quantifies the structural
+    complexity of a molecule. It is based on the distribution of molecular paths,
+    atomic complexity, molecular complexity, log-sum complexity, and structural entropy.
+
+    Parameters:
+    ----------
+    mol : rdkit.Chem.rdchem.Mol
+        The RDKit molecule object for which the Proudfoot complexity is to be calculated.
+
+    Returns:
+    -------
+    float
+        The Proudfoot complexity of the molecule.
+    """
+    # Generate the Morgan fingerprint for the molecule with a radius of 2
+    fingerprint = rdMolDescriptors.GetMorganFingerprint(mol, 2)
+    paths = fingerprint.GetNonzeroElements()
+
+    # Calculate path frequencies per atom environment
+    atom_paths = defaultdict(list)
+    for path, count in paths.items():
+        # Determine the atoms involved in the path
+        atoms_in_path = path % mol.GetNumAtoms()
+        atom_paths[atoms_in_path].append(count)
+
+    # Step 1: Calculate atomic complexity (C_A)
+    c_a_values = {}
+    for atom, path_counts in atom_paths.items():
+        total_paths = sum(path_counts)
+        # Calculate the fraction of each path
+        path_fractions = [count / total_paths for count in path_counts]
+        # Compute atomic complexity using Shannon entropy
+        ca = -sum(p * math.log2(p) for p in path_fractions) + math.log2(total_paths)
+        c_a_values[atom] = ca
+
+    # Step 2: Calculate molecular complexity (C_M)
+    c_m = sum(c_a_values.values())
+
+    # Step 3: Calculate log-sum complexity (C_M*)
+    c_m_star = math.log2(sum(2 ** ca for ca in c_a_values.values()))
+
+    # Step 4: Calculate structural entropy complexity (C_SE)
+    atom_types = [atom.GetAtomicNum() for atom in mol.GetAtoms()]
+    total_atoms = len(atom_types)
+    # Calculate the frequency of each atom type
+    type_frequencies = {atype: atom_types.count(atype) / total_atoms for atype in set(atom_types)}
+    # Compute structural entropy using Shannon entropy
+    c_se = -sum(freq * math.log2(freq) for freq in type_frequencies.values())
+
+    return c_m
+
+
+def mc1(mol: Mol) -> float:
+    """
+    Calculates the molecular connectivity index (MC1) of a molecule.
+
+    https://pubs.acs.org/doi/full/10.1021/acs.jcim.5c00334
+
+    The MC1 index is a measure of the proportion of non-divalent nodes
+    in a molecule. It is calculated as 1 minus the ratio of divalent nodes
+    to the total number of atoms in the molecule.
+
+    Parameters:
+    ----------
+    mol : rdkit.Chem.rdchem.Mol
+        The RDKit molecule object for which the MC1 index is to be calculated.
+
+    Returns:
+    -------
+    float
+        The MC1 index of the molecule.
+    """
+    total_atoms = len(mol.GetAtoms())
+    divalent_nodes = sum(1 for atom in mol.GetAtoms() if atom.GetDegree() == 2)
+    return 1.0 - (divalent_nodes / total_atoms)
+
+
+def mc2(mol: Mol) -> int:
+    """
+    Calculates a molecular connectivity index (MC2) for a molecule.
+
+    https://pubs.acs.org/doi/full/10.1021/acs.jcim.5c00334
+
+    This function identifies carbon-oxygen (C=O) double bonds in the molecule
+    and checks if the carbon atom in the bond is connected to a nitrogen (N) or
+    oxygen (O) atom (excluding the double-bonded oxygen). It then counts the
+    number of non-divalent atoms that are not part of these specific C=O-X
+    double bonds.
+
+    Parameters:
+    ----------
+    mol : rdkit.Chem.rdchem.Mol
+        The RDKit molecule object for which the MC2 index is to be calculated.
+
+    Returns:
+    -------
+    int
+        The count of non-divalent atoms not involved in C=O-X double bonds.
+    """
+    double_bond_set = set()
+
+    for bond in mol.GetBonds():
+        # Check for a C=O double bond
+        if bond.GetBondType() == Chem.rdchem.BondType.DOUBLE:
+            atoms = [bond.GetBeginAtom(), bond.GetEndAtom()]
+            if {atom.GetAtomicNum() for atom in atoms} == {6, 8}:  # C and O
+                carbon = next(atom for atom in atoms if atom.GetAtomicNum() == 6)
+                oxygen = next(atom for atom in atoms if atom.GetAtomicNum() == 8)
+
+                # Check carbon's neighbors for N or O (excluding the double-bonded O)
+                if any(neighbor.GetIdx() != oxygen.GetIdx() and neighbor.GetAtomicNum() in [7, 8]
+                       for neighbor in carbon.GetNeighbors()):
+                    double_bond_set.update([carbon.GetIdx(), oxygen.GetIdx()])
+
+    # Count non-divalent atoms not in C=O-X double bonds
+    return sum(1 for atom in mol.GetAtoms() if atom.GetDegree() != 2 and atom.GetIdx() not in double_bond_set)
