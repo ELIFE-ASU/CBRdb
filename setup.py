@@ -29,7 +29,6 @@ setup(
         'chemparse',
         'swifter',
         'ase',
-        'bottcherscore @ git+https://github.com/ELIFE-ASU/bottcherscore.git',
         # 'rxnmapper',
     ],
     extras_require={
