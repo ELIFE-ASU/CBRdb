@@ -296,26 +296,73 @@ def compound_super_safe_load(file, verbose=True):
 
 
 def _get_properties(mol):
+    """
+    Extracts molecular properties and descriptors for a given molecule.
+
+    This function standardizes the molecule, fixes R groups, caps the molecule with hydrogens,
+    and calculates molecular descriptors. It returns a dictionary containing SMILES, InChI,
+    capped SMILES, capped InChI, and molecular descriptors.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.Mol
+        The input molecule to process.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing the following keys:
+        - 'smiles': The SMILES representation of the molecule.
+        - 'inchi': The InChI representation of the molecule.
+        - 'smiles_capped': The SMILES representation of the hydrogen-capped molecule.
+        - 'inchi_capped': The InChI representation of the hydrogen-capped molecule.
+        - Additional keys for molecular descriptors calculated from the capped molecule.
+    """
     # Standardize and embed the molecule
     mol = standardize_mol(mol)
-    # Fix the fix r group so that it can be converted to smiles
+    # Fix the R group so that it can be converted to SMILES
     mol = fix_r_group(mol)
-    # Get H capped molecule
+    # Get hydrogen-capped molecule
     mol_capped = standardize_mol(mol_replacer(mol))
-    # Make sure the molecule is fully saturated with hydrogens
+    # Ensure the molecule is fully saturated with hydrogens
     mol_capped = Chem.AddHs(mol_capped)
-    store_dict = {"smiles": Chem.MolToSmiles(mol),
-                  "inchi": Chem.MolToInchi(mol),
-                  "smiles_capped": Chem.MolToSmiles(mol_capped),
-                  "inchi_capped": Chem.MolToInchi(mol_capped)}
+
+    # Create a dictionary to store molecular representations
+    store_dict = {
+        "smiles": Chem.MolToSmiles(mol),
+        "inchi": Chem.MolToInchi(mol),
+        "smiles_capped": Chem.MolToSmiles(mol_capped),
+        "inchi_capped": Chem.MolToInchi(mol_capped)
+    }
+
     # Calculate the molecular descriptors
     desc_dict = get_all_mol_descriptors(mol_capped)
-    # combine the descriptors with the capped SMILES and InChI
+    # Combine the descriptors with the capped SMILES and InChI
     store_dict.update(desc_dict)
+
     return store_dict
 
 
 def get_properties(mols):
+    """
+    Calculates molecular properties for a list of molecules.
+
+    This function uses multiprocessing to compute properties for each molecule
+    by calling the `_get_properties` function. The results are aggregated into
+    a dictionary where each key corresponds to a property and its value is a list
+    of values for all molecules.
+
+    Parameters:
+    -----------
+    mols : list of rdkit.Chem.Mol
+        A list of RDKit molecule objects for which properties are to be calculated.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing molecular properties. Each key represents a property,
+        and its value is a list of property values for all molecules.
+    """
     properties_list = mp_calc(_get_properties, mols)
 
     result = {}

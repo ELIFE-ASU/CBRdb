@@ -703,6 +703,46 @@ def mc2(mol: Mol) -> int:
 
 
 def get_all_mol_descriptors(mol):
+    """
+    Calculates a comprehensive set of molecular descriptors for a given molecule.
+
+    This function computes various molecular descriptors using RDKit and custom functions.
+    It combines descriptors such as molecular formula, molecular weight, number of heavy atoms,
+    and several topological indices into a single dictionary.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.rdchem.Mol
+        The RDKit molecule object for which descriptors are to be calculated.
+
+    Returns:
+    --------
+    dict
+        A dictionary containing molecular descriptors. The keys represent descriptor names, and
+        the values are the corresponding calculated values. The descriptors include:
+        - 'formula': Molecular formula.
+        - 'molecular_weight': Exact molecular weight.
+        - 'n_heavy_atoms': Number of heavy atoms.
+        - 'unique_bonds': Count of unique bonds.
+        - 'bertz': Bertz complexity.
+        - 'wiener_index': Wiener index.
+        - 'balaban_index': Balaban index.
+        - 'randic_index': Randic index.
+        - 'kirchhoff_index': Kirchhoff index.
+        - 'spacial_score': Spacial score.
+        - 'chirality': Number of chiral centers.
+        - 'fcfp4': FCFP_4 fingerprint.
+        - 'bottcher': Bottcher complexity.
+        - 'proudfoot': Proudfoot complexity.
+        - 'mc1': Molecular connectivity index (MC1).
+        - 'mc2': Molecular connectivity index (MC2).
+        - Additional descriptors calculated using `get_mol_descriptors`.
+
+    Notes:
+    ------
+    - The function combines descriptors from RDKit and custom calculations into a single dictionary.
+    - If any descriptor calculation fails, it may not be included in the output dictionary.
+    """
     out_dict = {'formula': rdMolDescriptors.CalcMolFormula(mol),
                 "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol),
                 "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol),
@@ -721,6 +761,6 @@ def get_all_mol_descriptors(mol):
                 'mc2': mc2(mol)}
 
     batch_dict = get_mol_descriptors(mol)
-    # combine the descriptors into a single dictionary
+    # Combine the descriptors into a single dictionary
     out_dict.update(batch_dict)
     return out_dict
