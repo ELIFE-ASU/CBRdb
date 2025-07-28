@@ -1085,36 +1085,20 @@ def plot_reaction_id(id, data_r, data_c, render_dir='render', size=(600, 600)):
     return plot_eq_line(eq, data_c, render_dir=render_dir, size=size)
 
 
-def to_smarts_rxn_line(eq, data_c):
-    """
-    Converts a chemical equation into a SMARTS reaction line.
-
-    Parameters:
-    -----------
-    eq : str
-        A string representing a chemical equation, with reactants and products separated by '<=>'.
-    data_c : pandas.DataFrame
-        A DataFrame containing compound data with 'compound_id' and 'smiles' columns.
-
-    Returns:
-    --------
-    str
-        A SMARTS reaction line in the format 'reactants>>products', where reactants and products are represented
-        as concatenated SMARTS strings.
-
-    Notes:
-    ------
-    - The function retrieves SMILES strings for reactants and products from the `data_c` DataFrame.
-    - Reactants and products are combined into SMARTS strings using their stoichiometric coefficients.
-    """
+def to_smarts_rxn_line(eq, data_c, add_stoich=False):
     reactants, products = eq_to_dict(eq)
 
     # Get SMILES for reactants and products
     reactants_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in reactants}
     products_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in products}
 
-    # Combine SMILES into SMARTS strings
-    reactants_smarts = ".".join(f"{reactants[k]}{v}" for k, v in reactants_smiles.items())
-    products_smarts = ".".join(f"{products[k]}{v}" for k, v in products_smiles.items())
+    if add_stoich:
+        # Combine SMILES into SMARTS strings
+        reactants_smarts = ".".join(f"{reactants[k]}{v}" for k, v in reactants_smiles.items())
+        products_smarts = ".".join(f"{products[k]}{v}" for k, v in products_smiles.items())
+    else:
+        # Combine SMILES into SMARTS strings without stoichiometry
+        reactants_smarts = ".".join(reactants_smiles.values())
+        products_smarts = ".".join(products_smiles.values())
 
     return f"{reactants_smarts}>>{products_smarts}"
