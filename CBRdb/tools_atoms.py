@@ -5,8 +5,9 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
+import numpy as np
 import pandas as pd
-from ase.atoms import Atoms
+from ase import Atoms
 from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
 from ase.io import read
@@ -589,6 +590,35 @@ def calculate_vib_spectrum(atoms,
         return data_ir, data_raman, data_vib
 
 
+def get_total_electrons(atoms: Atoms) -> int:
+    """
+    Calculate the total number of electrons in a molecule.
+
+    This function computes the total number of electrons in a molecule
+    represented by an ASE `Atoms` object. It sums the atomic numbers (Z)
+    of all atoms in the molecule and adjusts for the explicit charge
+    provided in the `Atoms.info` dictionary.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+
+    Returns:
+    --------
+    int
+        The total number of electrons in the molecule, corrected for its charge.
+    """
+    # Sum atomic numbers (Z) for every atom in the molecule
+    n_electrons = int(np.sum(atoms.get_atomic_numbers()))
+
+    # Correct for explicit total charge, if provided in the `Atoms.info` dictionary
+    charge = atoms.info.get('charge', 0.0)
+    n_electrons -= int(round(charge))
+
+    return n_electrons
+
+
 def calculate_ccsd_energy(atoms,
                           charge=0,
                           multiplicity=1,
@@ -596,15 +626,16 @@ def calculate_ccsd_energy(atoms,
                           basis_set='def2-TZVPP',
                           n_procs=10):
     # If no ORCA path is provided, try to read it from the environment variable
-    if orca_path is None:
-        orca_path = os.environ.get('ORCA_PATH')
-    else:
-        orca_path = os.path.abspath(orca_path)
+    orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
+
+    # Get the total number of electrons in the system
+    total_electrons = get_total_electrons(atoms)
+    # Prevent too many processors being used
+    if n_procs > total_electrons:
+        n_procs = total_electrons
 
     # Create a temporary directory for the ORCA calculation
     with tempfile.TemporaryDirectory() as temp_dir:
-        # temp_dir= 'tmp'
-        # os.makedirs(temp_dir, exist_ok=True)
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
                                 directory=temp_dir,
@@ -657,7 +688,7 @@ def calculate_free_energy(atoms,
         if ccsd_energy is None:
             raise ValueError("CCSD energy calculation failed. Please check the ORCA setup.")
     with tempfile.TemporaryDirectory() as temp_dir:
-        # temp_dir = os.path.join(tempfile.mkdtemp())
+        temp_dir = os.path.join(tempfile.mkdtemp())
 
         orca_file = os.path.join(temp_dir, 'orca.out')
         calc = orca_calc_preset(orca_path=orca_path,
@@ -682,7 +713,7 @@ def calculate_free_energy(atoms,
         else:
             energy = grab_value(orca_file, 'Final Gibbs free energy', '...')
 
-        return energy, energy - entropy, entropy
+        return energy, 0, 0  # , energy - entropy, entropy
 
 
 def list_to_str(lst):
@@ -955,6 +986,7 @@ def calculate_free_energy_formation(mol,
     # Loop over the references and calculate the free energy
     for ref_smi, ref_count in references:
         ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
+        print(f"Ref: {ref_smi}, count: {ref_count}, charge: {ref_charge}, multi: {ref_multiplicity}", flush=True)
         ref_free, ref_enthalpy, ref_entropy = calculate_free_energy(ref_atoms,
                                                                     charge=charge,
                                                                     multiplicity=multiplicity,
@@ -967,8 +999,6 @@ def calculate_free_energy_formation(mol,
                                                                     f_disp=f_disp,
                                                                     n_procs=n_procs,
                                                                     use_ccsd=use_ccsd)
-        print(f"Reference: {ref_smi}, Count: {ref_count}, charge: {ref_charge}, multiplicity: {ref_multiplicity}",
-              flush=True)
         print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
         free_atoms += ref_free * ref_count
         enthalpy_atoms += ref_enthalpy * ref_count
