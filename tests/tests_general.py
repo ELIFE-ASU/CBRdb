@@ -747,84 +747,10 @@ def test_get_properties():
     print(properties)
 
 
-def get_formation_references(mol):
-    from collections import defaultdict
-
-    # Get elemental composition
-    atom_counts = defaultdict(int)
-    symbols = set()
-    for atom in mol.GetAtoms():
-        symbol = atom.GetSymbol()
-        atom_counts[symbol] += 1.0
-        symbols.add(symbol)
-
-    supported_set = {'H', 'Ba', 'Cu', 'S', 'K', 'Cl', 'Rb', 'B', 'N', 'Se', 'Te', 'O', 'Fe', 'Co', 'Mg', 'Ge', 'I',
-                     'Tl', 'Pt', 'Xe', 'Zn', 'Gd', 'Cd', 'C', 'Al', 'F', 'Li', 'Ca', 'Ni', 'Th', 'Sr', 'Sn', 'Au', 'Ag',
-                     'V', 'Pu', 'Sb', 'Mn', 'Cr', 'Mo', 'Ra', 'Pb', 'Bi', 'As', 'Hg', 'Si', 'Br', 'Rn', 'P', 'W', 'Be',
-                     'Na'}
-    if not symbols.issubset(supported_set):
-        raise ValueError(f"Unsupported elements in the molecule: {symbols - supported_set}")
-
-    # Standard reference molecules
-    references = []
-    # loop over the atom_counts dictionary
-    for symbol, count in atom_counts.items():
-        if count > 0:
-            if symbol == 'H':
-                references.append(("[H][H]", atom_counts['H'] / 2.0))
-            elif symbol == 'Cl':
-                references.append(("Cl-Cl", atom_counts['Cl'] / 2.0))
-            elif symbol == 'N':
-                references.append(("N#N", atom_counts['N'] / 2.0))
-            elif symbol == 'O':
-                references.append(("O=O", atom_counts['O'] / 2.0))
-            elif symbol == 'I':
-                references.append(("I-I", atom_counts['I'] / 2.0))
-            elif symbol == 'F':
-                references.append(("F-F", atom_counts['F'] / 2.0))
-            elif symbol == 'Br':
-                references.append(("Br-Br", atom_counts['Br'] / 2.0))
-            else:
-                references.append((f"{symbol}", atom_counts[f"{symbol}"]))
-
-    return references
-
-
-def test_free_energy_formation():
+def test_calculate_free_energy_formation():
     print(flush=True)
-    smi = "OO" # NN
+    smi = "OO" # 1.246926, 1.946203 0.699277
+    smi = "NN" # 1.54946
+    smi = "O=C=O" # 4.087565
     mol = Chem.MolFromSmiles(smi)
-    mol = Chem.AddHs(mol)
-
-    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
-    free, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
-                                                          charge=charge,
-                                                          multiplicity=multiplicity,
-                                                          use_ccsd=True
-                                                          )
-    print(f"Mol Free: {free}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
-
-    free_atoms = 0.0
-    enthalpy_atoms = 0.0
-    entropy_atoms = 0.0
-
-    # Get the formation references
-    references = get_formation_references(mol)
-    # Loop over the references and calculate the free energy
-    for ref_smi, ref_count in references:
-        ref_atoms, ref_charge, ref_multiplicity = CBRdb.smi_to_atoms(ref_smi)
-        ref_free, ref_enthalpy, ref_entropy = CBRdb.calculate_free_energy(ref_atoms,
-                                                                           charge=ref_charge,
-                                                                           multiplicity=ref_multiplicity,
-                                                                           use_ccsd=True)
-        print(f"Reference: {ref_smi}, Count: {ref_count}", flush=True)
-        print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
-        free_atoms += ref_free * ref_count
-        enthalpy_atoms += ref_enthalpy * ref_count
-        entropy_atoms += ref_entropy * ref_count
-    print(f"Atoms Free: {free_atoms}, Enthalpy: {enthalpy_atoms}, Entropy: {entropy_atoms}", flush=True)
-    d_free = free - free_atoms
-    d_enthalpy = enthalpy - enthalpy_atoms
-    d_entropy = entropy - entropy_atoms
-    print(f"Deltas Free: {d_free}, Enthalpy: {d_enthalpy}, Entropy: {d_entropy}", flush=True)
-    print(f"Half values Free: {d_free / 2.0}, Enthalpy: {d_enthalpy / 2.0}, Entropy: {d_entropy / 2.0}", flush=True)
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation(mol)
