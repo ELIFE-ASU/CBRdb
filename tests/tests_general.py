@@ -792,25 +792,39 @@ def get_formation_references(mol):
 
 def test_free_energy_formation():
     print(flush=True)
-    smi = "OO"
+    smi = "OO" # NN
     mol = Chem.MolFromSmiles(smi)
     mol = Chem.AddHs(mol)
 
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
-    energy, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
-                                                            charge=charge,
-                                                            multiplicity=multiplicity,
-                                                            xc='pbe')
-    print(energy, flush=True)
+    free, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
+                                                          charge=charge,
+                                                          multiplicity=multiplicity,
+                                                          use_ccsd=True
+                                                          )
+    print(f"Mol Free: {free}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
 
-    energy_atoms = 0.0
+    free_atoms = 0.0
+    enthalpy_atoms = 0.0
+    entropy_atoms = 0.0
+
+    # Get the formation references
     references = get_formation_references(mol)
+    # Loop over the references and calculate the free energy
     for ref_smi, ref_count in references:
         ref_atoms, ref_charge, ref_multiplicity = CBRdb.smi_to_atoms(ref_smi)
-        ref_energy, _, _ = CBRdb.calculate_free_energy(ref_atoms,
-                                                       charge=ref_charge,
-                                                       multiplicity=ref_multiplicity,
-                                                       xc='pbe')
-        print(f"Reference: {ref_smi}, Count: {ref_count}, Energy: {ref_energy}", flush=True)
-        energy_atoms += ref_energy * ref_count
-    print(energy_atoms, flush=True)
+        ref_free, ref_enthalpy, ref_entropy = CBRdb.calculate_free_energy(ref_atoms,
+                                                                           charge=ref_charge,
+                                                                           multiplicity=ref_multiplicity,
+                                                                           use_ccsd=True)
+        print(f"Reference: {ref_smi}, Count: {ref_count}", flush=True)
+        print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
+        free_atoms += ref_free * ref_count
+        enthalpy_atoms += ref_enthalpy * ref_count
+        entropy_atoms += ref_entropy * ref_count
+    print(f"Atoms Free: {free_atoms}, Enthalpy: {enthalpy_atoms}, Entropy: {entropy_atoms}", flush=True)
+    d_free = free - free_atoms
+    d_enthalpy = enthalpy - enthalpy_atoms
+    d_entropy = entropy - entropy_atoms
+    print(f"Deltas Free: {d_free}, Enthalpy: {d_enthalpy}, Entropy: {d_entropy}", flush=True)
+    print(f"Half values Free: {d_free / 2.0}, Enthalpy: {d_enthalpy / 2.0}, Entropy: {d_entropy / 2.0}", flush=True)
