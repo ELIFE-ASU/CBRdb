@@ -721,7 +721,31 @@ def calculate_free_energy(atoms,
 
 
 def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:
-    # Compile a regex that matches a data line in the ensemble table
+    """
+    Extract conformer information from an ORCA output file.
+
+    This function reads an ORCA output file and parses the ensemble table to extract
+    conformer data, including conformer index, energy, and percentage of the total.
+
+    Parameters:
+    -----------
+    filepath : Union[str, Path]
+        Path to the ORCA output file containing the ensemble table.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A pandas DataFrame containing the following columns:
+        - 'Conformer': Conformer index (int).
+        - 'Energy_kcal_mol': Energy in kcal/mol (float).
+        - 'Percent_total': Percentage of the total (float).
+
+    Raises:
+    -------
+    ValueError
+        If the ensemble table cannot be located in the file.
+    """
+    # Compile a regex pattern to match a data line in the ensemble table
     line_pat = re.compile(
         r"""^\s*
             (?P<conformer>\d+)\s+          # integer index
@@ -733,21 +757,26 @@ def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:
         re.VERBOSE,
     )
 
-    # Sentinels to locate the table
+    # Compile a regex pattern to locate the table header
     header_pat = re.compile(r"Conformer\s+Energy.*% total", re.I)
 
-    # Read and parse
+    # Initialize variables for parsing
     rows = []
     in_table = False
+
+    # Open the file and read its contents
     with open(filepath, "r", encoding="utf-8", errors="ignore") as fh:
         for line in fh:
+            # Check for the table header to start reading data
             if not in_table and header_pat.search(line):
-                in_table = True  # Start reading on next lines
+                in_table = True  # Start reading on the next lines
                 continue
 
             if in_table:
+                # Stop reading when the table ends
                 if line.strip() == "" or line.strip().startswith("Conformers"):
-                    break  # Reached the end of the table
+                    break
+                # Match a data line and extract values
                 m = line_pat.match(line)
                 if m:
                     rows.append(
@@ -758,11 +787,13 @@ def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:
                         )
                     )
 
+    # Raise an error if no data was found
     if not rows:
         raise ValueError(
             "Could not locate ensemble table. Check that the file is complete."
         )
 
+    # Return the extracted data as a pandas DataFrame
     return pd.DataFrame(
         rows, columns=["Conformer", "Energy_kcal_mol", "Percent_total"]
     )
@@ -773,6 +804,36 @@ def calculate_goat(atoms,
                    multiplicity=1,
                    orca_path=None,
                    n_procs=10):
+    """
+    Perform a GOAT (Global Optimization of Atomic Topologies) calculation using ORCA.
+
+    This function sets up and executes a GOAT calculation to optimize molecular conformers
+    and extract conformer information from the ORCA output file.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        ASE Atoms object representing the molecule to be optimized.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+
+    Returns:
+    --------
+    tuple
+        - atoms : list of ase.Atoms
+            List of ASE Atoms objects representing the optimized conformers.
+        - df : pandas.DataFrame
+            DataFrame containing conformer information, including:
+            - 'Conformer': Conformer index (int).
+            - 'Energy_kcal_mol': Energy in kcal/mol (float).
+            - 'Percent_total': Percentage of the total (float).
+    """
     # Determine the ORCA path
     if orca_path is None:
         # Try to read the path from the environment variable
@@ -780,6 +841,7 @@ def calculate_goat(atoms,
     else:
         # Convert the provided path to an absolute path
         orca_path = os.path.abspath(orca_path)
+
     # Create an ORCA profile with the specified command
     profile = OrcaProfile(command=orca_path)
 
@@ -791,22 +853,30 @@ def calculate_goat(atoms,
 
     # Create a temporary working directory
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Create and return the ORCA calculator object
+        # Create and configure the ORCA calculator object
         calc = ORCA(
             profile=profile,
             charge=charge,
             mult=multiplicity,
             directory=temp_dir,
             orcasimpleinput='GOAT XTB',
-            orcablocks=inpt_procs)
-        # Assign the calculator to the molecule
+            orcablocks=inpt_procs
+        )
+        # Assign the calculator to the ASE Atoms object
         atoms.calc = calc
 
-        # Trigger the calculation to optimise the geometry
+        # Trigger the calculation to optimize the geometry
         _ = atoms.get_potential_energy()
-        xyz_file = os.path.join(temp_dir, "orca.finalensemble.xyz")
-        orca_file = os.path.join(temp_dir, "orca.out")
 
+        # Define paths for the output files
+        xyz_file = os.path.join(temp_dir, "orca.finalensemble.xyz")  # Path to the final ensemble file
+        orca_file = os.path.join(temp_dir, "orca.out")  # Path to the ORCA output file
+
+        # Extract conformer information from the ORCA output file
         df = extract_conformer_info(orca_file)
+
+        # Read the optimized conformers from the ensemble file
         atoms = read(xyz_file, format="xyz", index=':')
+
+        # Return the optimized conformers and conformer information
         return atoms, df
