@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from ase.io import read
 from ase.visualize import view
 from rdkit import Chem as Chem
 
@@ -636,11 +637,14 @@ def test_calculate_goat():
 
 def test_calculate_free_energy_batch():
     print(flush=True)
-    t_list = [300, 400]  # List of temperatures in Kelvin
-    p_list = [1.0, 2.0]  # List of pressures in atm
-    smi = "OCCCCC"  # SMILES representation of the molecule (water in this case)
-    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
-    CBRdb.calculate_free_energy_batch(atoms, t_list, p_list, charge, multiplicity)
+    # t_list = [300, 400]  # List of temperatures in Kelvin
+    # p_list = [1.0, 2.0]  # List of pressures in atm
+    # smi = "OCCCCC"  # SMILES representation of the molecule (water in this case)
+    # atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    # CBRdb.calculate_free_energy_batch(atoms, t_list, p_list, charge, multiplicity)
+    atoms = read('data/orca.xyz')  # Load atoms from an XYZ file
+    hessian = os.path.join(os.getcwd(), 'data/orca.hess')  # Load hessian from a numpy file
+    CBRdb.calculate_free_energy_batch(atoms, hessian, 300, 1.0)
 
 
 def test_to_smarts_rxn_line():
