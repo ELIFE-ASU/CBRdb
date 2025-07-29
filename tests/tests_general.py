@@ -580,19 +580,48 @@ def test_calculate_free_energy():
     print(flush=True)
     smi = "O"  # SMILES representation of the molecule (water in this case)
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
-    energy, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
-                                                            charge=charge,
-                                                            multiplicity=multiplicity)
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy(atoms, charge=charge, multiplicity=multiplicity)
     print(energy, enthalpy, entropy, flush=True)
     ref_energy = -2079.599879755067  # Reference Gibbs free energy value
     assert np.allclose(energy, ref_energy,
-                       atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
+                       atol=1e-3), f"Calculated energy {energy} does not match reference {ref_energy}"
     ref_enthalpy = -2079.017167243439
     assert np.allclose(enthalpy, ref_enthalpy,
-                       atol=1e-1), f"Calculated enthalpy {enthalpy} does not match reference {ref_enthalpy}"
+                       atol=1e-3), f"Calculated enthalpy {enthalpy} does not match reference {ref_enthalpy}"
     ref_entropy = -0.5827125116277472
     assert np.allclose(entropy, ref_entropy,
-                       atol=1e-1), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
+                       atol=1e-3), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
+
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
+                                                            charge=charge,
+                                                            multiplicity=multiplicity,
+                                                            use_ccsd=True)
+    print(energy, enthalpy, entropy, flush=True)
+    ref_energy = -2077.1273362752813  # Reference Gibbs free energy value
+    assert np.allclose(energy, ref_energy,
+                       atol=1e-3), f"Calculated energy {energy} does not match reference {ref_energy}"
+    ref_enthalpy = -2076.5446237636534
+    assert np.allclose(enthalpy, ref_enthalpy,
+                       atol=1e-3), f"Calculated enthalpy {enthalpy} does not match reference {ref_enthalpy}"
+    ref_entropy = -0.5827125116277472
+    assert np.allclose(entropy, ref_entropy,
+                       atol=1e-3), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
+
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
+                                                            charge=charge,
+                                                            multiplicity=multiplicity,
+                                                            use_ccsd=True,
+                                                            f_solv=True)
+    print(energy, enthalpy, entropy, flush=True)
+    ref_energy = -2077.0719458992658  # Reference Gibbs free energy value
+    assert np.allclose(energy, ref_energy,
+                       atol=1e-3), f"Calculated energy {energy} does not match reference {ref_energy}"
+    ref_enthalpy = -2076.4889517497927
+    assert np.allclose(enthalpy, ref_enthalpy,
+                       atol=1e-3), f"Calculated enthalpy {enthalpy} does not match reference {ref_enthalpy}"
+    ref_entropy = -0.5829941494730994
+    assert np.allclose(entropy, ref_entropy,
+                       atol=1e-3), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
 
 
 def test_optimise_atoms():
