@@ -264,6 +264,12 @@ def orca_calc_preset(orca_path=None,
     else:
         inpt_simple = '{} {}'.format(calc_type, basis_set)
 
+    if multiplicity > 1:
+        if calc_type == 'DFT' or calc_type == 'QM/XTB2':
+            inpt_simple = 'UHK' + inpt_simple
+        elif calc_type == 'MP2' or calc_type == 'CCSD':
+            inpt_simple = 'UKS' + inpt_simple
+
     # Add the SCF option if provided
     if scf_option is not None:
         inpt_simple += ' ' + scf_option
@@ -944,7 +950,8 @@ def calculate_free_energy_formation(mol,
                                                                     f_disp=f_disp,
                                                                     n_procs=n_procs,
                                                                     use_ccsd=use_ccsd)
-        print(f"Reference: {ref_smi}, Count: {ref_count}", flush=True)
+        print(f"Reference: {ref_smi}, Count: {ref_count}, charge: {ref_charge}, multiplicity: {ref_multiplicity}",
+              flush=True)
         print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
         free_atoms += ref_free * ref_count
         enthalpy_atoms += ref_enthalpy * ref_count
