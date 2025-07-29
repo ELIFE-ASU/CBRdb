@@ -594,6 +594,7 @@ def test_calculate_free_energy():
 
 
 def test_optimise_atoms():
+    print(flush=True)
     smi = "O"  # SMILES representation of the molecule (water in this case)
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
     atoms = CBRdb.optimise_atoms(atoms, charge=charge, multiplicity=multiplicity)
@@ -606,6 +607,7 @@ def test_optimise_atoms():
 
 
 def test_calculate_vib_spectrum():
+    print(flush=True)
     smi = "O"  # SMILES representation of the molecule (water in this case)
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
 
@@ -615,6 +617,18 @@ def test_calculate_vib_spectrum():
     print(data_ir, flush=True)
     print(data_raman, flush=True)
     print(data_vib, flush=True)
+
+def test_calculate_goat():
+    print(flush=True)
+    smi = "OCCCCC"  # SMILES representation of the molecule (water in this case)
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+
+    data_goat = CBRdb.calculate_goat(atoms,
+                                     charge=charge,
+                                     multiplicity=multiplicity)
+    from ase.visualize import view
+    view(data_goat)
+
 
 
 def test_to_smarts_rxn_line():

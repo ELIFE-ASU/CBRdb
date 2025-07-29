@@ -36,7 +36,8 @@ from .tools_atoms import (smi_to_atoms,
                           calculate_vib_spectrum,
                           calculate_free_energy,
                           calculate_ccsd_energy,
-                          calculate_free_energy)
+                          calculate_free_energy,
+                          calculate_goat)
 from .tools_complexity import (count_unique_bonds,
                                molecular_weight,
                                bertz,

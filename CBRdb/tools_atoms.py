@@ -716,3 +716,46 @@ def calculate_free_energy(atoms,
                     break
 
         return energy, enthalpy, entropy
+
+
+def calculate_goat(atoms,
+                   charge=0,
+                   multiplicity=1,
+                   orca_path=None,
+                   n_procs=10):
+    # Determine the ORCA path
+    if orca_path is None:
+        # Try to read the path from the environment variable
+        orca_path = os.environ.get('ORCA_PATH')
+    else:
+        # Convert the provided path to an absolute path
+        orca_path = os.path.abspath(orca_path)
+    # Create an ORCA profile with the specified command
+    profile = OrcaProfile(command=orca_path)
+
+    # Configure the number of processors
+    if n_procs > 1:
+        inpt_procs = '%pal nprocs {} end'.format(n_procs)
+    else:
+        inpt_procs = ''
+
+    # Create a temporary working directory
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = 'temp'
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Create and return the ORCA calculator object
+        calc = ORCA(
+            profile=profile,
+            charge=charge,
+            mult=multiplicity,
+            directory=temp_dir,
+            orcasimpleinput='GOAT XTB',
+            orcablocks=inpt_procs)
+        # Assign the calculator to the molecule
+        atoms.calc = calc
+
+        # Trigger the calculation to optimise the geometry
+        _ = atoms.get_potential_energy()
+        orca_file = os.path.join(temp_dir, "orca.finalensemble.xyz")
+        return read(orca_file, format="xyz", index=':')
