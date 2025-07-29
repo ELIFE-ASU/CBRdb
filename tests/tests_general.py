@@ -775,3 +775,63 @@ def test_calculate_free_energy_formation():
     smi = "O=C=O"  # 4.087565
     mol = Chem.MolFromSmiles(smi)
     energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation(mol)
+
+
+def _calc_unpaired(capacity: int, electrons: int) -> int:
+    orbitals = capacity // 2
+    return electrons if electrons <= orbitals else 2 * orbitals - electrons
+
+
+def _aufbau_multiplicity(z: int) -> int:
+    subshells = [
+        ('1s', 2), ('2s', 2), ('2p', 6), ('3s', 2), ('3p', 6),
+        ('4s', 2), ('3d', 10), ('4p', 6), ('5s', 2), ('4d', 10),
+        ('5p', 6), ('6s', 2), ('4f', 14), ('5d', 10), ('6p', 6),
+        ('7s', 2), ('5f', 14), ('6d', 10), ('7p', 6),
+    ]
+    remaining, unpaired = z, 0
+    for _, cap in subshells:
+        if remaining == 0:
+            break
+        n = min(cap, remaining)
+        remaining -= n
+        unpaired += _calc_unpaired(cap, n)
+    return unpaired + 1  # 2S+1
+
+
+def get_spin_multiplicity(mol: Chem.Mol) -> int:
+    mol = Chem.AddHs(mol)
+    # 1 – explicit override
+    for key in ("spinMultiplicity", "SpinMultiplicity"):
+        if mol.HasProp(key):
+            return int(mol.GetProp(key))
+
+    # 2 – isolated atom
+    if mol.GetNumAtoms() == 1:
+        _EXCEPTIONS = {24: 7, 29: 2, 42: 7, 47: 2}  # Cr, Cu, Mo, Ag
+        _GROUND_STATE_MULTIPLICITY = {
+            z: _EXCEPTIONS.get(z, _aufbau_multiplicity(z))
+            for z in range(1, 118 + 1)
+        }
+        z = mol.GetAtomWithIdx(0).GetAtomicNum()
+        return _GROUND_STATE_MULTIPLICITY.get(z, 1)
+
+    # 3 – molecule: use radical count if present
+    n_rad = sum(a.GetNumRadicalElectrons() for a in mol.GetAtoms())
+    return (n_rad + 1) if n_rad else 1
+
+
+def test_spin_multiplicity():
+    print(flush=True)
+    examples = {
+        "[C]": "isolated carbon atom (triplet)",
+        "C": "methane (singlet)",
+        "[CH3]": "methyl radical (doublet)",
+        "[O][O]": "triplet O₂ (two radicals)",
+        "O=O": "singlet O₂ resonance form",
+    }
+
+    for smi, label in examples.items():
+        m = Chem.MolFromSmiles(smi)
+        mult = get_spin_multiplicity(m)
+        print(f"{smi:6s} → multiplicity {mult} \t({label})")
