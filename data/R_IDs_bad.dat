@@ -18,6 +18,7 @@ A009452,structure_missing
 A009453,structure_missing
 A010468,structure_missing
 A011573,structure_missing
+A012803,general
 A013987,structure_missing
 A014488,structure_missing
 A014760,structure_missing
@@ -802,6 +803,7 @@ A127924,structure_missing
 A128722,structure_missing
 A128723,structure_missing
 A129404,structure_missing
+A130342,shortcut
 A130722,structure_missing
 A130794,structure_missing
 A131192,structure_missing
@@ -814,6 +816,7 @@ A132990,structure_missing
 A133034,structure_missing
 A133290,structure_missing
 A133305,structure_missing
+A133808,shortcut
 A137902,structure_missing
 A137903,structure_missing
 A138031,structure_missing
@@ -844,6 +847,7 @@ A139059,structure_missing
 A139106,structure_missing
 A139152,structure_missing
 A139254,structure_missing
+A139321,shortcut
 A139341,structure_missing
 A139354,structure_missing
 A139384,structure_missing
@@ -1552,6 +1556,7 @@ R02848,general
 R02849,general
 R02850,general
 R02854,unclear
+R02857,general
 R02861,incomplete
 R02874,structure_missing
 R02876,general+structure_missing
