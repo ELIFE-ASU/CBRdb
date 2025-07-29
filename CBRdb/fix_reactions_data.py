@@ -221,8 +221,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     print_and_log("Filtering out var list", f_log)
     if f_parallel:
         t0 = time.time()
-        bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list,
-                                                                                     args=(data_c,))
+        coeffs = data_r['reaction'].str.split(' <=> ', expand=True).map(side_to_dict)
+        variable_coeff = lambda x: any([isinstance(i, str) for i in x.values()])
+        bool_var_list = coeffs.map(variable_coeff).any(axis=1)
+        # bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list,
+        #                                                                              args=(data_c,))
         print_and_log(f"Time to check var list: {time.time() - t0}", f_log)
     else:
         t0 = time.time()
