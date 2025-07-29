@@ -1,6 +1,8 @@
 import os
 import re
 import tempfile
+from pathlib import Path
+from typing import Union
 
 import pandas as pd
 from ase.atoms import Atoms
@@ -718,6 +720,54 @@ def calculate_free_energy(atoms,
         return energy, enthalpy, entropy
 
 
+def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:
+    # Compile a regex that matches a data line in the ensemble table
+    line_pat = re.compile(
+        r"""^\s*
+            (?P<conformer>\d+)\s+          # integer index
+            (?P<energy>-?\d+\.\d+)\s+      # energy in kcal/mol
+            \d+\s+                         # degeneracy (ignored)
+            (?P<ptotal>\d+\.\d+)\s+        # % total
+            \d+\.\d+\s*?$                  # % cumulative (ignored)
+        """,
+        re.VERBOSE,
+    )
+
+    # Sentinels to locate the table
+    header_pat = re.compile(r"Conformer\s+Energy.*% total", re.I)
+
+    # Read and parse
+    rows = []
+    in_table = False
+    with open(filepath, "r", encoding="utf-8", errors="ignore") as fh:
+        for line in fh:
+            if not in_table and header_pat.search(line):
+                in_table = True  # Start reading on next lines
+                continue
+
+            if in_table:
+                if line.strip() == "" or line.strip().startswith("Conformers"):
+                    break  # Reached the end of the table
+                m = line_pat.match(line)
+                if m:
+                    rows.append(
+                        (
+                            int(m["conformer"]),
+                            float(m["energy"]),
+                            float(m["ptotal"]),
+                        )
+                    )
+
+    if not rows:
+        raise ValueError(
+            "Could not locate ensemble table. Check that the file is complete."
+        )
+
+    return pd.DataFrame(
+        rows, columns=["Conformer", "Energy_kcal_mol", "Percent_total"]
+    )
+
+
 def calculate_goat(atoms,
                    charge=0,
                    multiplicity=1,
@@ -741,9 +791,6 @@ def calculate_goat(atoms,
 
     # Create a temporary working directory
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = 'temp'
-        os.makedirs(temp_dir, exist_ok=True)
-
         # Create and return the ORCA calculator object
         calc = ORCA(
             profile=profile,
@@ -757,5 +804,9 @@ def calculate_goat(atoms,
 
         # Trigger the calculation to optimise the geometry
         _ = atoms.get_potential_energy()
-        orca_file = os.path.join(temp_dir, "orca.finalensemble.xyz")
-        return read(orca_file, format="xyz", index=':')
+        xyz_file = os.path.join(temp_dir, "orca.finalensemble.xyz")
+        orca_file = os.path.join(temp_dir, "orca.out")
+
+        df = extract_conformer_info(orca_file)
+        atoms = read(xyz_file, format="xyz", index=':')
+        return atoms, df

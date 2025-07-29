@@ -2,6 +2,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from ase.visualize import view
 from rdkit import Chem as Chem
 
 import CBRdb
@@ -618,17 +619,19 @@ def test_calculate_vib_spectrum():
     print(data_raman, flush=True)
     print(data_vib, flush=True)
 
+
 def test_calculate_goat():
     print(flush=True)
     smi = "OCCCCC"  # SMILES representation of the molecule (water in this case)
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
 
-    data_goat = CBRdb.calculate_goat(atoms,
-                                     charge=charge,
-                                     multiplicity=multiplicity)
-    from ase.visualize import view
-    view(data_goat)
+    atoms, data_goat = CBRdb.calculate_goat(atoms,
+                                            charge=charge,
+                                            multiplicity=multiplicity)
 
+    print(data_goat, flush=True)
+
+    view(atoms)
 
 
 def test_to_smarts_rxn_line():
