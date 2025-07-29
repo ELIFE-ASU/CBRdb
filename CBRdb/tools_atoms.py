@@ -284,9 +284,9 @@ def orca_calc_preset(orca_path=None,
 
     if multiplicity > 1:
         if calc_type == 'DFT' or calc_type == 'QM/XTB2':
-            inpt_simple = 'UHK' + inpt_simple
+            inpt_simple = 'UKS  ' + inpt_simple
         elif calc_type == 'MP2' or calc_type == 'CCSD':
-            inpt_simple = 'UKS' + inpt_simple
+            inpt_simple = 'UKS ' + inpt_simple
 
     # Add the SCF option if provided
     if scf_option is not None:
@@ -688,8 +688,6 @@ def calculate_free_energy(atoms,
         if ccsd_energy is None:
             raise ValueError("CCSD energy calculation failed. Please check the ORCA setup.")
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = os.path.join(tempfile.mkdtemp())
-
         orca_file = os.path.join(temp_dir, 'orca.out')
         calc = orca_calc_preset(orca_path=orca_path,
                                 directory=temp_dir,
@@ -713,7 +711,7 @@ def calculate_free_energy(atoms,
         else:
             energy = grab_value(orca_file, 'Final Gibbs free energy', '...')
 
-        return energy, 0, 0  # , energy - entropy, entropy
+        return energy, energy - entropy, entropy
 
 
 def list_to_str(lst):
@@ -961,7 +959,6 @@ def calculate_free_energy_formation(mol,
                                     n_procs=10,
                                     use_ccsd=False):
     mol = Chem.AddHs(mol)
-
     atoms, charge, multiplicity = mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(mol)
     free, enthalpy, entropy = calculate_free_energy(atoms,
                                                     charge=charge,
@@ -980,7 +977,6 @@ def calculate_free_energy_formation(mol,
     free_atoms = 0.0
     enthalpy_atoms = 0.0
     entropy_atoms = 0.0
-
     # Get the formation references
     references = get_formation_references(mol)
     # Loop over the references and calculate the free energy
@@ -1008,7 +1004,6 @@ def calculate_free_energy_formation(mol,
     d_enthalpy = enthalpy - enthalpy_atoms
     d_entropy = entropy - entropy_atoms
     print(f"Deltas Free: {d_free}, Enthalpy: {d_enthalpy}, Entropy: {d_entropy}", flush=True)
-    print(f"Half values Free: {d_free / 2.0}, Enthalpy: {d_enthalpy / 2.0}, Entropy: {d_entropy / 2.0}", flush=True)
     return d_free, d_enthalpy, d_entropy
 
 
