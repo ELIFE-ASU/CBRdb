@@ -634,6 +634,15 @@ def test_calculate_goat():
     view(atoms)
 
 
+def test_calculate_free_energy_batch():
+    print(flush=True)
+    t_list = [300, 400]  # List of temperatures in Kelvin
+    p_list = [1.0, 2.0]  # List of pressures in atm
+    smi = "OCCCCC"  # SMILES representation of the molecule (water in this case)
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    CBRdb.calculate_free_energy_batch(atoms, t_list, p_list, charge, multiplicity)
+
+
 def test_to_smarts_rxn_line():
     """
     Test the `to_smarts_rxn_line` function from the `CBRdb` module.

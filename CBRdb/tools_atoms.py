@@ -720,6 +720,74 @@ def calculate_free_energy(atoms,
         return energy, enthalpy, entropy
 
 
+def list_to_str(lst):
+    lst = [str(item) for item in lst]
+    return ', '.join(lst)
+
+
+def calculate_free_energy_batch(
+        atoms,
+        t_list,
+        p_list,
+        charge=0,
+        multiplicity=1,
+        orca_path=None,
+        xc='r2SCAN-3c',
+        basis_set='def2-QZVP',
+        tight_opt=False,
+        tight_scf=False,
+        f_solv=False,
+        f_disp=False,
+        n_procs=10,
+        ccsd_energy=False
+):
+    if orca_path is None:
+        orca_path = os.environ.get('ORCA_PATH')
+    else:
+        orca_path = os.path.abspath(orca_path)
+
+    if tight_opt:
+        opt_option = 'TIGHTOPT'
+    else:
+        opt_option = 'OPT'
+
+    if tight_scf:
+        calc_extra = f'{opt_option} TIGHTSCF FREQ'
+    else:
+        calc_extra = f'{opt_option} FREQ'
+
+    # Set up the %thermo block for this temperature and pressure
+    blocks_extra = f'''
+    %freq
+        Temp {list_to_str(t_list)}
+        Pressure {list_to_str(p_list)}
+    end
+    '''
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = 'tmp'
+        os.makedirs(temp_dir, exist_ok=True)
+
+        calc = orca_calc_preset(
+            orca_path=orca_path,
+            directory=temp_dir,
+            charge=charge,
+            multiplicity=multiplicity,
+            xc=xc,
+            basis_set=basis_set,
+            n_procs=n_procs,
+            f_solv=f_solv,
+            f_disp=f_disp,
+            calc_extra=calc_extra,
+            blocks_extra=blocks_extra
+        )
+
+        atoms.calc = calc
+        _ = atoms.get_potential_energy()
+
+    return None
+
+
 def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:
     """
     Extract conformer information from an ORCA output file.
