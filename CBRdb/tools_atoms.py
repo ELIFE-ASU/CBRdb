@@ -1,6 +1,7 @@
 import os
 import re
 import tempfile
+from collections import defaultdict
 from pathlib import Path
 from typing import Union
 
@@ -579,6 +580,8 @@ def calculate_ccsd_energy(atoms,
 
     # Create a temporary directory for the ORCA calculation
     with tempfile.TemporaryDirectory() as temp_dir:
+        # temp_dir= 'tmp'
+        # os.makedirs(temp_dir, exist_ok=True)
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
                                 directory=temp_dir,
@@ -625,6 +628,8 @@ def calculate_free_energy(atoms,
                                             charge=charge,
                                             multiplicity=multiplicity,
                                             n_procs=n_procs)
+        if ccsd_energy is None:
+            raise ValueError("CCSD energy calculation failed. Please check the ORCA setup.")
     with tempfile.TemporaryDirectory() as temp_dir:
         orca_file = os.path.join(temp_dir, 'orca.out')
         calc = orca_calc_preset(orca_path=orca_path,
@@ -644,7 +649,7 @@ def calculate_free_energy(atoms,
 
         if use_ccsd:
             g_e_ele = grab_value(orca_file, 'G-E(el)', '...')
-            g_e_solv = grab_value(orca_file, 'Free-energy (cav+disp)', ':') if f_solv else 0
+            g_e_solv = grab_value(orca_file, 'Free-energy (cav+disp)', ':') if f_solv else 0.0
             energy = ccsd_energy + g_e_ele + g_e_solv
         else:
             energy = grab_value(orca_file, 'Final Gibbs free energy', '...')
@@ -843,6 +848,109 @@ def calculate_free_energy_batch(atoms,
             energy = grab_value(orca_file, 'Final Gibbs free energy', '...')
 
         return energy, energy - entropy, entropy
+
+
+def get_formation_references(mol):
+    # Get elemental composition
+    atom_counts = defaultdict(int)
+    symbols = set()
+    for atom in mol.GetAtoms():
+        symbol = atom.GetSymbol()
+        atom_counts[symbol] += 1.0
+        symbols.add(symbol)
+
+    supported_set = {'H', 'Ba', 'Cu', 'S', 'K', 'Cl', 'Rb', 'B', 'N', 'Se', 'Te', 'O', 'Fe', 'Co', 'Mg', 'Ge', 'I',
+                     'Tl', 'Pt', 'Xe', 'Zn', 'Gd', 'Cd', 'C', 'Al', 'F', 'Li', 'Ca', 'Ni', 'Th', 'Sr', 'Sn', 'Au', 'Ag',
+                     'V', 'Pu', 'Sb', 'Mn', 'Cr', 'Mo', 'Ra', 'Pb', 'Bi', 'As', 'Hg', 'Si', 'Br', 'Rn', 'P', 'W', 'Be',
+                     'Na'}
+    if not symbols.issubset(supported_set):
+        raise ValueError(f"Unsupported elements in the molecule: {symbols - supported_set}")
+
+    # Standard reference molecules
+    references = []
+    # loop over the atom_counts dictionary
+    for symbol, count in atom_counts.items():
+        if count > 0:
+            if symbol == 'H':
+                references.append(("[H][H]", atom_counts['H'] / 2.0))
+            elif symbol == 'Cl':
+                references.append(("Cl-Cl", atom_counts['Cl'] / 2.0))
+            elif symbol == 'N':
+                references.append(("N#N", atom_counts['N'] / 2.0))
+            elif symbol == 'O':
+                references.append(("O=O", atom_counts['O'] / 2.0))
+            elif symbol == 'I':
+                references.append(("I-I", atom_counts['I'] / 2.0))
+            elif symbol == 'F':
+                references.append(("F-F", atom_counts['F'] / 2.0))
+            elif symbol == 'Br':
+                references.append(("Br-Br", atom_counts['Br'] / 2.0))
+            else:
+                references.append((f"[{symbol}]", atom_counts[f"{symbol}"]))
+
+    return references
+
+
+def calculate_free_energy_formation(mol,
+                                    orca_path=None,
+                                    xc='r2SCAN-3c',
+                                    basis_set='def2-QZVP',
+                                    tight_opt=False,
+                                    tight_scf=False,
+                                    f_solv=False,
+                                    f_disp=False,
+                                    n_procs=10,
+                                    use_ccsd=False):
+    mol = Chem.AddHs(mol)
+
+    atoms, charge, multiplicity = mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(mol)
+    free, enthalpy, entropy = calculate_free_energy(atoms,
+                                                    charge=charge,
+                                                    multiplicity=multiplicity,
+                                                    orca_path=orca_path,
+                                                    xc=xc,
+                                                    basis_set=basis_set,
+                                                    tight_opt=tight_opt,
+                                                    tight_scf=tight_scf,
+                                                    f_solv=f_solv,
+                                                    f_disp=f_disp,
+                                                    n_procs=n_procs,
+                                                    use_ccsd=use_ccsd)
+    print(f"Mol Free: {free}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
+
+    free_atoms = 0.0
+    enthalpy_atoms = 0.0
+    entropy_atoms = 0.0
+
+    # Get the formation references
+    references = get_formation_references(mol)
+    # Loop over the references and calculate the free energy
+    for ref_smi, ref_count in references:
+        ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
+        ref_free, ref_enthalpy, ref_entropy = calculate_free_energy(ref_atoms,
+                                                                    charge=charge,
+                                                                    multiplicity=multiplicity,
+                                                                    orca_path=orca_path,
+                                                                    xc=xc,
+                                                                    basis_set=basis_set,
+                                                                    tight_opt=tight_opt,
+                                                                    tight_scf=tight_scf,
+                                                                    f_solv=f_solv,
+                                                                    f_disp=f_disp,
+                                                                    n_procs=n_procs,
+                                                                    use_ccsd=use_ccsd)
+        print(f"Reference: {ref_smi}, Count: {ref_count}", flush=True)
+        print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
+        free_atoms += ref_free * ref_count
+        enthalpy_atoms += ref_enthalpy * ref_count
+        entropy_atoms += ref_entropy * ref_count
+    print(f"Atoms Free: {free_atoms}, Enthalpy: {enthalpy_atoms}, Entropy: {entropy_atoms}", flush=True)
+    d_free = free - free_atoms
+    d_enthalpy = enthalpy - enthalpy_atoms
+    d_entropy = entropy - entropy_atoms
+    print(f"Deltas Free: {d_free}, Enthalpy: {d_enthalpy}, Entropy: {d_entropy}", flush=True)
+    print(f"Half values Free: {d_free / 2.0}, Enthalpy: {d_enthalpy / 2.0}, Entropy: {d_entropy / 2.0}", flush=True)
+    return d_free, d_enthalpy, d_entropy
 
 
 def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:
