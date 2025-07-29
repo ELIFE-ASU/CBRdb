@@ -620,6 +620,9 @@ def calculate_free_energy(atoms,
                           ccsd_energy=None):
     orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
     opt_flag = 'TIGHTOPT' if tight_opt else 'OPT'
+    if len(atoms) == 1:
+        opt_flag = ''
+
     scf_flag = 'TIGHTSCF' if tight_scf else ''
     calc_extra = f'{opt_flag} {scf_flag} FREQ'.strip()
     if use_ccsd and ccsd_energy is None:
@@ -631,6 +634,8 @@ def calculate_free_energy(atoms,
         if ccsd_energy is None:
             raise ValueError("CCSD energy calculation failed. Please check the ORCA setup.")
     with tempfile.TemporaryDirectory() as temp_dir:
+        # temp_dir = os.path.join(tempfile.mkdtemp())
+
         orca_file = os.path.join(temp_dir, 'orca.out')
         calc = orca_calc_preset(orca_path=orca_path,
                                 directory=temp_dir,
