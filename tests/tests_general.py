@@ -28,6 +28,19 @@ def assert_dicts_equal(d1, d2):
         assert d1[key] == d2[key], f"Value mismatch for key '{key}': {d1[key]} != {d2[key]}"
 
 
+def get_unique_elements():
+    data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))
+    smiles_list = data_c['smiles'].tolist()
+    # Get the set of unique element symbols from the data
+    element_symbols = set()
+    for smi in smiles_list:
+        mol = Chem.MolFromSmiles(smi)
+        if mol is not None:
+            for atom in mol.GetAtoms():
+                element_symbols.add(atom.GetSymbol())
+    return element_symbols
+
+
 def test_side_to_dict():
     print(flush=True)
     tmp = CBRdb.side_to_dict('C00001 + 1 C00002')
@@ -732,3 +745,72 @@ def test_get_properties():
     # Get the properties
     properties = CBRdb.get_properties(mols)
     print(properties)
+
+
+def get_formation_references(mol):
+    from collections import defaultdict
+
+    # Get elemental composition
+    atom_counts = defaultdict(int)
+    symbols = set()
+    for atom in mol.GetAtoms():
+        symbol = atom.GetSymbol()
+        atom_counts[symbol] += 1.0
+        symbols.add(symbol)
+
+    supported_set = {'H', 'Ba', 'Cu', 'S', 'K', 'Cl', 'Rb', 'B', 'N', 'Se', 'Te', 'O', 'Fe', 'Co', 'Mg', 'Ge', 'I',
+                     'Tl', 'Pt', 'Xe', 'Zn', 'Gd', 'Cd', 'C', 'Al', 'F', 'Li', 'Ca', 'Ni', 'Th', 'Sr', 'Sn', 'Au', 'Ag',
+                     'V', 'Pu', 'Sb', 'Mn', 'Cr', 'Mo', 'Ra', 'Pb', 'Bi', 'As', 'Hg', 'Si', 'Br', 'Rn', 'P', 'W', 'Be',
+                     'Na'}
+    if not symbols.issubset(supported_set):
+        raise ValueError(f"Unsupported elements in the molecule: {symbols - supported_set}")
+
+    # Standard reference molecules
+    references = []
+    # loop over the atom_counts dictionary
+    for symbol, count in atom_counts.items():
+        if count > 0:
+            if symbol == 'H':
+                references.append(("[H][H]", atom_counts['H'] / 2.0))
+            elif symbol == 'Cl':
+                references.append(("Cl-Cl", atom_counts['Cl'] / 2.0))
+            elif symbol == 'N':
+                references.append(("N#N", atom_counts['N'] / 2.0))
+            elif symbol == 'O':
+                references.append(("O=O", atom_counts['O'] / 2.0))
+            elif symbol == 'I':
+                references.append(("I-I", atom_counts['I'] / 2.0))
+            elif symbol == 'F':
+                references.append(("F-F", atom_counts['F'] / 2.0))
+            elif symbol == 'Br':
+                references.append(("Br-Br", atom_counts['Br'] / 2.0))
+            else:
+                references.append((f"{symbol}", atom_counts[f"{symbol}"]))
+
+    return references
+
+
+def test_free_energy_formation():
+    print(flush=True)
+    smi = "OO"
+    mol = Chem.MolFromSmiles(smi)
+    mol = Chem.AddHs(mol)
+
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
+                                                            charge=charge,
+                                                            multiplicity=multiplicity,
+                                                            xc='pbe')
+    print(energy, flush=True)
+
+    energy_atoms = 0.0
+    references = get_formation_references(mol)
+    for ref_smi, ref_count in references:
+        ref_atoms, ref_charge, ref_multiplicity = CBRdb.smi_to_atoms(ref_smi)
+        ref_energy, _, _ = CBRdb.calculate_free_energy(ref_atoms,
+                                                       charge=ref_charge,
+                                                       multiplicity=ref_multiplicity,
+                                                       xc='pbe')
+        print(f"Reference: {ref_smi}, Count: {ref_count}, Energy: {ref_energy}", flush=True)
+        energy_atoms += ref_energy * ref_count
+    print(energy_atoms, flush=True)
