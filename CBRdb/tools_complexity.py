@@ -760,7 +760,7 @@ def get_all_mol_descriptors(mol):
                 # 'mc1': mc1(mol),
                 # 'mc2': mc2(mol)}
 
-    batch_dict = get_mol_descriptors(mol)
+    # batch_dict = get_mol_descriptors(mol)
     # Combine the descriptors into a single dictionary
-    out_dict.update(batch_dict)
+    # out_dict.update(batch_dict)
     return out_dict
