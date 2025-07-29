@@ -717,25 +717,20 @@ def calculate_hessian(atoms,
         return read(atoms_file, format="xyz"), hessian_file
 
 
-def calculate_free_energy_batch(atoms,
-                                hessian,
-                                temp,
-                                pressure,
-                                charge=0,
-                                multiplicity=1,
-                                orca_path=None,
-                                xc='r2SCAN-3c',
-                                basis_set='def2-QZVP',
-                                tight_opt=False,
-                                tight_scf=False,
-                                f_solv=False,
-                                f_disp=False,
-                                n_procs=10,
-                                calc_ccsd_energy=False):
-    if orca_path is None:
-        orca_path = os.environ.get('ORCA_PATH')
-    else:
-        orca_path = os.path.abspath(orca_path)
+def _calculate_free_energy_batch(atoms,
+                                 hessian,
+                                 temp,
+                                 pressure,
+                                 charge=0,
+                                 multiplicity=1,
+                                 orca_path=None,
+                                 xc='r2SCAN-3c',
+                                 basis_set='def2-QZVP',
+                                 f_solv=False,
+                                 f_disp=False,
+                                 n_procs=10,
+                                 ccsd_energy=None):
+    orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
 
     # Set up the %thermo block for this temperature and pressure
     blocks_extra = f'''
@@ -752,20 +747,19 @@ def calculate_free_energy_batch(atoms,
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dir = 'tmp'
         os.makedirs(temp_dir, exist_ok=True)
+        orca_file = os.path.join(temp_dir, "orca.out")
 
-        calc = orca_calc_preset(
-            orca_path=orca_path,
-            directory=temp_dir,
-            charge=charge,
-            multiplicity=multiplicity,
-            xc=xc,
-            basis_set=basis_set,
-            n_procs=n_procs,
-            f_solv=f_solv,
-            f_disp=f_disp,
-            calc_extra='PRINTTHERMOCHEM',
-            blocks_extra=blocks_extra
-        )
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                xc=xc,
+                                basis_set=basis_set,
+                                n_procs=n_procs,
+                                f_solv=f_solv,
+                                f_disp=f_disp,
+                                calc_extra='PRINTTHERMOCHEM',
+                                blocks_extra=blocks_extra)
 
         atoms.calc = calc
         # Trigger the calculation to optimise the system.
@@ -773,67 +767,82 @@ def calculate_free_energy_batch(atoms,
             _ = atoms.get_potential_energy()
         except:
             pass
+
+        entropy = grab_value(orca_file, 'Total entropy correction', '...')
+
+        if ccsd_energy is not None:
+            g_e_ele = grab_value(orca_file, 'G-E(el)', '...')
+            g_e_solv = grab_value(orca_file, 'Free-energy (cav+disp)', ':') if f_solv else 0
+            energy = ccsd_energy + g_e_ele + g_e_solv
+        else:
+            energy = grab_value(orca_file, 'Final Gibbs free energy', '...')
+
+        return energy, energy - entropy, entropy
+
+
+def calculate_free_energy_batch(atoms,
+                                hessian,
+                                temp,
+                                pressure,
+                                charge=0,
+                                multiplicity=1,
+                                orca_path=None,
+                                xc='r2SCAN-3c',
+                                basis_set='def2-QZVP',
+                                tight_opt=False,
+                                tight_scf=False,
+                                f_solv=False,
+                                f_disp=False,
+                                n_procs=10,
+                                ccsd_energy=None):
+    orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
+
+    # Set up the %thermo block for this temperature and pressure
+    blocks_extra = f'''
+    %GEOM
+         INHESSNAME "{hessian}"
+    END
+
+    %freq
+        Temp {temp}
+        Pressure {pressure}
+    end
+    '''
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = 'tmp'
+        os.makedirs(temp_dir, exist_ok=True)
         orca_file = os.path.join(temp_dir, "orca.out")
 
-        # If CCSD energy is requested, calculate the correction
-        if calc_ccsd_energy:
-            # Read the ORCA output file to extract the DFT Gibbs free energy
-            with open(orca_file, 'r') as f:
-                for line in reversed(f.readlines()):
-                    if 'G-E(el)' in line:
-                        g_e_ele = float(line.split('...')[-1].split('Eh')[0])
-                        # Convert the energy from Hartree to eV
-                        g_e_ele *= Hartree
-                        break
+        calc = orca_calc_preset(orca_path=orca_path,
+                                directory=temp_dir,
+                                charge=charge,
+                                multiplicity=multiplicity,
+                                xc=xc,
+                                basis_set=basis_set,
+                                n_procs=n_procs,
+                                f_solv=f_solv,
+                                f_disp=f_disp,
+                                calc_extra='PRINTTHERMOCHEM',
+                                blocks_extra=blocks_extra)
 
-            # Find the solvent free energy correction
-            if f_solv:
-                # Find the Free-energy (cav+disp) from the ORCA output file
-                with open(orca_file, 'r') as f:
-                    for line in reversed(f.readlines()):
-                        if 'Free-energy (cav+disp)' in line:
-                            g_e_solv = float(line.split(':')[-1].split('Eh')[0])
-                            # Convert the energy from Hartree to eV
-                            g_e_solv *= Hartree
-                            break
-                return calc_ccsd_energy + g_e_ele + g_e_solv
-            else:
-                # If no solvent correction is applied, return the CCSD energy
-                return calc_ccsd_energy + g_e_ele
+        atoms.calc = calc
+        # Trigger the calculation to optimise the system.
+        try:
+            _ = atoms.get_potential_energy()
+        except:
+            pass
 
+        entropy = grab_value(orca_file, 'Total entropy correction', '...')
+
+        if ccsd_energy is not None:
+            g_e_ele = grab_value(orca_file, 'G-E(el)', '...')
+            g_e_solv = grab_value(orca_file, 'Free-energy (cav+disp)', ':') if f_solv else 0
+            energy = ccsd_energy + g_e_ele + g_e_solv
         else:
-            # Read the ORCA output file to extract the final Gibbs free energy
-            with open(orca_file, 'r') as f:
-                for line in reversed(f.readlines()):
-                    if 'Final Gibbs free energy' in line:
-                        energy = float(line.split('...')[-1].split('Eh')[0])
-                        # Convert the energy from Hartree to eV
-                        energy *= Hartree
-                        break
+            energy = grab_value(orca_file, 'Final Gibbs free energy', '...')
 
-        with open(orca_file, 'r') as f:
-            # Get the enthalpy from the ORCA output file
-            enthalpy = None
-            for line in reversed(f.readlines()):
-                if 'Total enthalpy' in line:
-                    enthalpy = float(line.split('...')[-1].split('Eh')[0])
-                    # Convert the enthalpy from Hartree to eV
-                    enthalpy *= Hartree
-                    break
-
-        with open(orca_file, 'r') as f:
-            # Get the entropy from the ORCA output file
-            entropy = None
-            for line in reversed(f.readlines()):
-                if 'Total entropy correction' in line:
-                    entropy = float(line.split('...')[-1].split('Eh')[0])
-                    # Convert the entropy from Hartree to eV
-                    entropy *= Hartree
-                    break
-
-        return energy, enthalpy, entropy
-
-    return None
+        return energy, energy - entropy, entropy
 
 
 def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:

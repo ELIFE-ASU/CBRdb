@@ -673,7 +673,19 @@ def test_calculate_free_energy_batch():
     # CBRdb.calculate_free_energy_batch(atoms, t_list, p_list, charge, multiplicity)
     atoms = read('data/orca.xyz')  # Load atoms from an XYZ file
     hessian = os.path.join(os.getcwd(), 'data/orca.hess')  # Load hessian from a numpy file
-    CBRdb.calculate_free_energy_batch(atoms, hessian, 300, 1.0)
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy_batch(atoms, hessian, 400, 1.0)
+    print(energy, enthalpy, entropy, flush=True)
+    # 3.2295803570495636 4.874475172217753 -1.64489481516819
+    # Values messed up
+    ref_energy = -2077.0719458992658  # Reference Gibbs free energy value
+    assert np.allclose(energy, ref_energy,
+                       atol=1e-3), f"Calculated energy {energy} does not match reference {ref_energy}"
+    ref_enthalpy = -2076.4889517497927
+    assert np.allclose(enthalpy, ref_enthalpy,
+                       atol=1e-3), f"Calculated enthalpy {enthalpy} does not match reference {ref_enthalpy}"
+    ref_entropy = -0.5829941494730994
+    assert np.allclose(entropy, ref_entropy,
+                       atol=1e-3), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
 
 
 def test_to_smarts_rxn_line():
