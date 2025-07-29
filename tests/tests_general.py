@@ -747,10 +747,31 @@ def test_get_properties():
     print(properties)
 
 
+def test_get_formation_references():
+    print(flush=True)
+    mol = Chem.MolFromSmiles("OO")
+    dict_out = CBRdb.get_formation_references(Chem.AddHs(mol))
+    print(dict_out)
+    dict_ref = [('O=O', 1.0), ('[H][H]', 1.0)]
+    assert dict_out == dict_ref, f"Expected {dict_ref}, but got {dict_out}"
+
+    mol = Chem.MolFromSmiles("OO")
+    dict_out = CBRdb.get_formation_references(mol)
+    print(dict_out)
+    dict_ref = [('O=O', 1.0)]
+    assert dict_out == dict_ref, f"Expected {dict_ref}, but got {dict_out}"
+
+    mol = Chem.MolFromSmiles("NN")
+    dict_out = CBRdb.get_formation_references(Chem.AddHs(mol))
+    print(dict_out)
+    dict_ref = [('N#N', 1.0), ('[H][H]', 2.0)]
+    assert dict_out == dict_ref, f"Expected {dict_ref}, but got {dict_out}"
+
+
 def test_calculate_free_energy_formation():
     print(flush=True)
-    smi = "OO" # 1.246926, 1.946203 0.699277
-    smi = "NN" # 1.54946
-    smi = "O=C=O" # 4.087565
+    smi = "OO"  # 1.246926, 1.946203 0.699277
+    smi = "NN"  # 1.54946
+    smi = "O=C=O"  # 4.087565
     mol = Chem.MolFromSmiles(smi)
     energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation(mol)

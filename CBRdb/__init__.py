@@ -38,6 +38,7 @@ from .tools_atoms import (smi_to_atoms,
                           calculate_ccsd_energy,
                           calculate_free_energy,
                           calculate_free_energy_batch,
+                          get_formation_references,
                           calculate_free_energy_formation,
                           calculate_goat)
 from .tools_complexity import (count_unique_bonds,
