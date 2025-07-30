@@ -723,6 +723,7 @@ def get_all_mol_descriptors(mol):
         - 'formula': Molecular formula.
         - 'molecular_weight': Exact molecular weight.
         - 'n_heavy_atoms': Number of heavy atoms.
+        - 'n_chiral_centers': Number of chiral centers.
         - 'unique_bonds': Count of unique bonds.
         - 'bertz': Bertz complexity.
         - 'wiener_index': Wiener index.
@@ -730,7 +731,6 @@ def get_all_mol_descriptors(mol):
         - 'randic_index': Randic index.
         - 'kirchhoff_index': Kirchhoff index.
         - 'spacial_score': Spacial score.
-        - 'chirality': Number of chiral centers.
         - 'fcfp4': FCFP_4 fingerprint.
         - 'bottcher': Bottcher complexity.
         - 'proudfoot': Proudfoot complexity.
@@ -746,6 +746,7 @@ def get_all_mol_descriptors(mol):
     out_dict = {'formula': rdMolDescriptors.CalcMolFormula(mol),
                 "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol),
                 "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol),
+                'n_chiral_centers': get_chirality(mol),    
                 'unique_bonds': count_unique_bonds(mol),}
                 # 'bertz': bertz(mol),
                 # 'wiener_index': wiener_index(mol),
@@ -753,7 +754,6 @@ def get_all_mol_descriptors(mol):
                 # 'randic_index': randic_index(mol),
                 # 'kirchhoff_index': kirchhoff_index(mol),
                 # 'spacial_score': spacial_score(mol),
-                # 'chirality': get_chirality(mol),
                 # 'fcfp4': fcfp4(mol),
                 # 'bottcher': bottcher(mol),
                 # 'proudfoot': proudfoot(mol),
