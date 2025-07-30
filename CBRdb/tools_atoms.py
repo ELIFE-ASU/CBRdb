@@ -955,7 +955,7 @@ def grab_value(orca_file, term, splitter):
 def calculate_free_energy(atoms,
                           charge=0,
                           multiplicity=1,
-                          temp=None,
+                          temperature=None,
                           pressure=None,
                           orca_path=None,
                           xc='r2SCAN-3c',
@@ -982,7 +982,7 @@ def calculate_free_energy(atoms,
         Total charge of the molecule. Default is 0.
     multiplicity : int, optional
         Spin multiplicity of the molecule. Default is 1.
-    temp : float, optional
+    temperature : float, optional
         Temperature in Kelvin for the calculation. Default is None.
     pressure : float, optional
         Pressure in atm for the calculation. Default is None.
@@ -1036,22 +1036,22 @@ def calculate_free_energy(atoms,
     calc_extra = f'{opt_flag} {scf_flag} FREQ'.strip()
 
     # Set up the %thermo block for this temperature and pressure
-    if temp is not None and pressure is None:
+    if temperature is not None and pressure is None:
         blocks_extra = f'''
                                   %freq
-                                      Temp {temp}
+                                      Temp {temperature}
                                   end
                                   '''
-    elif pressure is not None and temp is None:
+    elif pressure is not None and temperature is None:
         blocks_extra = f'''
                                           %freq
                                               Pressure {pressure}
                                           end
                                           '''
-    elif pressure is None and temp is not None:
+    elif pressure is None and temperature is not None:
         blocks_extra = f'''
                                           %freq
-                                              Temp {temp}
+                                              Temp {temperature}
                                               Pressure {pressure}
                                           end
                                           '''
