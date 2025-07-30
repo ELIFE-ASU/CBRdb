@@ -799,10 +799,13 @@ def test_calculate_free_energy_formation():
     print(flush=True)
     smi = "OO"  # 1.246926, 1.946203 0.699277
     smi = "NN"  # 1.54946
-    smi = "O=C=O"  # 4.087565
+    # smi = "O=C=O"  # 4.087565
     smi = "[C-]#[O+]"  # 1.421564
+    # smi = "S=C=S" # 0.69544
+    # smi = "C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O)O)O)O)O" # 9.437292
     mol = Chem.MolFromSmiles(smi)
     energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation(mol, use_ccsd=True)
+    print(f"Deltas Free: {energy}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
 
 
 def test_spin_multiplicity():

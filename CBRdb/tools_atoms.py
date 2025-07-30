@@ -649,7 +649,7 @@ def calculate_ccsd_energy(atoms,
                           multiplicity=1,
                           orca_path=None,
                           basis_set='def2-TZVPP',
-                          n_procs=1):
+                          n_procs=10):
     # If no ORCA path is provided, try to read it from the environment variable
     orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
 
@@ -661,7 +661,7 @@ def calculate_ccsd_energy(atoms,
 
     # Create a temporary directory for the ORCA calculation
     with tempfile.TemporaryDirectory() as temp_dir:
-        temp_dir = os.path.join(tempfile.mkdtemp())
+        # temp_dir = os.path.join(tempfile.mkdtemp())
 
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
@@ -711,6 +711,7 @@ def calculate_free_energy(atoms,
                                             orca_path=orca_path,
                                             charge=charge,
                                             multiplicity=multiplicity,
+                                            n_procs=n_procs,
                                             )
         if ccsd_energy is None:
             raise ValueError("CCSD energy calculation failed. Please check the ORCA setup.")
