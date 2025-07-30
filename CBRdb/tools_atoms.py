@@ -619,12 +619,37 @@ def get_total_electrons(atoms: Atoms) -> int:
     return n_electrons
 
 
+def round_to_nearest_two(number):
+    """
+    Round a number to the nearest multiple of 2.
+    If the result would be 0, return 1 instead.
+
+    Parameters:
+    -----------
+    number : float or int
+        The number to be rounded
+
+    Returns:
+    --------
+    int
+        The nearest multiple of 2, or 1 if result would be 0
+    """
+    # Round to nearest multiple of 2
+    result = round(number / 2) * 2
+
+    # If result is 0, set it to 1
+    if result == 0:
+        result = 1
+
+    return result
+
+
 def calculate_ccsd_energy(atoms,
                           charge=0,
                           multiplicity=1,
                           orca_path=None,
                           basis_set='def2-TZVPP',
-                          n_procs=10):
+                          n_procs=1):
     # If no ORCA path is provided, try to read it from the environment variable
     orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
 
@@ -632,10 +657,12 @@ def calculate_ccsd_energy(atoms,
     total_electrons = get_total_electrons(atoms)
     # Prevent too many processors being used
     if n_procs > total_electrons:
-        n_procs = total_electrons
+        n_procs = round_to_nearest_two(total_electrons - 2)
 
     # Create a temporary directory for the ORCA calculation
     with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir = os.path.join(tempfile.mkdtemp())
+
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
                                 directory=temp_dir,
@@ -684,7 +711,7 @@ def calculate_free_energy(atoms,
                                             orca_path=orca_path,
                                             charge=charge,
                                             multiplicity=multiplicity,
-                                            n_procs=n_procs)
+                                            )
         if ccsd_energy is None:
             raise ValueError("CCSD energy calculation failed. Please check the ORCA setup.")
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -957,7 +984,8 @@ def calculate_free_energy_formation(mol,
                                     f_solv=False,
                                     f_disp=False,
                                     n_procs=10,
-                                    use_ccsd=False):
+                                    use_ccsd=False,
+                                    debug=False):
     mol = Chem.AddHs(mol)
     atoms, charge, multiplicity = mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(mol)
     free, enthalpy, entropy = calculate_free_energy(atoms,
@@ -972,7 +1000,8 @@ def calculate_free_energy_formation(mol,
                                                     f_disp=f_disp,
                                                     n_procs=n_procs,
                                                     use_ccsd=use_ccsd)
-    print(f"Mol Free: {free}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
+    if debug:
+        print(f"Mol Free: {free}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
 
     free_atoms = 0.0
     enthalpy_atoms = 0.0
@@ -982,7 +1011,6 @@ def calculate_free_energy_formation(mol,
     # Loop over the references and calculate the free energy
     for ref_smi, ref_count in references:
         ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
-        print(f"Ref: {ref_smi}, count: {ref_count}, charge: {ref_charge}, multi: {ref_multiplicity}", flush=True)
         ref_free, ref_enthalpy, ref_entropy = calculate_free_energy(ref_atoms,
                                                                     charge=charge,
                                                                     multiplicity=multiplicity,
@@ -995,15 +1023,18 @@ def calculate_free_energy_formation(mol,
                                                                     f_disp=f_disp,
                                                                     n_procs=n_procs,
                                                                     use_ccsd=use_ccsd)
-        print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
+        if debug:
+            print(f"Ref: {ref_smi}, count: {ref_count}, charge: {ref_charge}, multi: {ref_multiplicity}", flush=True)
+            print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
         free_atoms += ref_free * ref_count
         enthalpy_atoms += ref_enthalpy * ref_count
         entropy_atoms += ref_entropy * ref_count
-    print(f"Atoms Free: {free_atoms}, Enthalpy: {enthalpy_atoms}, Entropy: {entropy_atoms}", flush=True)
     d_free = free - free_atoms
     d_enthalpy = enthalpy - enthalpy_atoms
     d_entropy = entropy - entropy_atoms
-    print(f"Deltas Free: {d_free}, Enthalpy: {d_enthalpy}, Entropy: {d_entropy}", flush=True)
+    if debug:
+        print(f"Atoms Free: {free_atoms}, Enthalpy: {enthalpy_atoms}, Entropy: {entropy_atoms}", flush=True)
+        print(f"Deltas Free: {d_free}, Enthalpy: {d_enthalpy}, Entropy: {d_entropy}", flush=True)
     return d_free, d_enthalpy, d_entropy
 
 
