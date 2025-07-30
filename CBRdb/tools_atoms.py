@@ -20,13 +20,38 @@ from .tools_mols import standardize_mol
 
 
 def smi_to_atoms(smiles: str) -> tuple[Atoms, int, int]:
-    mol = Chem.MolFromSmiles(smiles, sanitize=True)
-    mol = Chem.AddHs(mol)
-    mol = standardize_mol(mol)
-    if mol is None:
-        raise ValueError(f"Failed to parse SMILES string: {smiles}")
+    """
+    Convert a SMILES string to an ASE Atoms object, charge, and spin multiplicity.
 
-    return mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(mol)
+    This function takes a SMILES string, sanitizes it, adds explicit hydrogens,
+    standardizes the molecule, and converts it to an ASE Atoms object. It also
+    calculates the charge and spin multiplicity of the molecule.
+
+    Parameters:
+    -----------
+    smiles : str
+        The SMILES string representing the molecule.
+
+    Returns:
+    --------
+    tuple[Atoms, int, int]
+        A tuple containing:
+        - Atoms: The ASE Atoms object representing the molecule.
+        - int: The formal charge of the molecule.
+        - int: The spin multiplicity of the molecule.
+
+    Raises:
+    -------
+    ValueError
+        If the SMILES string cannot be parsed into a valid molecule.
+    """
+    mol = Chem.MolFromSmiles(smiles, sanitize=True)  # Parse the SMILES string into an RDKit molecule.
+    mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
+    mol = standardize_mol(mol)  # Standardize the molecule structure.
+    if mol is None:
+        raise ValueError(f"Failed to parse SMILES string: {smiles}")  # Raise an error if the molecule is invalid.
+
+    return mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(mol)  # Convert to Atoms and calculate properties.
 
 
 def mol_to_atoms(mol: Mol, optimise: bool = True) -> Atoms:
@@ -89,11 +114,56 @@ def get_charge(mol: Mol) -> int:
 
 
 def _calc_unpaired(capacity: int, electrons: int) -> int:
-    orbitals = capacity // 2
+    """
+    Calculate the number of unpaired electrons in an atomic subshell.
+
+    This function determines the number of unpaired electrons in a subshell
+    based on its electron capacity and the number of electrons present.
+
+    Parameters:
+    -----------
+    capacity : int
+        The maximum number of electrons the subshell can hold.
+    electrons : int
+        The number of electrons present in the subshell.
+
+    Returns:
+    --------
+    int
+        The number of unpaired electrons in the subshell.
+        If the number of electrons is less than or equal to half the capacity,
+        all electrons are unpaired. Otherwise, the number of unpaired electrons
+        is calculated based on the pairing rules.
+    """
+    orbitals = capacity // 2  # Calculate the number of orbitals in the subshell.
     return electrons if electrons <= orbitals else 2 * orbitals - electrons
 
 
 def _aufbau_multiplicity(z: int) -> int:
+    """
+    Calculate the spin multiplicity of an atom based on the Aufbau principle.
+
+    This function determines the spin multiplicity (2S+1) of an atom by filling
+    its subshells with electrons according to the Aufbau principle. It calculates
+    the number of unpaired electrons in the subshells and adds 1 to compute the
+    spin multiplicity.
+
+    Parameters:
+    -----------
+    z : int
+        The atomic number of the atom.
+
+    Returns:
+    --------
+    int
+        The spin multiplicity of the atom (2S+1).
+
+    Notes:
+    ------
+    - Subshells are filled in order of increasing energy levels.
+    - The function uses the `_calc_unpaired` helper function to calculate the
+      number of unpaired electrons in each subshell.
+    """
     subshells = [
         ('1s', 2), ('2s', 2), ('2p', 6), ('3s', 2), ('3p', 6),
         ('4s', 2), ('3d', 10), ('4p', 6), ('5s', 2), ('4d', 10),
@@ -111,25 +181,50 @@ def _aufbau_multiplicity(z: int) -> int:
 
 
 def get_spin_multiplicity(mol: Chem.Mol) -> int:
-    mol = Chem.AddHs(mol)
-    # 1 – explicit override
+    """
+    Determine the spin multiplicity of a molecule.
+
+    This function calculates the spin multiplicity (2S+1) of a molecule based on its structure.
+    It first checks for explicit spin multiplicity properties, handles isolated atoms using
+    predefined exceptions and the Aufbau principle, and finally calculates the multiplicity
+    based on the number of unpaired electrons (radicals) in the molecule.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.Mol
+        An RDKit molecule object.
+
+    Returns:
+    --------
+    int
+        The spin multiplicity of the molecule.
+
+    Notes:
+    ------
+    - Spin multiplicity is calculated as (2S+1), where S is the total spin.
+    - For isolated atoms, predefined exceptions and the Aufbau principle are used.
+    - For molecules, the radical count determines the spin multiplicity.
+    """
+    mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
+
+    # 1 – Check for explicit spin multiplicity properties.
     for key in ("spinMultiplicity", "SpinMultiplicity"):
         if mol.HasProp(key):
-            return int(mol.GetProp(key))
+            return int(mol.GetProp(key))  # Return the explicitly defined spin multiplicity.
 
-    # 2 – isolated atom
+    # 2 – Handle isolated atoms.
     if mol.GetNumAtoms() == 1:
-        _EXCEPTIONS = {24: 7, 29: 2, 42: 7, 47: 2}  # Cr, Cu, Mo, Ag
+        _EXCEPTIONS = {24: 7, 29: 2, 42: 7, 47: 2}  # Predefined exceptions for Cr, Cu, Mo, Ag.
         _GROUND_STATE_MULTIPLICITY = {
-            z: _EXCEPTIONS.get(z, _aufbau_multiplicity(z))
-            for z in range(1, 118 + 1)
+            z: _EXCEPTIONS.get(z, _aufbau_multiplicity(z))  # Use exceptions or the Aufbau principle.
+            for z in range(1, 118 + 1)  # Atomic numbers from 1 to 118.
         }
-        z = mol.GetAtomWithIdx(0).GetAtomicNum()
-        return _GROUND_STATE_MULTIPLICITY.get(z, 1)
+        z = mol.GetAtomWithIdx(0).GetAtomicNum()  # Get the atomic number of the isolated atom.
+        return _GROUND_STATE_MULTIPLICITY.get(z, 1)  # Return the ground-state multiplicity.
 
-    # 3 – molecule: use radical count if present
-    n_rad = sum(a.GetNumRadicalElectrons() for a in mol.GetAtoms())
-    return (n_rad + 1) if n_rad else 1
+    # 3 – Calculate spin multiplicity for molecules based on radical count.
+    n_rad = sum(a.GetNumRadicalElectrons() for a in mol.GetAtoms())  # Count unpaired electrons (radicals).
+    return (n_rad + 1) if n_rad else 1  # Return (radical count + 1) or 1 if no radicals are present.
 
 
 def standardise_smiles(smi):
@@ -319,6 +414,48 @@ def optimise_atoms(atoms,
                    f_solv=False,
                    f_disp=False,
                    n_procs=10):
+    """
+    Optimise the geometry of a molecule using the ORCA quantum chemistry package.
+
+    This function sets up an ORCA calculation to optimise the geometry of a molecule
+    represented by an ASE `Atoms` object. It supports various calculation options,
+    including tight optimisation, solvent effects, and dispersion corrections.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule to be optimised.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-QZVP'.
+    tight_opt : bool, optional
+        Whether to use tight geometry optimisation. Default is False.
+    tight_scf : bool, optional
+        Whether to use tight SCF convergence criteria. Default is False.
+    f_solv : bool, optional
+        Whether to include solvent effects in the calculation. Default is False.
+    f_disp : bool, optional
+        Whether to include dispersion corrections in the calculation. Default is False.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+
+    Returns:
+    --------
+    ase.Atoms
+        An ASE `Atoms` object representing the optimised geometry of the molecule.
+
+    Raises:
+    -------
+    ValueError
+        If the ORCA path cannot be determined or the calculation fails.
+    """
     # Determine the ORCA path
     if orca_path is None:
         # Try to read the path from the environment variable
@@ -370,11 +507,27 @@ def load_ir_data(filename):
     """
     Load IR spectrum data from ORCA output file into a pandas DataFrame.
 
-    Args:
-        filename (str): Path to the IR frequency output file
+    This function reads an ORCA output file containing IR frequency data,
+    extracts the relevant information, and returns it as a pandas DataFrame.
+
+    Parameters:
+    -----------
+    filename : str
+        Path to the IR frequency output file.
 
     Returns:
-        pd.DataFrame: DataFrame containing Mode, Frequency (cm^-1), Epsilon, and Intensity
+    --------
+    pd.DataFrame
+        A DataFrame containing the following columns:
+        - 'Mode': Mode number (int).
+        - 'Frequency (cm^-1)': Frequency in inverse centimeters (float).
+        - 'Epsilon': Epsilon value (float).
+        - 'Intensity (km/mol)': Intensity in km/mol (float).
+
+    Raises:
+    -------
+    ValueError
+        If the IR spectrum data cannot be found in the file.
     """
     # Read the file
     with open(filename, 'r') as f:
@@ -400,10 +553,10 @@ def load_ir_data(filename):
         # Parse the line using regex to handle varying whitespace
         match = re.match(r'\s*(\d+):\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)', line)
         if match:
-            mode = int(match.group(1))
-            freq = float(match.group(2))
-            eps = float(match.group(3))
-            intensity = float(match.group(4))
+            mode = int(match.group(1))  # Mode number
+            freq = float(match.group(2))  # Frequency in cm^-1
+            eps = float(match.group(3))  # Epsilon value
+            intensity = float(match.group(4))  # Intensity in km/mol
             data.append([mode, freq, eps, intensity])
 
     # Create DataFrame
@@ -416,11 +569,27 @@ def load_raman_data(filename):
     """
     Load Raman spectrum data from ORCA output file into a pandas DataFrame.
 
-    Args:
-        filename (str): Path to the Raman frequency output file
+    This function reads an ORCA output file containing Raman frequency data,
+    extracts the relevant information, and returns it as a pandas DataFrame.
+
+    Parameters:
+    -----------
+    filename : str
+        Path to the Raman frequency output file.
 
     Returns:
-        pd.DataFrame: DataFrame containing Mode, Frequency, Activity, and Depolarisation
+    --------
+    pd.DataFrame
+        A DataFrame containing the following columns:
+        - 'Mode': Mode number (int).
+        - 'Frequency (cm^-1)': Frequency in inverse centimeters (float).
+        - 'Intensity (km/mol)': Intensity in km/mol (float).
+        - 'Depolarization': Depolarization value (float).
+
+    Raises:
+    -------
+    ValueError
+        If the Raman spectrum data cannot be found in the file.
     """
     # Read the file
     with open(filename, 'r') as f:
@@ -446,10 +615,10 @@ def load_raman_data(filename):
         # Parse the line using regex to handle varying whitespace
         match = re.match(r'\s*(\d+):\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)', line)
         if match:
-            mode = int(match.group(1))
-            freq = float(match.group(2))
-            activity = float(match.group(3))
-            depolarization = float(match.group(4))
+            mode = int(match.group(1))  # Mode number
+            freq = float(match.group(2))  # Frequency in cm^-1
+            activity = float(match.group(3))  # Intensity in km/mol
+            depolarization = float(match.group(4))  # Depolarization value
             data.append([mode, freq, activity, depolarization])
 
     # Create DataFrame
@@ -528,6 +697,53 @@ def calculate_vib_spectrum(atoms,
                            f_solv=False,
                            f_disp=False,
                            n_procs=10):
+    """
+    Calculate vibrational spectrum data using the ORCA quantum chemistry package.
+
+    This function sets up and performs a vibrational spectrum calculation for a molecule
+    represented by an ASE `Atoms` object. It computes IR, Raman, and vibrational spectrum data.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-QZVP'.
+    tight_opt : bool, optional
+        Whether to use tight geometry optimisation. Default is False.
+    tight_scf : bool, optional
+        Whether to use tight SCF convergence criteria. Default is False.
+    f_solv : bool, optional
+        Whether to include solvent effects in the calculation. Default is False.
+    f_disp : bool, optional
+        Whether to include dispersion corrections in the calculation. Default is False.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+
+    Returns:
+    --------
+    tuple
+        A tuple containing three pandas DataFrames:
+        - data_ir : pd.DataFrame
+            IR spectrum data.
+        - data_raman : pd.DataFrame
+            Raman spectrum data.
+        - data_vib : pd.DataFrame
+            Vibrational spectrum data.
+
+    Raises:
+    -------
+    ValueError
+        If the ORCA path cannot be determined or the calculation fails.
+    """
     # Determine the ORCA path
     if orca_path is None:
         # Try to read the path from the environment variable
@@ -650,6 +866,37 @@ def calculate_ccsd_energy(atoms,
                           orca_path=None,
                           basis_set='def2-TZVPP',
                           n_procs=10):
+    """
+    Perform a CCSD (Coupled Cluster Single and Double) energy calculation using the ORCA quantum chemistry package.
+
+    This function sets up and executes a CCSD energy calculation for a molecule represented by an ASE `Atoms` object.
+    It ensures that the number of processors used does not exceed the total number of electrons in the system.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-TZVPP'.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+
+    Returns:
+    --------
+    float
+        The CCSD energy of the molecule in eV.
+
+    Raises:
+    -------
+    ValueError
+        If the number of processors exceeds the adjusted limit based on the total number of electrons.
+    """
     # If no ORCA path is provided, try to read it from the environment variable
     orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
 
@@ -661,8 +908,6 @@ def calculate_ccsd_energy(atoms,
 
     # Create a temporary directory for the ORCA calculation
     with tempfile.TemporaryDirectory() as temp_dir:
-        # temp_dir = os.path.join(tempfile.mkdtemp())
-
         # Set up the ORCA calculator with the specified parameters
         calc = orca_calc_preset(orca_path=orca_path,
                                 directory=temp_dir,
@@ -679,6 +924,27 @@ def calculate_ccsd_energy(atoms,
 
 
 def grab_value(orca_file, term, splitter):
+    """
+    Extract a specific numerical value from an ORCA output file.
+
+    This function reads an ORCA output file in reverse order, searches for a specific term,
+    and extracts the numerical value associated with it. The value is converted from Hartree
+    units to eV using the ASE `Hartree` constant.
+
+    Parameters:
+    -----------
+    orca_file : str
+        Path to the ORCA output file.
+    term : str
+        The term to search for in the file.
+    splitter : str
+        The delimiter used to split the line containing the term.
+
+    Returns:
+    --------
+    float or None
+        The extracted value in eV, or None if the term is not found.
+    """
     with open(orca_file, 'r') as f:
         for line in reversed(f.readlines()):
             if term in line:
@@ -699,24 +965,85 @@ def calculate_free_energy(atoms,
                           n_procs=10,
                           use_ccsd=False,
                           ccsd_energy=None):
+    """
+    Calculate the Gibbs free energy of a molecule using the ORCA quantum chemistry package.
+
+    This function sets up and performs a free energy calculation for a molecule represented
+    by an ASE `Atoms` object. It supports CCSD energy calculations, solvent effects, and
+    dispersion corrections.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-QZVP'.
+    tight_opt : bool, optional
+        Whether to use tight geometry optimisation. Default is False.
+    tight_scf : bool, optional
+        Whether to use tight SCF convergence criteria. Default is False.
+    f_solv : bool, optional
+        Whether to include solvent effects in the calculation. Default is False.
+    f_disp : bool, optional
+        Whether to include dispersion corrections in the calculation. Default is False.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+    use_ccsd : bool, optional
+        Whether to use CCSD energy calculations. Default is False.
+    ccsd_energy : float, optional
+        Precomputed CCSD energy in eV. If None, CCSD energy will be calculated. Default is None.
+
+    Returns:
+    --------
+    tuple
+        A tuple containing:
+        - energy : float
+            The Gibbs free energy in eV.
+        - enthalpy : float
+            The enthalpy in eV.
+        - entropy : float
+            The entropy correction in eV.
+
+    Raises:
+    -------
+    ValueError
+        If the CCSD energy calculation fails or the ORCA setup is invalid.
+    """
+    # Determine the ORCA path
     orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
+
+    # Set optimization flags
     opt_flag = 'TIGHTOPT' if tight_opt else 'OPT'
-    if len(atoms) == 1:
+    if len(atoms) == 1:  # Skip optimization for single atoms
         opt_flag = ''
 
+    # Set SCF flags
     scf_flag = 'TIGHTSCF' if tight_scf else ''
     calc_extra = f'{opt_flag} {scf_flag} FREQ'.strip()
+
+    # Perform CCSD energy calculation if required and not provided
     if use_ccsd and ccsd_energy is None:
         ccsd_energy = calculate_ccsd_energy(atoms,
                                             orca_path=orca_path,
                                             charge=charge,
                                             multiplicity=multiplicity,
-                                            n_procs=n_procs,
-                                            )
+                                            n_procs=n_procs)
         if ccsd_energy is None:
             raise ValueError("CCSD energy calculation failed. Please check the ORCA setup.")
+
+    # Create a temporary directory for the calculation
     with tempfile.TemporaryDirectory() as temp_dir:
         orca_file = os.path.join(temp_dir, 'orca.out')
+
+        # Set up the ORCA calculator
         calc = orca_calc_preset(orca_path=orca_path,
                                 directory=temp_dir,
                                 charge=charge,
@@ -728,10 +1055,14 @@ def calculate_free_energy(atoms,
                                 f_disp=f_disp,
                                 calc_extra=calc_extra)
         atoms.calc = calc
+
+        # Trigger the calculation
         _ = atoms.get_potential_energy()
 
+        # Extract entropy correction
         entropy = grab_value(orca_file, 'Total entropy correction', '...')
 
+        # Calculate Gibbs free energy based on CCSD or DFT results
         if use_ccsd:
             g_e_ele = grab_value(orca_file, 'G-E(el)', '...')
             g_e_solv = grab_value(orca_file, 'Free-energy (cav+disp)', ':') if f_solv else 0.0
@@ -739,12 +1070,29 @@ def calculate_free_energy(atoms,
         else:
             energy = grab_value(orca_file, 'Final Gibbs free energy', '...')
 
+        # Return energy, enthalpy, and entropy
         return energy, energy - entropy, entropy
 
 
 def list_to_str(lst):
-    lst = [str(item) for item in lst]
-    return ', '.join(lst)
+    """
+    Convert a list of items to a comma-separated string.
+
+    This function takes a list of items, converts each item to a string,
+    and joins them with commas to create a single string.
+
+    Parameters:
+    -----------
+    lst : list
+        A list of items to be converted to a string.
+
+    Returns:
+    --------
+    str
+        A comma-separated string representation of the list.
+    """
+    lst = [str(item) for item in lst]  # Convert each item in the list to a string.
+    return ', '.join(lst)  # Join the string representations with commas.
 
 
 def calculate_hessian(atoms,
@@ -758,6 +1106,52 @@ def calculate_hessian(atoms,
                       f_solv=False,
                       f_disp=False,
                       n_procs=10):
+    """
+    Perform a Hessian matrix calculation using the ORCA quantum chemistry package.
+
+    This function sets up and executes a Hessian matrix calculation for a molecule
+    represented by an ASE `Atoms` object. It optimizes the geometry and computes
+    the Hessian matrix, which is used for vibrational analysis.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-QZVP'.
+    tight_opt : bool, optional
+        Whether to use tight geometry optimization. Default is False.
+    tight_scf : bool, optional
+        Whether to use tight SCF convergence criteria. Default is False.
+    f_solv : bool, optional
+        Whether to include solvent effects in the calculation. Default is False.
+    f_disp : bool, optional
+        Whether to include dispersion corrections in the calculation. Default is False.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+
+    Returns:
+    --------
+    tuple
+        A tuple containing:
+        - atoms : ase.Atoms
+            The optimized geometry of the molecule.
+        - hessian_file : str
+            Path to the file containing the Hessian matrix.
+
+    Raises:
+    -------
+    ValueError
+        If the ORCA path cannot be determined or the calculation fails.
+    """
     # Determine the ORCA path
     if orca_path is None:
         # Try to read the path from the environment variable
@@ -801,7 +1195,7 @@ def calculate_hessian(atoms,
         # Perform the energy calculation
         _ = atoms.get_potential_energy()
 
-        # Load the optimised geometry from the ORCA output file
+        # Load the optimized geometry from the ORCA output file
         atoms_file = os.path.join(temp_dir, "orca.xyz")
         hessian_file = os.path.join(temp_dir, "orca.hess")
         return read(atoms_file, format="xyz"), hessian_file
@@ -936,6 +1330,35 @@ def calculate_free_energy_batch(atoms,
 
 
 def get_formation_references(mol):
+    """
+    Generate a list of reference molecules for calculating formation energies.
+
+    This function determines the elemental composition of a molecule, checks for unsupported elements,
+    and generates a list of standard reference molecules based on the elemental composition.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.Mol
+        An RDKit molecule object representing the molecule.
+
+    Returns:
+    --------
+    list[tuple[str, float]]
+        A list of tuples where each tuple contains:
+        - str: The SMILES string of the reference molecule.
+        - float: The count of the reference molecule needed for the calculation.
+
+    Raises:
+    -------
+    ValueError
+        If the molecule contains unsupported elements.
+
+    Notes:
+    ------
+    - Supported elements are defined in the `supported_set`.
+    - Reference molecules are predefined for common elements like H, Cl, N, O, I, F, and Br.
+      For other elements, the atomic symbol is used as the reference.
+    """
     # Get elemental composition
     atom_counts = defaultdict(int)
     symbols = set()
@@ -944,16 +1367,18 @@ def get_formation_references(mol):
         atom_counts[symbol] += 1.0
         symbols.add(symbol)
 
+    # Define the set of supported elements
     supported_set = {'H', 'Ba', 'Cu', 'S', 'K', 'Cl', 'Rb', 'B', 'N', 'Se', 'Te', 'O', 'Fe', 'Co', 'Mg', 'Ge', 'I',
                      'Tl', 'Pt', 'Xe', 'Zn', 'Gd', 'Cd', 'C', 'Al', 'F', 'Li', 'Ca', 'Ni', 'Th', 'Sr', 'Sn', 'Au', 'Ag',
                      'V', 'Pu', 'Sb', 'Mn', 'Cr', 'Mo', 'Ra', 'Pb', 'Bi', 'As', 'Hg', 'Si', 'Br', 'Rn', 'P', 'W', 'Be',
                      'Na'}
+    # Raise an error if unsupported elements are found
     if not symbols.issubset(supported_set):
         raise ValueError(f"Unsupported elements in the molecule: {symbols - supported_set}")
 
     # Standard reference molecules
     references = []
-    # loop over the atom_counts dictionary
+    # Loop over the atom_counts dictionary
     for symbol, count in atom_counts.items():
         if count > 0:
             if symbol == 'H':
@@ -987,8 +1412,58 @@ def calculate_free_energy_formation(mol,
                                     n_procs=10,
                                     use_ccsd=False,
                                     debug=False):
-    mol = Chem.AddHs(mol)
-    atoms, charge, multiplicity = mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(mol)
+    """
+    Calculate the Gibbs free energy of formation for a molecule.
+
+    This function computes the Gibbs free energy of formation for a molecule
+    represented by an RDKit `Mol` object. It calculates the free energy, enthalpy,
+    and entropy of the molecule and its reference molecules, and determines the
+    formation energy by subtracting the reference contributions.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.Mol
+        An RDKit molecule object representing the molecule.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
+    xc : str, optional
+        Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set to use for the calculation. Default is 'def2-QZVP'.
+    tight_opt : bool, optional
+        Whether to use tight geometry optimisation. Default is False.
+    tight_scf : bool, optional
+        Whether to use tight SCF convergence criteria. Default is False.
+    f_solv : bool, optional
+        Whether to include solvent effects in the calculation. Default is False.
+    f_disp : bool, optional
+        Whether to include dispersion corrections in the calculation. Default is False.
+    n_procs : int, optional
+        Number of processors to use for the calculation. Default is 10.
+    use_ccsd : bool, optional
+        Whether to use CCSD energy calculations. Default is False.
+    debug : bool, optional
+        Whether to print debug information during the calculation. Default is False.
+
+    Returns:
+    --------
+    tuple
+        A tuple containing:
+        - d_free : float
+            The Gibbs free energy of formation in eV.
+        - d_enthalpy : float
+            The enthalpy of formation in eV.
+        - d_entropy : float
+            The entropy correction of formation in eV.
+
+    Raises:
+    -------
+    ValueError
+        If the calculation fails or the molecule contains unsupported elements.
+    """
+    mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
+    atoms, charge, multiplicity = mol_to_atoms(mol), get_charge(mol), get_spin_multiplicity(
+        mol)  # Convert to ASE Atoms and calculate properties.
     free, enthalpy, entropy = calculate_free_energy(atoms,
                                                     charge=charge,
                                                     multiplicity=multiplicity,
@@ -1000,7 +1475,7 @@ def calculate_free_energy_formation(mol,
                                                     f_solv=f_solv,
                                                     f_disp=f_disp,
                                                     n_procs=n_procs,
-                                                    use_ccsd=use_ccsd)
+                                                    use_ccsd=use_ccsd)  # Calculate free energy, enthalpy, and entropy.
     if debug:
         print(f"Mol Free: {free}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
 
@@ -1008,10 +1483,10 @@ def calculate_free_energy_formation(mol,
     enthalpy_atoms = 0.0
     entropy_atoms = 0.0
     # Get the formation references
-    references = get_formation_references(mol)
+    references = get_formation_references(mol)  # Generate reference molecules for formation energy calculation.
     # Loop over the references and calculate the free energy
     for ref_smi, ref_count in references:
-        ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
+        ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)  # Convert reference SMILES to ASE Atoms.
         ref_free, ref_enthalpy, ref_entropy = calculate_free_energy(ref_atoms,
                                                                     charge=charge,
                                                                     multiplicity=multiplicity,
@@ -1023,20 +1498,20 @@ def calculate_free_energy_formation(mol,
                                                                     f_solv=f_solv,
                                                                     f_disp=f_disp,
                                                                     n_procs=n_procs,
-                                                                    use_ccsd=use_ccsd)
+                                                                    use_ccsd=use_ccsd)  # Calculate free energy for reference molecules.
         if debug:
             print(f"Ref: {ref_smi}, count: {ref_count}, charge: {ref_charge}, multi: {ref_multiplicity}", flush=True)
             print(f"Free: {ref_free}, Enthalpy: {ref_enthalpy}, Entropy: {ref_entropy}", flush=True)
-        free_atoms += ref_free * ref_count
-        enthalpy_atoms += ref_enthalpy * ref_count
-        entropy_atoms += ref_entropy * ref_count
-    d_free = free - free_atoms
-    d_enthalpy = enthalpy - enthalpy_atoms
-    d_entropy = entropy - entropy_atoms
+        free_atoms += ref_free * ref_count  # Accumulate free energy contributions from reference molecules.
+        enthalpy_atoms += ref_enthalpy * ref_count  # Accumulate enthalpy contributions from reference molecules.
+        entropy_atoms += ref_entropy * ref_count  # Accumulate entropy contributions from reference molecules.
+    d_free = free - free_atoms  # Calculate the Gibbs free energy of formation.
+    d_enthalpy = enthalpy - enthalpy_atoms  # Calculate the enthalpy of formation.
+    d_entropy = entropy - entropy_atoms  # Calculate the entropy correction of formation.
     if debug:
         print(f"Atoms Free: {free_atoms}, Enthalpy: {enthalpy_atoms}, Entropy: {entropy_atoms}", flush=True)
         print(f"Deltas Free: {d_free}, Enthalpy: {d_enthalpy}, Entropy: {d_entropy}", flush=True)
-    return d_free, d_enthalpy, d_entropy
+    return d_free, d_enthalpy, d_entropy  # Return the formation energy components.
 
 
 def extract_conformer_info(filepath: Union[str, Path]) -> pd.DataFrame:
