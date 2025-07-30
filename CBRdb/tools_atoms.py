@@ -955,6 +955,8 @@ def grab_value(orca_file, term, splitter):
 def calculate_free_energy(atoms,
                           charge=0,
                           multiplicity=1,
+                          temp=None,
+                          pressure=None,
                           orca_path=None,
                           xc='r2SCAN-3c',
                           basis_set='def2-QZVP',
@@ -966,11 +968,11 @@ def calculate_free_energy(atoms,
                           use_ccsd=False,
                           ccsd_energy=None):
     """
-    Calculate the Gibbs free energy of a molecule using the ORCA quantum chemistry package.
+    Calculate the Gibbs free energy, enthalpy, and entropy of a molecule.
 
-    This function sets up and performs a free energy calculation for a molecule represented
-    by an ASE `Atoms` object. It supports CCSD energy calculations, solvent effects, and
-    dispersion corrections.
+    This function performs a quantum chemistry calculation using the ORCA package to compute
+    the Gibbs free energy, enthalpy, and entropy of a molecule represented by an ASE `Atoms` object.
+    It supports temperature and pressure adjustments, CCSD energy calculations, and various ORCA options.
 
     Parameters:
     -----------
@@ -980,6 +982,10 @@ def calculate_free_energy(atoms,
         Total charge of the molecule. Default is 0.
     multiplicity : int, optional
         Spin multiplicity of the molecule. Default is 1.
+    temp : float, optional
+        Temperature in Kelvin for the calculation. Default is None.
+    pressure : float, optional
+        Pressure in atm for the calculation. Default is None.
     orca_path : str, optional
         Path to the ORCA executable. If None, it will attempt to read from the environment variable 'ORCA_PATH'.
     xc : str, optional
@@ -987,7 +993,7 @@ def calculate_free_energy(atoms,
     basis_set : str, optional
         Basis set to use for the calculation. Default is 'def2-QZVP'.
     tight_opt : bool, optional
-        Whether to use tight geometry optimisation. Default is False.
+        Whether to use tight geometry optimization. Default is False.
     tight_scf : bool, optional
         Whether to use tight SCF convergence criteria. Default is False.
     f_solv : bool, optional
@@ -999,7 +1005,7 @@ def calculate_free_energy(atoms,
     use_ccsd : bool, optional
         Whether to use CCSD energy calculations. Default is False.
     ccsd_energy : float, optional
-        Precomputed CCSD energy in eV. If None, CCSD energy will be calculated. Default is None.
+        Precomputed CCSD energy in eV. If None, CCSD energy will be calculated if `use_ccsd` is True.
 
     Returns:
     --------
@@ -1029,6 +1035,29 @@ def calculate_free_energy(atoms,
     scf_flag = 'TIGHTSCF' if tight_scf else ''
     calc_extra = f'{opt_flag} {scf_flag} FREQ'.strip()
 
+    # Set up the %thermo block for this temperature and pressure
+    if temp is not None and pressure is None:
+        blocks_extra = f'''
+                                  %freq
+                                      Temp {temp}
+                                  end
+                                  '''
+    elif pressure is not None and temp is None:
+        blocks_extra = f'''
+                                          %freq
+                                              Pressure {pressure}
+                                          end
+                                          '''
+    elif pressure is None and temp is not None:
+        blocks_extra = f'''
+                                          %freq
+                                              Temp {temp}
+                                              Pressure {pressure}
+                                          end
+                                          '''
+    else:
+        blocks_extra = None
+
     # Perform CCSD energy calculation if required and not provided
     if use_ccsd and ccsd_energy is None:
         ccsd_energy = calculate_ccsd_energy(atoms,
@@ -1053,7 +1082,8 @@ def calculate_free_energy(atoms,
                                 n_procs=n_procs,
                                 f_solv=f_solv,
                                 f_disp=f_disp,
-                                calc_extra=calc_extra)
+                                calc_extra=calc_extra,
+                                blocks_extra=blocks_extra)
         atoms.calc = calc
 
         # Trigger the calculation
