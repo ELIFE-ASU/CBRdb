@@ -747,18 +747,18 @@ def get_all_mol_descriptors(mol):
                 "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol),
                 "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol),
                 'n_chiral_centers': get_chirality(mol),    
-                'unique_bonds': count_unique_bonds(mol),}
-                # 'bertz': bertz(mol),
-                # 'wiener_index': wiener_index(mol),
-                # 'balaban_index': balaban_index(mol),
-                # 'randic_index': randic_index(mol),
-                # 'kirchhoff_index': kirchhoff_index(mol),
-                # 'spacial_score': spacial_score(mol),
-                # 'fcfp4': fcfp4(mol),
+                'unique_bonds': count_unique_bonds(mol),
+                'bertz': bertz(mol),
+                'wiener_index': wiener_index(mol),
+                'balaban_index': balaban_index(mol),
+                'randic_index': randic_index(mol),
+                'kirchhoff_index': kirchhoff_index(mol),
+                'spacial_score': spacial_score(mol),
+                'fcfp4': fcfp4(mol),
                 # 'bottcher': bottcher(mol),
-                # 'proudfoot': proudfoot(mol),
-                # 'mc1': mc1(mol),
-                # 'mc2': mc2(mol)}
+                'proudfoot': proudfoot(mol),
+                'mc1': mc1(mol),
+                'mc2': mc2(mol)}
 
     # batch_dict = get_mol_descriptors(mol)
     # Combine the descriptors into a single dictionary
