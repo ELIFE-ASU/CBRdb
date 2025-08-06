@@ -136,6 +136,7 @@ from .tools_mols import (sanitize_mol,
 from .tools_mp import (mp_calc,
                        mp_calc_star,
                        tp_calc,
+                       write_to_shared_file,
                        )
 
 __version__ = "1.4.0"
