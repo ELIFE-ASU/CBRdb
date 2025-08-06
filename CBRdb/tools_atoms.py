@@ -583,7 +583,7 @@ def load_raman_data(filename):
         A DataFrame containing the following columns:
         - 'Mode': Mode number (int).
         - 'Frequency (cm^-1)': Frequency in inverse centimeters (float).
-        - 'Intensity (km/mol)': Intensity in km/mol (float).
+        - 'Activity': Activity (float).
         - 'Depolarization': Depolarization value (float).
 
     Raises:
@@ -617,12 +617,12 @@ def load_raman_data(filename):
         if match:
             mode = int(match.group(1))  # Mode number
             freq = float(match.group(2))  # Frequency in cm^-1
-            activity = float(match.group(3))  # Intensity in km/mol
+            activity = float(match.group(3))  # Activity in A^4 amu^-1
             depolarization = float(match.group(4))  # Depolarization value
             data.append([mode, freq, activity, depolarization])
 
     # Create DataFrame
-    df = pd.DataFrame(data, columns=['Mode', 'Frequency (cm^-1)', 'Intensity (km/mol)', 'Depolarization'])
+    df = pd.DataFrame(data, columns=['Mode', 'Frequency (cm^-1)', 'Activity (A^4 amu^-1)', 'Depolarization'])
 
     return df
 
@@ -642,8 +642,6 @@ def load_vib_data(filename):
         A DataFrame containing the following columns:
         - 'Mode': Mode number (int).
         - 'Frequency (cm^-1)': Frequency in inverse centimeters (float).
-        - 'Epsilon': Default value set to 1.0 (float).
-        - 'Intensity (km/mol)': Default value set to 1.0 (float).
 
     Raises:
     -------
@@ -676,12 +674,10 @@ def load_vib_data(filename):
         if match:
             mode = int(match.group(1))  # Mode number
             freq = float(match.group(2))  # Frequency in cm^-1
-            eps = 1.0  # Default epsilon value
-            intensity = 1.0  # Default intensity value
-            data.append([mode, freq, eps, intensity])
+            data.append([mode, freq])
 
     # Create DataFrame
-    df = pd.DataFrame(data, columns=['Mode', 'Frequency (cm^-1)', 'Epsilon', 'Intensity (km/mol)'])
+    df = pd.DataFrame(data, columns=['Mode', 'Frequency (cm^-1)'])
 
     return df
 
