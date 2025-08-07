@@ -1,3 +1,4 @@
+import fcntl
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
 
@@ -53,3 +54,24 @@ def tp_calc(func, arg, n=mp.cpu_count()):
     with ThreadPoolExecutor(max_workers=n) as executor:
         results = executor.map(func, arg)
     return results
+
+
+def write_to_shared_file(message: str, shared_file: str) -> None:
+    """
+    Write a message to a shared file with an exclusive lock.
+
+    Args:
+        message (str): The message to write to the file.
+        shared_file (str): The path to the shared file.
+
+    Returns:
+        None
+    """
+    with open(shared_file, 'a') as f:
+        # Acquire an exclusive lock before writing
+        fcntl.flock(f, fcntl.LOCK_EX)
+        # Write the message to the file
+        f.write(message)
+        # Release the lock after writing
+        fcntl.flock(f, fcntl.LOCK_UN)
+    return None

@@ -587,6 +587,14 @@ def test_calculate_ccsd_energy():
     ref_energy = -2077.148240270791  # Reference Gibbs free energy value
     assert np.allclose(energy, ref_energy,
                        atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
+    smi = "[C]"  # SMILES representation of the molecule (water in this case)
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    energy = CBRdb.calculate_ccsd_energy(atoms,
+                                         charge=charge,
+                                         multiplicity=multiplicity)
+    ref_energy = -1027.9776202250537
+    assert np.allclose(energy, ref_energy,
+                       atol=1e-1), f"Calculated energy {energy} does not match reference {ref_energy}"
 
 
 def test_calculate_free_energy():
@@ -633,6 +641,24 @@ def test_calculate_free_energy():
     assert np.allclose(enthalpy, ref_enthalpy,
                        atol=1e-3), f"Calculated enthalpy {enthalpy} does not match reference {ref_enthalpy}"
     ref_entropy = -0.5829941494730994
+    assert np.allclose(entropy, ref_entropy,
+                       atol=1e-3), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
+
+def test_calculate_free_energy_ccsd():
+    smi = "[C]"  # SMILES representation of the molecule (water in this case)
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy(atoms,
+                                                            charge=charge,
+                                                            multiplicity=multiplicity,
+                                                            use_ccsd=True)
+    print(energy, enthalpy, entropy, flush=True)
+    ref_energy = -1028.3734501076294  # Reference Gibbs free energy value
+    assert np.allclose(energy, ref_energy,
+                       atol=1e-3), f"Calculated energy {energy} does not match reference {ref_energy}"
+    ref_enthalpy = -1027.913388292571
+    assert np.allclose(enthalpy, ref_enthalpy,
+                       atol=1e-3), f"Calculated enthalpy {enthalpy} does not match reference {ref_enthalpy}"
+    ref_entropy = -0.460061815058536
     assert np.allclose(entropy, ref_entropy,
                        atol=1e-3), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
 
@@ -769,13 +795,17 @@ def test_get_formation_references():
 
 
 def test_calculate_free_energy_formation():
+    # https://en.wikipedia.org/wiki/Standard_Gibbs_free_energy_of_formation
     print(flush=True)
     smi = "OO"  # 1.246926, 1.946203 0.699277
     smi = "NN"  # 1.54946
-    smi = "O=C=O"  # 4.087565
+    # smi = "O=C=O"  # 4.087565
     smi = "[C-]#[O+]"  # 1.421564
+    # smi = "S=C=S" # 0.69544
+    # smi = "C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O)O)O)O)O" # 9.437292
     mol = Chem.MolFromSmiles(smi)
-    energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation(mol)
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation(mol, use_ccsd=True)
+    print(f"Deltas Free: {energy}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
 
 
 def test_spin_multiplicity():
