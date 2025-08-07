@@ -748,19 +748,14 @@ def calculate_vib_spectrum(atoms,
         # Convert the provided path to an absolute path
         orca_path = os.path.abspath(orca_path)
 
-    if tight_opt:
-        # Set up geometry optimization and frequency calculation parameters
-        opt_option = 'TIGHTOPT'
-    else:
-        # Set up frequency calculation parameters only
-        opt_option = 'OPT'
+    # Set optimization flags
+    opt_flag = 'TIGHTOPT' if tight_opt else 'OPT'
+    if len(atoms) == 1:  # Skip optimization for single atoms
+        opt_flag = ''
 
-    if tight_scf:
-        # Set up tight SCF convergence parameters
-        calc_extra = f'{opt_option} TIGHTSCF FREQ'
-    else:
-        # Use default SCF convergence parameters
-        calc_extra = f'{opt_option} FREQ'
+    # Set SCF flags
+    scf_flag = 'TIGHTSCF' if tight_scf else ''
+    calc_extra = f'{opt_flag} {scf_flag} FREQ'.strip()
 
     blocks_extra = '''
                           %ELPROP
@@ -786,18 +781,23 @@ def calculate_vib_spectrum(atoms,
 
         # Attach the calculator to the ASE Atoms object
         atoms.calc = calc
+        try:
+            # Perform the calculation (this will write the output to the ORCA file)
+            _ = atoms.get_potential_energy()
 
-        # Perform the calculation (this will write the output to the ORCA file)
-        _ = atoms.get_potential_energy()
+            # Load IR spectrum data
+            data_ir = load_ir_data(orca_file)
 
-        # Load IR spectrum data
-        data_ir = load_ir_data(orca_file)
+            # Load Raman spectrum data
+            data_raman = load_raman_data(orca_file)
 
-        # Load Raman spectrum data
-        data_raman = load_raman_data(orca_file)
-
-        # Load vibrational spectrum data
-        data_vib = load_vib_data(orca_file)
+            # Load vibrational spectrum data
+            data_vib = load_vib_data(orca_file)
+        except Exception as e:
+            data_ir = None
+            data_raman = None
+            data_vib = None
+            print(f"Failed to perform vibrational spectrum calculation: {e}")
 
         return data_ir, data_raman, data_vib
 
