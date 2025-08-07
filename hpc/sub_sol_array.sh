@@ -16,4 +16,4 @@ module load mamba/latest
 source activate cbrdb
 
 # Run the Python script, passing the SLURM_ARRAY_TASK_ID to the script
-srun "$HOME"/.conda/envs/cbrdb/bin/python3 calc_spectrum.py "${SLURM_ARRAY_TASK_ID}" CBRdb_C ir
+srun "$HOME"/.conda/envs/cbrdb/bin/python3 calc_spectrum.py "${SLURM_ARRAY_TASK_ID}" CBRdb_C.csv

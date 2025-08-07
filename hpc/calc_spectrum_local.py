@@ -18,26 +18,24 @@ if __name__ == "__main__":
     out_file = os.path.join(base_dir, f"{file}_out.dat")
 
     print(data_dir, flush=True)
-
+    # Load the data
     df = pd.read_csv(data_dir)
 
     # Select data that does not contain a star in the smiles
     df = df[~df['smiles'].str.contains(r'\*')]
 
-    # sort by n_heavy_atoms
+    # Sort by n_heavy_atoms
     df = df.sort_values(by='n_heavy_atoms', ascending=True)
-    # n_heavy_max = 4
-    # df = df[df['n_heavy_atoms'] <= n_heavy_max]
-    # df = df[df['n_heavy_atoms'] >= 1]
+    n_heavy_max = 4
+    n_heavy_min = 2
+    df = df[df['n_heavy_atoms'] <= n_heavy_max]
+    df = df[df['n_heavy_atoms'] >= n_heavy_min]
 
     print(df.columns)
     id_list = df['compound_id'].to_list()
     smi_list = df['smiles'].to_list()
     n_data = len(id_list)
     print(f"Number of SMILES: {n_data}", flush=True)
-
-    # Get the mols
-    mols = [Chem.MolFromSmiles(smi, sanitize=True) for smi in smi_list]
 
     for i in range(n_data):
         print(f"Processing molecule: {i + 1}/{n_data}, smi: {smi_list[i]}", flush=True)
@@ -60,4 +58,5 @@ if __name__ == "__main__":
         # Write the data to the shared file
         out_str = f"{id_list[i]}; {smi_list[i]}; {freq}; {eps_ir}; {int_ir}; {int_ram}; {dep_ram} \n"
         CBRdb.write_to_shared_file(out_str, out_file)
-        break
+        if i > 10:
+            break
