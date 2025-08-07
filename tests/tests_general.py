@@ -644,6 +644,7 @@ def test_calculate_free_energy():
     assert np.allclose(entropy, ref_entropy,
                        atol=1e-3), f"Calculated entropy {entropy} does not match reference {ref_entropy}"
 
+
 def test_calculate_free_energy_ccsd():
     smi = "[C]"  # SMILES representation of the molecule (water in this case)
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
@@ -680,10 +681,8 @@ def test_calculate_vib_spectrum():
     print(flush=True)
     smi = "O"  # SMILES representation of the molecule (water in this case)
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
-
-    data_ir, data_raman, data_vib = CBRdb.calculate_vib_spectrum(atoms,
-                                                                 charge=charge,
-                                                                 multiplicity=multiplicity)
+    os.getcwd()
+    data_ir, data_raman, data_vib = CBRdb.calculate_vib_spectrum(atoms, charge=charge, multiplicity=multiplicity)
     print(data_ir, flush=True)
     print(data_raman, flush=True)
     print(data_vib, flush=True)

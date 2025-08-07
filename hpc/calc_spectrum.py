@@ -1,7 +1,7 @@
 import os
 import sys
+
 import pandas as pd
-from rdkit import Chem as Chem
 
 import CBRdb
 
@@ -11,11 +11,11 @@ if __name__ == "__main__":
     i = int(sys.argv[1])
     file = str(sys.argv[2])
 
-    base_dir = os.path.abspath(os.path.expanduser(f"../"))
+    base_dir = os.getcwd()
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
 
-    data_dir = os.path.join(base_dir, f"{file}.dat")
+    data_dir = os.path.join(base_dir, f"{file}")
     out_file = os.path.join(base_dir, f"{file}_out.dat")
 
     # Load the data
@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # Sort by n_heavy_atoms
     df = df.sort_values(by='n_heavy_atoms', ascending=True)
-    n_heavy_max = 4
+    n_heavy_max = 50
     n_heavy_min = 2
     df = df[df['n_heavy_atoms'] <= n_heavy_max]
     df = df[df['n_heavy_atoms'] >= n_heavy_min]
