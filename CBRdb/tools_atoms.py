@@ -748,6 +748,12 @@ def calculate_vib_spectrum(atoms,
         # Convert the provided path to an absolute path
         orca_path = os.path.abspath(orca_path)
 
+    # Get the total number of electrons in the system
+    total_electrons = get_total_electrons(atoms)
+    # Prevent too many processors being used
+    if n_procs > total_electrons:
+        n_procs = round_to_nearest_two(total_electrons - 2)
+
     # Set optimization flags
     opt_flag = 'TIGHTOPT' if tight_opt else 'OPT'
     if len(atoms) == 1:  # Skip optimization for single atoms
