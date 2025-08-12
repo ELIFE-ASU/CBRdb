@@ -336,7 +336,7 @@ def _get_properties(mol):
     }
 
     # Calculate the molecular descriptors
-    desc_dict = get_all_mol_descriptors(mol_capped)
+    desc_dict = get_all_mol_descriptors(mol=mol_capped, mol_uncapped=mol)
     # Combine the descriptors with the capped SMILES and InChI
     store_dict.update(desc_dict)
 

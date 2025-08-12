@@ -702,7 +702,7 @@ def mc2(mol: Mol) -> int:
     return sum(1 for atom in mol.GetAtoms() if atom.GetDegree() != 2 and atom.GetIdx() not in double_bond_set)
 
 
-def get_all_mol_descriptors(mol):
+def get_all_mol_descriptors(mol, mol_uncapped):
     """
     Calculates a comprehensive set of molecular descriptors for a given molecule.
 
@@ -713,18 +713,20 @@ def get_all_mol_descriptors(mol):
     Parameters:
     -----------
     mol : rdkit.Chem.rdchem.Mol
-        The RDKit molecule object for which descriptors are to be calculated.
+        The hydrogen-capped RDKit molecule object for which descriptors are to be calculated.
+    mol_uncapped : rdkit.Chem.rdchem.Mol
+        The uncapped RDKit molecule object for which descriptors are to be calculated.
 
     Returns:
     --------
     dict
         A dictionary containing molecular descriptors. The keys represent descriptor names, and
         the values are the corresponding calculated values. The descriptors include:
-        - 'formula': Molecular formula.
-        - 'molecular_weight': Exact molecular weight.
-        - 'n_heavy_atoms': Number of heavy atoms.
-        - 'n_chiral_centers': Number of chiral centers.
-        - 'unique_bonds': Count of unique bonds.
+        - 'formula': Molecular formula. [*]
+        - 'molecular_weight': Exact molecular weight. [*]
+        - 'n_heavy_atoms': Number of heavy atoms. [*]
+        - 'n_chiral_centers': Number of chiral centers. [*]
+        - 'unique_bonds': Count of unique bonds. [*]
         - 'bertz': Bertz complexity.
         - 'wiener_index': Wiener index.
         - 'balaban_index': Balaban index.
@@ -732,22 +734,24 @@ def get_all_mol_descriptors(mol):
         - 'kirchhoff_index': Kirchhoff index.
         - 'spacial_score': Spacial score.
         - 'fcfp4': FCFP_4 fingerprint.
-        - 'bottcher': Bottcher complexity.
         - 'proudfoot': Proudfoot complexity.
         - 'mc1': Molecular connectivity index (MC1).
         - 'mc2': Molecular connectivity index (MC2).
-        - Additional descriptors calculated using `get_mol_descriptors`.
+    [*] Descriptor calculated using uncapped object.
 
     Notes:
     ------
     - The function combines descriptors from RDKit and custom calculations into a single dictionary.
     - If any descriptor calculation fails, it may not be included in the output dictionary.
+    - Additional dict entries planned or under development:
+        - 'bottcher': Bottcher complexity.
+        - Other descriptors calculated using `get_mol_descriptors`.
     """
-    out_dict = {'formula': rdMolDescriptors.CalcMolFormula(mol),
-                "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol),
-                "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol),
-                'n_chiral_centers': get_chirality(mol),    
-                'unique_bonds': count_unique_bonds(mol),
+    out_dict = {'formula': rdMolDescriptors.CalcMolFormula(mol_uncapped),
+                "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol_uncapped),
+                "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol_uncapped),
+                'n_chiral_centers': get_chirality(mol_uncapped),    
+                'unique_bonds': count_unique_bonds(mol_uncapped),
                 'bertz': bertz(mol),
                 'wiener_index': wiener_index(mol),
                 'balaban_index': balaban_index(mol),
