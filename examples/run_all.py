@@ -37,7 +37,7 @@ if __name__ == "__main__":
     C_main = CBRdb.preprocess(target="C")  # generates kegg_data_C.csv
 
     print("Importing and standardizing ATLAS reactions...", flush=True)
-    atlas_data_R = CBRdb.clean_atlas(f_exclude_kegg=True)  # generates atlas_data_R.csv
+    atlas_data_R = CBRdb.clean_atlas(f_exclude_kegg=False)  # generates atlas_data_R.csv
 
     print("Preprocessing KEGG reactions...", flush=True)
     kegg_data_R = CBRdb.preprocess(target="R")  # generates kegg_data_R.csv

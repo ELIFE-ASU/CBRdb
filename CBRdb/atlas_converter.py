@@ -30,14 +30,14 @@ def cleanup_eq_line(eq_line):
 
 def clean_atlas(in_file="../../data/atlas_reactions.dat",
                 out_file="../data/atlas_data_R.csv",
-                f_exclude_kegg=True):
+                f_exclude_kegg=False):
     """
     Cleans and processes atlas reaction data, optionally excluding KEGG reactions.
 
     Parameters:
     in_file (str): The path to the input file containing atlas reactions.
     out_file (str): The path to the output file where cleaned data will be saved.
-    f_exclude_kegg (bool): Flag to exclude KEGG reactions from the output. Default is True.
+    f_exclude_kegg (bool): Flag to exclude KEGG reactions from the output. Default is False.
 
     Returns:
     None
