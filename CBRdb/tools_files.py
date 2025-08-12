@@ -228,7 +228,7 @@ def compound_csv(df_C: pd.DataFrame, file_address: str, compression='infer'):
         df = df.reset_index(drop=False, names='compound_id')
 
     first_cols = ['compound_id', 'smiles', 'formula', 'molecular_weight', 'n_heavy_atoms', 'n_chiral_centers',
-                  'smiles_capped', 'inchi_capped', 'name', 'comment', 'glycan_ids', 'drug_ids', 'CBRdb_R_ids']
+                  'smiles_capped', 'inchi_capped', 'nickname', 'comment', 'CBRdb_R_ids']
     col_order = [i for i in first_cols if i in df.columns] + sorted(list(df.columns.difference(first_cols)),
                                                                     reverse=True)
 
