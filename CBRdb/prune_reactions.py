@@ -2,7 +2,7 @@ import pandas as pd
 
 from .merge_data_sets import identify_duplicate_compounds
 from .tools_files import reaction_csv, compound_csv
-
+from .tools_eq import standardise_eq
 
 def all_entries(dbs):
     """
@@ -254,35 +254,34 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     """
     # turn datasets into a dictionary
     dbs = {'kegg_data_R': kegg_data_R, 'atlas_data_R': atlas_data_R, 'kegg_data_C': C_main}
+
+    # identify all duplicated compounds
     dbs['CBRdb_C'] = dbs['kegg_data_C'].copy(deep=True)
-
-    sus = df_of_suspect_reactions(dbs)  # identify suspect reactions
-    sus = add_sus_reaction_dupes(sus, dbs)  # add reactions whose equations match that of a suspect reaction
-    sus = add_suspect_reactions_to_existing_bad_file(sus)  # add to log and import log
-
-    # remove reactions matching quarantine specs
-    dbs = quarantine_suspect_reactions_matching(dbs, sus, matching=to_quarantine)
-
-    # note what compounds are actually used in remaining reactions
-    all_rns, all_cps = all_entries(dbs)
-
-    # a few compounds were only used in those reactions; remove those. kegg_data_C retains quarantined entries
-    all_rns, all_cps = all_entries(dbs)
-    dbs['CBRdb_C'] = dbs['CBRdb_C'].query('compound_id.isin(@all_cps)')
-
-    # now identify and log duplicate compounds among what remains
     dbs['C_dupemap'] = identify_duplicate_compounds(dbs['CBRdb_C'])
 
-    # replace compound entries with dupe names
+    # replace duped compound IDs in compound DataFrame
     dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap']['new_id'])
-    # de-duplicate compounds
+
+    # de-duplicate compound entries
     dbs['CBRdb_C'] = dbs['CBRdb_C'].sort_values(by='compound_id').drop_duplicates(subset='compound_id', keep='first')
 
-    # replace compound IDs in reaction dfs. kegg_data_R_orig and atlas_data_R_orig retain original entries.
+    # replace duped compound IDs in reaction DataFrames
     dbs['kegg_data_R'].loc[:, 'reaction'] = dbs['kegg_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
         dbs['C_dupemap']['new_id']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
     dbs['atlas_data_R'].loc[:, 'reaction'] = dbs['atlas_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
         dbs['C_dupemap']['new_id']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+
+    # standardize reaction format again
+    dbs['kegg_data_R']['reaction'] = dbs['kegg_data_R']['reaction'].map(standardise_eq)
+    dbs['atlas_data_R']['reaction'] = dbs['atlas_data_R']['reaction'].map(standardise_eq)
+
+    # identify suspect reactions and those matching them
+    sus = df_of_suspect_reactions(dbs)
+    sus = add_sus_reaction_dupes(sus, dbs)
+    sus = add_suspect_reactions_to_existing_bad_file(sus) 
+
+    # remove reactions matching quarantine specs
+    dbs = quarantine_suspect_reactions_matching(dbs, sus, matching=to_quarantine)
 
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
