@@ -40,7 +40,8 @@ from .tools_atoms import (smi_to_atoms,
                           calculate_free_energy_batch,
                           get_formation_references,
                           calculate_free_energy_formation,
-                          calculate_goat)
+                          calculate_goat,
+                          get_symmetry_number)
 from .tools_complexity import (count_unique_bonds,
                                molecular_weight,
                                bertz,
