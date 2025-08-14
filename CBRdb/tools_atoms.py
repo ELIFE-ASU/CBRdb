@@ -4,8 +4,7 @@ import tempfile
 from collections import defaultdict
 from pathlib import Path
 from typing import Union
-from pymatgen.io.ase import AseAtomsAdaptor
-from pymatgen.symmetry.analyzer import PointGroupAnalyzer
+
 import numpy as np
 import pandas as pd
 from ase import Atoms
@@ -13,6 +12,8 @@ from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
 from ase.io import read
 from ase.units import Hartree
+from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.rdchem import Mol
