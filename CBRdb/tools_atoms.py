@@ -1,6 +1,7 @@
+import math
 import os
 import re
-import math
+import shutil
 import tempfile
 from collections import defaultdict
 from pathlib import Path
@@ -12,7 +13,11 @@ from ase import Atoms
 from ase.calculators.orca import ORCA
 from ase.calculators.orca import OrcaProfile
 from ase.io import read
+from ase.optimize import BFGS
+from ase.thermochemistry import IdealGasThermo
 from ase.units import Hartree
+from ase.vibrations import Vibrations
+from mace.calculators import mace_omol
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
@@ -1813,3 +1818,45 @@ def multiplicity_to_total_spin(multiplicity, check_integer=True, tol=1e-8):
         m = round(m)
 
     return (m - 1.0) / 2.0
+
+
+def free_energy_mace(atoms,
+                     charge=0,
+                     multiplicity=1,
+                     optimise=True,
+                     f_max=0.01,
+                     temperature=298.15,
+                     pressure=101325.0,
+                     calc_model='extra_large',
+                     calc_device="cuda"):
+    calc = mace_omol(model=calc_model, device=calc_device)
+    atoms.calc = calc
+    atoms.info["charge"] = charge
+    atoms.info["spin"] = multiplicity
+    if optimise:
+        BFGS(atoms,
+             logfile=None,
+             trajectory=None).run(fmax=f_max)
+
+    energy = atoms.get_potential_energy()
+
+    run_dir = os.path.join(os.getcwd(), 'vib')
+
+    vib = Vibrations(atoms, name=run_dir)
+    vib.run()
+    vib_energies = vib.get_energies()
+    # remove the vib directory if it exists
+    if os.path.exists(run_dir):
+        shutil.rmtree(run_dir)
+
+    thermo = IdealGasThermo(
+        vib_energies=vib_energies,
+        potentialenergy=energy,
+        atoms=atoms,
+        geometry=classify_geometry(atoms),
+        symmetrynumber=get_symmetry_number(atoms),
+        spin=multiplicity_to_total_spin(multiplicity),
+    )
+    free_energy = thermo.get_gibbs_energy(temperature=temperature,
+                                          pressure=pressure)
+    return free_energy

@@ -43,7 +43,8 @@ from .tools_atoms import (smi_to_atoms,
                           calculate_goat,
                           get_symmetry_number,
                           classify_geometry,
-                          multiplicity_to_total_spin)
+                          multiplicity_to_total_spin,
+                          free_energy_mace)
 from .tools_complexity import (count_unique_bonds,
                                molecular_weight,
                                bertz,

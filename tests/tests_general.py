@@ -900,45 +900,23 @@ def test_multiplicity_to_total_spin():
         print(f"Expected error: {e}", flush=True)
 
 
-def mace_free_energy(atoms, f_max=0.01, temperature=298.15, pressure=101325.0):
-    from ase.build import molecule
-    from ase.optimize import BFGS
-    from ase.thermochemistry import IdealGasThermo
-    from ase.vibrations import Vibrations
-    from mace.calculators import mace_omol
-    calc = mace_omol(model="extra_large", device="cuda")
-    atoms.calc = calc
-    BFGS(atoms,
-         logfile=None,
-         trajectory=None).run(fmax=f_max)
-
-    energy = atoms.get_potential_energy()
-
-    run_dir = os.path.join(os.getcwd(), 'vib')
-
-    vib = Vibrations(atoms, name=run_dir)
-    vib.run()
-    vib_energies = vib.get_energies()
-    # remove the vib directory if it exists
-    if os.path.exists(run_dir):
-        os.rmdir(run_dir)
-
-    thermo = IdealGasThermo(
-        vib_energies=vib_energies,
-        potentialenergy=energy,
-        atoms=atoms,
-        geometry=CBRdb.classify_geometry(atoms),
-        symmetrynumber=CBRdb.get_symmetry_number(atoms),
-        spin=CBRdb.multiplicity_to_total_spin(atoms),
-    )
-    free_energy = thermo.get_gibbs_energy(temperature=temperature,
-                                          pressure=pressure)
-    return free_energy
-
-
 def test_mace_free_energy():
     print(flush=True)
-    from ase.build import molecule
-    atoms = molecule('N2')
-    G = mace_free_energy(atoms)
-    print(f"Gibbs free energy: {G}", flush=True)
+
+    atoms = molecule('H2O')
+    g_h2o = CBRdb.free_energy_mace(atoms)
+    print(f"Gibbs free energy: {g_h2o}", flush=True)
+
+    atoms = molecule('H2')
+    g_h2 = CBRdb.free_energy_mace(atoms)
+    print(f"Gibbs free energy: {g_h2}", flush=True)
+
+    atoms = molecule('O2')
+    g_o2 = CBRdb.free_energy_mace(atoms)
+    print(f"Gibbs free energy: {g_o2}", flush=True)
+
+    g_formation = g_h2o - g_h2 - g_o2 / 2
+
+    print(f"Free energy of formation (H2O): {g_h2o - g_h2 - g_o2 / 2}", flush=True)
+    assert np.allclose(g_formation, -3.043,
+                       atol=1e-3), f"Calculated formation energy {g_formation} does not match reference"
