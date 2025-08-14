@@ -886,6 +886,20 @@ def test_mace():
     assert np.allclose(energy, -6234.296, atol=1e-3), f"Calculated energy {energy} does not match reference {energy}"
 
 
+def test_multiplicity_to_total_spin():
+    print(flush=True)
+    assert CBRdb.multiplicity_to_total_spin(1) == 0.0  # Singlet state
+    assert CBRdb.multiplicity_to_total_spin(2) == 0.5  # Doublet state
+    assert CBRdb.multiplicity_to_total_spin(3) == 1.0  # Triplet state
+    assert CBRdb.multiplicity_to_total_spin(4) == 1.5  # Quartet state
+    assert CBRdb.multiplicity_to_total_spin(5) == 2.0  # Quintet state
+
+    try:
+        CBRdb.multiplicity_to_total_spin(2.5)  # Should raise an error
+    except ValueError as e:
+        print(f"Expected error: {e}", flush=True)
+
+
 def test_mace_free_energy():
     print(flush=True)
     from ase.build import molecule

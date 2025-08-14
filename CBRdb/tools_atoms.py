@@ -1,5 +1,6 @@
 import os
 import re
+import math
 import tempfile
 from collections import defaultdict
 from pathlib import Path
@@ -1799,3 +1800,16 @@ def classify_geometry(atoms, tol_ratio=1e-3, tol_abs=1e-6):
 
     is_linear = (in_min / (in_max if in_max > 0 else 1.0) < tol_ratio) and (in_min < tol_abs * in_char)
     return 'linear' if is_linear else 'nonlinear'
+
+
+def multiplicity_to_total_spin(multiplicity, check_integer=True, tol=1e-8):
+    m = float(multiplicity)
+    if not math.isfinite(m) or m < 1:
+        raise ValueError("Multiplicity must be a finite number >= 1.")
+
+    if check_integer:
+        if abs(m - round(m)) > tol:
+            raise ValueError("Multiplicity must be an integer (1, 2, 3, ...).")
+        m = round(m)
+
+    return (m - 1.0) / 2.0
