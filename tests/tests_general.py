@@ -5,6 +5,7 @@ import pandas as pd
 from ase.build import molecule
 from ase.io import read
 from ase.visualize import view
+from mace.calculators import mace_omol
 from rdkit import Chem as Chem
 
 import CBRdb
@@ -870,7 +871,7 @@ def test_classify_geometry():
 
 def test_mace():
     print(flush=True)
-    from mace.calculators import mace_omol
+
     smi = "CC(=O)O"  # Acetic acid
     atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
     # Load MACE-OMOL model with charge and spin support
@@ -904,15 +905,15 @@ def test_mace_free_energy():
     print(flush=True)
 
     atoms = molecule('H2O')
-    g_h2o = CBRdb.free_energy_mace(atoms)
+    g_h2o, _, _ = CBRdb.free_energy_mace(atoms)
     print(f"Gibbs free energy: {g_h2o}", flush=True)
 
     atoms = molecule('H2')
-    g_h2 = CBRdb.free_energy_mace(atoms)
+    g_h2, _, _ = CBRdb.free_energy_mace(atoms)
     print(f"Gibbs free energy: {g_h2}", flush=True)
 
     atoms = molecule('O2')
-    g_o2 = CBRdb.free_energy_mace(atoms)
+    g_o2, _, _ = CBRdb.free_energy_mace(atoms)
     print(f"Gibbs free energy: {g_o2}", flush=True)
 
     g_formation = g_h2o - g_h2 - g_o2 / 2
@@ -920,3 +921,11 @@ def test_mace_free_energy():
     print(f"Free energy of formation (H2O): {g_h2o - g_h2 - g_o2 / 2}", flush=True)
     assert np.allclose(g_formation, -3.043,
                        atol=1e-3), f"Calculated formation energy {g_formation} does not match reference"
+
+
+def test_calculate_free_energy_formation_mace():
+    smi = "[H]-[O]-[H]"
+    mol = Chem.MolFromSmiles(smi)
+    energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation_mace(mol)
+    print(f"Deltas Free: {energy}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
+    assert np.allclose(energy, -3.043, atol=1e-3)

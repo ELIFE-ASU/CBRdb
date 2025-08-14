@@ -1859,4 +1859,53 @@ def free_energy_mace(atoms,
     )
     free_energy = thermo.get_gibbs_energy(temperature=temperature,
                                           pressure=pressure)
-    return free_energy
+    free_enthalpy = thermo.get_enthalpy(temperature=temperature)
+    free_entropy = thermo.get_entropy(temperature=temperature,
+                                      pressure=pressure)
+    return free_energy, free_enthalpy, free_entropy
+
+
+def calculate_free_energy_formation_mace(mol,
+                                         optimise=True,
+                                         f_max=0.01,
+                                         temperature=298.15,
+                                         pressure=101325.0,
+                                         calc_model='extra_large',
+                                         calc_device="cuda"):
+    mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
+    atoms = mol_to_atoms(mol)
+    charge = get_charge(mol)
+    multiplicity = get_spin_multiplicity(mol)
+    free, enthalpy, entropy = free_energy_mace(atoms,
+                                               charge=charge,
+                                               multiplicity=multiplicity,
+                                               optimise=optimise,
+                                               f_max=f_max,
+                                               temperature=temperature,
+                                               pressure=pressure,
+                                               calc_model=calc_model,
+                                               calc_device=calc_device)
+    free_atoms = 0.0
+    enthalpy_atoms = 0.0
+    entropy_atoms = 0.0
+    # Get the formation references
+    references = get_formation_references(mol)
+    for ref_smi, ref_count in references:
+        ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
+        ref_free, ref_enthalpy, ref_entropy = free_energy_mace(ref_atoms,
+                                                               charge=ref_charge,
+                                                               multiplicity=ref_multiplicity,
+                                                               optimise=optimise,
+                                                               f_max=f_max,
+                                                               temperature=temperature,
+                                                               pressure=pressure,
+                                                               calc_model=calc_model,
+                                                               calc_device=calc_device)
+        free_atoms += ref_free * ref_count
+        enthalpy_atoms += ref_enthalpy * ref_count
+        entropy_atoms += ref_entropy * ref_count
+
+    d_free = free - free_atoms  # Calculate the Gibbs free energy of formation.
+    d_enthalpy = enthalpy - enthalpy_atoms  # Calculate the enthalpy of formation.
+    d_entropy = entropy - entropy_atoms
+    return d_free, d_enthalpy, d_entropy

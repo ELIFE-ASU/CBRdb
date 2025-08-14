@@ -44,7 +44,8 @@ from .tools_atoms import (smi_to_atoms,
                           get_symmetry_number,
                           classify_geometry,
                           multiplicity_to_total_spin,
-                          free_energy_mace)
+                          free_energy_mace,
+                          calculate_free_energy_formation_mace)
 from .tools_complexity import (count_unique_bonds,
                                molecular_weight,
                                bertz,
