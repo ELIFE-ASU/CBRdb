@@ -1,9 +1,13 @@
 import os
+import re
 
 import numpy as np
 import pandas as pd
+from ase.build import molecule
 from ase.io import read
 from ase.visualize import view
+from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
 
 import CBRdb
@@ -828,3 +832,99 @@ def test_spin_multiplicity():
         m = Chem.MolFromSmiles(smi)
         mult = CBRdb.get_spin_multiplicity(m)
         assert mult == ref_list[i], f"Expected {ref_list[i]} for {smi}, got {mult}"
+
+
+def get_symmetry_number(atoms, tolerance=0.3):
+    if getattr(atoms, "pbc", None) is not None and any(atoms.pbc):
+        # Molecules should be non-periodic for a correct point-group analysis
+        atoms = atoms.copy()
+        atoms.pbc = (False, False, False)
+
+    # Convert ASE -> pymatgen Molecule
+    pmg_mol = AseAtomsAdaptor.get_molecule(atoms)
+
+    # Analyze point group
+    pga = PointGroupAnalyzer(pmg_mol, tolerance=tolerance)
+    # e.g., "C2v", "D6h", "Td", "Oh", "Cinfv", "Dinfh"
+    symbol = getattr(pga, "sch_symbol", None) or pga.get_pointgroup()
+
+    # Normalize common infinite-group spellings
+    s = str(symbol).replace("∞", "inf").replace("*", "inf").replace("Inf", "inf")
+
+    # Linear groups
+    if s.lower() in {"cinfv", "cinfv"}:
+        return 1
+    if s.lower() in {"dinfh", "dinfh"}:
+        return 2
+
+    # Trivial groups
+    if s in {"C1", "Ci", "Cs"}:
+        return 1
+
+    # Polyhedral (Platonic) groups
+    if s in {"T", "Td", "Th"}:
+        return 12
+    if s in {"O", "Oh"}:
+        return 24
+    if s in {"I", "Ih"}:
+        return 60
+
+    # Cyclic / dihedral / improper groups with finite n
+    # Match patterns like C3, C3v, C3h
+    m_c = re.fullmatch(r"C(\d+)(?:[vh])?", s)
+    if m_c:
+        return int(m_c.group(1))
+
+    # Match patterns like D5, D5d, D5h
+    m_d = re.fullmatch(r"D(\d+)(?:[dh])?", s)
+    if m_d:
+        return 2 * int(m_d.group(1))
+
+    # Improper S_{2n} groups -> sigma = n (only even-ordered S groups exist)
+    m_s = re.fullmatch(r"S(\d+)", s)
+    if m_s:
+        order = int(m_s.group(1))
+        if order % 2 == 0:
+            return order // 2  # S_{2n} -> n
+        # Odd S_n shouldn't occur for rigid molecules; fall through just in case.
+
+    # As a safe fallback, count proper operations from the full symmetry-ops set.
+    # (This works for all *finite* groups).
+    try:
+        ops = pga.get_symmetry_operations()
+        proper = [op for op in ops if np.linalg.det(op.rotation_matrix) > 0]
+        if len(proper) > 0:
+            return int(len(proper))
+    except Exception:
+        pass
+
+    # Last resort
+    return 1
+
+
+def test_sym_number():
+    print(flush=True)
+
+    s = get_symmetry_number(molecule("H2O"))
+    print(s)  # -> 2  (C2v)
+    assert s == 2
+
+    s = get_symmetry_number(molecule("C2H4"))
+    print(s)  # -> 4  (D2h)
+    assert s == 4
+
+    s = get_symmetry_number(molecule("CH4"))
+    print(s)  # -> 12 (Td)
+    assert s == 12
+
+    s = get_symmetry_number(molecule("N2"))
+    print(s)  # -> 2  (D∞h)
+    assert s == 2
+
+    s = get_symmetry_number(molecule("CO"))
+    print(s)  # -> 1  (C∞v)
+    assert s == 1
+
+    s = get_symmetry_number(molecule("C6H6"))
+    print(s)  # -> 12 (D6h)
+    assert s == 12
