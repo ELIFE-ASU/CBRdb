@@ -1776,3 +1776,26 @@ def get_symmetry_number(atoms, tolerance=0.3):
 
     # Last resort
     return 1
+
+
+def classify_geometry(atoms, tol_ratio=1e-3, tol_abs=1e-6):
+    n = len(atoms)
+    if n == 1:
+        return 'monatomic'
+    if n == 2:
+        return 'linear'
+
+    # Principal moments of inertia (amu·Å^2)
+    inertia = np.sort(np.asarray(atoms.get_moments_of_inertia()))
+    in_min, in_mid, in_max = inertia
+
+    # Characteristic inertia scale ~ M * <r^2> (helps set an absolute floor)
+    masses = atoms.get_masses()
+    pos = atoms.get_positions()  # assumes not wrapping across PBC
+    com = np.average(pos, axis=0, weights=masses)
+    r = pos - com
+    r2_weighted_mean = np.sum(masses * np.sum(r ** 2, axis=1)) / np.sum(masses)
+    in_char = np.sum(masses) * r2_weighted_mean
+
+    is_linear = (in_min / (in_max if in_max > 0 else 1.0) < tol_ratio) and (in_min < tol_abs * in_char)
+    return 'linear' if is_linear else 'nonlinear'
