@@ -867,6 +867,7 @@ def test_classify_geometry():
     assert CBRdb.classify_geometry(molecule("H2O")) == 'nonlinear'
     assert CBRdb.classify_geometry(molecule("HCN")) == 'linear'
 
+
 def test_mace():
     print(flush=True)
     from mace.calculators import mace_omol
@@ -883,3 +884,34 @@ def test_mace():
     energy = atoms.get_potential_energy()
     print(f"Energy: {energy}", flush=True)
     assert np.allclose(energy, -6234.296, atol=1e-3), f"Calculated energy {energy} does not match reference {energy}"
+
+
+def test_mace_free_energy():
+    print(flush=True)
+    from ase.build import molecule
+    from ase.optimize import QuasiNewton
+    from ase.thermochemistry import IdealGasThermo
+    from ase.vibrations import Vibrations
+    from mace.calculators import mace_omol
+
+    calc = mace_omol(model="extra_large", device="cuda")
+    atoms = molecule('N2')
+    atoms.calc = calc
+    dyn = QuasiNewton(atoms)
+    dyn.run(fmax=0.01)
+    potentialenergy = atoms.get_potential_energy()
+
+    vib = Vibrations(atoms)
+    vib.run()
+    vib_energies = vib.get_energies()
+
+    thermo = IdealGasThermo(
+        vib_energies=vib_energies,
+        potentialenergy=potentialenergy,
+        atoms=atoms,
+        geometry='linear',
+        symmetrynumber=2,
+        spin=0,
+    )
+    G = thermo.get_gibbs_energy(temperature=298.15, pressure=101325.0)
+    print(f"Gibbs free energy: {G}", flush=True)
