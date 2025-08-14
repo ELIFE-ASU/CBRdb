@@ -86,19 +86,20 @@ File locking ensures safe concurrent writes to output files.
 
 ============================================================================"""
 
-
 import argparse
-import sys
 import os
+import sys
+
+import matplotlib.pyplot as plt
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Draw
-from rdkit.Chem.Draw import IPythonConsole  # enables rich display in Jupyter
-import matplotlib.pyplot as plt
 from rxnmapper import RXNMapper
+
 # --- Import localmapper for fallback mapping ---
 try:
     from localmapper import localmapper
+
     LOCALMAPPER_AVAILABLE = True
     print("[INFO] localmapper package is available for fallback mapping")
 except ImportError:
@@ -110,8 +111,10 @@ try:
     from filelock import FileLock
 except ImportError:
     import subprocess
+
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'filelock'])
     from filelock import FileLock
+
 
 # -------------------- Helper Functions --------------------
 def canonicalize_smiles(smiles):
@@ -128,6 +131,7 @@ def canonicalize_smiles(smiles):
         atom.SetAtomMapNum(0)
     return Chem.MolToSmiles(mol, canonical=True, isomericSmiles=True)
 
+
 def smiles_to_mols(smiles):
     """
     Convert a dot-separated SMILES string into a list of RDKit Mol objects.
@@ -136,14 +140,14 @@ def smiles_to_mols(smiles):
     if not smiles or not smiles.strip():
         print(f"[WARNING] Empty or whitespace-only SMILES string provided to smiles_to_mols")
         return []
-    
+
     # Split by '.' and filter out empty strings
     fragments = [smi.strip() for smi in smiles.strip().split('.') if smi.strip()]
-    
+
     if not fragments:
         print(f"[WARNING] No valid SMILES fragments found in: '{smiles}'")
         return []
-    
+
     mols = []
     for smi in fragments:
         try:
@@ -154,8 +158,9 @@ def smiles_to_mols(smiles):
                 print(f"[WARNING] Invalid SMILES fragment: '{smi}'")
         except Exception as e:
             print(f"[ERROR] Failed to parse SMILES fragment '{smi}': {e}")
-    
+
     return mols
+
 
 def label_atom(mol, atom_idx, map_num):
     """
@@ -166,6 +171,7 @@ def label_atom(mol, atom_idx, map_num):
     if 0 <= atom_idx < mol.GetNumAtoms():
         mol.GetAtomWithIdx(atom_idx).SetAtomMapNum(map_num)
     return mol
+
 
 def trace_atom(atom_map_num, mols):
     """
@@ -180,6 +186,7 @@ def trace_atom(atom_map_num, mols):
     print(f"[DEBUG] Atom map {atom_map_num} not found in any of the {len(mols)} molecules")
     return None
 
+
 def remove_atom_map_numbers(mol):
     """
     Remove all atom map numbers from a molecule and return its canonical SMILES.
@@ -190,6 +197,7 @@ def remove_atom_map_numbers(mol):
     for atom in mol.GetAtoms():
         atom.SetAtomMapNum(0)
     return Chem.MolToSmiles(mol, canonical=True, isomericSmiles=True)
+
 
 def visualize_mapped_rxn(mapped_rxn_smiles, reaction_id, save_images=False):
     """
@@ -213,11 +221,13 @@ def visualize_mapped_rxn(mapped_rxn_smiles, reaction_id, save_images=False):
     except Exception as e:
         print(f"[ERROR] Could not visualize reaction {reaction_id}: {e}")
 
+
 # lookup_compound_id must be defined after df_canonical_index is available
 lookup_compound_id = None
 
 # -------------------- File Locator --------------------
 script_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 def find_file(filename):
     """
@@ -229,6 +239,7 @@ def find_file(filename):
         if os.path.exists(candidate):
             return candidate
     raise FileNotFoundError(f"{filename} not found in current or parent directories.")
+
 
 # ------------------- canonical indeces in one csv file -------------------------
 def get_or_build_canonical_index(df_molecules, output_file):
@@ -265,6 +276,7 @@ def get_or_build_canonical_index(df_molecules, output_file):
         df_index.to_csv(output_file, index=False)
         print(f"[INFO] Canonical index saved to {output_file}")
         return df_index
+
 
 # -------------------- Inputs --------------------
 
@@ -307,6 +319,7 @@ if args.row_index >= len(df_input_reactions):
 
 df_canonical_index = get_or_build_canonical_index(df_molecules, canonical_index_file)
 
+
 # Now that df_canonical_index is available, define lookup_compound_id
 def lookup_compound_id(canonical_smiles):
     """
@@ -317,6 +330,7 @@ def lookup_compound_id(canonical_smiles):
     if not match.empty:
         return match['compound_id'].values[0]
     return 'Unknown'
+
 
 # ----------------------Selection-------------------------
 selected_row = df_input_reactions.iloc[args.row_index]
@@ -335,6 +349,7 @@ if LOCALMAPPER_AVAILABLE:
         print(f"[WARNING] Failed to initialize localmapper: {e}")
         LOCALMAPPER_AVAILABLE = False
 
+
 def perform_atom_mapping(reaction_smiles, reaction_id):
     """
     Perform atom mapping with RXNMapper first, fallback to localmapper if token limit exceeded.
@@ -349,14 +364,14 @@ def perform_atom_mapping(reaction_smiles, reaction_id):
     except Exception as e:
         error_msg = str(e)
         print(f"[WARNING] RXNMapper failed for reaction {reaction_id}: {error_msg}")
-        
+
         # Check if error is due to token limit
         token_limit_keywords = ["tokens", "token", "512", "should be at most", "token limit", "maximum length"]
         is_token_limit_error = any(keyword in error_msg.lower() for keyword in token_limit_keywords)
-        
+
         if is_token_limit_error:
             print(f"[INFO] Token limit exceeded for reaction {reaction_id}, attempting localmapper fallback")
-            
+
             if LOCALMAPPER_AVAILABLE and local_mapper is not None:
                 try:
                     print(f"[INFO] Attempting mapping with localmapper for reaction {reaction_id}")
@@ -378,58 +393,58 @@ def perform_atom_mapping(reaction_smiles, reaction_id):
 
 # -------------------Cofactor list--------------------
 cofactor_ids = [
-                'C00002',   # Adenosine triphosphate (ATP)
-                'C00003',   # Nicotinamide Adenine Dinucleotide (NAD+)(Vitamin B3)
-                'C00004',   # Reduced Nicotinamide-adenine dinucleotide (NADH)(Vitamin B3)
-                'C00005',   # Reduced nicotinamide adenine dinucleotide phosphate (NADPH)(Vitamin B3)
-                'C00006',   # Nicotinamide adenine dinucleotide phosphate (NADP+)(Vitamin B3)
-                'C00008',   # Adenosine diphosphate(ADP)
-                'C00010',   # Coenzyme A (Vitamin B5)
-                'C00016',   # Flavin adenine dinucleotide (FAD)(Vitamin B2)
-                'C00018',   # Pyridoxal phosphate (Vitamin B6)
-                'C00019',   # S-Adenosyl methionine (SAM)
-                'C00020',   # Adenosine monophosphate (AMP)
-                'C00032',   # Heme B
-                'C00034',   # Manganese (Mn)
-                'C00038',   # Zinc (Zn2+)
-                'C00051',   # Glutathione (GSH)
-                'C00053',   # 3'-Phosphoadenylyl sulfate (PAPS)
-                'C00061',   # Flavin mononucleotide (FMN)(Vitamin B2)
-                'C00063',   # Cytidine triphosphate (CTP)
-                'C00068',   # Thiamin diphosphate (Vitamin B1)
-                'C00072',   # Ascorbic acid (Vitamin C)
-                'C00076',   # Calcium Ion (Ca2+)
-                'C00101',   # Tetrahydrofolate (Vitamin B9)
-                'C00113',   # Pyrroloquinoline quinone
-                'C00120',   # Biotin (Vitamin B7)
-                'C00143',   # Methylenetetrahydrofolate (Vitamin B9)
-                'C00175',   # Cobalt ion (Co2+)
-                'C00194',   # Cobamide coenzyme (Vitamin B12)
-                'C00272',   # Tetrahydrobiopterin
-                'C00305',   # Magnesium ion (Mg2+)
-                'C00415',   # Dihydrofolic acid (Vitamin B9)
-                'C00828',   # Menaquinone (Vitamin K2)
-                'C00862',   # Methanofuran
-                'C01217',   # Tetrahydromethanopterin
-                'C01352',   # Flavin adenine dinucleotide (FADH2)
-                'C02059',   # Phylloquinone (Vitamin K1)
-                'C03576',   # Coenzyme M
-                'C04628',   # Coenzyme B 
-                'C05924',   # Molybdopterin
-                'C06453',   # Methylcobalamin (Vitamin B12)
-                'C11378',   # Ubiquinone-10 (Coenzyme Q10)
-                'C14818',   # Iron (Fe2+)
-                'C14819',   # Iron (Fe3+)
-                'C15670',   # Heme A
-                'C15672',   # Heme O
-                'C15817',   # Heme C
-                'C16241',   # Lipoic acid
-                'C18237',   # Molybdenum cofactor
-                'C19153',   # Coenzyme F420-0
-                'C19609',   # Nickel ion (Ni2+)
-                'C19610',   # Manganese (Mn2+)
-                'C22424',   # Copper ion (Cu2+)
-                ]
+    'C00002',  # Adenosine triphosphate (ATP)
+    'C00003',  # Nicotinamide Adenine Dinucleotide (NAD+)(Vitamin B3)
+    'C00004',  # Reduced Nicotinamide-adenine dinucleotide (NADH)(Vitamin B3)
+    'C00005',  # Reduced nicotinamide adenine dinucleotide phosphate (NADPH)(Vitamin B3)
+    'C00006',  # Nicotinamide adenine dinucleotide phosphate (NADP+)(Vitamin B3)
+    'C00008',  # Adenosine diphosphate(ADP)
+    'C00010',  # Coenzyme A (Vitamin B5)
+    'C00016',  # Flavin adenine dinucleotide (FAD)(Vitamin B2)
+    'C00018',  # Pyridoxal phosphate (Vitamin B6)
+    'C00019',  # S-Adenosyl methionine (SAM)
+    'C00020',  # Adenosine monophosphate (AMP)
+    'C00032',  # Heme B
+    'C00034',  # Manganese (Mn)
+    'C00038',  # Zinc (Zn2+)
+    'C00051',  # Glutathione (GSH)
+    'C00053',  # 3'-Phosphoadenylyl sulfate (PAPS)
+    'C00061',  # Flavin mononucleotide (FMN)(Vitamin B2)
+    'C00063',  # Cytidine triphosphate (CTP)
+    'C00068',  # Thiamin diphosphate (Vitamin B1)
+    'C00072',  # Ascorbic acid (Vitamin C)
+    'C00076',  # Calcium Ion (Ca2+)
+    'C00101',  # Tetrahydrofolate (Vitamin B9)
+    'C00113',  # Pyrroloquinoline quinone
+    'C00120',  # Biotin (Vitamin B7)
+    'C00143',  # Methylenetetrahydrofolate (Vitamin B9)
+    'C00175',  # Cobalt ion (Co2+)
+    'C00194',  # Cobamide coenzyme (Vitamin B12)
+    'C00272',  # Tetrahydrobiopterin
+    'C00305',  # Magnesium ion (Mg2+)
+    'C00415',  # Dihydrofolic acid (Vitamin B9)
+    'C00828',  # Menaquinone (Vitamin K2)
+    'C00862',  # Methanofuran
+    'C01217',  # Tetrahydromethanopterin
+    'C01352',  # Flavin adenine dinucleotide (FADH2)
+    'C02059',  # Phylloquinone (Vitamin K1)
+    'C03576',  # Coenzyme M
+    'C04628',  # Coenzyme B
+    'C05924',  # Molybdopterin
+    'C06453',  # Methylcobalamin (Vitamin B12)
+    'C11378',  # Ubiquinone-10 (Coenzyme Q10)
+    'C14818',  # Iron (Fe2+)
+    'C14819',  # Iron (Fe3+)
+    'C15670',  # Heme A
+    'C15672',  # Heme O
+    'C15817',  # Heme C
+    'C16241',  # Lipoic acid
+    'C18237',  # Molybdenum cofactor
+    'C19153',  # Coenzyme F420-0
+    'C19609',  # Nickel ion (Ni2+)
+    'C19610',  # Manganese (Mn2+)
+    'C22424',  # Copper ion (Cu2+)
+]
 
 # -------------------- Parse Reaction --------------------
 if '<=>' not in raw_reaction:
@@ -452,6 +467,7 @@ def omit_shared_compounds(sub_ids, prod_ids):
     if shared:
         print(f"[INFO] Omitting compounds present on both sides: {shared}")
     return [cid for cid in sub_ids if cid not in shared], [cid for cid in prod_ids if cid not in shared]
+
 
 if args.dynamic_cofactors:
     substrate_ids, product_ids = omit_shared_compounds(substrate_ids, product_ids)
@@ -491,41 +507,44 @@ static_cofactors = args.static_cofactors
 
 # --- Remove stoichiometry numbers from reaction string ---
 import re
+
+
 def remove_coefficients(reaction_string):
     """Remove numerical coefficients and variable coefficients from the reaction string"""
     # Remove numbers or variable coefficients followed by space before compound names
     # This handles: "2 compound", "n compound", "m compound", etc.
     reaction_string = re.sub(r'\b(\d+|n|m)\s+', '', reaction_string)
-    
+
     # Remove variable coefficients that appear as separate terms
     # This handles: "n", "m", "m-1", "n-x", "x", etc. when they appear between + signs
     # But be careful not to remove parts of compound names
     reaction_string = re.sub(r'\+\s*([nm](-\d+)?|[nm]-[xn]|x)\s*\+', ' + ', reaction_string)
     reaction_string = re.sub(r'^([nm](-\d+)?|[nm]-[xn]|x)\s*\+', '', reaction_string)
     reaction_string = re.sub(r'\+\s*([nm](-\d+)?|[nm]-[xn]|x)\s*$', '', reaction_string)
-    
+
     # Handle cases where coefficient terms are at the beginning/end without +
     reaction_string = re.sub(r'^([nm](-\d+)?|[nm]-[xn]|x)\s+', '', reaction_string)
     reaction_string = re.sub(r'\s+([nm](-\d+)?|[nm]-[xn]|x)$', '', reaction_string)
-    
+
     # Special handling for complex coefficient expressions like "n-x+x"
     # Replace "n-x+x" with empty string (as it equals n)
     reaction_string = re.sub(r'\bn-x\+x\b', 'n', reaction_string)
-    
+
     # Clean up any double spaces and multiple + signs
     reaction_string = re.sub(r'\s+', ' ', reaction_string).strip()
     reaction_string = re.sub(r'\+\s*\+', '+', reaction_string)
     reaction_string = re.sub(r'^\+\s*', '', reaction_string)
     reaction_string = re.sub(r'\s*\+$', '', reaction_string)
-    
+
     return reaction_string
+
 
 def replace_compounds_with_smiles(reaction_string, compound_mapping):
     """Replace compound IDs with their corresponding SMILES"""
     if not reaction_string or not reaction_string.strip():
         print(f"Warning: Empty or whitespace-only reaction string")
         return ""
-    
+
     # Split by reaction arrow to handle reactants and products separately
     if '<=>' in reaction_string:
         reactants, products = reaction_string.split('<=>')
@@ -537,27 +556,28 @@ def replace_compounds_with_smiles(reaction_string, compound_mapping):
         # If no arrow found, treat entire string as reactants
         reactants = reaction_string
         products = ''
-    
+
     def replace_in_side(side):
         if not side or not side.strip():
             return ""
-        
+
         # Split by + to get individual compounds
         compounds = [comp.strip() for comp in side.split('+') if comp.strip()]
         smiles_list = []
-        
+
         for compound in compounds:
             compound = compound.strip()  # Extra strip for safety
-            
+
             # Skip empty strings and coefficient-only terms
-            if not compound or compound in ['n', 'm', 'x', 'm-1', 'n-x'] or re.match(r'^[nm](-\d+)?$|^[nm]-[xn]$|^x$', compound):
+            if not compound or compound in ['n', 'm', 'x', 'm-1', 'n-x'] or re.match(r'^[nm](-\d+)?$|^[nm]-[xn]$|^x$',
+                                                                                     compound):
                 print(f"Debug: Skipping coefficient/empty term: '{compound}'")
                 continue
-                
+
             # Remove any remaining coefficient patterns from individual compound names
             original_compound = compound
             compound = re.sub(r'^(\d+|[nm](-\d+)?|[nm]-[xn]|x)\s+', '', compound)
-            
+
             if compound and compound in compound_mapping:
                 smiles = compound_mapping[compound]
                 if smiles and smiles.strip():  # Check if SMILES is not empty
@@ -570,13 +590,13 @@ def replace_compounds_with_smiles(reaction_string, compound_mapping):
                 smiles_list.append(compound)
             else:
                 print(f"Warning: After coefficient removal, compound became empty. Original: '{original_compound}'")
-        
+
         # Join with . instead of +
         result = '.'.join(smiles_list)
         if not result:
             print(f"Warning: No valid compounds found in side: '{side}'")
         return result
-    
+
     reactants_smiles = replace_in_side(reactants)
     if products:
         products_smiles = replace_in_side(products)
@@ -584,8 +604,10 @@ def replace_compounds_with_smiles(reaction_string, compound_mapping):
     else:
         return reactants_smiles
 
+
 # Save reaction after removing stoichiometry
 reaction_no_stoich = remove_coefficients(raw_reaction)
+
 
 # --- Save reaction after cofactor filtering ---
 
@@ -602,9 +624,11 @@ def get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids, rem
     prod_names = [cid for cid in filtered_prods]
     return ' + '.join(sub_names) + ' <=> ' + ' + '.join(prod_names)
 
+
 # Show cofactor-filtered reaction if either static or dynamic cofactor flag is set
 remove_cofactors_flag = args.static_cofactors or args.dynamic_cofactors
-reaction_after_cofactor = get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids, remove_cofactors_flag)
+reaction_after_cofactor = get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids,
+                                                         remove_cofactors_flag)
 
 if static_cofactors:
     cofactor_smiles = set()
@@ -614,6 +638,7 @@ if static_cofactors:
             if canonical:
                 cofactor_smiles.add(canonical)
 
+
     def filter_cofactors(smiles_string):
         if not smiles_string:
             return ""
@@ -621,6 +646,7 @@ if static_cofactors:
             smi for smi in smiles_string.strip().split('.')
             if canonicalize_smiles(smi) not in cofactor_smiles
         ])
+
 
     substrate_smiles = filter_cofactors(substrate_smiles)
     product_smiles = filter_cofactors(product_smiles)
@@ -644,12 +670,14 @@ if not substrate_mols:
     print(f"No non-cofactor substrates found for reaction {selected_id}. Halting.")
     sys.exit(0)
 
+
 # -------------------- Auto-select Molecule --------------------
 
 # --- Chiral center counting function ---
 def count_chiral_centers(mol):
     chiral_centers = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
     return len(chiral_centers)
+
 
 # -------------------- Atom Tracking Function --------------------
 def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, selected_id, mapper_name=""):
@@ -662,30 +690,30 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
     target_atom = original_mol.GetAtomWithIdx(atom_idx)
     target_symbol = target_atom.GetSymbol()
     target_degree = target_atom.GetDegree()
-    
+
     # Re-label the atom in case it was modified
     substrate_mols[mol_idx] = label_atom(substrate_mols[mol_idx], atom_idx, 1)
-    
+
     # Generate reaction SMILES
     reactant_smiles = Chem.MolToSmiles(substrate_mols[mol_idx], canonical=False)
     reaction_smiles = f"{reactant_smiles}>>{product_smiles}"
-    
+
     print(f"[DEBUG] {mapper_name} Reaction SMILES for mapping: {reaction_smiles}")
-    
+
     # Perform atom mapping
     mapped_rxn, mapper_used, mapping_error = perform_atom_mapping(reaction_smiles, selected_id)
-    
+
     if mapped_rxn:
         atom_mapped_rxn = mapped_rxn
         try:
             reactant_part, product_part = mapped_rxn.split('>>')
             print(f"[DEBUG] {mapper_name} Reactant part: {reactant_part}")
             print(f"[DEBUG] {mapper_name} Product part: {product_part}")
-            
+
             # Parse reactant molecules to find the map number assigned to our target atom
             reactant_mols = smiles_to_mols(reactant_part)
             target_map_num = None
-            
+
             # Debug: Show all atom map numbers in reactant molecules first
             print(f"[DEBUG] {mapper_name} Number of reactant molecules parsed: {len(reactant_mols)}")
             reactant_map_nums = []
@@ -694,10 +722,11 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
                 print(f"[DEBUG] {mapper_name} Reactant molecule {i} has atom map numbers: {mol_map_nums}")
                 reactant_map_nums.extend(mol_map_nums)
             print(f"[DEBUG] {mapper_name} All atom map numbers in reactants: {set(reactant_map_nums)}")
-            
+
             # Find which map number was assigned to our target atom in the mapped reaction
-            print(f"[DEBUG] {mapper_name} Looking for target atom: {target_symbol} with degree {target_degree} at position {atom_idx}")
-            
+            print(
+                f"[DEBUG] {mapper_name} Looking for target atom: {target_symbol} with degree {target_degree} at position {atom_idx}")
+
             # Strategy 1: Look for our labeled atom (map number 1) in reactants first
             for r_idx, r_mol in enumerate(reactant_mols):
                 for atom in r_mol.GetAtoms():
@@ -707,7 +736,7 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
                         break
                 if target_map_num is not None:
                     break
-            
+
             # Strategy 2: If map 1 not found, find atoms matching our target properties
             if target_map_num is None:
                 print(f"[DEBUG] {mapper_name} Map number 1 not preserved, searching by atom properties...")
@@ -716,15 +745,16 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
                     r_mol = reactant_mols[mol_idx]
                     matching_atoms = []
                     for atom in r_mol.GetAtoms():
-                        if (atom.GetSymbol() == target_symbol and 
-                            atom.GetDegree() == target_degree and
-                            atom.GetAtomMapNum() > 0):
+                        if (atom.GetSymbol() == target_symbol and
+                                atom.GetDegree() == target_degree and
+                                atom.GetAtomMapNum() > 0):
                             matching_atoms.append(atom.GetAtomMapNum())
-                    
+
                     if matching_atoms:
                         target_map_num = matching_atoms[0]  # Take the first match
-                        print(f"[DEBUG] {mapper_name} Found matching {target_symbol} atom with map number: {target_map_num}")
-            
+                        print(
+                            f"[DEBUG] {mapper_name} Found matching {target_symbol} atom with map number: {target_map_num}")
+
             # Strategy 3: Broader search if still not found
             if target_map_num is None:
                 print(f"[DEBUG] {mapper_name} Broader search for any {target_symbol} atom...")
@@ -736,39 +766,39 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
                             break
                     if target_map_num is not None:
                         break
-            
+
             # Fallback to looking for map number 1
             if target_map_num is None:
                 target_map_num = 1
                 print(f"[DEBUG] {mapper_name} Could not determine target map number, using default: 1")
-            
+
             product_mols = smiles_to_mols(product_part)
             print(f"[DEBUG] {mapper_name} Number of product molecules parsed: {len(product_mols)}")
-            
+
             # Debug: Show all atom map numbers in product molecules
             all_map_nums = []
             for i, mol in enumerate(product_mols):
                 mol_map_nums = [atom.GetAtomMapNum() for atom in mol.GetAtoms() if atom.GetAtomMapNum() > 0]
                 print(f"[DEBUG] {mapper_name} Product molecule {i} has atom map numbers: {mol_map_nums}")
                 all_map_nums.extend(mol_map_nums)
-            
+
             print(f"[DEBUG] {mapper_name} All atom map numbers in products: {set(all_map_nums)}")
-            
+
             # Check mapping consistency
             reactant_set = set(reactant_map_nums)
             product_set = set(all_map_nums)
             common_maps = reactant_set & product_set
             only_reactants = reactant_set - product_set
             only_products = product_set - reactant_set
-            
+
             print(f"[DEBUG] {mapper_name} Map numbers in both reactants and products: {len(common_maps)} atoms")
             if only_reactants:
                 print(f"[DEBUG] {mapper_name} Map numbers only in reactants: {only_reactants}")
             if only_products:
                 print(f"[DEBUG] {mapper_name} Map numbers only in products: {only_products}")
-            
+
             print(f"[DEBUG] {mapper_name} Looking for atom map number: {target_map_num}")
-            
+
             matched = trace_atom(target_map_num, product_mols)
 
             if matched:
@@ -779,17 +809,20 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
             else:
                 print(f"[DEBUG] {mapper_name} Atom with map number {target_map_num} not found in any product.")
                 # Final fallback: look for any atom of the same element in products
-                print(f"[DEBUG] {mapper_name} Final fallback: searching for any mapped {target_symbol} atoms in products...")
+                print(
+                    f"[DEBUG] {mapper_name} Final fallback: searching for any mapped {target_symbol} atoms in products...")
                 for p_idx, p_mol in enumerate(product_mols):
                     for atom in p_mol.GetAtoms():
                         if atom.GetSymbol() == target_symbol and atom.GetAtomMapNum() > 0:
-                            print(f"[DEBUG] {mapper_name} Found mapped {target_symbol} atom in product molecule {p_idx} with map number: {atom.GetAtomMapNum()}")
+                            print(
+                                f"[DEBUG] {mapper_name} Found mapped {target_symbol} atom in product molecule {p_idx} with map number: {atom.GetAtomMapNum()}")
                             clean_smiles = remove_atom_map_numbers(p_mol)
                             product_cid = lookup_compound_id(clean_smiles)
-                            print(f"[DEBUG] {mapper_name} Fallback {target_symbol} match - Product SMILES: {clean_smiles} → {product_cid}")
+                            print(
+                                f"[DEBUG] {mapper_name} Fallback {target_symbol} match - Product SMILES: {clean_smiles} → {product_cid}")
                             return product_cid, atom_mapped_rxn, True, mapper_used, None
                 return 'NotFound', atom_mapped_rxn, False, mapper_used, None
-                
+
         except Exception as e:
             post_error = f"Post-mapping processing error: {str(e)}"
             print(f"[ERROR] {mapper_name} Error processing mapped reaction: {e}")
@@ -797,6 +830,7 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
     else:
         print(f"[ERROR] {mapper_name} Mapping failed: {mapping_error}")
         return 'Error', 'Error', False, 'failed', mapping_error
+
 
 # --- Molecule selection logic ---
 
@@ -806,11 +840,13 @@ def selection_key_highest(i):
     # For tie-breaking: sort by chiral centers, then by heavy atom count (descending)
     return (ccc, heavy)
 
+
 def selection_key_lowest(i):
     ccc = count_chiral_centers(substrate_mols[i])
     heavy = substrate_mols[i].GetNumHeavyAtoms()
     # For lowest: sort by chiral centers ascending, then by heavy atom count descending
     return (ccc, -heavy)
+
 
 if args.highest_CCC:
     # Highest chiral center count, break ties with highest heavy atom count
@@ -850,20 +886,21 @@ product_cid, atom_mapped_rxn, tracking_successful, mapper_used, mapping_error = 
 # If tracking failed and we used localmapper fallback, try alternative atom selection
 if not tracking_successful and mapper_used == "localmapper_fallback":
     print(f"[INFO] Initial tracking with localmapper failed, trying alternative atom selection...")
-    
+
     # Try with a different atom selection strategy
     # First, try the atom with second highest degree
-    degrees = [(i, substrate_mols[mol_idx].GetAtomWithIdx(i).GetDegree()) for i in range(substrate_mols[mol_idx].GetNumAtoms())]
+    degrees = [(i, substrate_mols[mol_idx].GetAtomWithIdx(i).GetDegree()) for i in
+               range(substrate_mols[mol_idx].GetNumAtoms())]
     degrees.sort(key=lambda x: x[1], reverse=True)
-    
+
     if len(degrees) > 1:
         alt_atom_idx = degrees[1][0]  # Second highest degree atom
         print(f"[INFO] Trying alternative atom: index {alt_atom_idx} (degree {degrees[1][1]})")
-        
+
         alt_product_cid, alt_atom_mapped_rxn, alt_tracking_successful, alt_mapper_used, alt_mapping_error = perform_atom_tracking(
             substrate_mols, product_smiles, mol_idx, alt_atom_idx, selected_id, "[ALTERNATIVE]"
         )
-        
+
         # If alternative tracking was successful, use those results
         if alt_tracking_successful:
             product_cid = alt_product_cid
@@ -888,13 +925,14 @@ print(f"[INFO] Final result - Mapping: {mapper_used}, Tracking: {'successful' if
 # Set final mapping_error if needed
 if not tracking_successful and mapping_error is None:
     mapping_error = "Atom tracking failed - atom not found in products"
-    
+
+
 def save_error_reaction(error_output_file, error_lock_file, reaction_data):
     """
     Save error reaction data to the error CSV file with the same structure as the main output.
     """
     error_row = pd.DataFrame([reaction_data])
-    
+
     # Use file lock to ensure safe concurrent writes for error file
     with FileLock(error_lock_file, timeout=60):
         if os.path.exists(error_output_file) and os.path.getsize(error_output_file) > 0:
@@ -904,8 +942,9 @@ def save_error_reaction(error_output_file, error_lock_file, reaction_data):
             df_combined_errors.to_csv(error_output_file, index=False, quoting=1)  # QUOTE_ALL
         else:
             error_row.to_csv(error_output_file, index=False, quoting=1)  # QUOTE_ALL
-    
+
     print(f"[INFO] Saved error reaction to {error_output_file}")
+
 
 def process_error_reactions_smiles(error_output_file, compound_mapping):
     """
@@ -914,9 +953,9 @@ def process_error_reactions_smiles(error_output_file, compound_mapping):
     if not os.path.exists(error_output_file):
         print(f"[INFO] No error reactions file found at {error_output_file}")
         return
-    
+
     print(f"[INFO] Processing error reactions to add SMILES...")
-    
+
     # Read the error reactions file with proper CSV handling for long strings
     try:
         df_errors = pd.read_csv(error_output_file, quoting=1)  # QUOTE_ALL for better CSV handling
@@ -929,16 +968,16 @@ def process_error_reactions_smiles(error_output_file, compound_mapping):
         except Exception as e2:
             print(f"[ERROR] Still failed to read error reactions file: {e2}")
             return
-    
+
     # Check if reaction_smiles column already exists and inform user it will be overwritten
     if 'reaction_smiles' in df_errors.columns:
         print(f"[INFO] reaction_smiles column already exists in error reactions file - overwriting...")
-    
+
     # Process each reaction to generate SMILES
     reaction_smiles_list = []
     for index, row in df_errors.iterrows():
         reaction_string = None
-        
+
         # Try to get reaction string from various possible columns
         if 'reaction_no_stoich' in row and pd.notna(row['reaction_no_stoich']):
             reaction_string = str(row['reaction_no_stoich'])
@@ -950,7 +989,7 @@ def process_error_reactions_smiles(error_output_file, compound_mapping):
                 original_reaction = matching_reactions['reaction'].iloc[0]
                 reaction_string = remove_coefficients(original_reaction)
                 print(f"[INFO] Found original reaction for {reaction_id}: {original_reaction}")
-        
+
         if reaction_string:
             # Replace compounds with SMILES
             reaction_smiles = replace_compounds_with_smiles(reaction_string, compound_mapping)
@@ -958,14 +997,15 @@ def process_error_reactions_smiles(error_output_file, compound_mapping):
         else:
             print(f"[WARNING] No reaction string found for error row {index}")
             reaction_smiles_list.append('')
-    
+
     # Add the reaction_smiles column
     df_errors['reaction_smiles'] = reaction_smiles_list
-    
+
     # Save the updated file with proper CSV quoting
     df_errors.to_csv(error_output_file, index=False, quoting=1)  # QUOTE_ALL
     print(f"[INFO] Added reaction_smiles column to {error_output_file}")
     print(f"[INFO] Processed {len(reaction_smiles_list)} error reactions")
+
 
 # -------------------- Get Substrate ID --------------------
 selected_mol = substrate_mols[mol_idx]
@@ -1003,7 +1043,7 @@ if mapping_error:
 else:
     # Save successful reaction to main output file
     output_row = pd.DataFrame([output_data])
-    
+
     # --- Use file lock to ensure safe concurrent writes ---
     with FileLock(lock_file, timeout=60):
         if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
@@ -1013,7 +1053,7 @@ else:
             df_combined.to_csv(output_file, index=False)
         else:
             output_row.to_csv(output_file, index=False)
-    
+
     print(f"[INFO] Saved tracking result to {output_file}")
 
 # -------------------- Process Error Reactions for SMILES --------------------
