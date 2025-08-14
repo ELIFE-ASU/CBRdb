@@ -29,6 +29,7 @@ setup(
         'chemparse',
         'swifter',
         'ase',
+        'pymatgen',
         # 'rxnmapper',
     ],
     extras_require={
