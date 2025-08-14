@@ -866,3 +866,20 @@ def test_classify_geometry():
     assert CBRdb.classify_geometry(molecule("CO2")) == 'linear'
     assert CBRdb.classify_geometry(molecule("H2O")) == 'nonlinear'
     assert CBRdb.classify_geometry(molecule("HCN")) == 'linear'
+
+def test_mace():
+    print(flush=True)
+    from mace.calculators import mace_omol
+    smi = "CC(=O)O"  # Acetic acid
+    atoms, charge, multiplicity = CBRdb.smi_to_atoms(smi)
+    # Load MACE-OMOL model with charge and spin support
+    calc = mace_omol(model="extra_large", device="cuda")
+    atoms.calc = calc
+
+    # Set charge and spin for the system
+    atoms.info["charge"] = 1.0  # +1 charge
+    atoms.info["spin"] = 1.0  # spin multiplicity
+
+    energy = atoms.get_potential_energy()
+    print(f"Energy: {energy}", flush=True)
+    assert np.allclose(energy, -6234.296, atol=1e-3), f"Calculated energy {energy} does not match reference {energy}"
