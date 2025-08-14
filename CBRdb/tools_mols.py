@@ -316,7 +316,7 @@ def _get_properties(mol):
         - 'inchi': The InChI representation of the molecule.
         - 'smiles_capped': The SMILES representation of the hydrogen-capped molecule.
         - 'inchi_capped': The InChI representation of the hydrogen-capped molecule.
-        - Additional keys for molecular descriptors calculated from the capped molecule.
+        - Additional keys for molecular descriptors calculated using CBRDB.get_all_mol_descriptors.
     """
     # Standardize and embed the molecule
     mol = standardize_mol(mol)
