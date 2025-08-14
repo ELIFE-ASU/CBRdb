@@ -29,6 +29,7 @@ setup(
         'chemparse',
         'swifter',
         'ase',
+        'mace',
         'pymatgen',
         # 'rxnmapper',
     ],
