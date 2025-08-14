@@ -900,32 +900,45 @@ def test_multiplicity_to_total_spin():
         print(f"Expected error: {e}", flush=True)
 
 
-def test_mace_free_energy():
-    print(flush=True)
+def mace_free_energy(atoms, f_max=0.01, temperature=298.15, pressure=101325.0):
     from ase.build import molecule
-    from ase.optimize import QuasiNewton
+    from ase.optimize import BFGS
     from ase.thermochemistry import IdealGasThermo
     from ase.vibrations import Vibrations
     from mace.calculators import mace_omol
-
     calc = mace_omol(model="extra_large", device="cuda")
-    atoms = molecule('N2')
     atoms.calc = calc
-    dyn = QuasiNewton(atoms)
-    dyn.run(fmax=0.01)
-    potentialenergy = atoms.get_potential_energy()
+    BFGS(atoms,
+         logfile=None,
+         trajectory=None).run(fmax=f_max)
 
-    vib = Vibrations(atoms)
+    energy = atoms.get_potential_energy()
+
+    run_dir = os.path.join(os.getcwd(), 'vib')
+
+    vib = Vibrations(atoms, name=run_dir)
     vib.run()
     vib_energies = vib.get_energies()
+    # remove the vib directory if it exists
+    if os.path.exists(run_dir):
+        os.rmdir(run_dir)
 
     thermo = IdealGasThermo(
         vib_energies=vib_energies,
-        potentialenergy=potentialenergy,
+        potentialenergy=energy,
         atoms=atoms,
-        geometry='linear',
-        symmetrynumber=2,
-        spin=0,
+        geometry=CBRdb.classify_geometry(atoms),
+        symmetrynumber=CBRdb.get_symmetry_number(atoms),
+        spin=CBRdb.multiplicity_to_total_spin(atoms),
     )
-    G = thermo.get_gibbs_energy(temperature=298.15, pressure=101325.0)
+    free_energy = thermo.get_gibbs_energy(temperature=temperature,
+                                          pressure=pressure)
+    return free_energy
+
+
+def test_mace_free_energy():
+    print(flush=True)
+    from ase.build import molecule
+    atoms = molecule('N2')
+    G = mace_free_energy(atoms)
     print(f"Gibbs free energy: {G}", flush=True)
