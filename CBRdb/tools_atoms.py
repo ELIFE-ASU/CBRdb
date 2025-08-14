@@ -1840,29 +1840,27 @@ def free_energy_mace(atoms,
 
     energy = atoms.get_potential_energy()
 
-    run_dir = os.path.join(os.getcwd(), 'vib')
+    with tempfile.TemporaryDirectory() as run_dir:
+        vib = Vibrations(atoms, name=run_dir)
+        vib.run()
+        vib_energies = vib.get_energies()
+        if os.path.exists(run_dir):
+            shutil.rmtree(run_dir)
 
-    vib = Vibrations(atoms, name=run_dir)
-    vib.run()
-    vib_energies = vib.get_energies()
-    # remove the vib directory if it exists
-    if os.path.exists(run_dir):
-        shutil.rmtree(run_dir)
-
-    thermo = IdealGasThermo(
-        vib_energies=vib_energies,
-        potentialenergy=energy,
-        atoms=atoms,
-        geometry=classify_geometry(atoms),
-        symmetrynumber=get_symmetry_number(atoms),
-        spin=multiplicity_to_total_spin(multiplicity),
-    )
-    free_energy = thermo.get_gibbs_energy(temperature=temperature,
+        thermo = IdealGasThermo(
+            vib_energies=vib_energies,
+            potentialenergy=energy,
+            atoms=atoms,
+            geometry=classify_geometry(atoms),
+            symmetrynumber=get_symmetry_number(atoms),
+            spin=multiplicity_to_total_spin(multiplicity),
+        )
+        free_energy = thermo.get_gibbs_energy(temperature=temperature,
+                                              pressure=pressure)
+        free_enthalpy = thermo.get_enthalpy(temperature=temperature)
+        free_entropy = thermo.get_entropy(temperature=temperature,
                                           pressure=pressure)
-    free_enthalpy = thermo.get_enthalpy(temperature=temperature)
-    free_entropy = thermo.get_entropy(temperature=temperature,
-                                      pressure=pressure)
-    return free_energy, free_enthalpy, free_entropy
+        return free_energy, free_enthalpy, free_entropy
 
 
 def calculate_free_energy_formation_mace(mol,
@@ -1872,7 +1870,7 @@ def calculate_free_energy_formation_mace(mol,
                                          pressure=101325.0,
                                          calc_model='extra_large',
                                          calc_device="cuda"):
-    mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
+    mol = Chem.AddHs(mol)
     atoms = mol_to_atoms(mol)
     charge = get_charge(mol)
     multiplicity = get_spin_multiplicity(mol)
@@ -1905,7 +1903,7 @@ def calculate_free_energy_formation_mace(mol,
         enthalpy_atoms += ref_enthalpy * ref_count
         entropy_atoms += ref_entropy * ref_count
 
-    d_free = free - free_atoms  # Calculate the Gibbs free energy of formation.
-    d_enthalpy = enthalpy - enthalpy_atoms  # Calculate the enthalpy of formation.
+    d_free = free - free_atoms
+    d_enthalpy = enthalpy - enthalpy_atoms
     d_entropy = entropy - entropy_atoms
     return d_free, d_enthalpy, d_entropy
