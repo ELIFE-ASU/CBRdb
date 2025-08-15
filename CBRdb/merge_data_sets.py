@@ -3,6 +3,18 @@ import pandas as pd
 out_fmt = {'encoding': 'utf-8', 'index': False}
 
 
+def id_indexed(df: pd.DataFrame) -> pd.DataFrame:
+    """ Convenience fxn: Sets 'id' or 'compound_id' column as a pd.DataFrame's index. Returns a copy (not modified inplace) """
+    if df.index.name in ['id', 'compound_id']:
+        return df
+    elif 'id' in df.columns and df.index.name != 'id':
+        return df.set_index('id')
+    elif 'compound_id' in df.columns and df.index.name != 'compound_id':
+        return df.set_index('compound_id')
+    else:
+        return df
+
+
 def merge_duplicate_reactions(df, r_dupemap):
     """
     Merges duplicate reactions in a DataFrame based on a user-provided duplicate map.
