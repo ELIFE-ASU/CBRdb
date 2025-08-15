@@ -702,6 +702,11 @@ def mc2(mol: Mol) -> int:
     return sum(1 for atom in mol.GetAtoms() if atom.GetDegree() != 2 and atom.GetIdx() not in double_bond_set)
 
 
+def get_formal_charge(mol: Mol) -> int:
+    charge = Chem.GetFormalCharge(mol)
+    return charge if isinstance(charge, int) else 0
+
+
 def get_all_mol_descriptors(mol, mol_uncapped):
     """
     Calculates a comprehensive set of molecular descriptors for a given molecule.
@@ -727,6 +732,7 @@ def get_all_mol_descriptors(mol, mol_uncapped):
         - 'n_heavy_atoms': Number of heavy atoms. [*]
         - 'n_chiral_centers': Number of chiral centers. [*]
         - 'unique_bonds': Count of unique bonds. [*]
+        - 'formal_charge': Formal charge on the molecule. [*]
         - 'bertz': Bertz complexity.
         - 'wiener_index': Wiener index.
         - 'balaban_index': Balaban index.
@@ -752,6 +758,7 @@ def get_all_mol_descriptors(mol, mol_uncapped):
                 "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol_uncapped),
                 'n_chiral_centers': get_chirality(mol_uncapped),    
                 'unique_bonds': count_unique_bonds(mol_uncapped),
+                'formal_charge': get_formal_charge(mol_uncapped),
                 'bertz': bertz(mol),
                 'wiener_index': wiener_index(mol),
                 'balaban_index': balaban_index(mol),

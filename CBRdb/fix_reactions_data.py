@@ -429,15 +429,10 @@ def compound_lookup_tables(data_c, f_log=None):
 
     # DataFrame of compound attributes relevant for balancing reactions
     print_and_log('making "cpd_data": DataFrame of compound attributes relevant for balancing reactions', f_log)
-    cpd_data = data_c[['formula','smiles']].copy(deep=True).dropna().assign(
+    cpd_data = data_c[['formula', 'formal_charge']].copy(deep=True).dropna().assign(
         formula_dict = lambda x: x.formula.map(convert_formula_to_dict),
         starred = lambda x: x.formula_dict.map(lambda y: '*' in y),
-        n_elements = lambda x: x.formula_dict.map(len),
-        formal_charge = lambda x: (x.smiles.map(Chem.MolFromSmiles) # returns None for 7 CBRdb_C IDs
-                                   .map(standardize_mol, na_action='ignore')
-                                   .map(Chem.GetFormalCharge, na_action='ignore')
-                                   .fillna(0).astype(int))) # when standardized from file, all 7 have charge=0
-
+        n_elements = lambda x: x.formula_dict.map(len))
     # DataTable indicating, for each compound (column), the count (value) of each element (row)
     print_and_log('making "formula_table": matrix-like DataFrame of element counts for each compound', f_log)
     formula_table = cpd_data['formula_dict'].apply(pd.Series).fillna(0).astype(int).T
