@@ -1717,6 +1717,34 @@ def calculate_goat(atoms,
 
 
 def get_symmetry_number(atoms, tolerance=0.3):
+    """
+    Calculate the symmetry number of a molecule.
+
+    This function determines the symmetry number of a molecule based on its point group.
+    It uses the ASE `Atoms` object and pymatgen's `PointGroupAnalyzer` to analyze the
+    molecular symmetry and return the corresponding symmetry number.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    tolerance : float, optional
+        Tolerance for symmetry analysis. Default is 0.3.
+
+    Returns:
+    --------
+    int
+        The symmetry number of the molecule.
+
+    Notes:
+    ------
+    - The function handles periodic boundary conditions (PBC) by disabling them
+      for the symmetry analysis.
+    - Infinite groups (e.g., C∞v, D∞h) and polyhedral groups (e.g., Td, Oh) are
+      explicitly handled.
+    - For unsupported or unknown groups, the function falls back to counting
+      proper symmetry operations or returns 1 as a last resort.
+    """
     if getattr(atoms, "pbc", None) is not None and any(atoms.pbc):
         # Molecules should be non-periodic for a correct point-group analysis
         atoms = atoms.copy()
@@ -1785,29 +1813,83 @@ def get_symmetry_number(atoms, tolerance=0.3):
 
 
 def classify_geometry(atoms, tol_ratio=1e-3, tol_abs=1e-6):
-    n = len(atoms)
+    """
+    Classify the geometry of a molecule based on its atomic structure.
+
+    This function determines whether a molecule is monatomic, linear, or nonlinear
+    by analyzing the number of atoms and the principal moments of inertia.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    tol_ratio : float, optional
+        Tolerance ratio for determining linearity based on the smallest and largest
+        principal moments of inertia. Default is 1e-3.
+    tol_abs : float, optional
+        Absolute tolerance for determining linearity based on the characteristic
+        inertia scale. Default is 1e-6.
+
+    Returns:
+    --------
+    str
+        A string indicating the geometry of the molecule:
+        - 'monatomic' for single-atom molecules.
+        - 'linear' for linear molecules.
+        - 'nonlinear' for nonlinear molecules.
+    """
+    n = len(atoms)  # Get the number of atoms in the molecule.
     if n == 1:
-        return 'monatomic'
+        return 'monatomic'  # Single-atom molecules are classified as monatomic.
     if n == 2:
-        return 'linear'
+        return 'linear'  # Two-atom molecules are always linear.
 
     # Principal moments of inertia (amu·Å^2)
-    inertia = np.sort(np.asarray(atoms.get_moments_of_inertia()))
-    in_min, in_mid, in_max = inertia
+    inertia = np.sort(np.asarray(atoms.get_moments_of_inertia()))  # Sort the moments of inertia.
+    in_min, in_mid, in_max = inertia  # Extract the minimum, middle, and maximum moments.
 
     # Characteristic inertia scale ~ M * <r^2> (helps set an absolute floor)
-    masses = atoms.get_masses()
-    pos = atoms.get_positions()  # assumes not wrapping across PBC
-    com = np.average(pos, axis=0, weights=masses)
-    r = pos - com
-    r2_weighted_mean = np.sum(masses * np.sum(r ** 2, axis=1)) / np.sum(masses)
-    in_char = np.sum(masses) * r2_weighted_mean
+    masses = atoms.get_masses()  # Get the atomic masses.
+    pos = atoms.get_positions()  # Get the atomic positions (assumes no wrapping across PBC).
+    com = np.average(pos, axis=0, weights=masses)  # Calculate the center of mass.
+    r = pos - com  # Calculate the displacement of each atom from the center of mass.
+    r2_weighted_mean = np.sum(masses * np.sum(r ** 2, axis=1)) / np.sum(masses)  # Weighted mean of squared distances.
+    in_char = np.sum(masses) * r2_weighted_mean  # Characteristic inertia scale.
 
+    # Determine if the molecule is linear based on the moments of inertia.
     is_linear = (in_min / (in_max if in_max > 0 else 1.0) < tol_ratio) and (in_min < tol_abs * in_char)
-    return 'linear' if is_linear else 'nonlinear'
+    return 'linear' if is_linear else 'nonlinear'  # Return 'linear' or 'nonlinear' based on the analysis.
 
 
 def multiplicity_to_total_spin(multiplicity, check_integer=True, tol=1e-8):
+    """
+    Convert a spin multiplicity to the total spin (S).
+
+    This function calculates the total spin (S) from the given spin multiplicity
+    using the formula S = (multiplicity - 1) / 2. It also validates the input
+    multiplicity to ensure it is a finite number greater than or equal to 1.
+
+    Parameters:
+    -----------
+    multiplicity : float or int
+        The spin multiplicity of the system (must be >= 1).
+    check_integer : bool, optional
+        If True, checks that the multiplicity is an integer within a specified tolerance.
+        Default is True.
+    tol : float, optional
+        Tolerance for checking if the multiplicity is an integer. Default is 1e-8.
+
+    Returns:
+    --------
+    float
+        The total spin (S) of the system.
+
+    Raises:
+    -------
+    ValueError
+        If the multiplicity is not a finite number >= 1, or if `check_integer` is True
+        and the multiplicity is not an integer within the specified tolerance.
+    """
     m = float(multiplicity)
     if not math.isfinite(m) or m < 1:
         raise ValueError("Multiplicity must be a finite number >= 1.")
@@ -1829,6 +1911,51 @@ def free_energy_mace(atoms,
                      pressure=101325.0,
                      calc_model='extra_large',
                      calc_device="cuda"):
+    """
+    Calculate the Gibbs free energy, enthalpy, and entropy of a molecule using the MACE model.
+
+    This function performs a quantum chemistry calculation using the MACE model to compute
+    the Gibbs free energy, enthalpy, and entropy of a molecule represented by an ASE `Atoms` object.
+    It supports geometry optimization and vibrational analysis.
+
+    Parameters:
+    -----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    optimise : bool, optional
+        Whether to optimize the geometry of the molecule. Default is True.
+    f_max : float, optional
+        Maximum force convergence criterion for geometry optimization. Default is 0.01 eV/Å.
+    temperature : float, optional
+        Temperature in Kelvin for the calculation. Default is 298.15 K.
+    pressure : float, optional
+        Pressure in Pascals for the calculation. Default is 101325.0 Pa (1 atm).
+    calc_model : str, optional
+        MACE model to use for the calculation. Default is 'extra_large'.
+    calc_device : str, optional
+        Device to use for the calculation (e.g., 'cuda' or 'cpu'). Default is 'cuda'.
+
+    Returns:
+    --------
+    tuple
+        A tuple containing:
+        - free_energy : float
+            Gibbs free energy of the molecule in eV.
+        - free_enthalpy : float
+            Enthalpy of the molecule in eV.
+        - free_entropy : float
+            Entropy of the molecule in eV/K.
+
+    Notes:
+    ------
+    - The function uses the MACE model for energy calculations and ASE's `Vibrations` for vibrational analysis.
+    - Geometry optimization is performed using the BFGS algorithm if `optimise` is True.
+    - Temporary directories are used to store intermediate files, which are cleaned up after the calculation.
+    """
     calc = mace_omol(model=calc_model, device=calc_device)
     atoms.calc = calc
     atoms.info["charge"] = charge
@@ -1870,10 +1997,48 @@ def calculate_free_energy_formation_mace(mol,
                                          pressure=101325.0,
                                          calc_model='extra_large',
                                          calc_device="cuda"):
-    mol = Chem.AddHs(mol)
-    atoms = mol_to_atoms(mol)
-    charge = get_charge(mol)
-    multiplicity = get_spin_multiplicity(mol)
+    """
+    Calculate the Gibbs free energy of formation for a molecule using the MACE model.
+
+    This function computes the Gibbs free energy of formation for a molecule
+    represented by an RDKit `Mol` object. It calculates the free energy, enthalpy,
+    and entropy of the molecule and its reference molecules, and determines the
+    formation energy by subtracting the reference contributions.
+
+    Parameters:
+    -----------
+    mol : rdkit.Chem.Mol
+        An RDKit molecule object representing the molecule.
+    optimise : bool, optional
+        Whether to optimize the geometry of the molecule. Default is True.
+    f_max : float, optional
+        Maximum force convergence criterion for geometry optimization. Default is 0.01 eV/Å.
+    temperature : float, optional
+        Temperature in Kelvin for the calculation. Default is 298.15 K.
+    pressure : float, optional
+        Pressure in Pascals for the calculation. Default is 101325.0 Pa (1 atm).
+    calc_model : str, optional
+        MACE model to use for the calculation. Default is 'extra_large'.
+    calc_device : str, optional
+        Device to use for the calculation (e.g., 'cuda' or 'cpu'). Default is 'cuda'.
+
+    Returns:
+    --------
+    tuple
+        A tuple containing:
+        - d_free : float
+            Gibbs free energy of formation in eV.
+        - d_enthalpy : float
+            Enthalpy of formation in eV.
+        - d_entropy : float
+            Entropy correction of formation in eV/K.
+    """
+    mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
+    atoms = mol_to_atoms(mol)  # Convert the molecule to an ASE Atoms object.
+    charge = get_charge(mol)  # Calculate the formal charge of the molecule.
+    multiplicity = get_spin_multiplicity(mol)  # Determine the spin multiplicity of the molecule.
+
+    # Calculate the free energy, enthalpy, and entropy of the molecule.
     free, enthalpy, entropy = free_energy_mace(atoms,
                                                charge=charge,
                                                multiplicity=multiplicity,
@@ -1883,12 +2048,16 @@ def calculate_free_energy_formation_mace(mol,
                                                pressure=pressure,
                                                calc_model=calc_model,
                                                calc_device=calc_device)
+
+    # Initialize variables to store the contributions from reference molecules.
     free_atoms = 0.0
     enthalpy_atoms = 0.0
     entropy_atoms = 0.0
-    # Get the formation references
+
+    # Get the formation references for the molecule.
     references = get_formation_references(mol)
     for ref_smi, ref_count in references:
+        # Convert reference SMILES to ASE Atoms and calculate their properties.
         ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
         ref_free, ref_enthalpy, ref_entropy = free_energy_mace(ref_atoms,
                                                                charge=ref_charge,
@@ -1899,11 +2068,14 @@ def calculate_free_energy_formation_mace(mol,
                                                                pressure=pressure,
                                                                calc_model=calc_model,
                                                                calc_device=calc_device)
+        # Accumulate contributions from reference molecules.
         free_atoms += ref_free * ref_count
         enthalpy_atoms += ref_enthalpy * ref_count
         entropy_atoms += ref_entropy * ref_count
 
+    # Calculate the formation energy components.
     d_free = free - free_atoms
     d_enthalpy = enthalpy - enthalpy_atoms
     d_entropy = entropy - entropy_atoms
+
     return d_free, d_enthalpy, d_entropy
