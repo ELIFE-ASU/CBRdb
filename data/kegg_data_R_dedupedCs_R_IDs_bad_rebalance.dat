@@ -1,4 +1,4 @@
-# Bad IDs, reason
+id, reason
 R00034, failed to balance
 R00914, failed to balance
 R00915, failed to balance
@@ -48,7 +48,6 @@ R04879, failed to balance
 R04899, failed to balance
 R04906, failed to balance
 R04925, failed to balance
-R04933, failed to balance
 R04934, failed to balance
 R05001, failed to balance
 R05089, failed to balance
@@ -68,7 +67,6 @@ R05675, failed to balance
 R05840, failed to balance
 R05860, failed to balance
 R05867, failed to balance
-R05868, failed to balance
 R05871, failed to balance
 R05872, failed to balance
 R05886, failed to balance
@@ -205,7 +203,6 @@ R07546, failed to balance
 R07548, failed to balance
 R07549, failed to balance
 R07550, failed to balance
-R07552, failed to balance
 R07553, failed to balance
 R07554, failed to balance
 R07555, failed to balance
@@ -242,7 +239,6 @@ R07838, failed to balance
 R07841, failed to balance
 R07842, failed to balance
 R07843, failed to balance
-R07844, failed to balance
 R07845, failed to balance
 R07846, failed to balance
 R07847, failed to balance
@@ -276,7 +272,6 @@ R08033, failed to balance
 R08034, failed to balance
 R08035, failed to balance
 R08040, failed to balance
-R08041, failed to balance
 R08049, failed to balance
 R08122, failed to balance
 R08123, failed to balance
@@ -292,7 +287,6 @@ R08139, failed to balance
 R08142, failed to balance
 R08143, failed to balance
 R08155, failed to balance
-R08256, failed to balance
 R08268, failed to balance
 R08269, failed to balance
 R08272, failed to balance
@@ -512,9 +506,6 @@ R11254, failed to balance
 R11255, failed to balance
 R11256, failed to balance
 R11287, failed to balance
-R11302, failed to balance
-R11303, failed to balance
-R11304, failed to balance
 R11305, failed to balance
 R11308, failed to balance
 R11311, failed to balance
@@ -546,7 +537,6 @@ R12093, failed to balance
 R12104, failed to balance
 R12126, failed to balance
 R12127, failed to balance
-R12135, failed to balance
 R12136, failed to balance
 R12137, failed to balance
 R12142, failed to balance
@@ -581,14 +571,12 @@ R12889, failed to balance
 R12890, failed to balance
 R12891, failed to balance
 R12892, failed to balance
-R12893, failed to balance
 R12957, failed to balance
 R12994, failed to balance
 R13034, failed to balance
 R13037, failed to balance
 R13057, failed to balance
 R13074, failed to balance
-R13075, failed to balance
 R13086, failed to balance
 R13087, failed to balance
 R13098, failed to balance
@@ -609,3 +597,10 @@ R13339, failed to balance
 R13340, failed to balance
 R13341, failed to balance
 R13376, failed to balance
+R13447, failed to balance
+R13448, failed to balance
+R13449, failed to balance
+R13450, failed to balance
+R13451, failed to balance
+R13454, failed to balance
+R13455, failed to balance

@@ -1,4 +1,4 @@
-# Bad IDs, reason
+id, reason
 A000023, failed to balance
 A000024, failed to balance
 A000025, failed to balance
@@ -262,6 +262,7 @@ A022533, failed to balance
 A022538, failed to balance
 A022540, failed to balance
 A022543, failed to balance
+A022545, failed to balance
 A022584, failed to balance
 A022585, failed to balance
 A023195, failed to balance
@@ -1962,6 +1963,7 @@ A138270, failed to balance
 A138271, failed to balance
 A138272, failed to balance
 A138273, failed to balance
+A138274, failed to balance
 A138275, failed to balance
 A138278, failed to balance
 A138302, failed to balance
@@ -2050,6 +2052,7 @@ A138528, failed to balance
 A138529, failed to balance
 A138535, failed to balance
 A138543, failed to balance
+A138576, failed to balance
 A138577, failed to balance
 A138595, failed to balance
 A138596, failed to balance
@@ -2280,6 +2283,7 @@ A139476, failed to balance
 A139478, failed to balance
 A139479, failed to balance
 A139481, failed to balance
+A139483, failed to balance
 A139487, failed to balance
 A139488, failed to balance
 A139489, failed to balance
@@ -2288,6 +2292,7 @@ A139493, failed to balance
 A139494, failed to balance
 A139506, failed to balance
 A139513, failed to balance
+A139528, failed to balance
 A139531, failed to balance
 A139534, failed to balance
 A139545, failed to balance
@@ -2307,7 +2312,6 @@ A139599, failed to balance
 A139600, failed to balance
 A139601, failed to balance
 A139602, failed to balance
-A139603, failed to balance
 A139604, failed to balance
 A139608, failed to balance
 A139609, failed to balance
@@ -2329,6 +2333,7 @@ A140016, failed to balance
 A140017, failed to balance
 A140018, failed to balance
 A140019, failed to balance
+A140020, failed to balance
 A140021, failed to balance
 A140030, failed to balance
 A140041, failed to balance
@@ -2336,6 +2341,7 @@ A140042, failed to balance
 A140043, failed to balance
 A140067, failed to balance
 A140068, failed to balance
+A140110, failed to balance
 A140112, failed to balance
 A140117, failed to balance
 A140118, failed to balance
@@ -2347,6 +2353,7 @@ A140224, failed to balance
 A140225, failed to balance
 A140226, failed to balance
 A140227, failed to balance
+A140240, failed to balance
 A140253, failed to balance
 A140259, failed to balance
 A140260, failed to balance
@@ -2431,6 +2438,8 @@ A140469, failed to balance
 A140470, failed to balance
 A140477, failed to balance
 A140478, failed to balance
+A140482, failed to balance
+A140490, failed to balance
 A140495, failed to balance
 A140496, failed to balance
 A140497, failed to balance
@@ -2636,6 +2645,7 @@ A141878, failed to balance
 A141879, failed to balance
 A141884, failed to balance
 A141885, failed to balance
+A141923, failed to balance
 A141954, failed to balance
 A141974, failed to balance
 A142021, failed to balance
@@ -2672,6 +2682,7 @@ A142163, failed to balance
 A142165, failed to balance
 A142169, failed to balance
 A142175, failed to balance
+A142177, failed to balance
 A142179, failed to balance
 A142180, failed to balance
 A142190, failed to balance
@@ -2696,6 +2707,7 @@ A142248, failed to balance
 A142249, failed to balance
 A142251, failed to balance
 A142252, failed to balance
+A142299, failed to balance
 A142324, failed to balance
 A142327, failed to balance
 A142331, failed to balance
@@ -2778,12 +2790,18 @@ A142767, failed to balance
 A142768, failed to balance
 A142769, failed to balance
 A142772, failed to balance
+A142796, failed to balance
 A142805, failed to balance
+A142816, failed to balance
 A142822, failed to balance
 A142830, failed to balance
 A142831, failed to balance
+A142891, failed to balance
+A142892, failed to balance
 A142893, failed to balance
 A142894, failed to balance
+A142896, failed to balance
+A142898, failed to balance
 A142900, failed to balance
 A142902, failed to balance
 A142903, failed to balance
