@@ -3,6 +3,7 @@ import re
 
 import chemparse
 import pandas as pd
+from time import time
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 from rdkit.Chem.MolStandardize import rdMolStandardize
@@ -11,7 +12,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_files import remove_filepath
-from .tools_complexity import get_all_mol_descriptors
+from .tools_complexity import get_all_mol_descriptors, capped_funcs, uncapped_funcs
 from .tools_mp import mp_calc
 
 
@@ -295,13 +296,13 @@ def compound_super_safe_load(file, verbose=True):
     return mol
 
 
-def _get_properties(mol):
+def _define_structures(mol):
     """
     Extracts molecular properties and descriptors for a given molecule.
 
     This function standardizes the molecule, fixes R groups, caps the molecule with hydrogens,
     and calculates molecular descriptors. It returns a dictionary containing SMILES, InChI,
-    capped SMILES, capped InChI, and molecular descriptors.
+    capped SMILES, and capped InChI strings, as well as the raw molecules (capped and uncapped).
 
     Parameters:
     -----------
@@ -329,16 +330,13 @@ def _get_properties(mol):
 
     # Create a dictionary to store molecular representations
     store_dict = {
+        "mol_uncapped": mol,
+        "mol_capped": mol_capped,
         "smiles": Chem.MolToSmiles(mol),
         "inchi": Chem.MolToInchi(mol),
         "smiles_capped": Chem.MolToSmiles(mol_capped),
         "inchi_capped": Chem.MolToInchi(mol_capped)
     }
-
-    # Calculate the molecular descriptors
-    desc_dict = get_all_mol_descriptors(mol=mol_capped, mol_uncapped=mol)
-    # Combine the descriptors with the capped SMILES and InChI
-    store_dict.update(desc_dict)
 
     return store_dict
 
@@ -348,9 +346,9 @@ def get_properties(mols):
     Calculates molecular properties for a list of molecules.
 
     This function uses multiprocessing to compute properties for each molecule
-    by calling the `_get_properties` function. The results are aggregated into
-    a dictionary where each key corresponds to a property and its value is a list
-    of values for all molecules.
+    by calling the `_define_structures` function, then deriving a set of properties
+    from `tools_complexity`. The results are aggregated into a dictionary where each
+    key corresponds to a property and its value is a list of values for all molecules.
 
     Parameters:
     -----------
@@ -363,12 +361,32 @@ def get_properties(mols):
         A dictionary containing molecular properties. Each key represents a property,
         and its value is a list of property values for all molecules.
     """
-    properties_list = mp_calc(_get_properties, mols)
+    #properties_list = mp_calc(_get_properties, mols)
+    print('Defining structures...', flush=True)
+    properties_df = pd.DataFrame(mp_calc(_define_structures, mols))
 
-    result = {}
-    if properties_list:
-        for key in properties_list[0]:
-            result[key] = [prop[key] for prop in properties_list]
+    # calculate property-by-property so user gets progress context
+    print('Calculating properties...', flush=True)
+    for name, func in uncapped_funcs.items():
+        print(f"    * {name}", flush=True)
+        properties_df[name] = properties_df["mol_uncapped"].map(func)
+    
+    faster_parallelized = ['bertz', 'wiener_index', 'randic_index', 'spacial_score']
+    for name, func in capped_funcs.items():
+        nsps = (16 - len(name)) * ' '
+        print(f"    * {name}", flush=True, end=nsps)
+
+        start = time()
+        if name in faster_parallelized:
+            properties_df[name] = mp_calc(func, properties_df["mol_capped"].tolist())
+        else:
+            properties_df[name] = properties_df["mol_capped"].map(func)
+        print(f'{(time() - start):.2f} s', flush=True)
+    
+    print('Done getting properties', flush=True)
+    properties_df.drop(columns=["mol_uncapped", "mol_capped"], inplace=True)
+    result = properties_df.to_dict(orient='list')
+
     return result
 
 

@@ -64,7 +64,10 @@ from .tools_complexity import (count_unique_bonds,
                                proudfoot,
                                mc1,
                                mc2,
-                               get_all_mol_descriptors)
+                               get_all_mol_descriptors,
+                               capped_funcs,
+                               uncapped_funcs,
+                               )
 # from .tools_atom_tracking import (canonicalize_smiles,
 #                                   smiles_to_mols,
 #                                   label_atom,

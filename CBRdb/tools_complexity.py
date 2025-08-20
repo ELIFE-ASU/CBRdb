@@ -775,3 +775,21 @@ def get_all_mol_descriptors(mol, mol_uncapped):
     # Combine the descriptors into a single dictionary
     # out_dict.update(batch_dict)
     return out_dict
+
+
+capped_funcs = {'bertz': bertz,
+                'wiener_index': wiener_index,
+                'balaban_index': balaban_index,
+                'randic_index': randic_index,
+                'kirchhoff_index': kirchhoff_index,
+                'spacial_score': spacial_score,
+                'fcfp4': fcfp4,
+                'proudfoot': proudfoot,
+                'mc1': mc1,
+                'mc2': mc2}
+uncapped_funcs = {'formula': rdMolDescriptors.CalcMolFormula,
+                  "molecular_weight": rdMolDescriptors.CalcExactMolWt,
+                  "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms,
+                  'n_chiral_centers': get_chirality,
+                  'unique_bonds': count_unique_bonds,
+                  'formal_charge': get_formal_charge}
