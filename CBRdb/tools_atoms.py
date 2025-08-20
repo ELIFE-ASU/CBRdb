@@ -17,7 +17,6 @@ from ase.optimize import BFGS
 from ase.thermochemistry import IdealGasThermo
 from ase.units import Hartree
 from ase.vibrations import Vibrations
-from mace.calculators import mace_omol
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
@@ -1956,6 +1955,7 @@ def free_energy_mace(atoms,
     - Geometry optimization is performed using the BFGS algorithm if `optimise` is True.
     - Temporary directories are used to store intermediate files, which are cleaned up after the calculation.
     """
+    from mace.calculators import mace_omol
     calc = mace_omol(model=calc_model, device=calc_device)
     atoms.calc = calc
     atoms.info["charge"] = charge
@@ -2033,6 +2033,7 @@ def calculate_free_energy_formation_mace(mol,
         - d_entropy : float
             Entropy correction of formation in eV/K.
     """
+    from mace.calculators import mace_omol
     mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
     atoms = mol_to_atoms(mol)  # Convert the molecule to an ASE Atoms object.
     charge = get_charge(mol)  # Calculate the formal charge of the molecule.
