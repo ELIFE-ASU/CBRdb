@@ -1985,15 +1985,15 @@ def calculate_free_energy_formation_mace(mol,
     for ref_smi, ref_count in references:
         # Convert reference SMILES to ASE Atoms and calculate their properties.
         ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
-        ref_free, ref_enthalpy, ref_entropy = free_energy_mace(ref_atoms,
-                                                               charge=ref_charge,
-                                                               multiplicity=ref_multiplicity,
-                                                               optimise=optimise,
-                                                               f_max=f_max,
-                                                               temperature=temperature,
-                                                               pressure=pressure,
-                                                               calc_model=calc_model,
-                                                               calc_device=calc_device)
+        ref_free, ref_enthalpy, ref_entropy, _ = free_energy_mace(ref_atoms,
+                                                                  charge=ref_charge,
+                                                                  multiplicity=ref_multiplicity,
+                                                                  optimise=optimise,
+                                                                  f_max=f_max,
+                                                                  temperature=temperature,
+                                                                  pressure=pressure,
+                                                                  calc_model=calc_model,
+                                                                  calc_device=calc_device)
         # Accumulate contributions from reference molecules.
         free_atoms += ref_free * ref_count
         enthalpy_atoms += ref_enthalpy * ref_count
