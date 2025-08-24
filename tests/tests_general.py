@@ -926,6 +926,6 @@ def test_mace_free_energy():
 def test_calculate_free_energy_formation_mace():
     smi = "[H]-[O]-[H]"
     mol = Chem.MolFromSmiles(smi)
-    energy, enthalpy, entropy = CBRdb.calculate_free_energy_formation_mace(mol)
+    energy, enthalpy, entropy, _, _, _ = CBRdb.calculate_free_energy_formation_mace(mol)
     print(f"Deltas Free: {energy}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
     assert np.allclose(energy, -3.043, atol=1e-3)

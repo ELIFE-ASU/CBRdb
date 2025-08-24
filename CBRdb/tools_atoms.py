@@ -2000,42 +2000,6 @@ def calculate_free_energy_formation_mace(mol,
                                          pressure=101325.0,
                                          calc_model='extra_large',
                                          calc_device=None):
-    """
-    Calculate the Gibbs free energy of formation for a molecule using the MACE calculator.
-
-    This function computes the Gibbs free energy of formation for a molecule
-    represented by an RDKit `Mol` object. It calculates the free energy, enthalpy,
-    and entropy of the molecule and its reference molecules, and determines the
-    formation energy by subtracting the reference contributions.
-
-    Parameters:
-    -----------
-    mol : rdkit.Chem.Mol
-        An RDKit molecule object representing the molecule.
-    optimise : bool, optional
-        Whether to optimize the geometry of the molecule. Default is True.
-    f_max : float, optional
-        Maximum force convergence criterion for geometry optimization. Default is 0.01 eV/Å.
-    temperature : float, optional
-        Temperature in Kelvin for the calculation. Default is 298.15 K.
-    pressure : float, optional
-        Pressure in Pascals for the calculation. Default is 101325.0 Pa.
-    calc_model : str, optional
-        MACE model to use for the calculation. Default is 'extra_large'.
-    calc_device : str, optional
-        Device to use for the calculation ('cuda' or 'cpu'). If None, it is determined automatically.
-
-    Returns:
-    --------
-    tuple
-        A tuple containing:
-        - d_free : float
-            The Gibbs free energy of formation in eV.
-        - d_enthalpy : float
-            The enthalpy of formation in eV.
-        - d_entropy : float
-            The entropy correction of formation in eV.
-    """
     if calc_device is None:
         import torch
         calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -2085,4 +2049,4 @@ def calculate_free_energy_formation_mace(mol,
     d_enthalpy = enthalpy - enthalpy_atoms
     d_entropy = entropy - entropy_atoms
 
-    return d_free, d_enthalpy, d_entropy
+    return d_free, d_enthalpy, d_entropy, free, enthalpy, entropy
