@@ -3,6 +3,7 @@ import sys
 
 import pandas as pd
 from rdkit import Chem as Chem
+
 import CBRdb
 
 if __name__ == "__main__":
@@ -33,7 +34,7 @@ if __name__ == "__main__":
 
     id_list = df['compound_id'].to_list()
     smi_list = df['smiles'].to_list()
-
+    print(f'{smi_list[i]}', flush=True)
     mol = Chem.MolFromSmiles(smi_list[i])
     (d_free,
      d_enthalpy,
