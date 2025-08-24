@@ -26,8 +26,8 @@ if __name__ == "__main__":
 
     # Sort by n_heavy_atoms
     df = df.sort_values(by='n_heavy_atoms', ascending=True)
-    n_heavy_max = 50
-    n_heavy_min = 2
+    n_heavy_max = 100
+    n_heavy_min = 1
     df = df[df['n_heavy_atoms'] <= n_heavy_max]
     df = df[df['n_heavy_atoms'] >= n_heavy_min]
 

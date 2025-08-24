@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=cbrdb
+#SBATCH --job-name=cbrdb_mace
 ##SBATCH --output=output_%A_%a.out   # Output file for each array task
 ##SBATCH --error=error_%A_%a.err     # Error file for each array task
-#SBATCH --array=0-4                  # Array of 10 jobs (adjust to your range) 15200 17023
+#SBATCH --array=0-4                  # Array of jobs (adjust to your range)
 #SBATCH --time=0-04:00:00            # Time limit
 #SBATCH --ntasks=1                   # Number of tasks (1 per array task)
 #SBATCH --cpus-per-task=8            # Number of CPU cores per task
