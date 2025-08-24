@@ -1909,13 +1909,13 @@ def free_energy_mace(atoms,
                      temperature=298.15,
                      pressure=101325.0,
                      calc_model='extra_large',
-                     calc_device="cuda"):
+                     calc_device=None):
     """
-    Calculate the Gibbs free energy, enthalpy, and entropy of a molecule using the MACE model.
+    Calculate the Gibbs free energy, enthalpy, and entropy of a molecule using the MACE calculator.
 
-    This function performs a quantum chemistry calculation using the MACE model to compute
+    This function performs a quantum chemistry calculation using the MACE package to compute
     the Gibbs free energy, enthalpy, and entropy of a molecule represented by an ASE `Atoms` object.
-    It supports geometry optimization and vibrational analysis.
+    It supports geometry optimization, vibrational analysis, and various calculation options.
 
     Parameters:
     -----------
@@ -1932,29 +1932,32 @@ def free_energy_mace(atoms,
     temperature : float, optional
         Temperature in Kelvin for the calculation. Default is 298.15 K.
     pressure : float, optional
-        Pressure in Pascals for the calculation. Default is 101325.0 Pa (1 atm).
+        Pressure in Pascals for the calculation. Default is 101325.0 Pa.
     calc_model : str, optional
         MACE model to use for the calculation. Default is 'extra_large'.
     calc_device : str, optional
-        Device to use for the calculation (e.g., 'cuda' or 'cpu'). Default is 'cuda'.
+        Device to use for the calculation ('cuda' or 'cpu'). If None, it is determined automatically.
 
     Returns:
     --------
     tuple
         A tuple containing:
         - free_energy : float
-            Gibbs free energy of the molecule in eV.
+            The Gibbs free energy in eV.
         - free_enthalpy : float
-            Enthalpy of the molecule in eV.
+            The enthalpy in eV.
         - free_entropy : float
-            Entropy of the molecule in eV/K.
+            The entropy in eV.
 
     Notes:
     ------
-    - The function uses the MACE model for energy calculations and ASE's `Vibrations` for vibrational analysis.
-    - Geometry optimization is performed using the BFGS algorithm if `optimise` is True.
-    - Temporary directories are used to store intermediate files, which are cleaned up after the calculation.
+    - The function uses the MACE calculator for energy calculations.
+    - Vibrational analysis is performed to compute thermodynamic properties.
+    - Geometry classification and symmetry number are used for thermodynamic calculations.
     """
+    if calc_device is None:
+        import torch
+        calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
     from mace.calculators import mace_omol
     calc = mace_omol(model=calc_model, device=calc_device)
     atoms.calc = calc
@@ -1996,9 +1999,9 @@ def calculate_free_energy_formation_mace(mol,
                                          temperature=298.15,
                                          pressure=101325.0,
                                          calc_model='extra_large',
-                                         calc_device="cuda"):
+                                         calc_device=None):
     """
-    Calculate the Gibbs free energy of formation for a molecule using the MACE model.
+    Calculate the Gibbs free energy of formation for a molecule using the MACE calculator.
 
     This function computes the Gibbs free energy of formation for a molecule
     represented by an RDKit `Mol` object. It calculates the free energy, enthalpy,
@@ -2016,23 +2019,26 @@ def calculate_free_energy_formation_mace(mol,
     temperature : float, optional
         Temperature in Kelvin for the calculation. Default is 298.15 K.
     pressure : float, optional
-        Pressure in Pascals for the calculation. Default is 101325.0 Pa (1 atm).
+        Pressure in Pascals for the calculation. Default is 101325.0 Pa.
     calc_model : str, optional
         MACE model to use for the calculation. Default is 'extra_large'.
     calc_device : str, optional
-        Device to use for the calculation (e.g., 'cuda' or 'cpu'). Default is 'cuda'.
+        Device to use for the calculation ('cuda' or 'cpu'). If None, it is determined automatically.
 
     Returns:
     --------
     tuple
         A tuple containing:
         - d_free : float
-            Gibbs free energy of formation in eV.
+            The Gibbs free energy of formation in eV.
         - d_enthalpy : float
-            Enthalpy of formation in eV.
+            The enthalpy of formation in eV.
         - d_entropy : float
-            Entropy correction of formation in eV/K.
+            The entropy correction of formation in eV.
     """
+    if calc_device is None:
+        import torch
+        calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
     from mace.calculators import mace_omol
     mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
     atoms = mol_to_atoms(mol)  # Convert the molecule to an ASE Atoms object.
