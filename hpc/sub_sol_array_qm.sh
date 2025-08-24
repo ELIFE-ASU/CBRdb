@@ -16,4 +16,4 @@ module load mamba/latest
 source activate cbrdb
 
 # Run the Python script, passing the SLURM_ARRAY_TASK_ID to the script
-srun python3 calc_spectrum.py "${SLURM_ARRAY_TASK_ID}" CBRdb_C.csv
+srun python3 calc_qm_spectrum.py "${SLURM_ARRAY_TASK_ID}" CBRdb_C.csv
