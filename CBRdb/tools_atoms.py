@@ -1910,51 +1910,6 @@ def free_energy_mace(atoms,
                      pressure=101325.0,
                      calc_model='extra_large',
                      calc_device=None):
-    """
-    Calculate the Gibbs free energy, enthalpy, and entropy of a molecule using the MACE calculator.
-
-    This function performs a quantum chemistry calculation using the MACE package to compute
-    the Gibbs free energy, enthalpy, and entropy of a molecule represented by an ASE `Atoms` object.
-    It supports geometry optimization, vibrational analysis, and various calculation options.
-
-    Parameters:
-    -----------
-    atoms : ase.Atoms
-        An ASE `Atoms` object representing the molecule.
-    charge : int, optional
-        Total charge of the molecule. Default is 0.
-    multiplicity : int, optional
-        Spin multiplicity of the molecule. Default is 1.
-    optimise : bool, optional
-        Whether to optimize the geometry of the molecule. Default is True.
-    f_max : float, optional
-        Maximum force convergence criterion for geometry optimization. Default is 0.01 eV/Å.
-    temperature : float, optional
-        Temperature in Kelvin for the calculation. Default is 298.15 K.
-    pressure : float, optional
-        Pressure in Pascals for the calculation. Default is 101325.0 Pa.
-    calc_model : str, optional
-        MACE model to use for the calculation. Default is 'extra_large'.
-    calc_device : str, optional
-        Device to use for the calculation ('cuda' or 'cpu'). If None, it is determined automatically.
-
-    Returns:
-    --------
-    tuple
-        A tuple containing:
-        - free_energy : float
-            The Gibbs free energy in eV.
-        - free_enthalpy : float
-            The enthalpy in eV.
-        - free_entropy : float
-            The entropy in eV.
-
-    Notes:
-    ------
-    - The function uses the MACE calculator for energy calculations.
-    - Vibrational analysis is performed to compute thermodynamic properties.
-    - Geometry classification and symmetry number are used for thermodynamic calculations.
-    """
     if calc_device is None:
         import torch
         calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -1990,7 +1945,7 @@ def free_energy_mace(atoms,
         free_enthalpy = thermo.get_enthalpy(temperature=temperature)
         free_entropy = thermo.get_entropy(temperature=temperature,
                                           pressure=pressure)
-        return free_energy, free_enthalpy, free_entropy
+        return free_energy, free_enthalpy, free_entropy, vib_energies
 
 
 def calculate_free_energy_formation_mace(mol,
@@ -2010,15 +1965,15 @@ def calculate_free_energy_formation_mace(mol,
     multiplicity = get_spin_multiplicity(mol)  # Determine the spin multiplicity of the molecule.
 
     # Calculate the free energy, enthalpy, and entropy of the molecule.
-    free, enthalpy, entropy = free_energy_mace(atoms,
-                                               charge=charge,
-                                               multiplicity=multiplicity,
-                                               optimise=optimise,
-                                               f_max=f_max,
-                                               temperature=temperature,
-                                               pressure=pressure,
-                                               calc_model=calc_model,
-                                               calc_device=calc_device)
+    free, enthalpy, entropy, vib_energies = free_energy_mace(atoms,
+                                                             charge=charge,
+                                                             multiplicity=multiplicity,
+                                                             optimise=optimise,
+                                                             f_max=f_max,
+                                                             temperature=temperature,
+                                                             pressure=pressure,
+                                                             calc_model=calc_model,
+                                                             calc_device=calc_device)
 
     # Initialize variables to store the contributions from reference molecules.
     free_atoms = 0.0
@@ -2049,4 +2004,4 @@ def calculate_free_energy_formation_mace(mol,
     d_enthalpy = enthalpy - enthalpy_atoms
     d_entropy = entropy - entropy_atoms
 
-    return d_free, d_enthalpy, d_entropy, free, enthalpy, entropy
+    return d_free, d_enthalpy, d_entropy, free, enthalpy, entropy, vib_energies
