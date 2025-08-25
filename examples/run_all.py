@@ -48,10 +48,8 @@ if __name__ == "__main__":
                                            smis_dict)  # merge these into the C data, modifies kegg_data_C.csv
 
     print("Fixing halogen reactions in KEGG and ATLAS...", flush=True)
-    kegg_data_R = CBRdb.fix_halogen_reactions_without_existing_halogens(kegg_data_R, C_main, specific_halogens)
-    atlas_data_R = CBRdb.fix_halogen_reactions_without_existing_halogens(atlas_data_R, C_main, specific_halogens)
-    CBRdb.reaction_csv(kegg_data_R, '../data/kegg_data_R.csv')
-    CBRdb.reaction_csv(atlas_data_R, '../data/atlas_data_R.csv')
+    kegg_data_R = CBRdb.fix_halogen_reactions_without_existing_halogens(kegg_data_R, C_main, specific_halogens, out_file=kegg_reactions_data+'.csv')
+    atlas_data_R = CBRdb.fix_halogen_reactions_without_existing_halogens(atlas_data_R, C_main, specific_halogens, out_file=atlas_reactions_data+'.csv')
 
     print("Finding and removing suspect KEGG reactions + de-duping compound dataset for compounds and reactions...",
           flush=True)
