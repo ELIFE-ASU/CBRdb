@@ -7,7 +7,7 @@ from rdkit import RDLogger
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from .tools_mols import standardize_mol, check_for_x_group, get_properties
+from .tools_mols import standardize_mol, check_for_x_group, get_properties, check_for_r_group, replace_r_group
 from .tools_files import make_custom_id, reaction_csv
 from .tools_mp import tp_calc
 from .tools_eq import convert_formula_to_dict, standardise_eq
@@ -77,8 +77,22 @@ def fix_halogen_compounds(
     for i in range(len(data_bad_id)):
         # Get the full path of the file
         tmp_file = os.path.join(target_dir_c, data_bad_id[i], data_bad_id[i] + ".mol")
+
+        # Check for and standardize R groups. as in compound_super_safe_load
+        flag_r = check_for_r_group(tmp_file)
+        if flag_r:
+            f_load_r = tmp_file.split(".")[0] + "_r.mol"
+            replace_r_group(tmp_file, f_load_r)
+            tmp_file = f_load_r
+
+        # Open the file
         with open(tmp_file, 'r') as f:
             file_data = f.read()
+
+        # Remove temporary file generated if R groups were found
+        if flag_r:
+            os.remove(tmp_file)
+        
         # Initialize the list for the current data[i]
         cids_dict[data_bad_id[i]] = []
         smis_dict[data_bad_id[i]] = []
@@ -98,6 +112,11 @@ def fix_halogen_compounds(
             # Standardize the molecule
             mol = standardize_mol(mol)
             smi = Chem.MolToSmiles(mol, allHsExplicit=True)
+
+            # Ensure R group's presence is registered by Chem.MolFromSmiles in merger step
+            if flag_r:
+                smi = smi.replace('[H:0]', '*')
+
             # Determine the compound id from the ones already given
             cid = {
                 "C00462": {"F": "C16487", "Cl": "C01327", "Br": "C13645", "I": "C05590"},
