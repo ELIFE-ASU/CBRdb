@@ -83,9 +83,18 @@ def fix_halogen_compounds(
         cids_dict[data_bad_id[i]] = []
         smis_dict[data_bad_id[i]] = []
         # Replace the X with the halogen
+        # First, use a sample halogen F, since these load correctly + no X+F combos exist
+        file_data = file_data.replace("X", "F")
+        # Create the molecule; use same read-in specs as compound_super_safe_load
+        base_mol = Chem.MolFromMolBlock(file_data, sanitize=False, removeHs=False)
+        # Standardize that molecule
+        base_mol = standardize_mol(base_mol)
+        # Iterate through halogens
         for j, hal in enumerate(hal_exp):
-            # Load the molecule
-            mol = Chem.MolFromMolBlock(file_data.replace("X", hal))
+            mol = Chem.ReplaceSubstructs(base_mol,
+                                          Chem.MolFromSmiles('F'),
+                                          Chem.MolFromSmiles(hal),
+                                          replaceAll=True)[0]
             # Standardize the molecule
             mol = standardize_mol(mol)
             smi = Chem.MolToSmiles(mol, allHsExplicit=True)
