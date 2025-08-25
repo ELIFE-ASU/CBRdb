@@ -364,7 +364,10 @@ def fix_halogen_reactions(cids_dict,
     return df
 
 
-def fix_halogen_reactions_without_existing_halogens(df_R, C_main, specific_halogens):
+def fix_halogen_reactions_without_existing_halogens(df_R, 
+                                                    C_main, 
+                                                    specific_halogens, 
+                                                    out_file=None):
     """
     Fixes halogen reactions by replacing generic halogen placeholders with specific halogen compounds.
 
@@ -428,5 +431,9 @@ def fix_halogen_reactions_without_existing_halogens(df_R, C_main, specific_halog
 
     # append these new reactions to the existing reaction database.
     df_R = pd.concat([df_R, halogen_grps[df_R.columns]], ignore_index=True).sort_values(by='id').reset_index(drop=True)
+
+    if out_file is not None:
+        out_file = os.path.abspath(out_file)
+        reaction_csv(df_R, out_file)
 
     return df_R
