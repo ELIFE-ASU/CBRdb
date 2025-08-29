@@ -83,6 +83,52 @@ def identify_duplicate_compounds(C_main):
     return compound_mapping
 
 
+def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> pd.DataFrame:
+    """
+    Merges duplicate compounds in a compound DataFrame using the duplication-map DataFrame.
+    Combines the lists of alternate IDs and relationships for all duplicated compounds.
+
+    Parameters:
+    C_main (pd.DataFrame): A DataFrame with compound data and compound_id column or index.name
+    C_dupemap (pd.DataFrame): A DataFrame mapping duplicate compounds (old_id index) to their merged new_id.
+
+    Returns:
+    pd.DataFrame: a copy of the main compound DataFrame, but with the duplicate compounds merged.
+    """
+
+    sum_entry_strs = lambda x: x.dropna().str.split(' ').sum()
+    sort_union_join = lambda x: ' '.join(sorted(set(x)))
+
+    # standardize data format
+    C_main_copy = id_indexed(C_main.copy(deep=True))
+    # identify columns for which the value should reflect the union of values
+    unify_col_options = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan', 
+                  'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
+    cols2unify = C_main_copy.columns.intersection(unify_col_options)
+    # consider only those columns
+    to_combine =  C_dupemap.join(C_main_copy[cols2unify])
+    # format values appropriately - where present, should be strings
+    to_combine.update(to_combine['PubChem'].dropna().astype(int).astype(str))
+    # combine each entry's (list of) values
+    to_combine = to_combine.reset_index().groupby(by='new_id').agg(sum_entry_strs).replace(0, pd.NA)
+    # de-duplicate and sort each entry's (list of) values; cast as a string
+    to_combine = to_combine.map(sort_union_join, na_action='ignore')
+    # rename the index
+    to_combine.rename_axis('compound_id', inplace=True)
+    # replace duplicate compound IDs with their new IDs
+    C_main_copy.rename(index=C_dupemap['new_id'], inplace=True)
+    # sort by compound ID
+    C_main_copy.sort_index(inplace=True)
+    # update with combined values
+    C_main_copy.update(to_combine)
+    # return index to initial state
+    C_main_copy.reset_index(inplace=True)
+    # de-duplicate compound entries
+    C_main_copy.drop_duplicates(subset='compound_id', keep='first', inplace=True)
+
+    return C_main_copy
+
+
 def add_R_col_to_C_file(final_output_Cs_fp = '../CBRdb_C.csv', final_output_Rs_fp = '../CBRdb_R.csv'):
     """
     Adds a column to the compound DataFrame indicating which reactions each compound is involved in.

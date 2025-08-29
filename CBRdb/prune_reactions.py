@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .merge_data_sets import identify_duplicate_compounds
+from .merge_data_sets import identify_duplicate_compounds, merge_duplicate_compounds
 from .tools_files import reaction_csv, compound_csv
 from .tools_eq import standardise_eq
 
@@ -258,12 +258,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     # identify all duplicated compounds
     dbs['CBRdb_C'] = dbs['kegg_data_C'].copy(deep=True)
     dbs['C_dupemap'] = identify_duplicate_compounds(dbs['CBRdb_C'])
-
-    # replace duped compound IDs in compound DataFrame
-    dbs['CBRdb_C']['compound_id'] = dbs['CBRdb_C']['compound_id'].replace(dbs['C_dupemap']['new_id'])
-
-    # de-duplicate compound entries
-    dbs['CBRdb_C'] = dbs['CBRdb_C'].sort_values(by='compound_id').drop_duplicates(subset='compound_id', keep='first')
+    dbs['CBRdb_C'] = merge_duplicate_compounds(dbs['CBRdb_C'], dbs['C_dupemap'])
 
     # replace duped compound IDs in reaction DataFrames
     dbs['kegg_data_R'].loc[:, 'reaction'] = dbs['kegg_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
