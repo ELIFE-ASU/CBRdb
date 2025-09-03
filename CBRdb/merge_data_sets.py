@@ -101,6 +101,8 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
 
     # standardize data format
     C_main_copy = id_indexed(C_main.copy(deep=True))
+    combo_names = C_dupemap.join(C_main_copy[['name']]).groupby('new_id')['name'].agg(';~'.join)
+    combo_names = combo_names.str.split(';~').map(lambda x: ';~'.join(dict.fromkeys(x).keys())).to_frame()
     # identify columns for which the value should reflect the union of values
     unify_col_options = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan', 
                   'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
@@ -121,6 +123,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     C_main_copy.sort_index(inplace=True)
     # update with combined values
     C_main_copy.update(to_combine)
+    C_main_copy.update(combo_names)
     # return index to initial state
     C_main_copy.reset_index(inplace=True)
     # de-duplicate compound entries
