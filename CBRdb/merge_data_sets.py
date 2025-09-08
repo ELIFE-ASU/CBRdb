@@ -65,22 +65,22 @@ def identify_duplicate_compounds(C_main):
     Returns:
     pd.DataFrame: A DataFrame mapping old compound IDs to new unique compound IDs.
     """
+    # ID the number to start counting back from when instantiating new IDs
     id_num = C_main.reset_index()['compound_id'].str.lstrip('C').astype(int)
     count_back_from = id_num.loc[id_num.diff().idxmax()] - 1
-    possible_dupes = (
-        C_main.query(
-            '~smiles.str.contains("*", regex=False) & smiles.duplicated(keep=False)').reset_index().sort_values(
-            by=['smiles', 'compound_id'])
-        .groupby('smiles')['compound_id'].apply(list).apply(sorted).reset_index(drop=True)
-        .explode().reset_index(name='id_old').rename({'index': 'id_new'}, axis=1))
-    possible_dupes['id_new'] = 'C' + (count_back_from - possible_dupes['id_new']).astype(str)
-    possible_dupes = dict(zip(possible_dupes['id_old'], possible_dupes['id_new']))
-    compound_mapping = pd.Series(possible_dupes).reset_index().groupby(by=0)['index'].apply(
-        lambda x: ' '.join(sorted(list(x))))
-    compound_mapping = (compound_mapping.str.split().explode().rename('old_id')
-                        .reset_index().rename({0: 'new_id'}, axis=1).set_index('old_id'))
-    compound_mapping.to_csv('../data/kegg_data_C_dupemap.csv', encoding='utf-8')
-    return compound_mapping
+    # Flag duplicates among well-defined structures
+    possible_dupes = C_main.dropna(subset='smiles').query(
+        'smiles.duplicated(keep=False) & ~smiles.str.contains("*", regex=False)')
+    # Group duplicate structures together
+    C_dupemap = possible_dupes.groupby(by='smiles')['compound_id'].apply(sorted)
+    # Assign a new ID for each dupe-group
+    C_dupemap = C_dupemap.reset_index(drop=True).explode().rename('old_id')
+    C_dupemap.index = ('C' + (count_back_from - C_dupemap.index).astype(str)).set_names('new_id')
+    # Sort the duplicate compound groups (within and between)
+    C_dupemap = C_dupemap.reset_index().sort_values(by=['new_id', 'old_id']).set_index('old_id')
+    # Generate dupe-map output file for easy conversion from old IDs to new IDs
+    C_dupemap.to_csv('../data/kegg_data_C_dupemap.csv', encoding='utf-8')
+    return C_dupemap
 
 
 def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> pd.DataFrame:
