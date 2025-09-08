@@ -17,12 +17,12 @@ def all_entries(dbs):
     Returns:
     tuple: A tuple containing:
            - all_rns (pd.Series): A Series where each element is a set of compound IDs found in the reactions.
-           - all_cps (set): A set of all compound IDs.
+           - all_cps (set): A set of all compound IDs for which structures are available.
     """
     kegg_rns = dbs['kegg_data_R'].set_index('id')['reaction']
     atlas_rns = dbs['atlas_data_R'].set_index('id')['reaction']
     all_rns = pd.concat([kegg_rns, atlas_rns]).str.findall(r"(C\d{5})").map(set)
-    all_cps = set(dbs['CBRdb_C']['compound_id'])
+    all_cps = set(dbs['CBRdb_C'].dropna(subset='smiles')['compound_id'])
     return all_rns, all_cps
 
 
