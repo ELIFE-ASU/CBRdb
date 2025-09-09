@@ -131,8 +131,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        f_parallel=True,
                        rebalance_depth=1,
                        bad_criterion='shortcut|structure_missing'):
-    if f_parallel:
-        swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
 
     # Get the absolute paths
     r_file = os.path.abspath(r_file)
@@ -188,6 +186,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     data_r.update(dfs['now_balanced'])
     data_r = data_r.reset_index()
 
+    if f_parallel:
+        swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
     # Sort by the index
     data_r = data_r.sort_values(by="id")
 
