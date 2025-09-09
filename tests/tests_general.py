@@ -988,3 +988,54 @@ def test_calculate_free_energy_formation_mace_batch():
     free_energy, _ = CBRdb.calculate_free_energy_formation_mace(mol, temperature=temperature, pressure=pressure)
     print(f"Gibbs free energy: {free_energy}", flush=True)
     assert len(free_energy) == len(temperature)
+
+def test_calculate_free_energy_formation_mace_batch_compare():
+    temperatures_k = [
+        223.15, 273.15, 298.15, 323.15, 348.15, 373.15, 398.15, 423.15,
+        448.15, 473.15, 498.15, 523.15, 548.15, 573.15, 598.15, 623.15
+    ]
+    pressures_pa = [
+        100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 101322.0, 232014.4, 475716.9,
+        891804.9, 1553649.9, 2547860.3, 3973649.3, 5943125.1, 8583784.3, 12045757.2, 16521128.9
+    ]
+
+    temperatures_k = [
+        223.15, 273.15, 298.15, 323.15, 348.15, 373.15, 398.15, 423.15,
+        448.15, 473.15, 498.15, 523.15, 548.15, 573.15, 598.15, 623.15
+    ]
+
+    pressures_pa = [
+        100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0,
+        100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0
+    ]
+
+    temperatures_k = [
+        223.15, 273.15, 298.15, 323.15, 348.15, 373.15, 398.15, 423.15,
+        448.15, 473.15, 498.15, 523.15, 548.15, 573.15, 598.15, 623.15,
+        223.15, 273.15, 298.15, 323.15, 348.15, 373.15, 398.15, 423.15,
+        448.15, 473.15, 498.15, 523.15, 548.15, 573.15, 598.15, 623.15
+    ]
+    pressures_pa = [
+        100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 101322.0, 232014.4, 475716.9,
+        891804.9, 1553649.9, 2547860.3, 3973649.3, 5943125.1, 8583784.3, 12045757.2, 16521128.9,
+        100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0,
+        100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0, 100000.0
+    ]
+
+    smi = "O=C(O)O"
+    mol = Chem.MolFromSmiles(smi)
+
+    free_energy, _ = CBRdb.calculate_free_energy_formation_mace(mol,
+                                                                temperature=temperatures_k,
+                                                                pressure=pressures_pa,
+                                                                analytic=True)
+    print(f"Gibbs free energy: {free_energy}", flush=True)
+
+    # plot the free energy vs temperature
+
+    plt.plot(temperatures_k, [g['dG'] for g in free_energy], marker='o', label='Gibbs Free Energy')
+    plt.plot(temperatures_k, [g['dH'] for g in free_energy], marker='o', label='Enthalpy')
+    plt.legend()
+    plt.xlabel('Temperature (K)')
+    plt.ylabel('Gibbs Free Energy (eV)')
+    plt.show()
