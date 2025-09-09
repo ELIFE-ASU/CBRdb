@@ -95,14 +95,17 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     Returns:
     pd.DataFrame: a copy of the main compound DataFrame, but with the duplicate compounds merged.
     """
-
+    # define functions for combining entries
     sum_entry_strs = lambda x: x.dropna().str.split(' ').sum()
     sort_union_join = lambda x: ' '.join(sorted(set(x)))
+    line_set_str = lambda x: '; '.join(sorted(set(x))) # unique strings, sorted
+    lines_set_str = lambda x: ';~'.join(dict.fromkeys(x.str.split(';~').sum()).keys())
+    name_funcs = {'name': lines_set_str, 'nickname': line_set_str}
 
     # standardize data format
     C_main_copy = id_indexed(C_main.copy(deep=True))
-    combo_names = C_dupemap.join(C_main_copy[['name']]).groupby('new_id')['name'].agg(';~'.join)
-    combo_names = combo_names.str.split(';~').map(lambda x: ';~'.join(dict.fromkeys(x).keys())).to_frame()
+    # combine names for each duplicate compound group
+    combo_names = C_dupemap.join(C_main_copy).groupby('new_id').agg(name_funcs)
     # identify columns for which the value should reflect the union of values
     unify_col_options = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan',
                          'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
@@ -112,9 +115,9 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     # format values appropriately - where present, should be strings
     to_combine.update(to_combine['PubChem'].dropna().astype(int).astype(str))
     # combine each entry's (list of) values
-    to_combine = to_combine.reset_index().groupby(by='new_id').agg(sum_entry_strs).replace(0, pd.NA)
+    to_combine = to_combine.reset_index().groupby(by='new_id').agg(sum_entry_strs)
     # de-duplicate and sort each entry's (list of) values; cast as a string
-    to_combine = to_combine.map(sort_union_join, na_action='ignore')
+    to_combine = to_combine.replace(0, pd.NA).map(sort_union_join, na_action='ignore')
     # rename the index
     to_combine.rename_axis('compound_id', inplace=True)
     # replace duplicate compound IDs with their new IDs
@@ -123,6 +126,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     C_main_copy.sort_index(inplace=True)
     # update with combined values
     C_main_copy.update(to_combine)
+    # update with combined names
     C_main_copy.update(combo_names)
     # return index to initial state
     C_main_copy.reset_index(inplace=True)
