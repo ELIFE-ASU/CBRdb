@@ -1,9 +1,14 @@
 import os
+import shutil
+import tempfile
+import time as t
 
 import numpy as np
 import pandas as pd
 from ase.build import molecule
 from ase.io import read
+from ase.optimize import BFGS
+from ase.vibrations import Vibrations
 from ase.visualize import view
 from mace.calculators import mace_omol
 from rdkit import Chem as Chem
@@ -924,8 +929,31 @@ def test_mace_free_energy():
 
 
 def test_calculate_free_energy_formation_mace():
+    print(flush=True)
     smi = "[H]-[O]-[H]"
     mol = Chem.MolFromSmiles(smi)
     energy, enthalpy, entropy, _, _, _, _ = CBRdb.calculate_free_energy_formation_mace(mol)
     print(f"Deltas Free: {energy}, Enthalpy: {enthalpy}, Entropy: {entropy}", flush=True)
-    assert np.allclose(energy, -3.043, atol=1e-3)
+    assert np.allclose(energy, -3.043, atol=1.0e-3)
+
+
+def test_mace_analytical_free():
+    print(flush=True)
+    smi = "CC(=O)O"  # Acetic acid
+    atoms, _, _ = CBRdb.smi_to_atoms(smi)
+    calc = mace_omol(model='extra_large', device='cuda')
+    atoms.calc = calc
+    BFGS(atoms).run(fmax=0.01)
+    t0 = t.time()
+    with tempfile.TemporaryDirectory() as run_dir:
+        vib = Vibrations(atoms, name=run_dir)
+        vib.run()
+        vib_e_numerical = vib.get_energies()
+        if os.path.exists(run_dir):
+            shutil.rmtree(run_dir)
+    t1 = t.time()
+    vib_e_analytical = CBRdb.get_analytical_hessian_energies(calc, atoms)
+    t2 = t.time()
+    print(f"Numerical time : {t1 - t0:.1f} s", flush=True)
+    print(f"Analytical time: {t2 - t1:.1f} s", flush=True)
+    assert np.allclose(vib_e_numerical, vib_e_analytical, atol=1.0e-3)

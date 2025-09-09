@@ -16,7 +16,7 @@ from ase.io import read
 from ase.optimize import BFGS
 from ase.thermochemistry import IdealGasThermo
 from ase.units import Hartree
-from ase.vibrations import Vibrations
+from ase.vibrations import Vibrations, VibrationsData
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
@@ -1901,10 +1901,18 @@ def multiplicity_to_total_spin(multiplicity, check_integer=True, tol=1e-8):
     return (m - 1.0) / 2.0
 
 
+def get_analytical_hessian_energies(calc, atoms):
+    hessian = calc.get_hessian(atoms=atoms)
+    n_atoms = len(atoms)
+    hessian = hessian.reshape((n_atoms, 3, n_atoms, 3))
+    return VibrationsData(atoms, hessian).get_energies()
+
+
 def free_energy_mace(atoms,
                      charge=0,
                      multiplicity=1,
                      optimise=True,
+                     analytic=True,
                      f_max=0.01,
                      temperature=298.15,
                      pressure=101325.0,
@@ -1926,9 +1934,12 @@ def free_energy_mace(atoms,
     energy = atoms.get_potential_energy()
 
     with tempfile.TemporaryDirectory() as run_dir:
-        vib = Vibrations(atoms, name=run_dir)
-        vib.run()
-        vib_energies = vib.get_energies()
+        if analytic:
+            vib_energies = get_analytical_hessian_energies(calc, atoms)
+        else:
+            vib = Vibrations(atoms, name=run_dir)
+            vib.run()
+            vib_energies = vib.get_energies()
         if os.path.exists(run_dir):
             shutil.rmtree(run_dir)
 
@@ -1950,6 +1961,7 @@ def free_energy_mace(atoms,
 
 def calculate_free_energy_formation_mace(mol,
                                          optimise=True,
+                                         analytic=True,
                                          f_max=0.01,
                                          temperature=298.15,
                                          pressure=101325.0,
@@ -1968,6 +1980,7 @@ def calculate_free_energy_formation_mace(mol,
                                                              charge=charge,
                                                              multiplicity=multiplicity,
                                                              optimise=optimise,
+                                                             analytic=analytic,
                                                              f_max=f_max,
                                                              temperature=temperature,
                                                              pressure=pressure,
