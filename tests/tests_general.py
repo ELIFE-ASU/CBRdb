@@ -8,7 +8,7 @@ import pandas as pd
 from ase.build import molecule
 from ase.io import read
 from ase.optimize import BFGS
-from ase.vibrations import Vibrations, VibrationsData
+from ase.vibrations import Vibrations
 from ase.visualize import view
 from mace.calculators import mace_omol
 from rdkit import Chem as Chem
@@ -937,13 +937,6 @@ def test_calculate_free_energy_formation_mace():
     assert np.allclose(energy, -3.043, atol=1.0e-3)
 
 
-def get_analytical_hessian_energies(calc, atoms):
-    hessian = calc.get_hessian(atoms=atoms)
-    n_atoms = len(atoms)
-    hessian = hessian.reshape((n_atoms, 3, n_atoms, 3))
-    return VibrationsData(atoms, hessian).get_energies()
-
-
 def test_mace_analytical_free():
     print(flush=True)
     smi = "CC(=O)O"  # Acetic acid
@@ -959,7 +952,7 @@ def test_mace_analytical_free():
         if os.path.exists(run_dir):
             shutil.rmtree(run_dir)
     t1 = t.time()
-    vib_e_analytical = get_analytical_hessian_energies(calc, atoms)
+    vib_e_analytical = CBRdb.get_analytical_hessian_energies(calc, atoms)
     t2 = t.time()
     print(f"Numerical time : {t1 - t0:.1f} s", flush=True)
     print(f"Analytical time: {t2 - t1:.1f} s", flush=True)

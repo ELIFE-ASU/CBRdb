@@ -16,7 +16,7 @@ from ase.io import read
 from ase.optimize import BFGS
 from ase.thermochemistry import IdealGasThermo
 from ase.units import Hartree
-from ase.vibrations import Vibrations
+from ase.vibrations import Vibrations, VibrationsData
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
@@ -1899,6 +1899,13 @@ def multiplicity_to_total_spin(multiplicity, check_integer=True, tol=1e-8):
         m = round(m)
 
     return (m - 1.0) / 2.0
+
+
+def get_analytical_hessian_energies(calc, atoms):
+    hessian = calc.get_hessian(atoms=atoms)
+    n_atoms = len(atoms)
+    hessian = hessian.reshape((n_atoms, 3, n_atoms, 3))
+    return VibrationsData(atoms, hessian).get_energies()
 
 
 def free_energy_mace(atoms,
