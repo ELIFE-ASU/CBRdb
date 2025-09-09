@@ -957,3 +957,13 @@ def test_mace_analytical_free():
     print(f"Numerical time : {t1 - t0:.1f} s", flush=True)
     print(f"Analytical time: {t2 - t1:.1f} s", flush=True)
     assert np.allclose(vib_e_numerical, vib_e_analytical, atol=1.0e-3)
+
+
+def test_free_energy_mace_batch():
+    print(flush=True)
+    temperature = [300, 400]  # List of temperatures in Kelvin
+    pressure = [1.0 * 101_325, 2.0 * 101_325]  # List of pressures in Pa
+    atoms = molecule('H2O')
+    free_energy, _ = CBRdb.free_energy_mace(atoms, temperature=temperature, pressure=pressure)
+    print(f"Gibbs free energy: {free_energy}", flush=True)
+    assert len(free_energy) == len(temperature)

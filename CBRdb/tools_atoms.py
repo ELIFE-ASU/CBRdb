@@ -1918,7 +1918,7 @@ def free_energy_mace(atoms,
                      analytic=True,
                      f_max=0.01,
                      temperature=298.15,
-                     pressure=101325.0,
+                     pressure=101_325.0,
                      calc_model='extra_large',
                      calc_device=None):
     def _as_list(x):
@@ -1931,21 +1931,21 @@ def free_energy_mace(atoms,
             return [float(v) for v in lst], False
         raise TypeError("temperature/pressure must be a number or an iterable of numbers.")
 
-    Ts, t_is_scalar = _as_list(temperature)
-    Ps, p_is_scalar = _as_list(pressure)
+    t_s, t_is_scalar = _as_list(temperature)
+    p_s, p_is_scalar = _as_list(pressure)
 
     # Decide batching scheme
-    if len(Ts) == len(Ps) and len(Ts) > 1:
-        pairs = list(zip(Ts, Ps))  # pairwise
-    elif len(Ts) == 1 and len(Ps) >= 1:
-        pairs = [(Ts[0], p) for p in Ps]
-    elif len(Ps) == 1 and len(Ts) >= 1:
-        pairs = [(t, Ps[0]) for t in Ts]
-    elif len(Ts) > 1 and len(Ps) > 1:
+    if len(t_s) == len(p_s) and len(t_s) > 1:
+        pairs = list(zip(t_s, p_s))  # pairwise
+    elif len(t_s) == 1 and len(p_s) >= 1:
+        pairs = [(t_s[0], p) for p in p_s]
+    elif len(p_s) == 1 and len(t_s) >= 1:
+        pairs = [(t, p_s[0]) for t in t_s]
+    elif len(t_s) > 1 and len(p_s) > 1:
         # Cartesian product
-        pairs = [(t, p) for t in Ts for p in Ps]
+        pairs = [(t, p) for t in t_s for p in p_s]
     else:
-        pairs = [(Ts[0], Ps[0])]
+        pairs = [(t_s[0], p_s[0])]
 
     # Set up calculator
     if calc_device is None:
@@ -1988,17 +1988,17 @@ def free_energy_mace(atoms,
     # Single case → original return signature
     if t_is_scalar and p_is_scalar:
         T, P = pairs[0]
-        G = thermo.get_gibbs_energy(temperature=T, pressure=P)
-        H = thermo.get_enthalpy(temperature=T)
-        S = thermo.get_entropy(temperature=T, pressure=P)
+        G = thermo.get_gibbs_energy(temperature=T, pressure=P, verbose=False)
+        H = thermo.get_enthalpy(temperature=T, verbose=False)
+        S = thermo.get_entropy(temperature=T, pressure=P, verbose=False)
         return G, H, S, vib_energies
 
     # Batch case → list of dicts + vib_energies
     results = []
     for T, P in pairs:
-        G = thermo.get_gibbs_energy(temperature=T, pressure=P)
-        H = thermo.get_enthalpy(temperature=T)
-        S = thermo.get_entropy(temperature=T, pressure=P)
+        G = thermo.get_gibbs_energy(temperature=T, pressure=P, verbose=False)
+        H = thermo.get_enthalpy(temperature=T, verbose=False)
+        S = thermo.get_entropy(temperature=T, pressure=P, verbose=False)
         results.append({"T": T, "P": P, "G": G, "H": H, "S": S})
 
     return results, vib_energies
@@ -2009,7 +2009,7 @@ def calculate_free_energy_formation_mace(mol,
                                          analytic=True,
                                          f_max=0.01,
                                          temperature=298.15,
-                                         pressure=101325.0,
+                                         pressure=101_325.0,
                                          calc_model='extra_large',
                                          calc_device=None):
     if calc_device is None:
