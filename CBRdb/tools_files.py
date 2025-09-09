@@ -205,6 +205,8 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str, compression='infer'):
 
     df = df.sort_values(by='id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
+    if not file_address.endswith('.zip'):
+        df.to_csv(file_address+'.zip', **params)
     return file_address
 
 
@@ -234,6 +236,8 @@ def compound_csv(df_C: pd.DataFrame, file_address: str, compression='infer'):
 
     df = df.sort_values(by='compound_id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
+    if not file_address.endswith('.zip'):
+        df.to_csv(file_address+'.zip', **params)
     return file_address
 
 
