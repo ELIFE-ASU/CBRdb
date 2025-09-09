@@ -1,9 +1,11 @@
 import math
+import numbers
 import os
 import re
 import shutil
 import tempfile
 from collections import defaultdict
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Union
 
@@ -16,7 +18,8 @@ from ase.io import read
 from ase.optimize import BFGS
 from ase.thermochemistry import IdealGasThermo
 from ase.units import Hartree
-from ase.vibrations import Vibrations, VibrationsData
+from ase.vibrations import Vibrations
+from ase.vibrations import VibrationsData
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
@@ -1918,23 +1921,52 @@ def free_energy_mace(atoms,
                      pressure=101325.0,
                      calc_model='extra_large',
                      calc_device=None):
+    def _as_list(x):
+        if isinstance(x, numbers.Real):
+            return [float(x)], True
+        if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
+            lst = list(x)
+            if not lst:
+                raise ValueError("Iterable temperature/pressure must be non-empty.")
+            return [float(v) for v in lst], False
+        raise TypeError("temperature/pressure must be a number or an iterable of numbers.")
+
+    Ts, t_is_scalar = _as_list(temperature)
+    Ps, p_is_scalar = _as_list(pressure)
+
+    # Decide batching scheme
+    if len(Ts) == len(Ps) and len(Ts) > 1:
+        pairs = list(zip(Ts, Ps))  # pairwise
+    elif len(Ts) == 1 and len(Ps) >= 1:
+        pairs = [(Ts[0], p) for p in Ps]
+    elif len(Ps) == 1 and len(Ts) >= 1:
+        pairs = [(t, Ps[0]) for t in Ts]
+    elif len(Ts) > 1 and len(Ps) > 1:
+        # Cartesian product
+        pairs = [(t, p) for t in Ts for p in Ps]
+    else:
+        pairs = [(Ts[0], Ps[0])]
+
+    # Set up calculator
     if calc_device is None:
         import torch
         calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
     from mace.calculators import mace_omol
     calc = mace_omol(model=calc_model, device=calc_device)
+
     atoms.calc = calc
     atoms.info["charge"] = charge
     atoms.info["spin"] = multiplicity
+
     if optimise:
-        BFGS(atoms,
-             logfile=None,
-             trajectory=None).run(fmax=f_max)
+        BFGS(atoms, logfile=None, trajectory=None).run(fmax=f_max)
 
     energy = atoms.get_potential_energy()
 
+    # Vibrations (analytic or finite differences)
     with tempfile.TemporaryDirectory() as run_dir:
         if analytic:
+            # Assumes you have this helper available in your environment:
             vib_energies = get_analytical_hessian_energies(calc, atoms)
         else:
             vib = Vibrations(atoms, name=run_dir)
@@ -1943,20 +1975,33 @@ def free_energy_mace(atoms,
         if os.path.exists(run_dir):
             shutil.rmtree(run_dir)
 
-        thermo = IdealGasThermo(
-            vib_energies=vib_energies,
-            potentialenergy=energy,
-            atoms=atoms,
-            geometry=classify_geometry(atoms),
-            symmetrynumber=get_symmetry_number(atoms),
-            spin=multiplicity_to_total_spin(multiplicity),
-        )
-        free_energy = thermo.get_gibbs_energy(temperature=temperature,
-                                              pressure=pressure)
-        free_enthalpy = thermo.get_enthalpy(temperature=temperature)
-        free_entropy = thermo.get_entropy(temperature=temperature,
-                                          pressure=pressure)
-        return free_energy, free_enthalpy, free_entropy, vib_energies
+    # Build thermo model once; evaluate at different T/P
+    thermo = IdealGasThermo(
+        vib_energies=vib_energies,
+        potentialenergy=energy,
+        atoms=atoms,
+        geometry=classify_geometry(atoms),  # assumes helper exists
+        symmetrynumber=get_symmetry_number(atoms),  # assumes helper exists
+        spin=multiplicity_to_total_spin(multiplicity),  # assumes helper exists
+    )
+
+    # Single case → original return signature
+    if t_is_scalar and p_is_scalar:
+        T, P = pairs[0]
+        G = thermo.get_gibbs_energy(temperature=T, pressure=P)
+        H = thermo.get_enthalpy(temperature=T)
+        S = thermo.get_entropy(temperature=T, pressure=P)
+        return G, H, S, vib_energies
+
+    # Batch case → list of dicts + vib_energies
+    results = []
+    for T, P in pairs:
+        G = thermo.get_gibbs_energy(temperature=T, pressure=P)
+        H = thermo.get_enthalpy(temperature=T)
+        S = thermo.get_entropy(temperature=T, pressure=P)
+        results.append({"T": T, "P": P, "G": G, "H": H, "S": S})
+
+    return results, vib_energies
 
 
 def calculate_free_energy_formation_mace(mol,
