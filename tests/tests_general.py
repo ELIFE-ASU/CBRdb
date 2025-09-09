@@ -864,6 +864,16 @@ def test_sym_number():
     print(s)  # -> 12 (D6h)
     assert s == 12
 
+    # Check that the system works for charged systems
+    mol = Chem.MolFromSmiles('[Al+2]')
+    mol = Chem.AddHs(mol)
+    atoms = CBRdb.mol_to_atoms(mol)
+    atoms.charge = CBRdb.get_charge(mol)
+    atoms.spin_multiplicity = CBRdb.get_spin_multiplicity(mol)
+    s = CBRdb.get_symmetry_number(atoms)
+    print(s)  # -> 1 (Oh)
+    assert s == 1
+
 
 def test_classify_geometry():
     print(flush=True)

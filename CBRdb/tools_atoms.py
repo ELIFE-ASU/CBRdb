@@ -1956,6 +1956,8 @@ def free_energy_mace(atoms,
     atoms.calc = calc
     atoms.info["charge"] = charge
     atoms.info["spin"] = multiplicity
+    atoms.charge = charge
+    atoms.spin_multiplicity = multiplicity
 
     if optimise:
         BFGS(atoms, logfile=None, trajectory=None).run(fmax=f_max)
