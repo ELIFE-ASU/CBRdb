@@ -967,3 +967,14 @@ def test_free_energy_mace_batch():
     free_energy, _ = CBRdb.free_energy_mace(atoms, temperature=temperature, pressure=pressure)
     print(f"Gibbs free energy: {free_energy}", flush=True)
     assert len(free_energy) == len(temperature)
+
+
+def test_calculate_free_energy_formation_mace_batch():
+    print(flush=True)
+    temperature = [300, 400]  # List of temperatures in Kelvin
+    pressure = [1.0 * 101_325, 2.0 * 101_325]  # List of pressures in Pa
+    smi = "[H]-[O]-[H]"
+    mol = Chem.MolFromSmiles(smi)
+    free_energy, _ = CBRdb.calculate_free_energy_formation_mace(mol, temperature=temperature, pressure=pressure)
+    print(f"Gibbs free energy: {free_energy}", flush=True)
+    assert len(free_energy) == len(temperature)
