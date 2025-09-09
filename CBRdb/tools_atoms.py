@@ -1912,6 +1912,7 @@ def free_energy_mace(atoms,
                      charge=0,
                      multiplicity=1,
                      optimise=True,
+                     analytic=True,
                      f_max=0.01,
                      temperature=298.15,
                      pressure=101325.0,
@@ -1933,9 +1934,12 @@ def free_energy_mace(atoms,
     energy = atoms.get_potential_energy()
 
     with tempfile.TemporaryDirectory() as run_dir:
-        vib = Vibrations(atoms, name=run_dir)
-        vib.run()
-        vib_energies = vib.get_energies()
+        if analytic:
+            vib_energies = get_analytical_hessian_energies(calc, atoms)
+        else:
+            vib = Vibrations(atoms, name=run_dir)
+            vib.run()
+            vib_energies = vib.get_energies()
         if os.path.exists(run_dir):
             shutil.rmtree(run_dir)
 
@@ -1957,6 +1961,7 @@ def free_energy_mace(atoms,
 
 def calculate_free_energy_formation_mace(mol,
                                          optimise=True,
+                                         analytic=True,
                                          f_max=0.01,
                                          temperature=298.15,
                                          pressure=101325.0,
@@ -1975,6 +1980,7 @@ def calculate_free_energy_formation_mace(mol,
                                                              charge=charge,
                                                              multiplicity=multiplicity,
                                                              optimise=optimise,
+                                                             analytic=analytic,
                                                              f_max=f_max,
                                                              temperature=temperature,
                                                              pressure=pressure,
