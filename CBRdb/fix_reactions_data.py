@@ -3,8 +3,8 @@ import time
 
 import pandas as pd
 import swifter
-from rdkit import Chem as Chem
 
+from .merge_data_sets import id_indexed
 from .tools_eq import (convert_formula_to_dict,
                        side_to_dict,
                        eq_to_dict,
@@ -17,9 +17,8 @@ from .tools_eq import (convert_formula_to_dict,
                        rebalance_eq,
                        fix_imbalance_core,
                        )
-from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements, standardize_mol)
-from .tools_files import reaction_csv, compound_csv
-from .merge_data_sets import id_indexed
+from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
+
 
 def print_and_log(statement, file=None):
     """
@@ -376,8 +375,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         to_concat = [data_r, data_r_rebalanced]
 
     df_final = pd.concat(to_concat).set_index('id').drop(ids_failed, errors='ignore')
-    if f_assume_var and len(data_r_var_list.index)>0:
-            df_final['var_coeff'] = df_final.index.isin(data_r_var_list['id'])
+    if f_assume_var and len(data_r_var_list.index) > 0:
+        df_final['var_coeff'] = df_final.index.isin(data_r_var_list['id'])
 
     # Get the final length of the data
     print_and_log(f"Final data shape: {df_final.shape}", f_log)
@@ -395,26 +394,26 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
 
 def balance_simple_cases(R_main, C_main, f_log=None):
-
     R_main = id_indexed(R_main)
     C_main = id_indexed(C_main)
     data_c, formula_table = compound_lookup_tables(C_main)
     dfs = filter_reactions_pandas(data_r=R_main, data_c=data_c, formula_table=formula_table, f_log=f_log)
 
-    injections_1el = get_charge_balanced_injections_1el(data_c = data_c, dfs = dfs)
-    injections_OH = get_charge_balanced_injections_OH(data_c = data_c, dfs = dfs)
+    injections_1el = get_charge_balanced_injections_1el(data_c=data_c, dfs=dfs)
+    injections_OH = get_charge_balanced_injections_OH(data_c=data_c, dfs=dfs)
 
     inj_df = pd.concat([injections_1el.join(R_main[['reaction']]), injections_OH.join(R_main[['reaction']])])
     inj_df['compounds'] = inj_df['reaction'].str.findall(r'([C]\d{5})')
 
     left_injections = inj_df.query('left_side').assign(
-        reaction_inj = lambda x: (x['count'].astype(str) + ' ' + x['compound_id'] + ' + ' + x['reaction'])
+        reaction_inj=lambda x: (x['count'].astype(str) + ' ' + x['compound_id'] + ' + ' + x['reaction'])
         .map(standardise_eq))
     right_injections = inj_df.query('left_side.eq(False)').assign(
-        reaction_inj = lambda x: (x['reaction'] + ' + ' + x['count'].astype(str) + ' ' + x['compound_id'])
+        reaction_inj=lambda x: (x['reaction'] + ' + ' + x['count'].astype(str) + ' ' + x['compound_id'])
         .map(standardise_eq))
 
-    now_balanced = pd.concat([left_injections['reaction_inj'], right_injections['reaction_inj']]).rename('reaction').to_frame().sort_index()
+    now_balanced = pd.concat([left_injections['reaction_inj'], right_injections['reaction_inj']]).rename(
+        'reaction').to_frame().sort_index()
 
     dfs = dfs | dict(inj_df=inj_df, now_balanced=now_balanced)
     print_and_log(f'balance_simple_cases output entries: {list(dfs.keys())}', f_log)
@@ -424,17 +423,16 @@ def balance_simple_cases(R_main, C_main, f_log=None):
 
 
 def compound_lookup_tables(data_c, f_log=None):
-
     # DataFrame of compound attributes relevant for balancing reactions
     print_and_log('making "cpd_data": DataFrame of compound attributes relevant for balancing reactions', f_log)
     cpd_data = data_c[['formula', 'formal_charge']].copy(deep=True).dropna().assign(
-        formula_dict = lambda x: x.formula.map(convert_formula_to_dict),
-        starred = lambda x: x.formula_dict.map(lambda y: '*' in y),
-        n_elements = lambda x: x.formula_dict.map(len))
+        formula_dict=lambda x: x.formula.map(convert_formula_to_dict),
+        starred=lambda x: x.formula_dict.map(lambda y: '*' in y),
+        n_elements=lambda x: x.formula_dict.map(len))
     # DataTable indicating, for each compound (column), the count (value) of each element (row)
     print_and_log('making "formula_table": matrix-like DataFrame of element counts for each compound', f_log)
     formula_table = cpd_data['formula_dict'].apply(pd.Series).fillna(0).astype(int).T
-    
+
     return cpd_data, formula_table
 
 
@@ -463,7 +461,7 @@ def filter_reactions_pandas(data_r, data_c, formula_table, f_log=None, dfs=None)
 
     # Get each reaction as a dict of reactants and products
     equations = data_r['reaction'].map(eq_to_dict)
-    sides = pd.DataFrame(equations.tolist(), index=equations.index).rename(columns={0:'L', 1:'R'})
+    sides = pd.DataFrame(equations.tolist(), index=equations.index).rename(columns={0: 'L', 1: 'R'})
 
     # Left side compound IDs and coefficients
     lsc = sides['L'].map(lambda x: x.items()).explode()
@@ -485,8 +483,10 @@ def filter_reactions_pandas(data_r, data_c, formula_table, f_log=None, dfs=None)
     right_charge = right_charge.groupby(level=0).sum()
 
     # To prep for L-R comparison in element counts, map compound IDs to element counts
-    lse = lsc.reset_index().merge(ft, left_on='compound_id', right_index=True, how='left').drop(columns='compound_id').set_index('id')
-    rse = rsc.reset_index().merge(ft, left_on='compound_id', right_index=True, how='left').drop(columns='compound_id').set_index('id')
+    lse = lsc.reset_index().merge(ft, left_on='compound_id', right_index=True, how='left').drop(
+        columns='compound_id').set_index('id')
+    rse = rsc.reset_index().merge(ft, left_on='compound_id', right_index=True, how='left').drop(
+        columns='compound_id').set_index('id')
 
     # Multiply element counts by compound coefficients
     lse.update(lse.iloc[:, 1:].apply(lambda x: x * lse['coeff'], axis=0))
@@ -502,18 +502,21 @@ def filter_reactions_pandas(data_r, data_c, formula_table, f_log=None, dfs=None)
     no_var_coefficients = sides.map(lambda x: all(type(v) is not str for v in x.values())).all(axis=1)
     has_starred_compound = sides.stack().explode().isin(cpd_data.query('starred').index).groupby(level=0).any()
     rn_attrs = pd.DataFrame({'bool_missing_data': ~ all_structures_found,
-                                'cpd_starred': has_starred_compound,
-                                'bool_var_list': ~ no_var_coefficients})
+                             'cpd_starred': has_starred_compound,
+                             'bool_var_list': ~ no_var_coefficients})
     rn_attrs['rebalanceable'] = ~ rn_attrs.any(axis=1)
     print_and_log('  * is_balanced: whether the reaction is balanced as written', f_log)
     rn_attrs['is_balanced'] = (product_els == reactant_els).all(axis=1)
-    rn_attrs['is_balanced'] = rn_attrs['is_balanced'].fillna(True) #we do not try to balance var_coeffs here and that's what's being counted
-    print_and_log('  * to_rebalance: unbalanced reactions that lack missing data, starred compounds, or vars-as-coefficients', f_log)
+    rn_attrs['is_balanced'] = rn_attrs['is_balanced'].fillna(
+        True)  # we do not try to balance var_coeffs here and that's what's being counted
+    print_and_log(
+        '  * to_rebalance: unbalanced reactions that lack missing data, starred compounds, or vars-as-coefficients',
+        f_log)
     rn_attrs['to_rebalance'] = rn_attrs['is_balanced'].eq(False) & rn_attrs['rebalanceable'].eq(True)
     print_and_log('  * is_balanced_except_star: reactions for which "*" is the only imbalanced element', f_log)
     rn_attrs['is_balanced_except_star'] = (product_els == reactant_els).drop(columns='*', errors='ignore').all(axis=1) & \
                                           rn_attrs['is_balanced'].eq(False)
-    #print_and_log('  * charge_R-L: charge (im)balance across the reaction (charge_R - charge_L). If positive, right needs (-) or left needs (+)', f_log)
+    # print_and_log('  * charge_R-L: charge (im)balance across the reaction (charge_R - charge_L). If positive, right needs (-) or left needs (+)', f_log)
     rn_attrs['charge_R-L'] = right_charge - left_charge
     dfs.update({'rns': rn_attrs})
     # pd.Series listing sets of formulas for each side of the reaction; can use Series.apply chempy.balance_stoichiometry to check in bulk.
@@ -523,9 +526,12 @@ def filter_reactions_pandas(data_r, data_c, formula_table, f_log=None, dfs=None)
     dfs.update({'formula_sides': formula_sides})
 
     # DataFrame of element count diffs (R - L); same count diff might indicate same set of compound-injector solutions, saving iterations
-    print_and_log('making "el_diff_groups": DataFrame assigning group numbers to reactions based on their element-count diff (R - L).', f_log)
+    print_and_log(
+        'making "el_diff_groups": DataFrame assigning group numbers to reactions based on their element-count diff (R - L).',
+        f_log)
     observed_el_diffs = (product_els - reactant_els).loc[rn_attrs.query('to_rebalance').index]
-    observed_el_diffs['group_num'] = (observed_el_diffs.astype(str)+' ').groupby(by=list(observed_el_diffs.columns)).ngroup()
+    observed_el_diffs['group_num'] = (observed_el_diffs.astype(str) + ' ').groupby(
+        by=list(observed_el_diffs.columns)).ngroup()
     observed_el_diffs['group_size'] = observed_el_diffs['group_num'].map(observed_el_diffs['group_num'].value_counts())
     observed_el_diffs = observed_el_diffs.sort_values(by=['group_size', 'group_num'], ascending=[False, True]).drop(
         'group_size', axis=1).set_index('group_num', append=True)
@@ -535,27 +541,30 @@ def filter_reactions_pandas(data_r, data_c, formula_table, f_log=None, dfs=None)
 
 
 def get_charge_balanced_injections_1el(data_c, dfs):
-
     cpd_pool = data_c.query('n_elements==1 & starred==False').copy(deep=True).assign(
-        el_sym = lambda x: x.formula_dict.explode(),
-        el_num = lambda x: x.formula_dict.map(lambda y: y.values()).explode()).reset_index()
-    cpd_pool = cpd_pool.groupby(by=['el_sym', 'formal_charge', 'el_num'], as_index=False)['compound_id'].agg(lambda x: x)
+        el_sym=lambda x: x.formula_dict.explode(),
+        el_num=lambda x: x.formula_dict.map(lambda y: y.values()).explode()).reset_index()
+    cpd_pool = cpd_pool.groupby(by=['el_sym', 'formal_charge', 'el_num'], as_index=False)['compound_id'].agg(
+        lambda x: x)
 
-    diffs = dfs['el_diff_groups'][dfs['el_diff_groups']['*'].eq(0)]     # consider only reactions with no starred compounds
+    diffs = dfs['el_diff_groups'][dfs['el_diff_groups']['*'].eq(0)]  # consider only reactions with no starred compounds
     sum_all_atoms = diffs.abs().sum(axis=1)
-    single_el_diffs = (diffs[(diffs.abs().T == sum_all_atoms).any()] # el diff = total diff necessarily means a one-element mismatch
-                    .reset_index(level=0).melt(id_vars='id', value_name='diff', var_name='el_sym') # so only one diff per reaction
-                    .query('diff!=0').set_index('id').assign(formal_charge=dfs['rns']['charge_R-L'])) # diffs are RE: element and charge.
+    single_el_diffs = (
+        diffs[(diffs.abs().T == sum_all_atoms).any()]  # el diff = total diff necessarily means a one-element mismatch
+        .reset_index(level=0).melt(id_vars='id', value_name='diff', var_name='el_sym')  # so only one diff per reaction
+        .query('diff!=0').set_index('id').assign(
+            formal_charge=dfs['rns']['charge_R-L']))  # diffs are RE: element and charge.
 
     cpd_pool = cpd_pool.query('el_sym in @single_el_diffs.el_sym')
     single_el_diffs = single_el_diffs.assign(compound_id=None, left_side=None, count=None)
     queries = {'formal_charge == 0': '(formal_charge == 0)',
-            'formal_charge == 1': '(formal_charge == diff)',
-            'formal_charge == -1': '(formal_charge == -1 * diff)'}
-    
+               'formal_charge == 1': '(formal_charge == diff)',
+               'formal_charge == -1': '(formal_charge == -1 * diff)'}
+
     for charge_specs, solution_query in queries.items():
         for _, soln in cpd_pool.query(charge_specs).iterrows():
-            solvable = single_el_diffs.query(f'(el_sym == @soln.el_sym) & (diff.abs() % @soln.el_num == 0) & {solution_query}')
+            solvable = single_el_diffs.query(
+                f'(el_sym == @soln.el_sym) & (diff.abs() % @soln.el_num == 0) & {solution_query}')
             if len(solvable.index) > 0:
                 single_el_diffs.loc[solvable.index, 'compound_id'] = soln['compound_id']
                 single_el_diffs.loc[solvable.index, 'count'] = (solvable['diff'].abs() / soln['el_num']).astype(int)
@@ -568,17 +577,20 @@ def get_charge_balanced_injections_OH(data_c, dfs):
     solutions = pd.DataFrame(columns=['el_sym', 'diff', 'formal_charge', 'compound_id', 'left_side', 'count'])
     diffs = dfs['el_diff_groups'][dfs['el_diff_groups']['*'].eq(0)]
     sum_all_atoms = diffs.abs().sum(axis=1)
-    diffs = diffs.loc[diffs.query('H.ne(0) & O.ne(0)')[['H','O']].sum(axis=1).abs().eq(sum_all_atoms)][['H','O']].reset_index(level=1, drop=True)
+    diffs = diffs.loc[diffs.query('H.ne(0) & O.ne(0)')[['H', 'O']].sum(axis=1).abs().eq(sum_all_atoms)][
+        ['H', 'O']].reset_index(level=1, drop=True)
     diffs['formal_charge'] = dfs['rns']['charge_R-L'].loc[diffs.index.get_level_values(0)].values
     H2O_solves = diffs.query('formal_charge.eq(0) & H == 2*O')
     H2O2_solves = diffs.query('H==O & formal_charge.eq(0) & H%2==0')
     solutions = pd.DataFrame()
-    if len(H2O_solves.index)>0:
-        H2O_solves = H2O_solves.assign( el_sym = 'H2O', diff = lambda x: x.O, compound_id = 'C00001', 
-                                       left_side = lambda x: x.H.gt(0), count = lambda x: x.O.abs()).drop(['H','O'], axis=1)
+    if len(H2O_solves.index) > 0:
+        H2O_solves = H2O_solves.assign(el_sym='H2O', diff=lambda x: x.O, compound_id='C00001',
+                                       left_side=lambda x: x.H.gt(0), count=lambda x: x.O.abs()).drop(['H', 'O'],
+                                                                                                      axis=1)
         solutions = pd.concat([solutions, H2O_solves])
-    if len(H2O2_solves.index)>0:
-        H2O2_solves = H2O2_solves.assign(el_sym = 'H2O2', diff = lambda x: (x.O/2).astype(int), compound_id = 'C00027', 
-                                         left_side= lambda x: x['diff'].gt(0), count = lambda x: x['diff'].abs()).drop(['H','O'], axis=1)
+    if len(H2O2_solves.index) > 0:
+        H2O2_solves = H2O2_solves.assign(el_sym='H2O2', diff=lambda x: (x.O / 2).astype(int), compound_id='C00027',
+                                         left_side=lambda x: x['diff'].gt(0), count=lambda x: x['diff'].abs()).drop(
+            ['H', 'O'], axis=1)
         solutions = pd.concat([solutions, H2O2_solves])
     return solutions

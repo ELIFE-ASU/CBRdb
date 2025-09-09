@@ -104,11 +104,11 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     combo_names = C_dupemap.join(C_main_copy[['name']]).groupby('new_id')['name'].agg(';~'.join)
     combo_names = combo_names.str.split(';~').map(lambda x: ';~'.join(dict.fromkeys(x).keys())).to_frame()
     # identify columns for which the value should reflect the union of values
-    unify_col_options = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan', 
-                  'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
+    unify_col_options = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan',
+                         'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
     cols2unify = C_main_copy.columns.intersection(unify_col_options)
     # consider only those columns
-    to_combine =  C_dupemap.join(C_main_copy[cols2unify])
+    to_combine = C_dupemap.join(C_main_copy[cols2unify])
     # format values appropriately - where present, should be strings
     to_combine.update(to_combine['PubChem'].dropna().astype(int).astype(str))
     # combine each entry's (list of) values
@@ -132,7 +132,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     return C_main_copy
 
 
-def add_R_col_to_C_file(final_output_Cs_fp = '../CBRdb_C.csv', final_output_Rs_fp = '../CBRdb_R.csv'):
+def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp='../CBRdb_R.csv'):
     """
     Adds a column to the compound DataFrame indicating which reactions each compound is involved in.
     Parameters:
@@ -141,7 +141,7 @@ def add_R_col_to_C_file(final_output_Cs_fp = '../CBRdb_C.csv', final_output_Rs_f
     Returns:
     None: The function modifies the compound DataFrame in place and saves it to the specified file  
     """
-    final_output_Rs = pd.read_csv(final_output_Rs_fp, index_col=0, usecols=[0,1,2], dtype=object)
+    final_output_Rs = pd.read_csv(final_output_Rs_fp, index_col=0, usecols=[0, 1, 2], dtype=object)
     final_output_Cs = pd.read_csv(final_output_Cs_fp, index_col=0)
 
     if 'id' in final_output_Rs.columns:
@@ -149,7 +149,7 @@ def add_R_col_to_C_file(final_output_Cs_fp = '../CBRdb_C.csv', final_output_Rs_f
     if 'compound_id' in final_output_Cs.columns:
         final_output_Cs = final_output_Cs.set_index('compound_id')
     if 'CBRdb_R_ids' in final_output_Cs.columns:
-        final_output_Cs.drop(columns=['CBRdb_R_ids'], inplace=True)    
+        final_output_Cs.drop(columns=['CBRdb_R_ids'], inplace=True)
 
     cid2rid = pd.Series(final_output_Rs.reaction.str.findall(r'C\d{5}').explode().to_frame().groupby('reaction').groups)
     cid2rid_printable = cid2rid.map(lambda x: ' '.join(sorted(list(set(x)), reverse=True)))

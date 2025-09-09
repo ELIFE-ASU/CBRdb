@@ -1958,7 +1958,6 @@ def calculate_free_energy_formation_mace(mol,
     if calc_device is None:
         import torch
         calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    from mace.calculators import mace_omol
     mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
     atoms = mol_to_atoms(mol)  # Convert the molecule to an ASE Atoms object.
     charge = get_charge(mol)  # Calculate the formal charge of the molecule.

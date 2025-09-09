@@ -55,8 +55,8 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
 
     # The ATLAS database headers are listed on p.6 of this guide:
     # https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf
-    in_file_cols = ['id', 'kegg_id', 'x', 'reaction', 'reaction_rule', 
-               'dG_kJ/mol', 'dG_err', 'most_sim_kegg', 'bridgit_score']
+    in_file_cols = ['id', 'kegg_id', 'x', 'reaction', 'reaction_rule',
+                    'dG_kJ/mol', 'dG_err', 'most_sim_kegg', 'bridgit_score']
 
     # Open the file.
     df = pd.read_table(in_file, header=None, sep=';', names=in_file_cols)
@@ -85,7 +85,7 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     for fxn in [set, list]:
         df.update(df.filter(like='msk').map(fxn, na_action='ignore'))
         df.update(df['ec'].map(fxn, na_action='ignore'))
-    
+
     # dG signs in the guide above are reversed in the data we were granted.
     # TODO: Calculate dG for a few rxns with extreme (+/-) reported dG. Diff signs, y/n?
     # df['dG_kJ/mol'] = -1 * df['dG_kJ/mol'].astype(float)

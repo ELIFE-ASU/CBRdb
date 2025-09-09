@@ -92,7 +92,7 @@ def fix_halogen_compounds(
         # Remove temporary file generated if R groups were found
         if flag_r:
             os.remove(tmp_file)
-        
+
         # Initialize the list for the current data[i]
         cids_dict[data_bad_id[i]] = []
         smis_dict[data_bad_id[i]] = []
@@ -106,9 +106,9 @@ def fix_halogen_compounds(
         # Iterate through halogens
         for j, hal in enumerate(hal_exp):
             mol = Chem.ReplaceSubstructs(base_mol,
-                                          Chem.MolFromSmiles('F'),
-                                          Chem.MolFromSmiles(hal),
-                                          replaceAll=True)[0]
+                                         Chem.MolFromSmiles('F'),
+                                         Chem.MolFromSmiles(hal),
+                                         replaceAll=True)[0]
             # Standardize the molecule
             mol = standardize_mol(mol)
             smi = Chem.MolToSmiles(mol, allHsExplicit=True)
@@ -364,9 +364,9 @@ def fix_halogen_reactions(cids_dict,
     return df
 
 
-def fix_halogen_reactions_without_existing_halogens(df_R, 
-                                                    C_main, 
-                                                    specific_halogens, 
+def fix_halogen_reactions_without_existing_halogens(df_R,
+                                                    C_main,
+                                                    specific_halogens,
                                                     out_file=None):
     """
     Fixes halogen reactions by replacing generic halogen placeholders with specific halogen compounds.

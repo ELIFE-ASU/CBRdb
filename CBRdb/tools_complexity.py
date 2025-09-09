@@ -756,7 +756,7 @@ def get_all_mol_descriptors(mol, mol_uncapped):
     out_dict = {'formula': rdMolDescriptors.CalcMolFormula(mol_uncapped),
                 "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol_uncapped),
                 "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol_uncapped),
-                'n_chiral_centers': get_chirality(mol_uncapped),    
+                'n_chiral_centers': get_chirality(mol_uncapped),
                 'unique_bonds': count_unique_bonds(mol_uncapped),
                 'formal_charge': get_formal_charge(mol_uncapped),
                 'bertz': bertz(mol),

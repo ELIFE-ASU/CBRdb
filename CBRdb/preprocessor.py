@@ -104,12 +104,12 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     target_dir = os.path.abspath(target_dir)
 
     # List metadata files in target_dir
-    paths = pd.Series({file.split('.')[0] : os.path.join(root, file)
-            for root, _, files in os.walk(target_dir) 
-            for file in files if file.endswith('.data')})
+    paths = pd.Series({file.split('.')[0]: os.path.join(root, file)
+                       for root, _, files in os.walk(target_dir)
+                       for file in files if file.endswith('.data')})
     # If list is empty, notify user of problem
     if len(paths) == 0:
-            raise FileNotFoundError(f'No .data files in {target_dir} or any subdirectories.')
+        raise FileNotFoundError(f'No .data files in {target_dir} or any subdirectories.')
     # If user provided a list of compound IDs, import only those.
     if valid_cids is not None and hasattr(valid_cids, '__iter__'):
         if len(paths.index.intersection(valid_cids)) > 0:
@@ -119,16 +119,16 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
 
     # Import raw metadata
     df = pd.DataFrame({
-            cid : pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line'])
-                .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('~'.join)
-            for cid, path in paths.items()}).drop('///', errors='ignore').T
+        cid: pd.read_fwf(path, colspecs=[(0, 12), (12, -1)], header=None, names=['id', 'line'])
+        .dropna(subset=['line']).ffill().set_index('id')['line'].str.strip().groupby(level=0).apply('~'.join)
+        for cid, path in paths.items()}).drop('///', errors='ignore').T
     df = df.set_axis(axis=1, labels=df.columns.str.strip().str.lower()).sort_index()
 
     print(f'Formatting metadata...', flush=True)
 
     # Remove structural data since we get these elsewhere
     structure_cols = ['atom', 'bond', 'original', 'repeat', 'bracket']
-    df.drop(columns = structure_cols + ['entry'], errors='ignore', inplace=True)
+    df.drop(columns=structure_cols + ['entry'], errors='ignore', inplace=True)
 
     # Process individual columns
     if 'brite' in df.columns:
@@ -144,34 +144,34 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
 
     # Ease cross-referencing of databases by making database-specific fields
     for col in df.columns.intersection(['remark', 'dblinks']):
-            icol = df[col].dropna().str.split('~').explode()
-            col_df = pd.pivot(icol.str.split(': ', expand=True), columns=0, values=1)
-            df = df.join(col_df, how='left')
-            df.drop(columns=col, inplace=True)
+        icol = df[col].dropna().str.split('~').explode()
+        col_df = pd.pivot(icol.str.split(': ', expand=True), columns=0, values=1)
+        df = df.join(col_df, how='left')
+        df.drop(columns=col, inplace=True)
 
     # Ease cross-referencing of KEGG GLYCAN and KEGG DRUG databases specifically
     if 'Same as' in df.columns:
-            # prepare to extract glycan + drug IDs from field
-            df['glycan'] = df['Same as'].copy(deep=True)
-            df['drug'] = df['Same as'].copy(deep=True)
-            # Future-proofing: check for presence of other ID types
-            RetainSameAs = df['Same as'].str.split().explode().str.fullmatch(r'(G\d{5}|D\d{5})')
-            RetainSameAs = RetainSameAs.eq(False).groupby(level=0).any()
-            df['Same as'] = df['Same as'].mask(~RetainSameAs)
-    
+        # prepare to extract glycan + drug IDs from field
+        df['glycan'] = df['Same as'].copy(deep=True)
+        df['drug'] = df['Same as'].copy(deep=True)
+        # Future-proofing: check for presence of other ID types
+        RetainSameAs = df['Same as'].str.split().explode().str.fullmatch(r'(G\d{5}|D\d{5})')
+        RetainSameAs = RetainSameAs.eq(False).groupby(level=0).any()
+        df['Same as'] = df['Same as'].mask(~RetainSameAs)
+
     # Standardize and compress representation of refs to KEGG databases
-    string_of_ids = lambda l: ' '.join(sorted(list(set(l)))) if len(l)>0 else float('nan')
+    string_of_ids = lambda l: ' '.join(sorted(list(set(l)))) if len(l) > 0 else float('nan')
     col_pat_mapping = {'module': r'(M\d{5})', 'glycan': r'(G\d{5})', 'drug': r'(D\d{5})',
-                    'pathway': r'(map\d{5})', 'network': r'nt\d{5}(?:\(G\d{5}\))?',
-                    'enzyme': r'(\d+\.\d+\.\d+\.\d+)', 'reaction': r'(R\d{5})', 'brite': r'(br\d{5})'}
+                       'pathway': r'(map\d{5})', 'network': r'nt\d{5}(?:\(G\d{5}\))?',
+                       'enzyme': r'(\d+\.\d+\.\d+\.\d+)', 'reaction': r'(R\d{5})', 'brite': r'(br\d{5})'}
     for col, pat in col_pat_mapping.items():
         if col in df.columns:
             df[col] = df[col].str.findall(pat).map(string_of_ids, na_action='ignore')
-    
+
     print('Formatting metadata labels...', flush=True)
     kegg_cols = ['mol_weight', 'exact_mass', 'brite_full', 'sequence', 'type', 'formula', 'gene', 'organism']
-    col_name_mapping = {'index': 'compound_id'} | {i: 'kegg_'+i for i in kegg_cols}
-    col_name_mapping = col_name_mapping | {i: 'kegg_'+i for i in col_pat_mapping.keys()}
+    col_name_mapping = {'index': 'compound_id'} | {i: 'kegg_' + i for i in kegg_cols}
+    col_name_mapping = col_name_mapping | {i: 'kegg_' + i for i in col_pat_mapping.keys()}
     df = df.sort_index().reset_index().rename(columns=col_name_mapping).rename_axis(None, axis=1)
     df.columns = df.columns.str.replace('-', '_').str.replace(' ', '_')
     df.dropna(axis=1, how='all', inplace=True)

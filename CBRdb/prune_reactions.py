@@ -1,8 +1,9 @@
 import pandas as pd
 
 from .merge_data_sets import identify_duplicate_compounds, merge_duplicate_compounds
-from .tools_files import reaction_csv, compound_csv
 from .tools_eq import standardise_eq
+from .tools_files import reaction_csv, compound_csv
+
 
 def all_entries(dbs):
     """
@@ -136,8 +137,8 @@ def list_multistep_enumerated(dbs, verbose=False):
         'rn_refs.str.len()>1 & comment.str.contains("step") & ~comment.str.contains("possibl|probabl|similar")')
     if verbose:
         multistep_enum = pd.concat([dbs['kegg_data_R'].set_index('id').loc[['R10671'], ['comment']],
-                                     dbs['kegg_data_R'].set_index('id').loc[reactions_overall, ['comment']],
-                                     rns])
+                                    dbs['kegg_data_R'].set_index('id').loc[reactions_overall, ['comment']],
+                                    rns])
         multistep_enum['rn_refs'] = multistep_enum['rn_refs'].map(lambda x: ' '.join(list(x)), na_action='ignore')
         multistep_enum.to_csv('../data/multistep_enumerated.csv', encoding='utf-8')
     rns = rns.index.union(reactions_overall).drop_duplicates().union({'R10671'})  # false negative: "similar" in line
@@ -273,7 +274,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     # identify suspect reactions and those matching them
     sus = df_of_suspect_reactions(dbs)
     sus = add_sus_reaction_dupes(sus, dbs)
-    sus = add_suspect_reactions_to_existing_bad_file(sus) 
+    sus = add_suspect_reactions_to_existing_bad_file(sus)
 
     # remove reactions matching quarantine specs
     dbs = quarantine_suspect_reactions_matching(dbs, sus, matching=to_quarantine)

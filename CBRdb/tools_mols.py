@@ -1,9 +1,9 @@
 import os
 import re
+from time import time
 
 import chemparse
 import pandas as pd
-from time import time
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 from rdkit.Chem.MolStandardize import rdMolStandardize
@@ -12,7 +12,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_files import remove_filepath
-from .tools_complexity import get_all_mol_descriptors, capped_funcs, uncapped_funcs
+from .tools_complexity import capped_funcs, uncapped_funcs
 from .tools_mp import mp_calc
 
 
@@ -361,7 +361,7 @@ def get_properties(mols):
         A dictionary containing molecular properties. Each key represents a property,
         and its value is a list of property values for all molecules.
     """
-    #properties_list = mp_calc(_get_properties, mols)
+    # properties_list = mp_calc(_get_properties, mols)
     print('Defining structures...', flush=True)
     properties_df = pd.DataFrame(mp_calc(_define_structures, mols))
 
@@ -370,7 +370,7 @@ def get_properties(mols):
     for name, func in uncapped_funcs.items():
         print(f"    * {name}", flush=True)
         properties_df[name] = properties_df["mol_uncapped"].map(func)
-    
+
     faster_parallelized = ['bertz', 'wiener_index', 'randic_index', 'spacial_score']
     for name, func in capped_funcs.items():
         nsps = (16 - len(name)) * ' '
@@ -382,7 +382,7 @@ def get_properties(mols):
         else:
             properties_df[name] = properties_df["mol_capped"].map(func)
         print(f'{(time() - start):.2f} s', flush=True)
-    
+
     print('Done getting properties', flush=True)
     properties_df.drop(columns=["mol_uncapped", "mol_capped"], inplace=True)
     result = properties_df.to_dict(orient='list')
