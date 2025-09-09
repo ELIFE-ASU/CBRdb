@@ -1,11 +1,12 @@
 import math
+import numbers
 import os
 import re
 import shutil
 import tempfile
 from collections import defaultdict
 from pathlib import Path
-from typing import Union
+from typing import Union, Iterable
 
 import numpy as np
 import pandas as pd
@@ -16,7 +17,8 @@ from ase.io import read
 from ase.optimize import BFGS
 from ase.thermochemistry import IdealGasThermo
 from ase.units import Hartree
-from ase.vibrations import Vibrations, VibrationsData
+from ase.vibrations import Vibrations
+from ase.vibrations import VibrationsData
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
@@ -1915,26 +1917,57 @@ def free_energy_mace(atoms,
                      analytic=True,
                      f_max=0.01,
                      temperature=298.15,
-                     pressure=101325.0,
+                     pressure=101_325.0,
                      calc_model='extra_large',
                      calc_device=None):
+    def _as_list(x):
+        if isinstance(x, numbers.Real):
+            return [float(x)], True
+        if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
+            lst = list(x)
+            if not lst:
+                raise ValueError("Iterable temperature/pressure must be non-empty.")
+            return [float(v) for v in lst], False
+        raise TypeError("temperature/pressure must be a number or an iterable of numbers.")
+
+    t_s, t_is_scalar = _as_list(temperature)
+    p_s, p_is_scalar = _as_list(pressure)
+
+    # Decide batching scheme
+    if len(t_s) == len(p_s) and len(t_s) > 1:
+        pairs = list(zip(t_s, p_s))  # pairwise
+    elif len(t_s) == 1 and len(p_s) >= 1:
+        pairs = [(t_s[0], p) for p in p_s]
+    elif len(p_s) == 1 and len(t_s) >= 1:
+        pairs = [(t, p_s[0]) for t in t_s]
+    elif len(t_s) > 1 and len(p_s) > 1:
+        # Cartesian product
+        pairs = [(t, p) for t in t_s for p in p_s]
+    else:
+        pairs = [(t_s[0], p_s[0])]
+
+    # Set up calculator
     if calc_device is None:
         import torch
         calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
     from mace.calculators import mace_omol
     calc = mace_omol(model=calc_model, device=calc_device)
+
     atoms.calc = calc
     atoms.info["charge"] = charge
     atoms.info["spin"] = multiplicity
+    atoms.charge = charge
+    atoms.spin_multiplicity = multiplicity
+
     if optimise:
-        BFGS(atoms,
-             logfile=None,
-             trajectory=None).run(fmax=f_max)
+        BFGS(atoms, logfile=None, trajectory=None).run(fmax=f_max)
 
     energy = atoms.get_potential_energy()
 
+    # Vibrations (analytic or finite differences)
     with tempfile.TemporaryDirectory() as run_dir:
         if analytic:
+            # Assumes you have this helper available in your environment:
             vib_energies = get_analytical_hessian_energies(calc, atoms)
         else:
             vib = Vibrations(atoms, name=run_dir)
@@ -1943,77 +1976,144 @@ def free_energy_mace(atoms,
         if os.path.exists(run_dir):
             shutil.rmtree(run_dir)
 
-        thermo = IdealGasThermo(
-            vib_energies=vib_energies,
-            potentialenergy=energy,
-            atoms=atoms,
-            geometry=classify_geometry(atoms),
-            symmetrynumber=get_symmetry_number(atoms),
-            spin=multiplicity_to_total_spin(multiplicity),
-        )
-        free_energy = thermo.get_gibbs_energy(temperature=temperature,
-                                              pressure=pressure)
-        free_enthalpy = thermo.get_enthalpy(temperature=temperature)
-        free_entropy = thermo.get_entropy(temperature=temperature,
-                                          pressure=pressure)
-        return free_energy, free_enthalpy, free_entropy, vib_energies
+    # Build thermo model once; evaluate at different T/P
+    thermo = IdealGasThermo(
+        vib_energies=vib_energies,
+        potentialenergy=energy,
+        atoms=atoms,
+        geometry=classify_geometry(atoms),  # assumes helper exists
+        symmetrynumber=get_symmetry_number(atoms),  # assumes helper exists
+        spin=multiplicity_to_total_spin(multiplicity),  # assumes helper exists
+    )
+
+    # Single case → original return signature
+    if t_is_scalar and p_is_scalar:
+        T, P = pairs[0]
+        G = thermo.get_gibbs_energy(temperature=T, pressure=P, verbose=False)
+        H = thermo.get_enthalpy(temperature=T, verbose=False)
+        S = thermo.get_entropy(temperature=T, pressure=P, verbose=False)
+        return G, H, S, vib_energies
+
+    # Batch case → list of dicts + vib_energies
+    results = []
+    for T, P in pairs:
+        G = thermo.get_gibbs_energy(temperature=T, pressure=P, verbose=False)
+        H = thermo.get_enthalpy(temperature=T, verbose=False)
+        S = thermo.get_entropy(temperature=T, pressure=P, verbose=False)
+        results.append({"T": T, "P": P, "G": G, "H": H, "S": S})
+
+    return results, vib_energies
 
 
 def calculate_free_energy_formation_mace(mol,
-                                         optimise=True,
-                                         analytic=True,
-                                         f_max=0.01,
-                                         temperature=298.15,
-                                         pressure=101325.0,
-                                         calc_model='extra_large',
-                                         calc_device=None):
+                                         optimise: bool = True,
+                                         analytic: bool = True,
+                                         f_max: float = 0.01,
+                                         temperature: Union[float, Iterable[float]] = 298.15,
+                                         pressure: Union[float, Iterable[float]] = 101_325.0,
+                                         calc_model: str = 'extra_large',
+                                         calc_device: str = None):
     if calc_device is None:
         import torch
         calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    mol = Chem.AddHs(mol)  # Add explicit hydrogens to the molecule.
-    atoms = mol_to_atoms(mol)  # Convert the molecule to an ASE Atoms object.
-    charge = get_charge(mol)  # Calculate the formal charge of the molecule.
-    multiplicity = get_spin_multiplicity(mol)  # Determine the spin multiplicity of the molecule.
 
-    # Calculate the free energy, enthalpy, and entropy of the molecule.
-    free, enthalpy, entropy, vib_energies = free_energy_mace(atoms,
-                                                             charge=charge,
-                                                             multiplicity=multiplicity,
-                                                             optimise=optimise,
-                                                             analytic=analytic,
-                                                             f_max=f_max,
-                                                             temperature=temperature,
-                                                             pressure=pressure,
-                                                             calc_model=calc_model,
-                                                             calc_device=calc_device)
-
-    # Initialize variables to store the contributions from reference molecules.
-    free_atoms = 0.0
-    enthalpy_atoms = 0.0
-    entropy_atoms = 0.0
-
-    # Get the formation references for the molecule.
+    # Prepare target molecule
+    mol = Chem.AddHs(mol)
+    atoms = mol_to_atoms(mol)
+    charge = get_charge(mol)
+    multiplicity = get_spin_multiplicity(mol)
     references = get_formation_references(mol)
-    for ref_smi, ref_count in references:
-        # Convert reference SMILES to ASE Atoms and calculate their properties.
-        ref_atoms, ref_charge, ref_multiplicity = smi_to_atoms(ref_smi)
-        ref_free, ref_enthalpy, ref_entropy, _ = free_energy_mace(ref_atoms,
-                                                                  charge=ref_charge,
-                                                                  multiplicity=ref_multiplicity,
-                                                                  optimise=optimise,
-                                                                  f_max=f_max,
-                                                                  temperature=temperature,
-                                                                  pressure=pressure,
-                                                                  calc_model=calc_model,
-                                                                  calc_device=calc_device)
-        # Accumulate contributions from reference molecules.
-        free_atoms += ref_free * ref_count
-        enthalpy_atoms += ref_enthalpy * ref_count
-        entropy_atoms += ref_entropy * ref_count
 
-    # Calculate the formation energy components.
-    d_free = free - free_atoms
-    d_enthalpy = enthalpy - enthalpy_atoms
-    d_entropy = entropy - entropy_atoms
+    if not isinstance(temperature, list) or not isinstance(pressure, list):
+        # Main molecule thermochemistry
+        free, enthalpy, entropy, vib_energies = free_energy_mace(
+            atoms,
+            charge=charge,
+            multiplicity=multiplicity,
+            optimise=optimise,
+            analytic=analytic,
+            f_max=f_max,
+            temperature=temperature,
+            pressure=pressure,
+            calc_model=calc_model,
+            calc_device=calc_device
+        )
 
-    return d_free, d_enthalpy, d_entropy, free, enthalpy, entropy, vib_energies
+        free_atoms = 0.0
+        enthalpy_atoms = 0.0
+        entropy_atoms = 0.0
+        for ref_smi, ref_count in references:
+            ref_atoms, ref_charge, ref_mult = smi_to_atoms(ref_smi)
+            ref_free, ref_H, ref_S, _ = free_energy_mace(
+                ref_atoms,
+                charge=ref_charge,
+                multiplicity=ref_mult,
+                optimise=optimise,
+                analytic=analytic,
+                f_max=f_max,
+                temperature=temperature,
+                pressure=pressure,
+                calc_model=calc_model,
+                calc_device=calc_device
+            )
+            free_atoms += ref_free * ref_count
+            enthalpy_atoms += ref_H * ref_count
+            entropy_atoms += ref_S * ref_count
+
+        d_free = free - free_atoms
+        d_enthalpy = enthalpy - enthalpy_atoms
+        d_entropy = entropy - entropy_atoms
+
+        return d_free, d_enthalpy, d_entropy, free, enthalpy, entropy, vib_energies
+
+    else:
+        main_results, vib_energies = free_energy_mace(
+            atoms,
+            charge=charge,
+            multiplicity=multiplicity,
+            optimise=optimise,
+            analytic=analytic,
+            f_max=f_max,
+            temperature=temperature,
+            pressure=pressure,
+            calc_model=calc_model,
+            calc_device=calc_device
+        )
+        n = len(main_results)
+        agg_G = [0.0] * n
+        agg_H = [0.0] * n
+        agg_S = [0.0] * n
+
+        for ref_smi, ref_count in references:
+            ref_atoms, ref_charge, ref_mult = smi_to_atoms(ref_smi)
+            ref_res, _ = free_energy_mace(
+                ref_atoms,
+                charge=ref_charge,
+                multiplicity=ref_mult,
+                optimise=optimise,
+                analytic=analytic,
+                f_max=f_max,
+                temperature=temperature,
+                pressure=pressure,
+                calc_model=calc_model,
+                calc_device=calc_device
+            )
+            if not isinstance(ref_res, list) or len(ref_res) != n:
+                raise ValueError("Reference results are not aligned with main results in batch mode.")
+            for i, r in enumerate(ref_res):
+                agg_G[i] += r["G"] * ref_count
+                agg_H[i] += r["H"] * ref_count
+                agg_S[i] += r["S"] * ref_count
+
+        out = []
+        for i, mr in enumerate(main_results):
+            dG = mr["G"] - agg_G[i]
+            dH = mr["H"] - agg_H[i]
+            dS = mr["S"] - agg_S[i]
+            out.append({
+                "T": mr["T"], "P": mr["P"],
+                "dG": dG, "dH": dH, "dS": dS,
+                "G": mr["G"], "H": mr["H"], "S": mr["S"]
+            })
+
+        return out, vib_energies
