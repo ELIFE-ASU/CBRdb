@@ -160,7 +160,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     out_eq_file = f"{r_file.split('.')[0]}_processed.csv".replace('_deduped', '')
 
     # Read the bad reactions file
-    bad_ids = pd.read_csv(bad_file, index_col=0).query('reason.str.contains(@bad_criterion)').index.tolist()
+    bad_ids = pd.read_csv(bad_file, index_col=0).rename(columns={'reason': 'flags'})
 
     # Load the processed compound data
     print_and_log("Loading the compound data...", f_log)
@@ -181,104 +181,82 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     print_and_log(f"data shape: {data_r.shape}", f_log)
 
     # Balance the simple unbalanced reactions
-    dfs = balance_simple_cases(R_main=data_r, C_main=data_c, f_log=f_log)
+    dfs = balance_simple_cases(R_main=data_r, 
+                               C_main=data_c.dropna(subset='smiles'), 
+                               f_log=f_log)
     data_r = id_indexed(data_r)
     data_r.update(dfs['now_balanced'])
 
+    # Enforce that the reaction equations are standardized
+    data_r['reaction'] = data_r['reaction'].map(standardise_eq)
+
     # Tag reactions with common issues
     flag_cols = ['bool_missing_data', 'bool_var_list', 'cpd_starred', 'is_balanced_except_star']
-    data_r = data_r.join(dfs['rns'][flag_cols])
-    data_r = data_r.reset_index()
+    data_r = data_r.join(dfs['rns'][flag_cols]).join(bad_ids)
+    data_r[bad_criterion] = data_r['flags'].str.contains(bad_criterion, na=False)
+
+    # Filter out the bad ids (where flags meet specified bad_criterion)
+    print_and_log("Filtering out bad ids", f_log)
+    print_and_log(f"Number of bad ids removed: {data_r[bad_criterion].sum()}", f_log)
+    data_r = data_r.loc[data_r[bad_criterion].ne(True)].drop(columns=bad_criterion)
+
+    # Sort by the id; reset index to regain ID as column
+    data_r = data_r.sort_index().reset_index()
 
     if f_parallel:
         swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
-    # Sort by the index
-    data_r = data_r.sort_values(by="id")
 
-    # Filter out the bad ids, data that is shortcut/general/incomplete
-    print_and_log("Filtering out bad ids", f_log)
-    bool_bad_ids = data_r["id"].isin(bad_ids)
-    data_r = data_r.loc[~bool_bad_ids]
-    print_and_log(f"Number of bad ids removed: {sum(bool_bad_ids)}", f_log)
-
-    # Filter out the data that has missing formulas
-    print_and_log("Filtering out missing formulas", f_log)
-    if f_parallel:
-        t0 = time.time()
-        bool_missing_data = data_r['reaction'].swifter.force_parallel(enable=True).allow_dask_on_strings(
-            enable=True).apply(check_missing_formulas, args=(data_c,))
-        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
-    else:
-        t0 = time.time()
-        bool_missing_data = data_r['reaction'].apply(check_missing_formulas, args=(data_c,))
-        print_and_log(f"Time to check missing formulas: {time.time() - t0}", f_log)
-
-    data_r_missing_data = data_r[bool_missing_data]
-    if f_save_intermediate:
-        data_r_missing_data.to_csv(f"{r_file.split('.')[0]}_missing_data.csv",
-                                   encoding='utf-8',
-                                   index=False)
-
-    # Save the missing data to the rebalance file
-    for id in data_r_missing_data["id"].tolist():
-        f_rebalance.write(f"{id}, missing data\n")
-
-    # Remove the missing data
-    data_r = data_r[~bool_missing_data]
-    print_and_log(f"Number of missing formulas removed: {sum(bool_missing_data)}", f_log)
-
-    # Filter out the reactions that contain a var list
-    print_and_log("Filtering out var list", f_log)
-    if f_parallel:
-        t0 = time.time()
-        coeffs = data_r['reaction'].str.split(' <=> ', expand=True).map(side_to_dict)
-        variable_coeff = lambda x: any([isinstance(i, str) for i in x.values()])
-        bool_var_list = coeffs.map(variable_coeff).any(axis=1)
-        # bool_var_list = data_r['reaction'].swifter.force_parallel(enable=True).apply(check_contains_var_list,
-        #                                                                              args=(data_c,))
-        print_and_log(f"Time to check var list: {time.time() - t0}", f_log)
-    else:
-        t0 = time.time()
-        bool_var_list = data_r['reaction'].apply(check_contains_var_list, args=(data_c,))
-        print_and_log(f"Time to check var list: {time.time() - t0}", f_log)
-
-    data_r_var_list = data_r[bool_var_list]
-    if f_save_intermediate:
-        data_r_var_list.to_csv(f"{r_file.split('.')[0]}_var_list.csv",
-                               encoding='utf-8',
-                               index=False)
-
-    # Save the var list data to the rebalance file
-    if not f_assume_var:
-        for id in data_r_var_list["id"].tolist():
-            f_rebalance.write(f"{id}, var list\n")
-
-    # Remove the var list data
-    data_r = data_r[~bool_var_list]
-    print_and_log(f"Number of var list reactions removed: {sum(bool_var_list)}", f_log)
+    currently_balanceable = '~ bool_missing_data & ~ bool_var_list'
+    possibly_unbalanced = data_r.query(currently_balanceable)
 
     # Filter out the data that is not balanced
     print_and_log("Filtering out unbalanced reactions", f_log)
     if f_parallel:
         t0 = time.time()
-        bool_unbalanced = data_r['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced,
+        
+        bool_unbalanced = possibly_unbalanced['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced,
                                                                                        args=(data_c,))
+        unbalanced_entries = bool_unbalanced[bool_unbalanced].index
         print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
     else:
         t0 = time.time()
-        bool_unbalanced = data_r['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+        bool_unbalanced = possibly_unbalanced['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+        unbalanced_entries = bool_unbalanced[bool_unbalanced].index
         print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
 
     # Get the data that is unbalanced
-    data_r_unbalanced = data_r[bool_unbalanced]
+    data_r_unbalanced = data_r.loc[unbalanced_entries]
     if f_save_intermediate:
         data_r_unbalanced.to_csv(f"{r_file.split('.')[0]}_unbalanced.csv",
                                  encoding='utf-8',
                                  index=False)
     # Get the data that is balanced
-    data_r = data_r[~bool_unbalanced]
+    data_r = data_r.drop(unbalanced_entries)
     # Determine the number of reactions that have been removed
-    print_and_log(f"Number of unbalanced reactions: {sum(bool_unbalanced)}", f_log)
+    print_and_log(f"Number of unbalanced reactions: {len(unbalanced_entries)}", f_log)
+
+    if f_assume_star:
+        print_and_log(f"Assuming that starred-compound equations are correct, leaving them unchanged", f_log)
+        data_r = pd.concat([data_r, data_r_unbalanced.query('cpd_starred')])
+        data_r_unbalanced = data_r_unbalanced.query('~ cpd_starred')
+    else:
+        # we do not currently try to rebalance reactions with starred compounds.
+        # TODO: this could change later, e.g. for cases in which:
+        # - the star count is balanced AND other elements are not balanced, and
+        # - simple compound injection would resolve imbalance, or
+        # - updating the ratio of non-starred compounds would resolve imbalance
+        print_and_log(f"Assuming that starred-compound equations are incorrect, removing them entirely", f_log)
+        data_r = data_r.query('~ cpd_starred')
+        data_r_unbalanced = data_r_unbalanced.query('~ cpd_starred')
+    
+    if f_assume_var:
+        print_and_log(f"Assuming that var-list equations are correct, leaving them unchanged", f_log)
+        data_r = pd.concat([data_r, data_r_unbalanced.query('bool_var_list')])
+        data_r_unbalanced = data_r_unbalanced.query('~ bool_var_list') #todo: may be redundant
+    else:
+        print_and_log(f"Assuming that var-list equations are incorrect, removing them entirely", f_log)
+        data_r = data_r.query('~ bool_var_list')
+        data_r_unbalanced = data_r_unbalanced.query('~ bool_var_list')
 
     # Get the data from the unbalanced dataframe
     ids = data_r_unbalanced["id"].tolist()
@@ -302,19 +280,6 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
         print_and_log(f"Reactants: {reactants}", f_log)
         print_and_log(f"Products:  {products}", f_log)
-
-        # Check if the equation contains a '*' in either reactants or products
-        if dict_ele_contains_star(react_ele, prod_ele):
-            # We assume that the equation is correct and add it to the output
-            if f_assume_star:
-                print_and_log(f"Assuming eq {id} is correct", f_log)
-                ids_out.append(id)
-                eq_lines_out.append(eq_line)
-                continue
-            # We assume that the equation is incorrect and skip it as we cannot fix it
-            else:
-                print_and_log(f"Assume that the eq {id} is incorrect and skip it as we cannot fix it..", f_log)
-                continue
 
         if id == 'R00263':
             print_and_log(f"Skipping {id} due to it being malformed", f_log)
@@ -365,22 +330,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     print_and_log("Combining the data!", f_log)
     print_and_log(f"data_r shape: {data_r.shape}", f_log)
-    print_and_log(f"data_r_var_list shape: {data_r_var_list.shape}", f_log)
     print_and_log(f"data_r_rebalanced shape: {data_r_rebalanced.shape}", f_log)
 
     # Combine the data
-    if f_assume_var:
-        # Here we have assumed that the data_r_var_list reactions data is correct
-        # This is questionable as the data may be incorrect
-        print_and_log("Merging data assuming equations with a var list data are correct...", f_log)
-        to_concat = [data_r, data_r_var_list, data_r_rebalanced]
-    else:
-        print_and_log("Merging data assuming equations with a var list data are incorrect...", f_log)
-        to_concat = [data_r, data_r_rebalanced]
-
+    to_concat = [data_r, data_r_rebalanced]
     df_final = pd.concat(to_concat).set_index('id').drop(ids_failed, errors='ignore')
-    if f_assume_var and len(data_r_var_list.index) > 0:
-        df_final['var_coeff'] = df_final.index.isin(data_r_var_list['id'])
 
     # Get the final length of the data
     print_and_log(f"Final data shape: {df_final.shape}", f_log)
@@ -459,7 +413,7 @@ def filter_reactions_pandas(data_r, data_c, formula_table, f_log=None, dfs=None)
         dfs = dict()
 
     # Set compound and reaction IDs as indices for faster subsetting
-    cpd_data = id_indexed(data_c).dropna(subset=['smiles', 'formula'])
+    cpd_data = id_indexed(data_c)
     data_r = id_indexed(data_r)
     ft = formula_table.T
 
