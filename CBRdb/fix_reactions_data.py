@@ -184,6 +184,10 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     dfs = balance_simple_cases(R_main=data_r, C_main=data_c, f_log=f_log)
     data_r = id_indexed(data_r)
     data_r.update(dfs['now_balanced'])
+
+    # Tag reactions with common issues
+    flag_cols = ['bool_missing_data', 'bool_var_list', 'cpd_starred', 'is_balanced_except_star']
+    data_r = data_r.join(dfs['rns'][flag_cols])
     data_r = data_r.reset_index()
 
     if f_parallel:
@@ -455,7 +459,7 @@ def filter_reactions_pandas(data_r, data_c, formula_table, f_log=None, dfs=None)
         dfs = dict()
 
     # Set compound and reaction IDs as indices for faster subsetting
-    cpd_data = id_indexed(data_c)
+    cpd_data = id_indexed(data_c).dropna(subset=['smiles', 'formula'])
     data_r = id_indexed(data_r)
     ft = formula_table.T
 
