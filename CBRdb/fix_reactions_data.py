@@ -2,17 +2,13 @@ import os
 import time
 
 import pandas as pd
-import swifter
 
 from .merge_data_sets import id_indexed
 from .tools_eq import (convert_formula_to_dict,
-                       side_to_dict,
                        eq_to_dict,
                        get_elements_from_eq,
                        compare_dict_values,
                        standardise_eq,
-                       check_contains_var_list,
-                       check_missing_formulas,
                        full_check_eq_unbalanced,
                        rebalance_eq,
                        fix_imbalance_core,
@@ -128,10 +124,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        f_assume_var=True,
                        f_assume_star=True,
                        f_save_intermediate=False,
-                       f_parallel=True,
                        rebalance_depth=1,
                        bad_criterion='shortcut|structure_missing'):
-
     # Get the absolute paths
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)
@@ -181,8 +175,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     print_and_log(f"data shape: {data_r.shape}", f_log)
 
     # Balance the simple unbalanced reactions
-    dfs = balance_simple_cases(R_main=data_r, 
-                               C_main=data_c.dropna(subset='smiles'), 
+    dfs = balance_simple_cases(R_main=data_r,
+                               C_main=data_c.dropna(subset='smiles'),
                                f_log=f_log)
     data_r = id_indexed(data_r)
     data_r.update(dfs['now_balanced'])
@@ -203,26 +197,16 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     # Sort by the id; reset index to regain ID as column
     data_r = data_r.sort_index().reset_index()
 
-    if f_parallel:
-        swifter.set_defaults(allow_dask_on_strings=True, force_parallel=True, progress_bar=False)
-
     currently_balanceable = '~ bool_missing_data & ~ bool_var_list'
     possibly_unbalanced = data_r.query(currently_balanceable)
 
     # Filter out the data that is not balanced
     print_and_log("Filtering out unbalanced reactions", f_log)
-    if f_parallel:
-        t0 = time.time()
-        
-        bool_unbalanced = possibly_unbalanced['reaction'].swifter.force_parallel(enable=True).apply(full_check_eq_unbalanced,
-                                                                                       args=(data_c,))
-        unbalanced_entries = bool_unbalanced[bool_unbalanced].index
-        print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
-    else:
-        t0 = time.time()
-        bool_unbalanced = possibly_unbalanced['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
-        unbalanced_entries = bool_unbalanced[bool_unbalanced].index
-        print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
+
+    t0 = time.time()
+    bool_unbalanced = possibly_unbalanced['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+    unbalanced_entries = bool_unbalanced[bool_unbalanced].index
+    print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
 
     # Get the data that is unbalanced
     data_r_unbalanced = data_r.loc[unbalanced_entries]
@@ -248,11 +232,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         print_and_log(f"Assuming that starred-compound equations are incorrect, removing them entirely", f_log)
         data_r = data_r.query('~ cpd_starred')
         data_r_unbalanced = data_r_unbalanced.query('~ cpd_starred')
-    
+
     if f_assume_var:
         print_and_log(f"Assuming that var-list equations are correct, leaving them unchanged", f_log)
         data_r = pd.concat([data_r, data_r_unbalanced.query('bool_var_list')])
-        data_r_unbalanced = data_r_unbalanced.query('~ bool_var_list') #todo: may be redundant
+        data_r_unbalanced = data_r_unbalanced.query('~ bool_var_list')  # todo: may be redundant
     else:
         print_and_log(f"Assuming that var-list equations are incorrect, removing them entirely", f_log)
         data_r = data_r.query('~ bool_var_list')

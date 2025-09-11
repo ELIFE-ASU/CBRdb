@@ -27,7 +27,6 @@ setup(
         'requests',
         'urllib3',
         'chemparse',
-        'swifter',
         'ase',
         'mace',
         'pymatgen',
