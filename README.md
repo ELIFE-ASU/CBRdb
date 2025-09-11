@@ -34,21 +34,25 @@ conda update conda --all -y
 
 ### Install the requirements
 ```
-conda install numpy sympy matplotlib networkx pandas rdkit chempy requests urllib3 chemparse swifter ase pymatgen -y
+conda install numpy sympy matplotlib networkx pandas rdkit chempy requests urllib3 chemparse ase pymatgen -y
 ```
 
 ### Optional extras
-The main optional extra to install is ORCA and/or MACE. If you are interested in doing ab initio chemistry calculations, you will need these.
+The main optional extra to install is ORCA and/or MACE. You will need these if you are interested in doing ab initio chemistry calculations.
 For ORCA, head to their downloads [page](https://orcaforum.kofo.mpg.de/app.php/dlext/?view=detail&df_id=251).
 For MACE, you will need to make sure you have PyTorch. Head to the [official PyTorch installation](https://pytorch.org/get-started/locally/) instructions page. An example might look like:
 ```
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu129
 ```
-Then, proceed to install MACE. When you first run MACE, it might take a while to download a model.
+Then, proceed to install MACE. When you first run MACE, downloading a model might take a while.
 ```
 pip3 install mace-torch
 ```
 MACE offers a massive speed-up on GPUs but can run on a CPU. 
+For more thermodynamic calculations, we use equilibrator-api.
+```
+conda install equilibrator-api
+```
 
 ### CBR-db install
 Then install CBRdb:
@@ -65,4 +69,4 @@ If you use this code in your work, you must reference the following:
 
 - Kanehisa, M., & Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic acids research, 28(1), 27-30.
 
-See the .bib file.
+Please take a look at the .bib file.
