@@ -14,6 +14,7 @@ from .fix_reactions_data import (fix_reactions_data,
                                  get_charge_balanced_injections_1el,
                                  get_charge_balanced_injections_OH,
                                  compound_lookup_tables,
+                                 get_stoichiometry,
                                  )
 from .lets_get_kegg import (download_data)
 from .merge_data_sets import (merge_duplicate_reactions,
