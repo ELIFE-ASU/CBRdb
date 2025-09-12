@@ -6,6 +6,7 @@ from rdkit import Chem as Chem
 from rdkit import RDLogger
 
 from .tools_mols import compound_super_safe_load, get_properties
+from .merge_data_sets import id_indexed
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -276,6 +277,8 @@ def preprocess(target="R",
                                              valid_cids=list(df_main['compound_id'].sort_values()))
         # merges the compound data
         df = df_main.merge(df_meta, on='compound_id', how='outer').sort_values(by='compound_id').reset_index(drop=True)
+        # tag compounds whose structures are missing
+        missing = log_missing_structures(df)
         # generates output file with compound data
         compound_csv(df, out_file)
         print("C preprocessing done. Compound info path:" + out_file, flush=True)
@@ -286,9 +289,9 @@ def preprocess(target="R",
         return df
 
 
-def log_compounds_for_followup(df):
+def log_missing_structures(df):
     """
-    Logs compounds without SMILES strings or mol files, whose metadata suggests we might want to seek structures elsewhere.
+    Logs compounds with metadata, but without SMILES strings or mol files. Uses metadata to infer priority compounds.
 
     Parameters:
     df (pd.DataFrame): A DataFrame containing compound data with 'compound_id' column.
@@ -303,24 +306,42 @@ def log_compounds_for_followup(df):
     k = [i.split('/')[-2] for i in file_list_all('../../data/kegg_data_C_full') if
          i.endswith('.data') & (i.split('/')[-2] not in extant)]
 
-    # Define the query to identify promising compounds for manual addition
-    compounds_manual_add_query = """sequence.isna() & type.isna() & ~remark.str.count(r"Same as: 	G").eq(0) & reaction.notna() \
-                                & ~name.str.lower().str.contains("protein|globin|doxin|glycan|lase|peptide|rna|dna|steroid|lipid|lignin", na=False) \
-                                & ~comment.fillna('').str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False) \
-                                & ~formula.str.contains("X", na=False) & ~brite.str.contains("rotein|nzyme|eptide", na=False)"""
+    # Preprocess the KEGG compound metadata for compounds missing structures
+    missing = preprocess_kegg_c_metadata(valid_cids=sorted(k))
+    # Omit generic halogen compounds as we enumerate these elsewhere
+    missing = missing.query('~ kegg_formula.str.contains("X", na=False)').reset_index(drop=True)
+    # Tag compounds prioritized for manual addition
+    missing['priority'] = missing.index.isin(filter_missing_structures(missing).index)
+    # Save compounds to a file
+    compound_csv(df_C=missing, file_address='../data/C_IDs_good.dat')
 
-    # Preprocess the KEGG compound metadata and apply the query to identify promising compounds
-    missing_promising = preprocess_kegg_c_metadata(valid_cids=sorted(k)).query(
-        compounds_manual_add_query).rename_axis('compound_id').sort_index().reset_index()
+    return missing
 
-    # Extract keywords from the 'name' field and drop rows with names ending in 'ase'
-    kwds = missing_promising['name'].fillna('').str.strip('[|]|(|)').str.split().explode().dropna()
-    missing_promising = missing_promising.drop(index=kwds[kwds.str.endswith('ase')].index, errors='ignore').drop(
-        ['sequence', 'type', 'remark', 'brite'], axis=1)
-    cols = 'compound_id,name,formula,reaction,comment,dblinks'.split(',')
-    missing_promising = missing_promising.loc[:, cols]
 
-    # Save the promising compounds to a file
-    missing_promising.to_csv('../data/C_IDs_good.dat', encoding='utf-8', index=False)
+def filter_missing_structures(df):
+    """
+    Filters compounds for manual addition based on specific criteria.
 
-    return missing_promising
+    Parameters:
+    df (pd.DataFrame): A DataFrame containing compound data with 'compound_id' column.
+
+    Returns:
+    pd.DataFrame: A DataFrame of compounds prioritized for manual addition in C_IDs_manual.dat
+    """
+    # Define the query to identify compounds prioritized for manual addition
+    query_dict = {'kegg_sequence': 'kegg_sequence.isna()',
+                    'kegg_type': 'kegg_type.isna()',
+                    'remark': '~remark.str.count(r"Same as: 	G").eq(0)',
+                    'kegg_reaction': 'kegg_reaction.notna()',
+                    'name': '~name.str.lower().str.contains("protein|globin|doxin|glycan|lase|peptide|rna|dna|steroid|lipid|lignin", na=False)',
+                    'comment': '~comment.fillna("").str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False)',
+                    'kegg_formula': '~kegg_formula.str.contains("X", na=False)',
+                    'kegg_brite': '~kegg_brite.str.contains("08009|08005", na=False)'}
+
+    # Combine all eligible queries based on the fields present
+    combined_query = ' & '.join([v for k, v in query_dict.items() if k in df.columns])
+
+    # Apply the query to identify promising compounds
+    priority_compounds = df.query(combined_query)
+
+    return priority_compounds

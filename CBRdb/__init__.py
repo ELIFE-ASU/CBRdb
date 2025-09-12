@@ -23,7 +23,9 @@ from .merge_data_sets import (merge_duplicate_reactions,
                               add_R_col_to_C_file,
                               id_indexed,
                               )
-from .preprocessor import (preprocess, log_compounds_for_followup)
+from .preprocessor import (preprocess,
+                           log_missing_structures,
+                           )
 from .prune_reactions import (iteratively_prune_entries,
                               df_of_suspect_reactions,
                               suspect_reaction_subset,
