@@ -1,12 +1,15 @@
 import numpy as np
-import pubchempy as pcp
-from equilibrator_api import ComponentContribution, Q_
-
+from equilibrator_api import ComponentContribution
+import CBRdb
+import pandas as pd
 import warnings
-warnings.filterwarnings("error")
+from functools import partial
 
 
-def get_dg_prime(eq_line, conditions='nstandard'):
+# warnings.filterwarnings("error")
+
+
+def get_dg_prime(eq_line, conditions='standard'):
     cc = ComponentContribution()
     # replace 'C' with 'kegg:C' to use KEGG IDs
     eq_line = eq_line.replace('C', 'kegg:C')
@@ -28,10 +31,41 @@ def get_dg_prime(eq_line, conditions='nstandard'):
         return np.nan, np.nan, np.nan
 
     if error == 100000.0:
-        error= np.nan
+        error = np.nan
     return val, error, rev
+
 
 if __name__ == "__main__":
     print(flush=True)
-    eq_line = '2 C00084 <=> 1 C00466'
-    print(get_dg_prime(eq_line))
+
+    # https://equilibrator.readthedocs.io/en/latest/equilibrator_examples.html#Using-formation-energies-to-calculate-reaction-energies
+
+    data = pd.read_csv('../CBRdb_R.csv', low_memory=False)
+    # get the reaction equations
+    ids = data['id'].tolist()
+    eq_lines = data['reaction'].tolist()[:1000]
+    eq_lines = [l.replace('C', 'kegg:C') for l in eq_lines]
+    eq_lines = [l.replace('<=>', '=') for l in eq_lines]
+    cc = ComponentContribution()
+    tmp = cc.get_compound('kegg:C98976')  # kegg:C98976
+    print(tmp, flush=True)
+    exit()
+
+    reactions = [cc.parse_reaction_formula(l) for l in eq_lines]
+
+    dg, uc = cc.standard_dg_prime_multi(reactions, uncertainty_representation="cov")
+    print(uc, flush=True)
+    # get the diagonal of the covariance matrix
+    uc = np.sqrt(np.diag(uc.magnitude))
+
+    print(dg, flush=True)
+    print(uc, flush=True)
+
+    # broken 1.41421356e+05
+
+    # for i in range(len(eq_lines)):
+    #     print(get_dg_prime(eq_lines[i]))
+
+    # tmp = partial(get_dg_prime, conditions='physiological')
+    # # use multiprocessing to speed up the calculation
+    # results = CBRdb.mp_calc(tmp, eq_lines)
