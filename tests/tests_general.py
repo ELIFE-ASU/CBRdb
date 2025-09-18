@@ -12,7 +12,7 @@ from ase.vibrations import Vibrations
 from ase.visualize import view
 from mace.calculators import mace_omol
 from rdkit import Chem as Chem
-
+import matplotlib.pyplot as plt
 import CBRdb
 
 
@@ -989,7 +989,9 @@ def test_calculate_free_energy_formation_mace_batch():
     print(f"Gibbs free energy: {free_energy}", flush=True)
     assert len(free_energy) == len(temperature)
 
+
 def test_calculate_free_energy_formation_mace_batch_compare():
+    print(flush=True)
     temperatures_k = [
         223.15, 273.15, 298.15, 323.15, 348.15, 373.15, 398.15, 423.15,
         448.15, 473.15, 498.15, 523.15, 548.15, 573.15, 598.15, 623.15
@@ -1039,3 +1041,11 @@ def test_calculate_free_energy_formation_mace_batch_compare():
     plt.xlabel('Temperature (K)')
     plt.ylabel('Gibbs Free Energy (eV)')
     plt.show()
+
+
+def test_get_eq_all_cids():
+    print(flush=True)
+    eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"
+    cids = CBRdb.get_eq_all_cids(eq)
+    print(cids)
+    assert cids == ['C00001', 'C00027', 'C00080', 'C19610', 'C19611']
