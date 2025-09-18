@@ -1,33 +1,8 @@
 import numpy as np
 import pandas as pd
 from equilibrator_api import ComponentContribution, Q_
+
 import CBRdb
-
-
-def get_dg_prime(eq_line, conditions='standard'):
-    cc = ComponentContribution()
-    # replace 'C' with 'kegg:C' to use KEGG IDs
-    eq_line = eq_line.replace('C', 'kegg:C')
-    # replace '<=>' with '=' for equilibrium
-    eq_line = eq_line.replace('<=>', '=')
-
-    try:
-        react_line = cc.parse_reaction_formula(eq_line)
-        rev = cc.ln_reversibility_index(react_line).value.m_as("dimensionless")
-        if conditions == 'standard':
-            dg = cc.standard_dg_prime(react_line)
-        else:
-            # assuming physiological conditions
-            dg = cc.physiological_dg_prime(react_line)
-        val = dg.value.m_as("kJ/mol")
-        error = dg.error.m_as("kJ/mol")
-    except Exception as e:
-        print(f"Error: {e}")
-        return np.nan, np.nan, np.nan
-
-    if error == 100000.0:
-        error = np.nan
-    return val, error, rev
 
 
 def err_from_sig(sigma_fin, sigma_inf, rmse_inf=1e-5):
@@ -59,8 +34,13 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
     data_c = pd.DataFrame(data_c['compound_id'])
     # Get the working compound list
     data_c = get_working_cids(data_c)
+    data_c = data_c.head(100)  # Limit to first 1000 compounds for testing
 
     cc = ComponentContribution()
+    cc.p_h = Q_(7.0)
+    cc.p_mg = Q_(10.0)
+    cc.ionic_strength = Q_(0.25, "M")
+    cc.temperature = Q_(298.15, "K")
     # Extract lists from dataframe and calculate standard Gibbs free energy and sigmas
     data_c[['std_dgf', 'sigma_fin', 'sigma_inf']] = pd.DataFrame(
         map(cc.standard_dg_formation, data_c['cc_comp'].tolist())
@@ -191,38 +171,6 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
 
 if __name__ == "__main__":
     print(flush=True)
-    # compound_get_energy_of_formation()
-    reaction_get_energy_of_reaction()
-    exit()
+    compound_get_energy_of_formation()
+    # reaction_get_energy_of_reaction()
 
-    # https://equilibrator.readthedocs.io/en/latest/equilibrator_examples.html#Using-formation-energies-to-calculate-reaction-energies
-
-    data = pd.read_csv('../CBRdb_R.csv', low_memory=False)
-    # get the reaction equations
-    ids = data['id'].tolist()
-    eq_lines = data['reaction'].tolist()[:1000]
-    eq_lines = [l.replace('C', 'kegg:C') for l in eq_lines]
-    eq_lines = [l.replace('<=>', '=') for l in eq_lines]
-    cc = ComponentContribution()
-    tmp = cc.get_compound('kegg:C98976')  # kegg:C98976
-    print(tmp, flush=True)
-    exit()
-
-    reactions = [cc.parse_reaction_formula(l) for l in eq_lines]
-
-    dg, uc = cc.standard_dg_prime_multi(reactions, uncertainty_representation="cov")
-    print(uc, flush=True)
-    # get the diagonal of the covariance matrix
-    uc = np.sqrt(np.diag(uc.magnitude))
-
-    print(dg, flush=True)
-    print(uc, flush=True)
-
-    # broken 1.41421356e+05
-
-    # for i in range(len(eq_lines)):
-    #     print(get_dg_prime(eq_lines[i]))
-
-    # tmp = partial(get_dg_prime, conditions='physiological')
-    # # use multiprocessing to speed up the calculation
-    # results = CBRdb.mp_calc(tmp, eq_lines)
