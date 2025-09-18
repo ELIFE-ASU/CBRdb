@@ -109,6 +109,7 @@ from .tools_eq import (convert_formula_to_dict,
                        plot_eq_line,
                        plot_reaction_id,
                        to_smarts_rxn_line,
+                       get_eq_all_cids,
                        )
 from .tools_files import (file_list,
                           file_list_all,

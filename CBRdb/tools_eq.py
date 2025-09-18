@@ -1115,3 +1115,17 @@ def to_smarts_rxn_line(eq, data_c, add_stoich=False):
 
     # Return the SMARTS reaction line
     return f"{reactants_smarts}>>{products_smarts}"
+
+
+def get_eq_all_cids(eq):
+    """
+    Extracts all unique compound IDs from a chemical equation.
+
+    Parameters:
+    eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
+
+    Returns:
+    list: A list of unique compound IDs present in the equation.
+    """
+    reactants, products = eq_to_dict(eq)
+    return list(set(reactants.keys()).union(set(products.keys())))
