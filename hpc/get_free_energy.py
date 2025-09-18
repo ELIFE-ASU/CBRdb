@@ -38,6 +38,7 @@ def err_from_sig(sigma_fin, sigma_inf, rmse_inf=1e-5):
 
 def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
                                      out_file='CBRdb_C_formation_energies.csv',
+                                     compact_output=True,
                                      run_physiological_transform=False):
     data_c = pd.read_csv(in_file, low_memory=False)
 
@@ -87,9 +88,19 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
             print(
                 f"{data_c['compound_id'][i]}: {data_c['standard_dgf_prime_mu'][i]:.2f} ± {data_c['standard_dgf_prime_error'][i]:.2f} kJ/mol")
 
+    if compact_output:
+        # Keep only relevant columns
+        cols_to_keep = ['compound_id', 'standard_dgf_mu', 'standard_error']
+        if run_physiological_transform:
+            cols_to_keep += ['standard_dgf_prime_mu', 'standard_dgf_prime_error']
+        data_c = data_c[cols_to_keep]
+
     # Save the results to a CSV file
+    print(f'Saving results to {out_file}', )
+    print(f'Calculated formation energies for {len(data_c)} compounds.')
     data_c.to_csv(out_file, index=False)
     return data_c
+
 
 
 if __name__ == "__main__":
