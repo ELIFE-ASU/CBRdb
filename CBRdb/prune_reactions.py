@@ -274,9 +274,6 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     sus = add_sus_reaction_dupes(sus, dbs)
     sus = add_suspect_reactions_to_existing_bad_file(sus)
 
-    # remove reactions matching quarantine specs
-    dbs = quarantine_suspect_reactions_matching(dbs, sus, matching=to_quarantine)
-
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
         reaction_csv(dbs[k], f'../data/{k}_dedupedCs.csv')
