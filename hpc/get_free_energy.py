@@ -35,87 +35,79 @@ def get_dg_prime(eq_line, conditions='standard'):
     return val, error, rev
 
 
-# Combine finite + (optional) infinite-uncertainty parts into a scalar 1-σ (kJ/mol)
-def stderr_from_sigmas(sigma_fin, sigma_inf):
-    # finite part
-    term = np.sum(np.asarray(sigma_fin, float)**2)
-    # some versions also return sigma_inf; scale by rmse_inf (default 1e-5 kJ/mol)
+def stderr_from_sigmas(sigma_fin, sigma_inf, rmse_inf=1e-5):
+    term = np.sum(np.asarray(sigma_fin, float) ** 2)
     sigma_inf = np.asarray(sigma_inf[0], float)
-    rmse_inf = 1e-5  # same default as the constructor
-    term += np.sum((rmse_inf * sigma_inf)**2)
+    term += np.sum((rmse_inf * sigma_inf) ** 2)
     return np.sqrt(term)
 
 
+def get_energy_of_formation(in_file='../CBRdb_C.csv',
+                            out_file='CBRdb_C_formation_energies.csv',
+                            run_physiological_transform=True):
+    data_c = pd.read_csv(in_file, low_memory=False)
+
+    # Make a new dataframe with only the compound_id and name columns
+    data_c = pd.DataFrame(data_c['compound_id'])
+    data_c.head(100)
+    # Make sure there are no duplicates or NaNs
+    data_c = data_c.drop_duplicates()
+    data_c = data_c.dropna()
+    data_c = data_c.reset_index(drop=True)
+
+    # Get the all compound ID lists and add KEGG-formatted IDs as a new column.
+    data_c['kegg_id'] = data_c['compound_id'].apply(lambda cid: f'kegg:{cid}')
+
+    cc = ComponentContribution()
+    data_c['cc_comp'] = data_c['kegg_id'].apply(lambda cid: cc.get_compound(cid))
+    # Filter to only those compounds that are in the ComponentContribution database
+    data_c = data_c.dropna(subset=['cc_comp'])
+    data_c = data_c.reset_index(drop=True)
+
+    # Extract lists from dataframe and calculate standard Gibbs free energy and sigmas
+    data_c[['standard_dgf_mu', 'sigma_fin', 'sigma_inf']] = pd.DataFrame(
+        map(cc.standard_dg_formation, data_c['cc_comp'].tolist())
+    )
+    # Drop None values
+    data_c = data_c.dropna(subset=['standard_dgf_mu'])
+    data_c = data_c.reset_index(drop=True)
+
+    # Apply stderr_from_sigmas to each row to get the standard error
+    data_c['standard_error'] = data_c.apply(lambda row: stderr_from_sigmas(row['sigma_fin'], row['sigma_inf']), axis=1)
+
+    # Loop over the first 10 and print the compound_id, standard_dgf_mu, and standard_error
+    for i in range(10):
+        print(
+            f"{data_c['compound_id'][i]}: {data_c['standard_dgf_mu'][i]:.2f} ± {data_c['standard_error'][i]:.2f} kJ/mol")
+
+    if run_physiological_transform:
+        # Apply the Legendre transform to convert from the standard ΔGf to the standard ΔG'f
+        data_c['delta_dgf'] = data_c['cc_comp'].apply(
+            lambda cpd: cpd.transform(cc.p_h, cc.ionic_strength, cc.temperature, cc.p_mg).m_as("kJ/mol")
+        )
+        data_c['standard_dgf_prime_mu'] = data_c['standard_dgf_mu'] + data_c['delta_dgf']
+        # calculate the covariance matrix
+        sigmas_fin = np.array(data_c['sigma_fin'].tolist()).T
+        sigmas_inf = np.array(data_c['sigma_inf'].tolist()).T
+        standard_dgf_cov = sigmas_fin @ sigmas_fin.T + 1e6 * sigmas_inf @ sigmas_inf.T
+        # convert the covariance matrix to a single error value (1-σ) for each compound
+        data_c['standard_dgf_prime_error'] = np.sqrt(np.diag(standard_dgf_cov))
+
+        # loop over the first 10 and print the compound_id, standard_dgf_prime_mu, and standard_dgf_prime_error
+        for i in range(10):
+            print(
+                f"{data_c['compound_id'][i]}: {data_c['standard_dgf_prime_mu'][i]:.2f} ± {data_c['standard_dgf_prime_error'][i]:.2f} kJ/mol")
+
+    # Save the results to a CSV file
+    data_c.to_csv(out_file, index=False)
+    return data_c
 
 
 if __name__ == "__main__":
     print(flush=True)
-    data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
-    print(data_c)
-    compound_ids = data_c['compound_id'].tolist()[:2]
-    print(f"Total compounds: {len(compound_ids)}", flush=True)
-    compound_ids = [f'kegg:{cid}' for cid in compound_ids]
+    get_energy_of_formation()
 
-    # Get the all compound ID lists.
-
-    # Check we can poll the compound database
-    cc = ComponentContribution()
-    compound_list = [cc.get_compound(i) for i in compound_ids]
-    # Get the index of the bad compounds
-    bad_idx = [i for i in range(len(compound_list)) if compound_list[i] is None]
-    bad_compounds = [compound_ids[i] for i in bad_idx]
-    print(f"Bad compounds: {len(bad_compounds)}", flush=True)
-
-    # Remove the bad compounds from the list
-    compound_list = [compound_list[i] for i in range(len(compound_list)) if i not in bad_idx]
-    compound_ids = [compound_ids[i] for i in range(len(compound_ids)) if i not in bad_idx]
-    print(f"Good compounds: {len(compound_list)}", flush=True)
-
-    # # Store the bad compound IDs
-    # with open('bad_compounds.txt', 'w') as f:
-    #     for cid in bad_compounds:
-    #         f.write(f"{cid}\n")
-
-    # Get the standard dg formation for each compound
-    print("Calculating standard formation energies...", flush=True)
-    standard_dgf_mu, sigmas_fin, sigmas_inf = zip(*map(cc.standard_dg_formation, compound_list))
-
-    # Loop over the items and remove any that have NaN values
-
-
-    
-
-    standard_dgf_mu = np.array(standard_dgf_mu)
-    sigmas_fin = np.array(sigmas_fin)
-    sigmas_inf = np.array(sigmas_inf)
-
-    for i in range(len(standard_dgf_mu)):
-        print(compound_ids[i], standard_dgf_mu[i])
-
-    err_atp = stderr_from_sigmas(sigmas_fin[0], sigmas_inf[0])
-    err_adp = stderr_from_sigmas(sigmas_fin[1], sigmas_inf[0])
-
-    print(f"ATP ΔfG° = {standard_dgf_mu[0]:.2f} ± {err_atp:.2f} kJ/mol (1σ)")
-    print(f"ADP ΔfG° = {standard_dgf_mu[1]:.2f} ± {err_adp:.2f} kJ/mol (1σ)")
-
-
-
-    # we now apply the Legendre transform to convert from the standard ΔGf to the standard ΔG'f
-    delta_dgf_list = np.array([
-        cpd.transform(cc.p_h, cc.ionic_strength, cc.temperature, cc.p_mg).m_as("kJ/mol")
-        for cpd in compound_list
-    ])
-    standard_dgf_prime_mu = standard_dgf_mu + delta_dgf_list
-
-    # to create the formation energy covariance matrix, we need to combine the two outputs
-    # sigma_fin and sigma_inf
-    standard_dgf_cov = sigmas_fin @ sigmas_fin.T + 1e6 * sigmas_inf @ sigmas_inf.T
-
-    print(f"μ(ΔGf'0) in kJ / mol: {standard_dgf_prime_mu}")
-    print(f"Σ(ΔGf'0) in kJ^2 / mol^2: {standard_dgf_cov}")
     exit()
-
-
 
     # https://equilibrator.readthedocs.io/en/latest/equilibrator_examples.html#Using-formation-energies-to-calculate-reaction-energies
 
