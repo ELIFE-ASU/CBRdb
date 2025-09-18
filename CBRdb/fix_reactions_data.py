@@ -319,7 +319,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Combine the data
     to_concat = [data_r, data_r_rebalanced]
-    df_final = pd.concat(to_concat).set_index('id').drop(ids_failed, errors='ignore')
+    df_final = pd.concat(to_concat).set_index('id')
+    df_final['balancer_failed'] = df_final.index.isin(ids_failed)
 
     # Get the final length of the data
     print_and_log(f"Final data shape: {df_final.shape}", f_log)
