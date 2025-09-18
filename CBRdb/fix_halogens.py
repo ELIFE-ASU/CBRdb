@@ -8,10 +8,11 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_mols import standardize_mol, check_for_x_group, get_properties, check_for_r_group, replace_r_group
-from .tools_files import make_custom_id, reaction_csv
+from .tools_files import make_custom_id, reaction_csv, compound_csv
 from .tools_mp import tp_calc
 from .tools_eq import convert_formula_to_dict, standardise_eq
-
+from .preprocessor import preprocess_kegg_c_metadata
+from .merge_data_sets import id_indexed
 
 def load_bad_entries(target_dir_c):
     """
@@ -47,7 +48,8 @@ def get_reactions_with_substring(reactions_df, substring):
 def fix_halogen_compounds(
         target_dir_c=r"../../data/kegg_data_C",
         hal_exp=None,
-        f_print=True):
+        f_print=True,
+        int_file=None):
     """
     Fixes halogen compounds by expanding halogen placeholders in molecular files and generating new compound IDs.
 
@@ -149,11 +151,23 @@ def fix_halogen_compounds(
                          .assign(elem=lambda x: x['smiles'].str.findall('F|Cl|Br|I').explode(),
                                  is_new=lambda x: x['compound_id'].str.startswith('C9'))
                          .reset_index(names='generic_id'))
-    return cids_dict, smis_dict, specific_halogens
+
+    # Get the compound metadata
+    x_metadata = id_indexed(preprocess_kegg_c_metadata(valid_cids = cids_dict.keys()))
+    # Tie each instantiated compound ID to its parent metadata
+    specific_halogens['nickname'] = (specific_halogens['elem'] +  '-bearing ' 
+                                    + specific_halogens['generic_id'].map(x_metadata['nickname']))
+    specific_halogens['comment'] = 'From generic halogen ' + specific_halogens['generic_id']
+    
+    if int_file is not None:
+        meta_out = x_metadata.drop(columns=['comment', 'nickname'])
+        int_out = specific_halogens.merge(meta_out, left_on='generic_id', right_index=True, how='left')
+        compound_csv(id_indexed(int_out), int_file)
+
+    return specific_halogens
 
 
-def merge_halogen_compounds(cids_dict,
-                            smis_dict,
+def merge_halogen_compounds(specific_halogens,
                             c_id_file="../data/kegg_data_C.csv",
                             int_file=None,
                             out_file=None):
@@ -179,12 +193,12 @@ def merge_halogen_compounds(cids_dict,
         int_file = os.path.abspath(int_file)
     out_file = os.path.abspath(out_file)
 
-    # Convert the cids_dict and smis_dict to a list
-    cids_list = []
-    smis_list = []
-    for key in cids_dict.keys():
-        cids_list.extend(cids_dict[key])
-        smis_list.extend(smis_dict[key])
+    # Only calculate properties for new compounds
+    new_halogens = specific_halogens.query('is_new')
+
+    # Convert the cids and smiles to a list
+    cids_list = new_halogens['compound_id'].tolist()
+    smis_list = new_halogens['smiles'].tolist()
 
     mols = [Chem.MolFromSmiles(smi) for smi in smis_list]
     # Get the properties
@@ -194,11 +208,15 @@ def merge_halogen_compounds(cids_dict,
 
     # Create a dataframe
     df = pd.DataFrame(data=df_dict)
+    df = df.merge(new_halogens[['compound_id', 'nickname', 'comment']], 
+                  on='compound_id', 
+                  how='left')
+
     if int_file is not None:
-        df.to_csv(int_file, encoding='utf-8', index=False, float_format='%.3f')
+        compound_csv(df, int_file)
 
     # Load the compounds data
-    df_old = pd.read_csv(c_id_file)
+    df_old = pd.read_csv(c_id_file, low_memory=False)
 
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)
@@ -207,7 +225,7 @@ def merge_halogen_compounds(cids_dict,
     # Sort the dataframe by the compound ID
     df = df.sort_values(by="compound_id")
     # Save the dataframe
-    df.to_csv(out_file, index=False, encoding='utf-8', float_format='%.3f')
+    compound_csv(df, out_file)
     print("Done!", flush=True)
     return df
 

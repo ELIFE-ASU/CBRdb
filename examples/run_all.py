@@ -43,9 +43,8 @@ if __name__ == "__main__":
     kegg_data_R = CBRdb.preprocess(target="R")  # generates kegg_data_R.csv
 
     print("Instantiating specific halogen compounds from generic ones...", flush=True)
-    cids_dict, smis_dict, specific_halogens = CBRdb.fix_halogen_compounds()  # turn generic halogens in the C data into specific halogens
-    C_main = CBRdb.merge_halogen_compounds(cids_dict,
-                                           smis_dict)  # merge these into the C data, modifies kegg_data_C.csv
+    specific_halogens = CBRdb.fix_halogen_compounds()  # turn generic halogens in the C data into specific halogens
+    C_main = CBRdb.merge_halogen_compounds(specific_halogens)  # merge these into the C data, modifies kegg_data_C.csv
 
     print("Fixing halogen reactions in KEGG and ATLAS...", flush=True)
     kegg_data_R = CBRdb.fix_halogen_reactions_without_existing_halogens(kegg_data_R, C_main, specific_halogens,
