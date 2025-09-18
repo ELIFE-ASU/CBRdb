@@ -1,7 +1,7 @@
 import pandas as pd
 
 from .merge_data_sets import identify_duplicate_compounds, merge_duplicate_compounds
-from .tools_eq import standardise_eq
+from .tools_eq import standardise_eq, get_eq_all_cids
 from .tools_files import reaction_csv, compound_csv
 
 
@@ -261,16 +261,14 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     dbs['C_dupemap'] = identify_duplicate_compounds(dbs['CBRdb_C'])
     dbs['CBRdb_C'] = merge_duplicate_compounds(dbs['CBRdb_C'], dbs['C_dupemap'])
 
-    # replace duped compound IDs in reaction DataFrames
-    dbs['kegg_data_R'].loc[:, 'reaction'] = dbs['kegg_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
-        dbs['C_dupemap']['new_id']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
-    dbs['atlas_data_R'].loc[:, 'reaction'] = dbs['atlas_data_R'].loc[:, 'reaction'].str.split(expand=True).replace(
-        dbs['C_dupemap']['new_id']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
-
-    # standardize reaction format again
-    dbs['kegg_data_R']['reaction'] = dbs['kegg_data_R']['reaction'].map(standardise_eq)
-    dbs['atlas_data_R']['reaction'] = dbs['atlas_data_R']['reaction'].map(standardise_eq)
-
+    for db in ['kegg_data_R', 'atlas_data_R']:
+        # replace duped compound IDs in reaction DataFrames
+        dbs[db].loc[:, 'reaction'] = dbs[db].loc[:, 'reaction'].str.split(expand=True).replace(
+            dbs['C_dupemap']['new_id']).fillna('').apply(lambda x: ' '.join(x), axis=1).str.strip()
+        # standardize reaction format again
+        dbs[db]['reaction'] = dbs[db]['reaction'].map(standardise_eq)
+        dbs[db]['CBRdb_C_ids'] = dbs[db]['reaction'].map(get_eq_all_cids)
+    
     # identify suspect reactions and those matching them
     sus = df_of_suspect_reactions(dbs)
     sus = add_sus_reaction_dupes(sus, dbs)
