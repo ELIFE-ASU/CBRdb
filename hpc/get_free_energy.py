@@ -1,12 +1,6 @@
 import numpy as np
-from equilibrator_api import ComponentContribution
-import CBRdb
 import pandas as pd
-import warnings
-from functools import partial
-
-
-# warnings.filterwarnings("error")
+from equilibrator_api import ComponentContribution
 
 
 def get_dg_prime(eq_line, conditions='standard'):
@@ -35,21 +29,20 @@ def get_dg_prime(eq_line, conditions='standard'):
     return val, error, rev
 
 
-def stderr_from_sigmas(sigma_fin, sigma_inf, rmse_inf=1e-5):
+def err_from_sig(sigma_fin, sigma_inf, rmse_inf=1e-5):
     term = np.sum(np.asarray(sigma_fin, float) ** 2)
     sigma_inf = np.asarray(sigma_inf[0], float)
     term += np.sum((rmse_inf * sigma_inf) ** 2)
     return np.sqrt(term)
 
 
-def get_energy_of_formation(in_file='../CBRdb_C.csv',
-                            out_file='CBRdb_C_formation_energies.csv',
-                            run_physiological_transform=True):
+def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
+                                     out_file='CBRdb_C_formation_energies.csv',
+                                     run_physiological_transform=False):
     data_c = pd.read_csv(in_file, low_memory=False)
 
     # Make a new dataframe with only the compound_id and name columns
     data_c = pd.DataFrame(data_c['compound_id'])
-    data_c.head(100)
     # Make sure there are no duplicates or NaNs
     data_c = data_c.drop_duplicates()
     data_c = data_c.dropna()
@@ -72,10 +65,9 @@ def get_energy_of_formation(in_file='../CBRdb_C.csv',
     data_c = data_c.dropna(subset=['standard_dgf_mu'])
     data_c = data_c.reset_index(drop=True)
 
-    # Apply stderr_from_sigmas to each row to get the standard error
-    data_c['standard_error'] = data_c.apply(lambda row: stderr_from_sigmas(row['sigma_fin'], row['sigma_inf']), axis=1)
+    # Calculate the standard error from the sigmas
+    data_c['standard_error'] = data_c.apply(lambda row: err_from_sig(row['sigma_fin'], row['sigma_inf']), axis=1)
 
-    # Loop over the first 10 and print the compound_id, standard_dgf_mu, and standard_error
     for i in range(10):
         print(
             f"{data_c['compound_id'][i]}: {data_c['standard_dgf_mu'][i]:.2f} ± {data_c['standard_error'][i]:.2f} kJ/mol")
@@ -86,14 +78,11 @@ def get_energy_of_formation(in_file='../CBRdb_C.csv',
             lambda cpd: cpd.transform(cc.p_h, cc.ionic_strength, cc.temperature, cc.p_mg).m_as("kJ/mol")
         )
         data_c['standard_dgf_prime_mu'] = data_c['standard_dgf_mu'] + data_c['delta_dgf']
-        # calculate the covariance matrix
         sigmas_fin = np.array(data_c['sigma_fin'].tolist()).T
         sigmas_inf = np.array(data_c['sigma_inf'].tolist()).T
         standard_dgf_cov = sigmas_fin @ sigmas_fin.T + 1e6 * sigmas_inf @ sigmas_inf.T
-        # convert the covariance matrix to a single error value (1-σ) for each compound
         data_c['standard_dgf_prime_error'] = np.sqrt(np.diag(standard_dgf_cov))
 
-        # loop over the first 10 and print the compound_id, standard_dgf_prime_mu, and standard_dgf_prime_error
         for i in range(10):
             print(
                 f"{data_c['compound_id'][i]}: {data_c['standard_dgf_prime_mu'][i]:.2f} ± {data_c['standard_dgf_prime_error'][i]:.2f} kJ/mol")
@@ -105,7 +94,7 @@ def get_energy_of_formation(in_file='../CBRdb_C.csv',
 
 if __name__ == "__main__":
     print(flush=True)
-    get_energy_of_formation()
+    compound_get_energy_of_formation()
 
     exit()
 
