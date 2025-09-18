@@ -1128,4 +1128,8 @@ def get_eq_all_cids(eq):
     list: A list of unique compound IDs present in the equation.
     """
     reactants, products = eq_to_dict(eq)
-    return list(set(reactants.keys()).union(set(products.keys())))
+    all_cids = list(set(reactants.keys()).union(set(products.keys())))
+
+    # sort the by alphanumeric order
+    all_cids.sort()
+    return all_cids
