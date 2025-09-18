@@ -12,9 +12,10 @@ from .tools_eq import (convert_formula_to_dict,
                        full_check_eq_unbalanced,
                        rebalance_eq,
                        fix_imbalance_core,
+                       get_eq_all_cids,
                        )
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
-
+from .tools_files import reaction_csv
 
 def print_and_log(statement, file=None):
     """
@@ -325,8 +326,15 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Sort by the index
     df_final = df_final.sort_index().reset_index()
+
+    # Standardise the equations one last time
+    df_final['reaction'] = df_final['reaction'].map(standardise_eq)
+
+    # Map each reaction to associated CIDs
+    df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids)
+
     # Write the data to a file
-    df_final.to_csv(out_eq_file, encoding='utf-8', index=False)
+    reaction_csv(df_R=df_final, file_address=out_eq_file)
 
     # Close the log files
     f_log.close()

@@ -192,7 +192,7 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str, compression='infer'):
     if df.index.name == 'id' or 'id' not in df.columns:
         df = df.reset_index(drop=False, names='id')
 
-    listlike_cols = df.columns.intersection(['ec', 'rclass', 'pathway', 'orthology', 'rhea', 'module'])
+    listlike_cols = df.columns.intersection(['ec', 'rclass', 'pathway', 'orthology', 'rhea', 'module', 'CBRdb_C_ids'])
     col_order = ['id', 'reaction'] + sorted(list(listlike_cols)) + sorted(
         df.columns.difference(listlike_cols.union(['id', 'reaction'])))
 
