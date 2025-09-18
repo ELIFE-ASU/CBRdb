@@ -230,41 +230,6 @@ def merge_halogen_compounds(specific_halogens,
     return df
 
 
-def merge_halogen_compounds_pd(C_main, specific_halogens, out_file="../data/kegg_data_C.csv", int_file=None):
-    """
-    Merges halogen compound data with existing compound data, saving the result.
-
-    Parameters:
-    C_main (pd.DataFrame): A pandas DataFrame containing existing compound data.
-    specific_halogens (pd.DataFrame): A pandas DataFrame containing specific halogen compounds extrapolated from generic ones, from fix_halogen_compounds.
-    out_file (str, optional): File name to which output csv should be written. Defaults to "../data/kegg_data_C.csv".
-    int_file (str, optional): Path to the intermediate file where new halogen compounds will be saved. Default is None.
-
-    Returns:
-    pd.DataFrame: The updated DataFrame with new halogen compounds merged in.
-    """
-    # Filter out existing halogens
-    new_halogens = specific_halogens.query('is_new').set_index('compound_id')
-    # Calculate molecular properties
-    property_names = ['smiles',
-                      'smiles_capped',
-                      'inchi_capped',
-                      'formula',
-                      'molecular_weight',
-                      'n_heavy_atoms',
-                      'n_chiral_centers']
-    property_values = new_halogens['smiles'].map(Chem.MolFromSmiles).map(get_properties)
-    halogen_properties = property_values.map(lambda x: dict(zip(property_names, x))).apply(pd.Series).reset_index()
-    halogen_properties['smiles'] = new_halogens['smiles'].reset_index(drop=True)
-    # Merge into compound database
-    C_main = pd.concat([C_main, halogen_properties], ignore_index=True)
-    # Write output file(s)
-    if int_file is not None:
-        halogen_properties.to_csv(int_file, index=False, encoding='utf-8', float_format='%.3f')
-    C_main.sort_values(by='compound_id').to_csv(out_file, index=False, encoding='utf-8', float_format='%.3f')
-    return C_main
-
-
 def fix_halogen_reactions(cids_dict,
                           r_id_file="../data/atlas_data_R.csv",
                           int_file=None,
