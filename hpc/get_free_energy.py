@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from equilibrator_api import ComponentContribution, Q_
-
+from functools import partial
 import CBRdb
 
 
@@ -89,6 +89,23 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
     return data_c
 
 
+def get_rev_index(cc, r):
+    try:
+        return cc.ln_reversibility_index(r).value.m_as("dimensionless")
+    except Exception as e:
+        print(f"Error calculating reversibility index for reaction {r}: {e}", flush=True)
+        return None
+
+
+def get_std_dg(cc, data_r):
+    try:
+        dg, uc = cc.standard_dg_prime_multi(data_r['cc_reac'].tolist(), uncertainty_representation="cov")
+        return dg.magnitude, np.sqrt(np.diag(uc.magnitude))
+    except Exception as e:
+        print(f"Error calculating standard Gibbs free energy for reactions: {e}", flush=True)
+        return None, None
+
+
 def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
                                     in_file_r='../CBRdb_R.csv',
                                     out_file='CBRdb_R_reaction_energies.csv',
@@ -134,14 +151,16 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
     cc.p_mg = Q_(10.0)
     cc.ionic_strength = Q_(0.25, "M")
     cc.temperature = Q_(298.15, "K")
+    func_rev_idx = partial(get_rev_index, cc)
     data_r['cc_reac'] = data_r['kegg_reaction'].apply(lambda r: cc.parse_reaction_formula(r))
-    data_r['rev_index'] = data_r['cc_reac'].apply(lambda r: cc.ln_reversibility_index(r).value.m_as("dimensionless"))
-    dg, uc = cc.standard_dg_prime_multi(data_r['cc_reac'].tolist(), uncertainty_representation="cov")
-    data_r['std_dg'] = dg.magnitude
-    data_r['std_dg_error'] = np.sqrt(np.diag(uc.magnitude))
+    data_r['rev_index'] = data_r['cc_reac'].apply(lambda r: func_rev_idx(r))
+    # Drop rows where rev_index is None
+    data_r = data_r.dropna(subset=['rev_index'])
+    data_r = data_r.reset_index(drop=True)
+    data_r['std_dg'], data_r['std_dg_error'] = get_std_dg(cc, data_r)
     for i in range(10):
         print(
-            f"{data_r['id'][i]}: {data_r['std_dg'][i]:.2f} ± {data_r['std_dg_error'][i]:.2f} kJ/mol")
+            f"{data_r['id'][i]}: {data_r['std_dg'][i]:.2f} ± {data_r['s+td_dg_error'][i]:.2f} kJ/mol")
 
     if run_physiological:
         cc = ComponentContribution()
@@ -149,12 +168,13 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
         cc.p_mg = Q_(3.0)
         cc.ionic_strength = Q_(0.25, "M")
         cc.temperature = Q_(298.15, "K")
+        func_rev_idx = partial(get_rev_index, cc)
         data_r['cc_reac'] = data_r['kegg_reaction'].apply(lambda r: cc.parse_reaction_formula(r))
-        data_r['rev_index_p'] = data_r['cc_reac'].apply(
-            lambda r: cc.ln_reversibility_index(r).value.m_as("dimensionless"))
-        dg, uc = cc.standard_dg_prime_multi(data_r['cc_reac'].tolist(), uncertainty_representation="cov")
-        data_r['std_dg_p'] = dg.magnitude
-        data_r['std_dg_p_error'] = np.sqrt(np.diag(uc.magnitude))
+        data_r['rev_index_p'] = data_r['cc_reac'].apply(lambda r: func_rev_idx(r))
+        # Drop rows where rev_index_p is None
+        data_r = data_r.dropna(subset=['rev_index_p'])
+        data_r = data_r.reset_index(drop=True)
+        data_r['std_dg_p'], data_r['std_dg_p_error'] = get_std_dg(cc, data_r)
         for i in range(10):
             print(
                 f"{data_r['id'][i]}: {data_r['std_dg_p'][i]:.2f} ± {data_r['std_dg_p_error'][i]:.2f} kJ/mol")
