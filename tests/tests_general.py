@@ -1051,21 +1051,9 @@ def test_get_eq_all_cids():
     assert cids == ['C00001', 'C00027', 'C00080', 'C19610', 'C19611']
 
 
-def enum_ionization_states(smi, ph_min=4.0, ph_max=10.0, precision=1.0, label=True, max_n=15):
-    from dimorphite_dl import protonate_smiles
-
-    enum_list = protonate_smiles(smi,
-                            ph_min=ph_min,
-                            ph_max=ph_max,
-                            precision=precision,
-                            label_states=label,
-                            max_variants=max_n)
-
-    # Remove the input molecule from the list
-    return [s for s in enum_list if s != smi]
-
-
 def test_enum_prot_states():
+    print(flush=True)
     smi = 'CC(=O)O'  # Acetic acid
-    prot_states = enum_ionization_states(smi)
+    prot_states = CBRdb.enum_ionization_states(smi)
     print(prot_states)
+    assert prot_states == ['CC(=O)[O-]']

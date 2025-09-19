@@ -30,6 +30,7 @@ setup(
         'ase',
         'mace',
         'pymatgen',
+        'dimorphite_dl',
         # 'rxnmapper',
     ],
     extras_require={

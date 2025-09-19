@@ -7,6 +7,7 @@ import pandas as pd
 from rdkit import Chem as Chem
 from rdkit import RDLogger
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from dimorphite_dl import protonate_smiles
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -503,3 +504,35 @@ def get_compounds_with_matching_elements(data_c_1, diff_ele_react, diff_ele_prod
 
     # Return the list of compound IDs
     return filtered_compounds['compound_id'].tolist()
+
+
+def enum_ionization_states(smi, ph_min=4.0, ph_max=10.0, precision=1.0, label=True, max_n=15):
+    """
+    Enumerates possible ionization states of a molecule within a specified pH range.
+
+    This function uses the `protonate_smiles` method to generate all possible ionization
+    states of the input SMILES string within the given pH range and precision. The input
+    molecule is excluded from the returned list of ionization states.
+
+    Parameters:
+    smi (str): The SMILES string representing the molecule to be ionized.
+    ph_min (float): The minimum pH value for ionization. Default is 4.0.
+    ph_max (float): The maximum pH value for ionization. Default is 10.0.
+    precision (float): The precision of the pH range. Smaller values generate more states. Default is 1.0.
+    label (bool): Whether to label the ionization states. Default is True.
+    max_n (int): The maximum number of ionization states to generate. Default is 15.
+
+    Returns:
+    list: A list of SMILES strings representing the enumerated ionization states,
+          excluding the input molecule.
+    """
+    # Generate a list of ionization states using the specified parameters
+    enum_list = protonate_smiles(smi,
+                                 ph_min=ph_min,
+                                 ph_max=ph_max,
+                                 precision=precision,
+                                 label_states=label,
+                                 max_variants=max_n)
+
+    # Remove the input molecule from the list and return the result
+    return [s for s in enum_list if s != smi]
