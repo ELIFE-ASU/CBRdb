@@ -27,14 +27,13 @@ def get_working_cids(data_c):
 def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
                                      out_file='CBRdb_C_formation_energies.csv',
                                      compact_output=True,
-                                     run_physiological_transform=False):
+                                     run_physiological=True):
     data_c = pd.read_csv(in_file, low_memory=False)
 
     # Make a new dataframe with only the compound_id and name columns
     data_c = pd.DataFrame(data_c['compound_id'])
     # Get the working compound list
     data_c = get_working_cids(data_c)
-    data_c = data_c.head(100)  # Limit to first 1000 compounds for testing
 
     cc = ComponentContribution()
     cc.p_h = Q_(7.0)
@@ -56,17 +55,22 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
         print(
             f"{data_c['compound_id'][i]}: {data_c['std_dgf'][i]:.2f} ± {data_c['std_dgf_error'][i]:.2f} kJ/mol")
 
-    if run_physiological_transform:
-        # Apply the Legendre transform to convert from the standard ΔGf to the standard ΔG'f
-        data_c['delta_dgf'] = data_c['cc_comp'].apply(
-            lambda cpd: cpd.transform(cc.p_h, cc.ionic_strength, cc.temperature, cc.p_mg).m_as("kJ/mol")
+    if run_physiological:
+        cc = ComponentContribution()
+        cc.p_h = Q_(7.5)
+        cc.p_mg = Q_(3.0)
+        cc.ionic_strength = Q_(0.25, "M")
+        cc.temperature = Q_(298.15, "K")
+        # Extract lists from dataframe and calculate standard Gibbs free energy and sigmas
+        data_c[['std_dgf_p', 'sigma_fin_p', 'sigma_inf_p']] = pd.DataFrame(
+            map(cc.standard_dg_formation, data_c['cc_comp'].tolist())
         )
-        data_c['std_dgf_p'] = data_c['std_dgf'] + data_c['delta_dgf']
-        sigmas_fin = np.array(data_c['sigma_fin'].tolist()).T
-        sigmas_inf = np.array(data_c['sigma_inf'].tolist()).T
-        standard_dgf_cov = sigmas_fin @ sigmas_fin.T + 1e6 * sigmas_inf @ sigmas_inf.T
-        data_c['std_dgf_p_error'] = np.sqrt(np.diag(standard_dgf_cov))
-
+        # Drop None values
+        data_c = data_c.dropna(subset=['std_dgf_p'])
+        data_c = data_c.reset_index(drop=True)
+        # Calculate the standard error from the sigmas
+        data_c['std_dgf_p_error'] = data_c.apply(lambda row: err_from_sig(row['sigma_fin_p'], row['sigma_inf_p']),
+                                                 axis=1)
         for i in range(10):
             print(
                 f"{data_c['compound_id'][i]}: {data_c['std_dgf_p'][i]:.2f} ± {data_c['std_dgf_p_error'][i]:.2f} kJ/mol")
@@ -74,7 +78,7 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
     if compact_output:
         # Keep only relevant columns
         cols_to_keep = ['compound_id', 'std_dgf', 'std_dgf_error']
-        if run_physiological_transform:
+        if run_physiological:
             cols_to_keep += ['std_dgf_p', 'std_dgf_p_error']
         data_c = data_c[cols_to_keep]
 
@@ -89,7 +93,7 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
                                     in_file_r='../CBRdb_R.csv',
                                     out_file='CBRdb_R_reaction_energies.csv',
                                     compact_output=True,
-                                    run_physiological_transform=True):
+                                    run_physiological=True):
     # Load the compound and reaction data
     data_c = pd.read_csv(in_file_c, low_memory=False)
     data_r = pd.read_csv(in_file_r, low_memory=False)
@@ -119,7 +123,6 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
     data_r = data_r[~data_r['reaction'].str.contains(r'[nmx]')]
     data_r = data_r.reset_index(drop=True)
     print(f'After removing reactions with unknown stoichiometry, {len(data_r)} reactions remain.')
-    data_r = data_r.head(10)  # Limit to first 1000 reactions for testing
 
     # Fix the formatting
     data_r['kegg_reaction'] = data_r['reaction'].apply(
@@ -140,7 +143,7 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
         print(
             f"{data_r['id'][i]}: {data_r['std_dg'][i]:.2f} ± {data_r['std_dg_error'][i]:.2f} kJ/mol")
 
-    if run_physiological_transform:
+    if run_physiological:
         cc = ComponentContribution()
         cc.p_h = Q_(7.5)
         cc.p_mg = Q_(3.0)
@@ -158,9 +161,9 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
 
     if compact_output:
         # Keep only relevant columns
-        cols_to_keep = ['id', 'std_dg', 'std_dg_error']
-        if run_physiological_transform:
-            cols_to_keep += ['std_dg_p', 'std_dg_p_error']
+        cols_to_keep = ['id', 'std_dg', 'std_dg_error', 'rev_index']
+        if run_physiological:
+            cols_to_keep += ['std_dg_p', 'std_dg_p_error', 'rev_index_p']
         data_r = data_r[cols_to_keep]
     # Save the results to a CSV file
     print(f'Saving results to {out_file}', flush=True)
@@ -172,5 +175,4 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
 if __name__ == "__main__":
     print(flush=True)
     compound_get_energy_of_formation()
-    # reaction_get_energy_of_reaction()
-
+    reaction_get_energy_of_reaction()
