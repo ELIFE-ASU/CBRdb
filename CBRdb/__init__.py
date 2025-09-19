@@ -132,6 +132,7 @@ from .tools_mols import (sanitize_mol,
                          get_compounds_with_matching_elements,
                          get_properties,
                          enum_ionization_states,
+                         get_reaction_similarity,
                          )
 from .tools_mp import (mp_calc,
                        mp_calc_star,

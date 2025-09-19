@@ -3,6 +3,7 @@ import shutil
 import tempfile
 import time as t
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from ase.build import molecule
@@ -12,11 +13,8 @@ from ase.vibrations import Vibrations
 from ase.visualize import view
 from mace.calculators import mace_omol
 from rdkit import Chem as Chem
-import matplotlib.pyplot as plt
-import CBRdb
 
-from rdkit.DataStructs import TanimotoSimilarity
-from rdkit.Chem import rdChemReactions
+import CBRdb
 
 
 def assert_dicts_equal(d1, d2):
@@ -1062,47 +1060,11 @@ def test_enum_prot_states():
     assert prot_states == ['CC(=O)[O-]']
 
 
-def get_reaction_similarity(s1, s2):
-    """
-    Calculates the Tanimoto similarity between two chemical reactions based on their structural fingerprints.
-
-    Parameters:
-    ----------
-    s1 : str
-        The SMARTS string representation of the first chemical reaction.
-    s2 : str
-        The SMARTS string representation of the second chemical reaction.
-
-    Returns:
-    -------
-    float
-        The Tanimoto similarity score between the two reactions, ranging from 0.0 (no similarity)
-        to 1.0 (identical reactions).
-
-    Notes:
-    -----
-    - The function uses RDKit to parse the SMARTS strings into reaction objects.
-    - Structural fingerprints are generated for each reaction and compared using the Tanimoto similarity metric.
-    - Ensure that the input SMARTS strings are valid and represent chemical reactions.
-    """
-    # Parse the first reaction from the SMARTS string
-    rxn_1 = rdChemReactions.ReactionFromSmarts(s1, useSmiles=True)
-    # Parse the second reaction from the SMARTS string
-    rxn_2 = rdChemReactions.ReactionFromSmarts(s2, useSmiles=True)
-
-    # Generate structural fingerprints for the reactions
-    fp_struct_1 = rdChemReactions.CreateStructuralFingerprintForReaction(rxn_1)
-    fp_struct_2 = rdChemReactions.CreateStructuralFingerprintForReaction(rxn_2)
-
-    # Calculate and return the Tanimoto similarity between the fingerprints
-    return TanimotoSimilarity(fp_struct_1, fp_struct_2)
-
-
 def test_get_reaction_similarity():
     print(flush=True)
     smarts_1 = 'CCO.OCC>>CCOC'
     smarts_2 = 'CCO.ClCC>>CCCl'
-    sim = get_reaction_similarity(smarts_1, smarts_2)
+    sim = CBRdb.get_reaction_similarity(smarts_1, smarts_2)
     print("Structural FP similarity:", sim)
     assert np.allclose(sim, 0.5625, atol=1e-3)
 
