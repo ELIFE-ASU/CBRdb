@@ -30,7 +30,7 @@ for filename in out_files:
                     data[col] = line[len(prefix):].strip()
     rows.append([data[col] for col, _ in columns])
 
-with open(os.path.join(output_dir, 'combined_output_Remainings.csv'), 'w', newline='', encoding='utf-8') as csvfile:
+with open(os.path.join(output_dir, 'combined_output_all.csv.gz'), 'w', newline='', encoding='utf-8') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow([col for col, _ in columns])
     writer.writerows(rows)

@@ -1058,6 +1058,7 @@ def test_enum_prot_states():
     print(prot_states)
     assert prot_states == ['CC(=O)[O-]']
 
+
 def test_reaction_finger_printing():
     print(flush=True)
     # data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))  # Load compound data
@@ -1085,9 +1086,20 @@ def test_reaction_finger_printing():
     num_on_bits = fp_struct_1.GetNumOnBits()
     print("Bits on:", num_on_bits)
 
-
     smarts_2 = 'CCO.ClCC>>CCCl'
     rxn_2 = rdChemReactions.ReactionFromSmarts(smarts_2, useSmiles=True)
     fp_struct_2 = rdChemReactions.CreateStructuralFingerprintForReaction(rxn_2)
     sim = DataStructs.TanimotoSimilarity(fp_struct_1, fp_struct_2)
     print("Structural FP similarity:", sim)
+
+
+def test_atom_tracking_convert():
+    data_file = '/home/louie/skunkworks/CBRdb/atom_tracking/combined_output_all.csv'
+    data = pd.read_csv(data_file)
+    # Save the data as a compressed csv
+    data.to_csv(data_file + '.gz', index=False, compression='gzip')
+
+    out_file = '/home/louie/skunkworks/CBRdb/atom_tracking/mapped_rxns.csv'
+    # select specific columns
+    data = data[['reaction_id', 'mapped_rxns']]
+    data.to_csv(out_file + '.gz', index=False, compression='gzip')
