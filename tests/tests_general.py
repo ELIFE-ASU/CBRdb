@@ -15,6 +15,9 @@ from rdkit import Chem as Chem
 import matplotlib.pyplot as plt
 import CBRdb
 
+from rdkit.DataStructs import TanimotoSimilarity
+from rdkit.Chem import rdChemReactions
+
 
 def assert_dicts_equal(d1, d2):
     """
@@ -1059,38 +1062,49 @@ def test_enum_prot_states():
     assert prot_states == ['CC(=O)[O-]']
 
 
-def test_reaction_finger_printing():
-    print(flush=True)
-    # data_c = pd.read_csv(os.path.abspath("../data/kegg_data_C.csv"))  # Load compound data
-    # eq = "2 C19610 + C00027 + 2 C00080 <=> 2 C19611 + 2 C00001"  # Define chemical equation
-    #
-    # r_smarts = CBRdb.to_smarts_rxn_line(eq, data_c, add_stoich=True)  # Convert equation to SMARTS reaction line
-    # print(r_smarts, flush=True)
-    # assert r_smarts == '2[Mn+2].1OO.2[H+]>>2[Mn+3].2[H]O[H]'  # Verify the result
-    #
-    # fp = CBRdb.reaction_finger_print(r_smarts)
-    # print(fp)
-    # assert fp.shape == (2048,)
+def get_reaction_similarity(s1, s2):
+    """
+    Calculates the Tanimoto similarity between two chemical reactions based on their structural fingerprints.
 
-    from rdkit import Chem, DataStructs
-    from rdkit.Chem import rdChemReactions
+    Parameters:
+    ----------
+    s1 : str
+        The SMARTS string representation of the first chemical reaction.
+    s2 : str
+        The SMARTS string representation of the second chemical reaction.
 
-    smarts_1 = 'CCO.OCC>>CCOC'
-    rxn_1 = rdChemReactions.ReactionFromSmarts(smarts_1, useSmiles=True)
+    Returns:
+    -------
+    float
+        The Tanimoto similarity score between the two reactions, ranging from 0.0 (no similarity)
+        to 1.0 (identical reactions).
+
+    Notes:
+    -----
+    - The function uses RDKit to parse the SMARTS strings into reaction objects.
+    - Structural fingerprints are generated for each reaction and compared using the Tanimoto similarity metric.
+    - Ensure that the input SMARTS strings are valid and represent chemical reactions.
+    """
+    # Parse the first reaction from the SMARTS string
+    rxn_1 = rdChemReactions.ReactionFromSmarts(s1, useSmiles=True)
+    # Parse the second reaction from the SMARTS string
+    rxn_2 = rdChemReactions.ReactionFromSmarts(s2, useSmiles=True)
+
+    # Generate structural fingerprints for the reactions
     fp_struct_1 = rdChemReactions.CreateStructuralFingerprintForReaction(rxn_1)
-    fp_diff = rdChemReactions.CreateDifferenceFingerprintForReaction(rxn_1)
-    import numpy as np
-    arr_struct = np.zeros((fp_struct_1.GetNumBits(),), dtype=int)
-    DataStructs.ConvertToNumpyArray(fp_struct_1, arr_struct)
-    print(arr_struct, sum(arr_struct), len(arr_struct), flush=True)
-    num_on_bits = fp_struct_1.GetNumOnBits()
-    print("Bits on:", num_on_bits)
-
-    smarts_2 = 'CCO.ClCC>>CCCl'
-    rxn_2 = rdChemReactions.ReactionFromSmarts(smarts_2, useSmiles=True)
     fp_struct_2 = rdChemReactions.CreateStructuralFingerprintForReaction(rxn_2)
-    sim = DataStructs.TanimotoSimilarity(fp_struct_1, fp_struct_2)
+
+    # Calculate and return the Tanimoto similarity between the fingerprints
+    return TanimotoSimilarity(fp_struct_1, fp_struct_2)
+
+
+def test_get_reaction_similarity():
+    print(flush=True)
+    smarts_1 = 'CCO.OCC>>CCOC'
+    smarts_2 = 'CCO.ClCC>>CCCl'
+    sim = get_reaction_similarity(smarts_1, smarts_2)
     print("Structural FP similarity:", sim)
+    assert np.allclose(sim, 0.5625, atol=1e-3)
 
 
 def test_atom_tracking_convert():
