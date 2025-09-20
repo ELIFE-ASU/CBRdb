@@ -2,19 +2,23 @@ import os
 import shutil
 import tempfile
 import time as t
-
+from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from ase.build import molecule
 from ase.io import read
 from ase.optimize import BFGS
+from ase.units import alpha
 from ase.vibrations import Vibrations
 from ase.visualize import view
 from mace.calculators import mace_omol
 from rdkit import Chem as Chem
-
+from scipy.stats import gaussian_kde
 import CBRdb
+
+# set the plot axis
+plt.rcParams['axes.linewidth'] = 2.0
 
 
 def assert_dicts_equal(d1, d2):
@@ -1067,6 +1071,147 @@ def test_get_reaction_similarity():
     sim = CBRdb.get_reaction_similarity(smarts_1, smarts_2)
     print("Structural FP similarity:", sim)
     assert np.allclose(sim, 0.5625, atol=1e-3)
+
+
+def ax_plot(fig: plt.Figure, ax: plt.Axes, xlab: str, ylab: str, xs: int = 14, ys: int = 14) -> None:
+    ax.minorticks_on()
+    ax.tick_params(axis='both', which='major', labelsize=ys - 2, direction='in', length=6, width=2)
+    ax.tick_params(axis='both', which='minor', labelsize=ys - 2, direction='in', length=4, width=2)
+    ax.tick_params(axis='both', which='both', top=True, right=True)
+    ax.set_xlabel(xlab, fontsize=xs)
+    ax.set_ylabel(ylab, fontsize=ys)
+    fig.tight_layout()
+    return None
+
+
+
+def plot_kde(
+        data,
+        bandwidth=None,
+        grid_size=1000,
+        y_scale='log',
+        xlab="Value",
+        ylab="Frequency",
+        fig=None,
+        ax=None,
+        fig_size=(8, 5),
+        fontsize=16,
+):
+    """
+    Plots a Kernel Density Estimate (KDE) for the given data using Matplotlib.
+
+    Parameters:
+    data (array-like): The data for which the KDE is to be plotted.
+    bandwidth (float or None, optional): The bandwidth of the KDE. If None, it is automatically determined. Defaults to None.
+    grid_size (int, optional): The number of points in the grid for evaluating the KDE. Defaults to 1000.
+    y_scale (str or None, optional): The scale for the y-axis (e.g., 'log'). If None, no scaling is applied. Defaults to 'log'.
+    xlab (str, optional): Label for the x-axis. Defaults to "Value".
+    ylab (str, optional): Label for the y-axis. Defaults to "Frequency".
+    fig (matplotlib.figure.Figure or None, optional): The Matplotlib figure object. If None, a new figure is created. Defaults to None.
+    ax (matplotlib.axes.Axes or None, optional): The Matplotlib Axes object. If None, a new Axes is created. Defaults to None.
+    fig_size (tuple, optional): The size of the figure in inches (width, height). Defaults to (8, 5).
+    fontsize (int, optional): Font size for axis labels. Defaults to 16.
+
+    Returns:
+    tuple: A tuple containing the Matplotlib figure and axis objects (fig, ax).
+    """
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(figsize=fig_size)
+    data = np.asarray(data)
+    n = len(data)
+
+    # Fit KDE
+    kde = gaussian_kde(data, bw_method=bandwidth)
+
+    # Evaluate KDE on a grid
+    x_min, x_max = data.min(), data.max()
+    xs = np.linspace(x_min, x_max, grid_size)
+    ys = kde(xs)
+
+    # Convert density to expected counts
+    dx = xs[1] - xs[0]
+    counts = ys * n * dx
+
+    ax.set_xlim(x_min, x_max)
+    if y_scale is not None:
+        # Find the nearest order of magnitude to the maximum count
+        order_of_magnitude = 10 ** np.floor(np.log10(max(counts)))
+        # Set the y-axis limit to the next order of magnitude
+        ax.set_ylim(1, order_of_magnitude * 10)
+        ax.set_yscale('log')
+
+    # Overlay KDE scaled to counts
+    ax.plot(xs, counts, lw=2)
+    ax_plot(fig, ax, xlab=xlab, ylab=ylab, xs=fontsize, ys=fontsize)
+
+    return fig, ax
+
+def find_similar_reactions(query_reaction, reaction_list):
+    func_sim = partial(CBRdb.get_reaction_similarity, query_reaction)
+    similarities = CBRdb.mp_calc(func_sim, reaction_list)
+
+    # Sort by similarity score in descending order
+    similarities.sort(key=lambda x: x, reverse=True)
+
+    return similarities
+
+
+def test_find_close():
+    print(flush=True)
+    data_c = pd.read_csv('CBRdb_C.csv')
+    data_r = pd.read_csv('CBRdb_R.csv')
+    # data_r = data_r.head(50_000)  # Limit to first 100 reactions for testing
+    print(data_c.columns)
+    print(data_r.columns)
+
+    print("Generating SMARTS for reactions...")
+    func_smarts = partial(CBRdb.to_smarts_rxn_line, data_c=data_c, add_stoich=False)
+    eq_list = data_r['reaction'].tolist()
+    data_r['smarts'] = CBRdb.mp_calc(func_smarts, eq_list)
+
+    # only select the reactions where the id starts with 'R'
+    sel = data_r['id'].str.startswith('R')
+    data_r_atlas = data_r[~sel]
+    data_r = data_r[sel]
+    # select everything else
+
+    # print the number of reactions
+    print(f"Number of reactions (KEGG) : {len(data_r)}")
+    print(f"Number of reactions (ATLAS): {len(data_r_atlas)}")
+
+    print('find_similar_reactions')
+    smarts_list = data_r['smarts'].tolist()
+    smarts_0 = smarts_list[0]
+    scores = find_similar_reactions(smarts_0, smarts_list)
+
+    smarts_list_atlas = data_r_atlas['smarts'].tolist()
+    scores_atlas = find_similar_reactions(smarts_0, smarts_list_atlas)
+
+    print(f"Max similarity score (KEGG) : {max(scores)}")
+    print(f"Max similarity score (ATLAS): {max(scores_atlas)}")
+    print(f"Min similarity score (KEGG) : {min(scores)}")
+    print(f"Min similarity score (ATLAS): {min(scores_atlas)}")
+
+    plt.hist(scores, bins=50, alpha=0.5, label='KEGG')
+    plt.legend()
+    plt.xlabel('Similarity score')
+    plt.ylabel('Frequency')
+    plt.title('Histogram of reaction similarity scores')
+    plt.show()
+
+    plt.hist(scores_atlas, bins=50, alpha=0.5, label='ATLAS')
+    plt.legend()
+    plt.xlabel('Similarity score')
+    plt.ylabel('Frequency')
+    plt.title('Histogram of reaction similarity scores')
+    plt.show()
+
+    plot_kde(scores, y_scale=None)
+    plt.show()
+
+    plot_kde(scores_atlas, y_scale=None)
+    plt.show()
+
 
 
 def test_atom_tracking_convert():
