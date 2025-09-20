@@ -25,16 +25,17 @@ def get_working_cids(data_c):
 
 
 def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
-                                     out_file='CBRdb_C_formation_energies.csv',
+                                     out_file='CBRdb_C_formation_energies.csv.gz',
                                      compact_output=True,
                                      run_physiological=True):
+    print('Reading CBRdb compound data...', flush=True)
     data_c = pd.read_csv(in_file, low_memory=False)
 
     # Make a new dataframe with only the compound_id and name columns
     data_c = pd.DataFrame(data_c['compound_id'])
     # Get the working compound list
     data_c = get_working_cids(data_c)
-
+    print(f'Calculating formation energies for {len(data_c)} compounds...', flush=True)
     cc = ComponentContribution()
     cc.p_h = Q_(7.0)
     cc.p_mg = Q_(10.0)
@@ -50,12 +51,13 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
 
     # Calculate the standard error from the sigmas
     data_c['std_dgf_error'] = data_c.apply(lambda row: err_from_sig(row['sigma_fin'], row['sigma_inf']), axis=1)
-
+    print('First 10 formation energies:', flush=True)
     for i in range(10):
         print(
             f"{data_c['compound_id'][i]}: {data_c['std_dgf'][i]:.2f} ± {data_c['std_dgf_error'][i]:.2f} kJ/mol")
 
     if run_physiological:
+        print('Calculating formation energies under physiological conditions...', flush=True)
         cc = ComponentContribution()
         cc.p_h = Q_(7.5)
         cc.p_mg = Q_(3.0)
@@ -71,6 +73,7 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
         # Calculate the standard error from the sigmas
         data_c['std_dgf_p_error'] = data_c.apply(lambda row: err_from_sig(row['sigma_fin_p'], row['sigma_inf_p']),
                                                  axis=1)
+        print('First 10 formation energies:', flush=True)
         for i in range(10):
             print(
                 f"{data_c['compound_id'][i]}: {data_c['std_dgf_p'][i]:.2f} ± {data_c['std_dgf_p_error'][i]:.2f} kJ/mol")
@@ -83,10 +86,12 @@ def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
         data_c = data_c[cols_to_keep]
 
     # Save the results to a CSV file
-    print(f'Saving results to {out_file}', )
-    print(f'Calculated formation energies for {len(data_c)} compounds.')
-    data_c.to_csv(out_file, index=False)
-    return data_c
+    print(f'Saving results to {out_file}', flush=True)
+    print(f'Calculated formation energies for {len(data_c)} compounds.', flush=True)
+    data_c.to_csv(out_file, index=False, compression='gzip')
+    print('Done.', flush=True)
+    print(flush=True)
+    return None
 
 
 def get_rev_index(cc, r):
@@ -106,11 +111,12 @@ def get_std_dg(cc, data_r):
         return None, None
 
 
-def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
+def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz',
                                     in_file_r='../CBRdb_R.csv',
-                                    out_file='CBRdb_R_reaction_energies.csv',
+                                    out_file='CBRdb_R_reaction_energies.csv.gz',
                                     compact_output=True,
                                     run_physiological=True):
+    print('Reading CBRdb reaction data...', flush=True)
     # Load the compound and reaction data
     data_c = pd.read_csv(in_file_c, low_memory=False)
     data_r = pd.read_csv(in_file_r, low_memory=False)
@@ -134,12 +140,22 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
     print(f'Pruning {data_r["prunable"].sum()} reactions that contain unknown compounds.', flush=True)
     data_r = data_r[~data_r['prunable']]
     data_r = data_r.reset_index(drop=True)
-    print(f'After pruning, {len(data_r)} reactions remain.')
+    print(f'After pruning, {len(data_r)} reactions remain.', flush=True)
 
     # Drop rows where the equation has an n, m or x (unknown stoichiometry)
     data_r = data_r[~data_r['reaction'].str.contains(r'[nmx]')]
     data_r = data_r.reset_index(drop=True)
-    print(f'After removing reactions with unknown stoichiometry, {len(data_r)} reactions remain.')
+    # Drop rows where the equation is NaN or empty
+    data_r = data_r.dropna(subset=['reaction'])
+    # Drop rows that do not contain a valid reaction arrow
+    data_r = data_r[data_r['reaction'].str.contains(r'<=>')]
+    data_r = data_r.reset_index(drop=True)
+    # count the number of 'C' in each reaction and drop rows with less than 2
+    data_r = data_r[data_r['reaction'].str.count('C') >= 2]
+    data_r = data_r.reset_index(drop=True)
+
+    data_r = data_r.head(1_000)
+    print(f'After removing unworkable or incomplete. {len(data_r)} reactions remain.', flush=True)
 
     # Fix the formatting
     data_r['kegg_reaction'] = data_r['reaction'].apply(
@@ -154,15 +170,19 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
     func_rev_idx = partial(get_rev_index, cc)
     data_r['cc_reac'] = data_r['kegg_reaction'].apply(lambda r: cc.parse_reaction_formula(r))
     data_r['rev_index'] = data_r['cc_reac'].apply(lambda r: func_rev_idx(r))
+
     # Drop rows where rev_index is None
     data_r = data_r.dropna(subset=['rev_index'])
     data_r = data_r.reset_index(drop=True)
+
     data_r['std_dg'], data_r['std_dg_error'] = get_std_dg(cc, data_r)
+    print('First 10 reaction energies:', flush=True)
     for i in range(10):
         print(
-            f"{data_r['id'][i]}: {data_r['std_dg'][i]:.2f} ± {data_r['s+td_dg_error'][i]:.2f} kJ/mol")
+            f"{data_r['id'][i]}: {data_r['std_dg'][i]:.2f} ± {data_r['std_dg_error'][i]:.2f} kJ/mol")
 
     if run_physiological:
+        print('Calculating reaction energies under physiological conditions...', flush=True)
         cc = ComponentContribution()
         cc.p_h = Q_(7.5)
         cc.p_mg = Q_(3.0)
@@ -171,10 +191,12 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
         func_rev_idx = partial(get_rev_index, cc)
         data_r['cc_reac'] = data_r['kegg_reaction'].apply(lambda r: cc.parse_reaction_formula(r))
         data_r['rev_index_p'] = data_r['cc_reac'].apply(lambda r: func_rev_idx(r))
+
         # Drop rows where rev_index_p is None
         data_r = data_r.dropna(subset=['rev_index_p'])
         data_r = data_r.reset_index(drop=True)
         data_r['std_dg_p'], data_r['std_dg_p_error'] = get_std_dg(cc, data_r)
+        print('First 10 reaction energies:', flush=True)
         for i in range(10):
             print(
                 f"{data_r['id'][i]}: {data_r['std_dg_p'][i]:.2f} ± {data_r['std_dg_p_error'][i]:.2f} kJ/mol")
@@ -185,11 +207,14 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv',
         if run_physiological:
             cols_to_keep += ['std_dg_p', 'std_dg_p_error', 'rev_index_p']
         data_r = data_r[cols_to_keep]
+
     # Save the results to a CSV file
     print(f'Saving results to {out_file}', flush=True)
     print(f'Calculated reaction energies for {len(data_r)} reactions.', flush=True)
-    data_r.to_csv(out_file, index=False)
-    return data_r
+    data_r.to_csv(out_file, index=False, compression='gzip')
+    print('Done.', flush=True)
+    print(flush=True)
+    return None
 
 
 if __name__ == "__main__":
