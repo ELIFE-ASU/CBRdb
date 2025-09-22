@@ -1169,30 +1169,30 @@ def test_find_close():
     eq_list = data_r['reaction'].tolist()
     data_r['smarts'] = CBRdb.mp_calc(func_smarts, eq_list)
 
-    # only select the reactions where the id starts with 'R'
+    # Only select the reactions where the id starts with 'R'
     sel = data_r['id'].str.startswith('R')
+    # Split the data into KEGG and ATLAS reactions
     data_r_atlas = data_r[~sel]
-    data_r = data_r[sel]
-    # select everything else
+    data_r_kegg = data_r[sel]
 
     # print the number of reactions
-    print(f"Number of reactions (KEGG) : {len(data_r)}")
+    print(f"Number of reactions (KEGG) : {len(data_r_kegg)}")
     print(f"Number of reactions (ATLAS): {len(data_r_atlas)}")
 
     print('find_similar_reactions')
-    smarts_list = data_r['smarts'].tolist()
+    smarts_list = data_r_kegg['smarts'].tolist()
     smarts_0 = smarts_list[0]
-    scores = find_similar_reactions(smarts_0, smarts_list)
+    scores_kegg = find_similar_reactions(smarts_0, smarts_list)
 
-    smarts_list_atlas = data_r_atlas['smarts'].tolist()
-    scores_atlas = find_similar_reactions(smarts_0, smarts_list_atlas)
+    smarts_list = data_r_atlas['smarts'].tolist()
+    scores_atlas = find_similar_reactions(smarts_0, smarts_list)
 
-    print(f"Max similarity score (KEGG) : {max(scores)}")
+    print(f"Max similarity score (KEGG) : {max(scores_kegg)}")
     print(f"Max similarity score (ATLAS): {max(scores_atlas)}")
-    print(f"Min similarity score (KEGG) : {min(scores)}")
+    print(f"Min similarity score (KEGG) : {min(scores_kegg)}")
     print(f"Min similarity score (ATLAS): {min(scores_atlas)}")
 
-    plt.hist(scores, bins=50, alpha=0.5, label='KEGG')
+    plt.hist(scores_kegg, bins=50, alpha=0.5, label='KEGG')
     plt.legend()
     plt.xlabel('Similarity score')
     plt.ylabel('Frequency')
@@ -1206,7 +1206,7 @@ def test_find_close():
     plt.title('Histogram of reaction similarity scores')
     plt.show()
 
-    plot_kde(scores, y_scale=None)
+    plot_kde(scores_kegg, y_scale=None)
     plt.show()
 
     plot_kde(scores_atlas, y_scale=None)
