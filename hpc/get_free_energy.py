@@ -1,7 +1,9 @@
+from functools import partial
+
 import numpy as np
 import pandas as pd
 from equilibrator_api import ComponentContribution, Q_
-from functools import partial
+
 import CBRdb
 
 
@@ -24,10 +26,10 @@ def get_working_cids(data_c):
     return data_c
 
 
-def compound_get_energy_of_formation(in_file='../CBRdb_C.csv',
-                                     out_file='CBRdb_C_formation_energies.csv.gz',
-                                     compact_output=True,
-                                     run_physiological=True):
+def get_energy_of_formation(in_file='../CBRdb_C.csv',
+                            out_file='CBRdb_C_formation_energies.csv.gz',
+                            compact_output=True,
+                            run_physiological=True):
     print('Reading CBRdb compound data...', flush=True)
     data_c = pd.read_csv(in_file, low_memory=False)
 
@@ -111,16 +113,7 @@ def get_std_dg(cc, data_r):
         return None, None
 
 
-def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz',
-                                    in_file_r='../CBRdb_R.csv',
-                                    out_file='CBRdb_R_reaction_energies.csv.gz',
-                                    compact_output=True,
-                                    run_physiological=True):
-    print('Reading CBRdb reaction data...', flush=True)
-    # Load the compound and reaction data
-    data_c = pd.read_csv(in_file_c, low_memory=False)
-    data_r = pd.read_csv(in_file_r, low_memory=False)
-
+def prepare_reaction_data(data_r, data_c):
     # Trim them down to only the necessary columns
     data_r = pd.DataFrame(data_r[['id', 'reaction']])
 
@@ -154,32 +147,29 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz
     data_r = data_r[data_r['reaction'].str.count('C') >= 2]
     data_r = data_r.reset_index(drop=True)
 
-    data_r = data_r.head(1_000)
     print(f'After removing unworkable or incomplete. {len(data_r)} reactions remain.', flush=True)
 
     # Fix the formatting
     data_r['kegg_reaction'] = data_r['reaction'].apply(
         lambda eq: eq.replace('C', 'kegg:C').replace('<=>', '=')
     )
+    return data_r
+
+
+def _get_energy_of_reaction(data_r, run_physiological=True):
     # Apply to get the eq cc format
     cc = ComponentContribution()
     cc.p_h = Q_(7.0)
     cc.p_mg = Q_(10.0)
     cc.ionic_strength = Q_(0.25, "M")
     cc.temperature = Q_(298.15, "K")
+    print('Calculating reversibility for standard conditions...', flush=True)
     func_rev_idx = partial(get_rev_index, cc)
     data_r['cc_reac'] = data_r['kegg_reaction'].apply(lambda r: cc.parse_reaction_formula(r))
     data_r['rev_index'] = data_r['cc_reac'].apply(lambda r: func_rev_idx(r))
 
-    # Drop rows where rev_index is None
-    data_r = data_r.dropna(subset=['rev_index'])
-    data_r = data_r.reset_index(drop=True)
-
+    print(f'Calculating reaction energies for {len(data_r)} reactions...', flush=True)
     data_r['std_dg'], data_r['std_dg_error'] = get_std_dg(cc, data_r)
-    print('First 10 reaction energies:', flush=True)
-    for i in range(10):
-        print(
-            f"{data_r['id'][i]}: {data_r['std_dg'][i]:.2f} ± {data_r['std_dg_error'][i]:.2f} kJ/mol")
 
     if run_physiological:
         print('Calculating reaction energies under physiological conditions...', flush=True)
@@ -188,18 +178,49 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz
         cc.p_mg = Q_(3.0)
         cc.ionic_strength = Q_(0.25, "M")
         cc.temperature = Q_(298.15, "K")
+        print('Calculating reversibility indices under physiological conditions...', flush=True)
         func_rev_idx = partial(get_rev_index, cc)
         data_r['cc_reac'] = data_r['kegg_reaction'].apply(lambda r: cc.parse_reaction_formula(r))
         data_r['rev_index_p'] = data_r['cc_reac'].apply(lambda r: func_rev_idx(r))
 
-        # Drop rows where rev_index_p is None
-        data_r = data_r.dropna(subset=['rev_index_p'])
-        data_r = data_r.reset_index(drop=True)
+        print(f'Calculating reaction energies for {len(data_r)} reactions...', flush=True)
         data_r['std_dg_p'], data_r['std_dg_p_error'] = get_std_dg(cc, data_r)
-        print('First 10 reaction energies:', flush=True)
-        for i in range(10):
-            print(
-                f"{data_r['id'][i]}: {data_r['std_dg_p'][i]:.2f} ± {data_r['std_dg_p_error'][i]:.2f} kJ/mol")
+    return data_r
+
+
+def get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz',
+                           in_file_r='../CBRdb_R.csv',
+                           out_file='CBRdb_R_reaction_energies.csv.gz',
+                           compact_output=True,
+                           run_physiological=True):
+    print('Reading CBRdb reaction data...', flush=True)
+
+    # Load the compound and reaction data
+    data_c = pd.read_csv(in_file_c, low_memory=False)
+    data_r = pd.read_csv(in_file_r, low_memory=False)
+
+    data_r_full = prepare_reaction_data(data_r, data_c)
+    total_reactions = len(data_r_full)
+    total_segments = 10
+    segment_size = total_reactions // total_segments
+    print(segment_size)
+
+    # Process each segment sequentially otherwise we run out of memory
+    all_results = []
+    for i in range(total_segments):
+        print(f"Processing segment {i + 1}/{total_segments}", flush=True)
+        # Select the segment
+        start_idx = i * segment_size
+        end_idx = (i + 1) * segment_size if i < total_segments - 1 else total_reactions
+        seg_r = data_r_full.iloc[start_idx:end_idx].reset_index(drop=True)
+
+        # Process the segment
+        segment_results = _get_energy_of_reaction(seg_r, run_physiological=run_physiological)
+        all_results.append(segment_results)
+        print(flush=True)
+
+    # Join the data
+    data_r = pd.concat(all_results, ignore_index=True)
 
     if compact_output:
         # Keep only relevant columns
@@ -219,5 +240,5 @@ def reaction_get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz
 
 if __name__ == "__main__":
     print(flush=True)
-    compound_get_energy_of_formation()
-    reaction_get_energy_of_reaction()
+    get_energy_of_formation()
+    get_energy_of_reaction()
