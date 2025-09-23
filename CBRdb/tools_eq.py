@@ -655,7 +655,7 @@ def generate_reaction_dupemap(df, prefix="T"):
 
 def standardise_eq(eq):
     """
-    Standardise the equation by sorting the reactants and products.
+    Standardise the equation by sorting the reactants and products, then sorting sides.
 
     Parameters:
     eq (str): The equation to be standardised.
@@ -664,7 +664,9 @@ def standardise_eq(eq):
     str: The standardised equation.
     """
     reactants, products = eq_to_dict(eq)
-    return dicts_to_eq(sort_dict_by_keys(reactants), sort_dict_by_keys(products))
+    ieq = dicts_to_eq(sort_dict_by_keys(reactants), sort_dict_by_keys(products))
+    ieq = ' <=> '.join(sorted(ieq.split(' <=> ')))
+    return ieq
 
 
 def contains_var_list(reactants, products, var_list=None):
