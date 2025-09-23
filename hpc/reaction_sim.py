@@ -3,10 +3,9 @@ from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.stats import gaussian_kde
-
 from rdkit.Chem import rdChemReactions
 from rdkit.DataStructs import TanimotoSimilarity
+from scipy.stats import gaussian_kde
 
 import CBRdb
 
@@ -84,19 +83,78 @@ def plot_kde(
     return fig, ax
 
 
+def plot_histogram(data,
+                   bins=30,
+                   xlab='Best Similarity score',
+                   ylab='Frequency',
+                   figsize=(8, 5),
+                   fontsize=16,
+                   ):
+    """
+    Plots a histogram for the given data.
+
+    Parameters:
+    data (list or array-like): The data to be plotted in the histogram.
+    bins (int, optional): Number of bins for the histogram. Default is 30.
+    xlab (str, optional): Label for the x-axis. Default is 'Values'.
+    ylab (str, optional): Label for the y-axis. Default is 'Frequency'.
+    figsize (tuple, optional): Size of the figure in inches (width, height). Default is (8, 6).
+    fontsize (int, optional): Font size for axis labels. Default is 16.
+
+    Returns:
+    tuple: A tuple containing the Matplotlib figure and axis objects (fig, ax).
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+    plt.hist(data, bins=bins, color='blue', edgecolor='black', alpha=0.8)
+    ax_plot(fig, ax, xlab=xlab, ylab=ylab, xs=fontsize, ys=fontsize)
+    return fig, ax
+
+
 def get_fingerprint(smarts):
     # CreateDifferenceFingerprintForReaction
-    return rdChemReactions.CreateStructuralFingerprintForReaction(
-        rdChemReactions.ReactionFromSmarts(smarts, useSmiles=True))
+    reaction = rdChemReactions.ReactionFromSmarts(smarts, useSmiles=True)
+    return rdChemReactions.CreateDifferenceFingerprintForReaction(reaction)
 
 
 def _find_minmax_similar_reactions(query_reaction, reaction_list):
-    similarities = [TanimotoSimilarity(query_reaction, rxn) for rxn in reaction_list]
+    similarities = [TanimotoSimilarity(query_reaction, r) for r in reaction_list]
     max_value = max(similarities)
     return max_value, similarities.index(max_value)
 
 
+def tanimoto_batch(query_bits: np.ndarray, db_bits: np.ndarray):
+    # all inputs are {0,1} arrays; returns vector of similarities
+    inter = (db_bits & query_bits).sum(axis=1)
+    a = query_bits.sum()
+    b = db_bits.sum(axis=1)
+    denom = (a + b - inter)
+    # avoid divide by zero if both are all-zero (rare with DRFP)
+    return np.where(denom > 0, inter / denom, 0.0)
+
+
 if __name__ == "__main__":
+    from drfp import DrfpEncoder
+    from rdkit import DataStructs
+
+    quer_rxn = "CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1"
+
+    rxn_smiles_list = ["CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
+                       "CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1"]
+    fps_db = DrfpEncoder.encode(rxn_smiles_list)
+    fp_query = DrfpEncoder.encode(quer_rxn)
+
+    # convert to numpy arrays
+    fps_db = np.asarray(fps_db)
+    fp_query = np.asarray(fp_query)
+
+    tmp = tanimoto_batch(fp_query, fps_db)
+    print(tmp)
+
+    # sim = DataStructs.TanimotoSimilarity(fps[0], fps[1])
+    # print(sim)
+
+    exit()
+
     print(flush=True)
     data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
     data_r = pd.read_csv('../CBRdb_R.csv', low_memory=False)
@@ -126,7 +184,6 @@ if __name__ == "__main__":
     fp_kegg = data_r_kegg['fp_struct'].tolist()
     fp_atlas = data_r_atlas['fp_struct'].tolist()
 
-
     func_sim = partial(_find_minmax_similar_reactions, reaction_list=fp_kegg)
     sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
 
@@ -141,17 +198,15 @@ if __name__ == "__main__":
     print("Lowest 10 similarity scores:", flush=True)
     print(data_r_atlas.nsmallest(10, 'sim_max')[['id', 'sim_max', 'sim_max_id']], flush=True)
 
-
-    plt.hist(sim_max, bins=50, alpha=0.5)
-    plt.xlabel('Best Similarity score')
-    plt.ylabel('Frequency')
+    plot_histogram(sim_max)
+    plt.savefig('ATLAS_R_sim_hist.png', dpi=300)
+    plt.savefig('ATLAS_R_sim_hist.pdf', dpi=300)
     plt.show()
 
-    plt.hist(sim_max, bins=50, alpha=0.5)
-    plt.xlabel('Best Similarity score')
-    plt.ylabel('Frequency')
-    # make y axis log scale
+    plot_histogram(sim_max)
     plt.yscale('log')
+    plt.savefig('ATLAS_R_sim_log_hist.png', dpi=300)
+    plt.savefig('ATLAS_R_sim_log_hist.pdf', dpi=300)
     plt.show()
 
     data_r_atlas.to_csv('ATLAS_R_sim.csv.gz', index=False, compression='gzip')
