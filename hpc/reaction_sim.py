@@ -5,6 +5,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde
 
+from rdkit.Chem import rdChemReactions
+from rdkit.DataStructs import TanimotoSimilarity
+
 import CBRdb
 
 
@@ -81,17 +84,14 @@ def plot_kde(
     return fig, ax
 
 
-def find_similar_reactions(query_reaction, reaction_list):
-    func_sim = partial(CBRdb.get_reaction_similarity, query_reaction)
-    similarities = CBRdb.mp_calc(func_sim, reaction_list)
-    # Sort by similarity score in descending order
-    similarities.sort(key=lambda x: x, reverse=True)
-    return similarities
+def get_fingerprint(smarts):
+    # CreateDifferenceFingerprintForReaction
+    return rdChemReactions.CreateStructuralFingerprintForReaction(
+        rdChemReactions.ReactionFromSmarts(smarts, useSmiles=True))
 
 
-def find_minmax_similar_reactions(query_reaction, reaction_list):
-    func_sim = partial(CBRdb.get_reaction_similarity, query_reaction)
-    similarities = CBRdb.mp_calc(func_sim, reaction_list)
+def _find_minmax_similar_reactions(query_reaction, reaction_list):
+    similarities = [TanimotoSimilarity(query_reaction, rxn) for rxn in reaction_list]
     return min(similarities), max(similarities)
 
 
@@ -100,12 +100,17 @@ if __name__ == "__main__":
     data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
     data_r = pd.read_csv('../CBRdb_R.csv', low_memory=False)
 
-    print("Generating SMARTS for reactions...")
+    # Trim them down to only the necessary columns
+    data_r = pd.DataFrame(data_r[['id', 'reaction']])
+
     # if the smarts column does not exist, create it
     if 'smarts' not in data_r.columns:
+        print("Generating SMARTS for reactions...", flush=True)
         func_smarts = partial(CBRdb.to_smarts_rxn_line, data_c=data_c, add_stoich=False)
-        eq_list = data_r['reaction'].tolist()
-        data_r['smarts'] = CBRdb.mp_calc(func_smarts, eq_list)
+        data_r['smarts'] = CBRdb.mp_calc(func_smarts, data_r['reaction'].tolist())
+
+    print("Generating fingerprints for reactions...", flush=True)
+    data_r['fp_struct'] = CBRdb.mp_calc(get_fingerprint, data_r['smarts'].tolist())
 
     # Only select the reactions where the id starts with 'R'
     sel = data_r['id'].str.startswith('R')
@@ -117,45 +122,24 @@ if __name__ == "__main__":
     print(f"Number of reactions (KEGG) : {len(data_r_kegg)}")
     print(f"Number of reactions (ATLAS): {len(data_r_atlas)}")
 
-    smarts_list_kegg = data_r_kegg['smarts'].tolist()
-    smarts_list_atlas = data_r_atlas['smarts'].tolist()
+    fp_kegg = data_r_kegg['fp_struct'].tolist()
+    fp_atlas = data_r_atlas['fp_struct'].tolist()
 
-    n = 100
-    sim_min = np.zeros(n)
-    sim_max = np.zeros(n)
-    for i in range(n):
-        print(f"Processing reaction {i + 1}/{n}")
-        sim_min[i], sim_max[i] = find_minmax_similar_reactions(smarts_list_atlas[i], smarts_list_kegg)
+    n = 50_000
+
+    func_sim = partial(_find_minmax_similar_reactions, reaction_list=fp_kegg)
+    sim_min, sim_max = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
+
+    # sim_min, sim_max = zip(*(_find_minmax_similar_reactions(fp_atlas[i], fp_kegg) for i in range(n)))
 
     plt.hist(sim_max, bins=50, alpha=0.5)
-    plt.xlabel('Similarity score')
+    plt.xlabel('Best Similarity score')
     plt.ylabel('Frequency')
     plt.show()
 
-    # smarts_list = data_r_atlas['smarts'].tolist()
-    # scores_atlas = find_similar_reactions(smarts_0, smarts_list)
-    #
-    # print(f"Max similarity score (KEGG) : {max(scores_kegg)}")
-    # print(f"Max similarity score (ATLAS): {max(scores_atlas)}")
-    # print(f"Min similarity score (KEGG) : {min(scores_kegg)}")
-    # print(f"Min similarity score (ATLAS): {min(scores_atlas)}")
-    #
-    # plt.hist(scores_kegg, bins=50, alpha=0.5, label='KEGG')
-    # plt.legend()
-    # plt.xlabel('Similarity score')
-    # plt.ylabel('Frequency')
-    # plt.title('Histogram of reaction similarity scores')
-    # plt.show()
-    #
-    # plt.hist(scores_atlas, bins=50, alpha=0.5, label='ATLAS')
-    # plt.legend()
-    # plt.xlabel('Similarity score')
-    # plt.ylabel('Frequency')
-    # plt.title('Histogram of reaction similarity scores')
-    # plt.show()
-    #
-    # plot_kde(scores_kegg, y_scale=None)
-    # plt.show()
-    #
-    # plot_kde(scores_atlas, y_scale=None)
-    # plt.show()
+    plt.hist(sim_max, bins=50, alpha=0.5)
+    plt.xlabel('Best Similarity score')
+    plt.ylabel('Frequency')
+    # make y axis log scale
+    plt.yscale('log')
+    plt.show()
