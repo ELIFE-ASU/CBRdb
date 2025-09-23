@@ -92,7 +92,8 @@ def get_fingerprint(smarts):
 
 def _find_minmax_similar_reactions(query_reaction, reaction_list):
     similarities = [TanimotoSimilarity(query_reaction, rxn) for rxn in reaction_list]
-    return min(similarities), max(similarities)
+    max_value = max(similarities)
+    return max_value, similarities.index(max_value)
 
 
 if __name__ == "__main__":
@@ -125,12 +126,21 @@ if __name__ == "__main__":
     fp_kegg = data_r_kegg['fp_struct'].tolist()
     fp_atlas = data_r_atlas['fp_struct'].tolist()
 
-    n = 50_000
 
     func_sim = partial(_find_minmax_similar_reactions, reaction_list=fp_kegg)
-    sim_min, sim_max = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
+    sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
 
-    # sim_min, sim_max = zip(*(_find_minmax_similar_reactions(fp_atlas[i], fp_kegg) for i in range(n)))
+    # convert the idx into the corresponding reaction id
+    sim_max_id = [data_r_kegg.iloc[idx]['id'] for idx in sim_max_idx]
+
+    # add the results to the atlas dataframe
+    data_r_atlas['sim_max'] = sim_max
+    data_r_atlas['sim_max_id'] = sim_max_id
+
+    # Print the lowest 10 similarity scores
+    print("Lowest 10 similarity scores:", flush=True)
+    print(data_r_atlas.nsmallest(10, 'sim_max')[['id', 'sim_max', 'sim_max_id']], flush=True)
+
 
     plt.hist(sim_max, bins=50, alpha=0.5)
     plt.xlabel('Best Similarity score')
@@ -143,3 +153,7 @@ if __name__ == "__main__":
     # make y axis log scale
     plt.yscale('log')
     plt.show()
+
+    data_r_atlas.to_csv('ATLAS_R_sim.csv.gz', index=False, compression='gzip')
+    print('Done.', flush=True)
+    print(flush=True)
