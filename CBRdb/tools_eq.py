@@ -1142,6 +1142,20 @@ def get_eq_all_cids(eq):
 
 
 def get_rxn_fingerprint(smarts, method='difference'):
+    """
+    Generates a reaction fingerprint from a SMARTS reaction string.
+
+    Parameters:
+    smarts (str): The SMARTS string representing the reaction.
+    method (str, optional): The method to use for generating the fingerprint.
+                            Options are 'difference' (default) or 'structural'.
+
+    Returns:
+    rdkit.DataStructs.cDataStructs.ExplicitBitVect: The generated reaction fingerprint.
+
+    Raises:
+    ValueError: If an unknown method is provided.
+    """
     reaction = rdChemReactions.ReactionFromSmarts(smarts, useSmiles=True)
     if method == 'difference':
         return rdChemReactions.CreateDifferenceFingerprintForReaction(reaction)
@@ -1152,26 +1166,79 @@ def get_rxn_fingerprint(smarts, method='difference'):
 
 
 def find_max_similar_rxn(rxn_query, rxn_db):
+    """
+    Finds the reaction in the database that is most similar to the query reaction.
+
+    Parameters:
+    rxn_query (rdkit.DataStructs.cDataStructs.ExplicitBitVect): The fingerprint of the query reaction.
+    rxn_db (list of rdkit.DataStructs.cDataStructs.ExplicitBitVect): A list of fingerprints representing the reactions in the database.
+
+    Returns:
+    tuple: A tuple containing:
+           - max_value (float): The maximum Tanimoto similarity score.
+           - index (int): The index of the reaction in the database with the highest similarity score.
+    """
     similarities = [TanimotoSimilarity(rxn_query, r) for r in rxn_db]
     max_value = max(similarities)
     return max_value, similarities.index(max_value)
 
 
 def get_rxn_fingerprint_drfp(smarts_list):
+    """
+    Generates reaction fingerprints using the DRFP (Differentiable Reaction Fingerprint) encoder.
+
+    Parameters:
+    smarts_list (list of str): A list of SMARTS strings representing the reactions.
+
+    Returns:
+    numpy.ndarray: A NumPy array containing the encoded reaction fingerprints.
+    """
     return np.asarray(DrfpEncoder.encode(smarts_list))
 
 
 def tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
-    # all inputs are {0,1} arrays; returns vector of similarities
+    """
+    Computes the Tanimoto similarity between a query fingerprint and a database of fingerprints.
+
+    Parameters:
+    query_bits (np.ndarray): A binary NumPy array representing the query fingerprint.
+    db_bits (np.ndarray): A binary NumPy array where each row represents a fingerprint in the database.
+
+    Returns:
+    np.ndarray: A NumPy array containing the Tanimoto similarity scores for the query fingerprint
+                against each fingerprint in the database.
+
+    Notes:
+    - All inputs are binary arrays ({0, 1}).
+    - The Tanimoto similarity is calculated as the ratio of the intersection size to the union size.
+    - Handles cases where both fingerprints are all-zero to avoid division by zero.
+    """
+    # Compute the intersection of bits between the query and each database fingerprint
     inter = (db_bits & query_bits).sum(axis=1)
+    # Compute the sum of bits in the query fingerprint
     a = query_bits.sum()
+    # Compute the sum of bits in each database fingerprint
     b = db_bits.sum(axis=1)
+    # Compute the denominator as the union size
     denom = (a + b - inter)
-    # avoid divide by zero if both are all-zero (rare with DRFP)
+    # Avoid division by zero for all-zero fingerprints and compute the similarity
     return np.where(denom > 0, inter / denom, 0.0)
 
 
 def find_max_similar_rxn_drfp(rxn_query, rxn_db):
+    """
+    Finds the reaction in the database that is most similar to the query reaction
+    using the DRFP (Differentiable Reaction Fingerprint) encoder.
+
+    Parameters:
+    rxn_query (np.ndarray): A binary NumPy array representing the query reaction fingerprint.
+    rxn_db (np.ndarray): A binary NumPy array where each row represents a reaction fingerprint in the database.
+
+    Returns:
+    tuple: A tuple containing:
+           - max_value (float): The maximum Tanimoto similarity score.
+           - max_idx (int): The index of the reaction in the database with the highest similarity score.
+    """
     similarities = tanimoto_batch_drfp(rxn_query, rxn_db)
     max_idx = np.argmax(similarities)
     max_value = similarities[max_idx]
