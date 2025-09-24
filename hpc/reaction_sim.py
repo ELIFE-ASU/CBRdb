@@ -6,7 +6,7 @@ import pandas as pd
 from rdkit.Chem import rdChemReactions
 from rdkit.DataStructs import TanimotoSimilarity
 from scipy.stats import gaussian_kde
-
+from drfp import DrfpEncoder
 import CBRdb
 
 
@@ -116,8 +116,8 @@ def get_fingerprint(smarts):
     return rdChemReactions.CreateDifferenceFingerprintForReaction(reaction)
 
 
-def _find_minmax_similar_reactions(query_reaction, reaction_list):
-    similarities = [TanimotoSimilarity(query_reaction, r) for r in reaction_list]
+def find_minmax_similar_reactions(rxn_query, rxn_db):
+    similarities = [TanimotoSimilarity(rxn_query, r) for r in rxn_db]
     max_value = max(similarities)
     return max_value, similarities.index(max_value)
 
@@ -132,26 +132,28 @@ def tanimoto_batch(query_bits: np.ndarray, db_bits: np.ndarray):
     return np.where(denom > 0, inter / denom, 0.0)
 
 
+def find_minmax_similar_reactions_drfp(rxn_query, rxn_db):
+    similarities = tanimoto_batch(rxn_query, rxn_db)
+    max_idx = np.argmax(similarities)
+    max_value = similarities[max_idx]
+    return max_value, int(max_idx)
+
+
 if __name__ == "__main__":
-    from drfp import DrfpEncoder
-    from rdkit import DataStructs
 
-    quer_rxn = "CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1"
+    rxn_query = "CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1"
 
-    rxn_smiles_list = ["CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
-                       "CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1"]
-    fps_db = DrfpEncoder.encode(rxn_smiles_list)
-    fp_query = DrfpEncoder.encode(quer_rxn)
-
-    # convert to numpy arrays
-    fps_db = np.asarray(fps_db)
-    fp_query = np.asarray(fp_query)
+    rxn_db = ["CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
+              "CC.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
+              "CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1"]
+    fps_db = np.asarray(DrfpEncoder.encode(rxn_db))
+    fp_query = np.asarray(DrfpEncoder.encode(rxn_query))
 
     tmp = tanimoto_batch(fp_query, fps_db)
     print(tmp)
 
-    # sim = DataStructs.TanimotoSimilarity(fps[0], fps[1])
-    # print(sim)
+    tmp = find_minmax_similar_reactions_drfp(fp_query, fps_db)
+    print(tmp)
 
     exit()
 
@@ -184,7 +186,7 @@ if __name__ == "__main__":
     fp_kegg = data_r_kegg['fp_struct'].tolist()
     fp_atlas = data_r_atlas['fp_struct'].tolist()
 
-    func_sim = partial(_find_minmax_similar_reactions, reaction_list=fp_kegg)
+    func_sim = partial(find_minmax_similar_reactions, rxn_db=fp_kegg)
     sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
 
     # convert the idx into the corresponding reaction id
