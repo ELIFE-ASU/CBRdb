@@ -144,5 +144,8 @@ from .tools_mp import (mp_calc,
                        tp_calc,
                        write_to_shared_file,
                        )
+from .tools_plots import (ax_plot,
+                          plot_kde,
+                          plot_histogram)
 
 __version__ = "1.4.0"
