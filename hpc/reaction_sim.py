@@ -110,33 +110,7 @@ def plot_histogram(data,
     return fig, ax
 
 
-def get_fingerprint(smarts):
-    # CreateDifferenceFingerprintForReaction
-    reaction = rdChemReactions.ReactionFromSmarts(smarts, useSmiles=True)
-    return rdChemReactions.CreateDifferenceFingerprintForReaction(reaction)
 
-
-def find_minmax_similar_reactions(rxn_query, rxn_db):
-    similarities = [TanimotoSimilarity(rxn_query, r) for r in rxn_db]
-    max_value = max(similarities)
-    return max_value, similarities.index(max_value)
-
-
-def tanimoto_batch(query_bits: np.ndarray, db_bits: np.ndarray):
-    # all inputs are {0,1} arrays; returns vector of similarities
-    inter = (db_bits & query_bits).sum(axis=1)
-    a = query_bits.sum()
-    b = db_bits.sum(axis=1)
-    denom = (a + b - inter)
-    # avoid divide by zero if both are all-zero (rare with DRFP)
-    return np.where(denom > 0, inter / denom, 0.0)
-
-
-def find_minmax_similar_reactions_drfp(rxn_query, rxn_db):
-    similarities = tanimoto_batch(rxn_query, rxn_db)
-    max_idx = np.argmax(similarities)
-    max_value = similarities[max_idx]
-    return max_value, int(max_idx)
 
 
 if __name__ == "__main__":
@@ -146,13 +120,19 @@ if __name__ == "__main__":
     rxn_db = ["CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
               "CC.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
               "CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1"]
-    fps_db = np.asarray(DrfpEncoder.encode(rxn_db))
-    fp_query = np.asarray(DrfpEncoder.encode(rxn_query))
+    fps_db = CBRdb.get_fingerprint_drfp(rxn_db)
+    fp_query = CBRdb.get_fingerprint_drfp(rxn_query)
 
-    tmp = tanimoto_batch(fp_query, fps_db)
+    tmp = CBRdb.tanimoto_batch(fp_query, fps_db)
     print(tmp)
 
-    tmp = find_minmax_similar_reactions_drfp(fp_query, fps_db)
+    tmp = CBRdb.find_minmax_similar_reactions_drfp(fp_query, fps_db)
+    print(tmp)
+
+    fps_db = [CBRdb.get_fingerprint(i) for i in rxn_db]
+    fps_query = CBRdb.get_fingerprint(rxn_query)
+
+    tmp = [TanimotoSimilarity(fps_query, r) for r in fps_db]
     print(tmp)
 
     exit()

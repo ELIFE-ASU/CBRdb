@@ -1,12 +1,16 @@
 import copy
 import os
 import re
+import numpy as np
 
 import chemparse
 import sympy as sp
 from chempy import balance_stoichiometry
 from rdkit import Chem
 from rdkit.Chem import Draw
+from rdkit.Chem import rdChemReactions
+from rdkit.DataStructs import TanimotoSimilarity
+from drfp import DrfpEncoder
 
 
 def strip_ionic_states(formula):
@@ -1135,3 +1139,41 @@ def get_eq_all_cids(eq):
     # sort the by alphanumeric order
     all_cids.sort()
     return all_cids
+
+
+def get_fingerprint(smarts, method='difference'):
+    # CreateDifferenceFingerprintForReaction
+    reaction = rdChemReactions.ReactionFromSmarts(smarts, useSmiles=True)
+    if method == 'difference':
+        return rdChemReactions.CreateDifferenceFingerprintForReaction(reaction)
+    elif method == 'structural':
+        return rdChemReactions.CreateStructuralFingerprintForReaction(reaction)
+    else:
+        raise ValueError(f"Unknown method: {method}")
+
+
+def find_minmax_similar_reactions(rxn_query, rxn_db):
+    similarities = [TanimotoSimilarity(rxn_query, r) for r in rxn_db]
+    max_value = max(similarities)
+    return max_value, similarities.index(max_value)
+
+
+def get_fingerprint_drfp(smarts_list):
+    return np.asarray(DrfpEncoder.encode(smarts_list))
+
+
+def find_minmax_similar_reactions_drfp(rxn_query, rxn_db):
+    similarities = tanimoto_batch(rxn_query, rxn_db)
+    max_idx = np.argmax(similarities)
+    max_value = similarities[max_idx]
+    return max_value, int(max_idx)
+
+
+def tanimoto_batch(query_bits: np.ndarray, db_bits: np.ndarray):
+    # all inputs are {0,1} arrays; returns vector of similarities
+    inter = (db_bits & query_bits).sum(axis=1)
+    a = query_bits.sum()
+    b = db_bits.sum(axis=1)
+    denom = (a + b - inter)
+    # avoid divide by zero if both are all-zero (rare with DRFP)
+    return np.where(denom > 0, inter / denom, 0.0)
