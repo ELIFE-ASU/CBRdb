@@ -110,9 +110,6 @@ def plot_histogram(data,
     return fig, ax
 
 
-
-
-
 if __name__ == "__main__":
 
     rxn_query = "CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1"
@@ -120,17 +117,17 @@ if __name__ == "__main__":
     rxn_db = ["CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
               "CC.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
               "CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1"]
-    fps_db = CBRdb.get_fingerprint_drfp(rxn_db)
-    fp_query = CBRdb.get_fingerprint_drfp(rxn_query)
+    fps_db = CBRdb.get_rxn_fingerprint_drfp(rxn_db)
+    fp_query = CBRdb.get_rxn_fingerprint_drfp(rxn_query)
 
-    tmp = CBRdb.tanimoto_batch(fp_query, fps_db)
+    tmp = CBRdb.tanimoto_batch_drfp(fp_query, fps_db)
     print(tmp)
 
-    tmp = CBRdb.find_minmax_similar_reactions_drfp(fp_query, fps_db)
+    tmp = CBRdb.find_max_similar_rxn_drfp(fp_query, fps_db)
     print(tmp)
 
-    fps_db = [CBRdb.get_fingerprint(i) for i in rxn_db]
-    fps_query = CBRdb.get_fingerprint(rxn_query)
+    fps_db = [CBRdb.get_rxn_fingerprint(i) for i in rxn_db]
+    fps_query = CBRdb.get_rxn_fingerprint(rxn_query)
 
     tmp = [TanimotoSimilarity(fps_query, r) for r in fps_db]
     print(tmp)

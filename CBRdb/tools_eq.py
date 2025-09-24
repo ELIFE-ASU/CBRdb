@@ -1141,8 +1141,7 @@ def get_eq_all_cids(eq):
     return all_cids
 
 
-def get_fingerprint(smarts, method='difference'):
-    # CreateDifferenceFingerprintForReaction
+def get_rxn_fingerprint(smarts, method='difference'):
     reaction = rdChemReactions.ReactionFromSmarts(smarts, useSmiles=True)
     if method == 'difference':
         return rdChemReactions.CreateDifferenceFingerprintForReaction(reaction)
@@ -1152,24 +1151,17 @@ def get_fingerprint(smarts, method='difference'):
         raise ValueError(f"Unknown method: {method}")
 
 
-def find_minmax_similar_reactions(rxn_query, rxn_db):
+def find_max_similar_rxn(rxn_query, rxn_db):
     similarities = [TanimotoSimilarity(rxn_query, r) for r in rxn_db]
     max_value = max(similarities)
     return max_value, similarities.index(max_value)
 
 
-def get_fingerprint_drfp(smarts_list):
+def get_rxn_fingerprint_drfp(smarts_list):
     return np.asarray(DrfpEncoder.encode(smarts_list))
 
 
-def find_minmax_similar_reactions_drfp(rxn_query, rxn_db):
-    similarities = tanimoto_batch(rxn_query, rxn_db)
-    max_idx = np.argmax(similarities)
-    max_value = similarities[max_idx]
-    return max_value, int(max_idx)
-
-
-def tanimoto_batch(query_bits: np.ndarray, db_bits: np.ndarray):
+def _tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
     # all inputs are {0,1} arrays; returns vector of similarities
     inter = (db_bits & query_bits).sum(axis=1)
     a = query_bits.sum()
@@ -1177,3 +1169,10 @@ def tanimoto_batch(query_bits: np.ndarray, db_bits: np.ndarray):
     denom = (a + b - inter)
     # avoid divide by zero if both are all-zero (rare with DRFP)
     return np.where(denom > 0, inter / denom, 0.0)
+
+
+def find_max_similar_rxn_drfp(rxn_query, rxn_db):
+    similarities = _tanimoto_batch_drfp(rxn_query, rxn_db)
+    max_idx = np.argmax(similarities)
+    max_value = similarities[max_idx]
+    return max_value, int(max_idx)
