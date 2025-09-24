@@ -13,6 +13,7 @@ from ase.vibrations import Vibrations
 from ase.visualize import view
 from mace.calculators import mace_omol
 from rdkit import Chem as Chem
+from rdkit.DataStructs import TanimotoSimilarity
 
 import CBRdb
 
@@ -1082,3 +1083,29 @@ def test_atom_tracking_convert():
     # select specific columns
     data = data[['reaction_id', 'mapped_rxns']]
     data.to_csv(out_file + '.gz', index=False, compression='gzip')
+
+
+def test_rxn_fingerprint():
+    print(flush=True)
+    rxn_query = "CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1"
+
+    rxn_db = ["CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
+              "CC.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
+              "CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1"]
+    fps_db = CBRdb.get_rxn_fingerprint_drfp(rxn_db)
+    fp_query = CBRdb.get_rxn_fingerprint_drfp(rxn_query)
+
+    tmp = CBRdb.tanimoto_batch_drfp(fp_query, fps_db)
+    print(tmp)
+    assert np.allclose([1.,         0.97619048, 0.01666667], tmp)
+
+    tmp = CBRdb.find_max_similar_rxn_drfp(fp_query, fps_db)
+    print(tmp)
+    assert np.allclose((np.float64(1.0), 0), tmp)
+
+    fps_db = [CBRdb.get_rxn_fingerprint(i) for i in rxn_db]
+    fps_query = CBRdb.get_rxn_fingerprint(rxn_query)
+
+    tmp = [TanimotoSimilarity(fps_query, r) for r in fps_db]
+    print(tmp)
+    assert np.allclose([1.0, 0.9622641509433962, 0.05319148936170213], tmp)

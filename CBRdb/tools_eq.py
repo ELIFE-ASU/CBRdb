@@ -1,16 +1,16 @@
 import copy
 import os
 import re
-import numpy as np
 
 import chemparse
+import numpy as np
 import sympy as sp
 from chempy import balance_stoichiometry
+from drfp import DrfpEncoder
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rdkit.Chem import rdChemReactions
 from rdkit.DataStructs import TanimotoSimilarity
-from drfp import DrfpEncoder
 
 
 def strip_ionic_states(formula):
@@ -1161,7 +1161,7 @@ def get_rxn_fingerprint_drfp(smarts_list):
     return np.asarray(DrfpEncoder.encode(smarts_list))
 
 
-def _tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
+def tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
     # all inputs are {0,1} arrays; returns vector of similarities
     inter = (db_bits & query_bits).sum(axis=1)
     a = query_bits.sum()
@@ -1172,7 +1172,7 @@ def _tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
 
 
 def find_max_similar_rxn_drfp(rxn_query, rxn_db):
-    similarities = _tanimoto_batch_drfp(rxn_query, rxn_db)
+    similarities = tanimoto_batch_drfp(rxn_query, rxn_db)
     max_idx = np.argmax(similarities)
     max_value = similarities[max_idx]
     return max_value, int(max_idx)

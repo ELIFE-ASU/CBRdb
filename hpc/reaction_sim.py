@@ -3,10 +3,8 @@ from functools import partial
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from rdkit.Chem import rdChemReactions
-from rdkit.DataStructs import TanimotoSimilarity
 from scipy.stats import gaussian_kde
-from drfp import DrfpEncoder
+
 import CBRdb
 
 
@@ -111,29 +109,6 @@ def plot_histogram(data,
 
 
 if __name__ == "__main__":
-
-    rxn_query = "CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1"
-
-    rxn_db = ["CO.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
-              "CC.O[C@@H]1CCNC1.[C-]#[N+]CC(=O)OC>>[C-]#[N+]CC(=O)N1CC[C@@H](O)C1",
-              "CCOC(=O)C(CC)c1cccnc1.Cl.O>>CCC(C(=O)O)c1cccnc1"]
-    fps_db = CBRdb.get_rxn_fingerprint_drfp(rxn_db)
-    fp_query = CBRdb.get_rxn_fingerprint_drfp(rxn_query)
-
-    tmp = CBRdb.tanimoto_batch_drfp(fp_query, fps_db)
-    print(tmp)
-
-    tmp = CBRdb.find_max_similar_rxn_drfp(fp_query, fps_db)
-    print(tmp)
-
-    fps_db = [CBRdb.get_rxn_fingerprint(i) for i in rxn_db]
-    fps_query = CBRdb.get_rxn_fingerprint(rxn_query)
-
-    tmp = [TanimotoSimilarity(fps_query, r) for r in fps_db]
-    print(tmp)
-
-    exit()
-
     print(flush=True)
     data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
     data_r = pd.read_csv('../CBRdb_R.csv', low_memory=False)
@@ -148,7 +123,7 @@ if __name__ == "__main__":
         data_r['smarts'] = CBRdb.mp_calc(func_smarts, data_r['reaction'].tolist())
 
     print("Generating fingerprints for reactions...", flush=True)
-    data_r['fp_struct'] = CBRdb.mp_calc(get_fingerprint, data_r['smarts'].tolist())
+    data_r['fp_struct'] = CBRdb.mp_calc(CBRdb.get_rxn_fingerprint, data_r['smarts'].tolist())
 
     # Only select the reactions where the id starts with 'R'
     sel = data_r['id'].str.startswith('R')
@@ -163,7 +138,7 @@ if __name__ == "__main__":
     fp_kegg = data_r_kegg['fp_struct'].tolist()
     fp_atlas = data_r_atlas['fp_struct'].tolist()
 
-    func_sim = partial(find_minmax_similar_reactions, rxn_db=fp_kegg)
+    func_sim = partial(CBRdb.find_max_similar_rxn, rxn_db=fp_kegg)
     sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
 
     # convert the idx into the corresponding reaction id
