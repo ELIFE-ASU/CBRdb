@@ -1095,6 +1095,9 @@ def test_rxn_fingerprint():
     fps_db = CBRdb.get_rxn_fingerprint_drfp(rxn_db)
     fp_query = CBRdb.get_rxn_fingerprint_drfp(rxn_query)
 
+    print("fps_db fingerprints shape:", fps_db.shape, flush=True)
+    print("fp_query fingerprints shape:", fp_query.shape, flush=True)
+
     tmp = CBRdb.tanimoto_batch_drfp(fp_query, fps_db)
     print(tmp)
     assert np.allclose([1.,         0.97619048, 0.01666667], tmp)

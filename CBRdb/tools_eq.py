@@ -1200,18 +1200,18 @@ def tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
     """
     Computes the Tanimoto similarity between a query fingerprint and a database of fingerprints.
 
+    The Tanimoto similarity is calculated as the ratio of the intersection size to the union size
+    of the bits in the fingerprints.
+
     Parameters:
     query_bits (np.ndarray): A binary NumPy array representing the query fingerprint.
+                             Shape: (n_bits,)
     db_bits (np.ndarray): A binary NumPy array where each row represents a fingerprint in the database.
+                          Shape: (n_fingerprints, n_bits)
 
     Returns:
-    np.ndarray: A NumPy array containing the Tanimoto similarity scores for the query fingerprint
-                against each fingerprint in the database.
-
-    Notes:
-    - All inputs are binary arrays ({0, 1}).
-    - The Tanimoto similarity is calculated as the ratio of the intersection size to the union size.
-    - Handles cases where both fingerprints are all-zero to avoid division by zero.
+    np.ndarray: A NumPy array containing the Tanimoto similarity scores between the query fingerprint
+                and each fingerprint in the database. Shape: (n_fingerprints,)
     """
     # Compute the intersection of bits between the query and each database fingerprint
     inter = (db_bits & query_bits).sum(axis=1)
@@ -1221,8 +1221,8 @@ def tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
     b = db_bits.sum(axis=1)
     # Compute the denominator as the union size
     denom = (a + b - inter)
-    # Avoid division by zero for all-zero fingerprints and compute the similarity
-    return np.where(denom > 0, inter / denom, 0.0)
+    # Return the Tanimoto similarity scores
+    return np.divide(inter, denom)
 
 
 def find_max_similar_rxn_drfp(rxn_query, rxn_db):
@@ -1241,5 +1241,4 @@ def find_max_similar_rxn_drfp(rxn_query, rxn_db):
     """
     similarities = tanimoto_batch_drfp(rxn_query, rxn_db)
     max_idx = np.argmax(similarities)
-    max_value = similarities[max_idx]
-    return max_value, int(max_idx)
+    return similarities[max_idx], int(max_idx)
