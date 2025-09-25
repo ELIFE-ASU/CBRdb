@@ -1222,7 +1222,8 @@ def tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
     # Compute the denominator as the union size
     denom = (a + b - inter)
     # Return the Tanimoto similarity scores
-    return np.divide(inter, denom)
+    # return np.divide(inter, denom)
+    return np.where(denom > 0, inter / denom, 0.0)
 
 
 def find_max_similar_rxn_drfp(rxn_query, rxn_db):
