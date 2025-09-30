@@ -7,9 +7,7 @@ import pandas as pd
 from dimorphite_dl import protonate_smiles
 from rdkit import Chem as Chem
 from rdkit import RDLogger
-from rdkit.Chem import rdChemReactions
 from rdkit.Chem.MolStandardize import rdMolStandardize
-from rdkit.DataStructs import TanimotoSimilarity
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -538,39 +536,3 @@ def enum_ionization_states(smi, ph_min=4.0, ph_max=10.0, precision=1.0, label=Tr
 
     # Remove the input molecule from the list and return the result
     return [s for s in enum_list if s != smi]
-
-
-def get_reaction_similarity(s1, s2):
-    """
-    Calculates the Tanimoto similarity between two chemical reactions based on their structural fingerprints.
-
-    Parameters:
-    ----------
-    s1 : str
-        The SMARTS string representation of the first chemical reaction.
-    s2 : str
-        The SMARTS string representation of the second chemical reaction.
-
-    Returns:
-    -------
-    float
-        The Tanimoto similarity score between the two reactions, ranging from 0.0 (no similarity)
-        to 1.0 (identical reactions).
-
-    Notes:
-    -----
-    - The function uses RDKit to parse the SMARTS strings into reaction objects.
-    - Structural fingerprints are generated for each reaction and compared using the Tanimoto similarity metric.
-    - Ensure that the input SMARTS strings are valid and represent chemical reactions.
-    """
-    # Parse the first reaction from the SMARTS string
-    rxn_1 = rdChemReactions.ReactionFromSmarts(s1, useSmiles=True)
-    # Parse the second reaction from the SMARTS string
-    rxn_2 = rdChemReactions.ReactionFromSmarts(s2, useSmiles=True)
-
-    # Generate structural fingerprints for the reactions
-    fp_struct_1 = rdChemReactions.CreateStructuralFingerprintForReaction(rxn_1)
-    fp_struct_2 = rdChemReactions.CreateStructuralFingerprintForReaction(rxn_2)
-
-    # Calculate and return the Tanimoto similarity between the fingerprints
-    return TanimotoSimilarity(fp_struct_1, fp_struct_2)
