@@ -1258,24 +1258,28 @@ def tanimoto_batch_drfp(query_bits: np.ndarray, db_bits: np.ndarray):
     # Compute the denominator as the union size
     denom = (a + b - inter)
     # Return the Tanimoto similarity scores
-    # return np.divide(inter, denom)
     return np.where(denom > 0, inter / denom, 0.0)
 
 
-def find_max_similar_rxn_drfp(rxn_query, rxn_db):
+def find_max_similar_rxn_drfp(rxn_query, rxn_db, replace_unity=False):
     """
-    Finds the reaction in the database that is most similar to the query reaction
-    using the DRFP (Differentiable Reaction Fingerprint) encoder.
+    Finds the most similar reaction in a database to a given query reaction using DRFP (Differentiable Reaction Fingerprint).
 
     Parameters:
     rxn_query (np.ndarray): A binary NumPy array representing the query reaction fingerprint.
+                            Shape: (n_bits,)
     rxn_db (np.ndarray): A binary NumPy array where each row represents a reaction fingerprint in the database.
+                         Shape: (n_fingerprints, n_bits)
+    replace_unity (bool, optional): If True, replaces similarity scores of 1.0 with NaN to exclude perfect matches.
+                                    Default is False.
 
     Returns:
     tuple: A tuple containing:
-           - max_value (float): The maximum Tanimoto similarity score.
-           - max_idx (int): The index of the reaction in the database with the highest similarity score.
+           - float: The maximum Tanimoto similarity score between the query and the database reactions.
+           - int: The index of the reaction in the database with the highest similarity score.
     """
     similarities = tanimoto_batch_drfp(rxn_query, rxn_db)
+    if replace_unity:
+        similarities = np.where(similarities == 1.0, np.nan, similarities)
     max_idx = np.argmax(similarities)
     return similarities[max_idx], int(max_idx)

@@ -60,7 +60,7 @@ if __name__ == "__main__":
         func_sim = partial(CBRdb.find_max_similar_rxn, rxn_db=fp_kegg)
         sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
     else:
-        func_sim_drfp = partial(CBRdb.find_max_similar_rxn_drfp, rxn_db=fp_kegg)
+        func_sim_drfp = partial(CBRdb.find_max_similar_rxn_drfp, rxn_db=fp_kegg, replace_unity=True)
         sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim_drfp, fp_atlas))
     print("Similarities calculated.", flush=True)
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     data_r_atlas['sim_max_id'] = sim_max_id
 
     # set nan and inf values to 0.0
-    data_r_atlas['sim_max'] = data_r_atlas['sim_max'].replace([np.nan, np.inf, None], 0.0)
+    # data_r_atlas['sim_max'] = data_r_atlas['sim_max'].replace([np.nan, np.inf, None], 0.0)
 
     # Print the lowest 10 similarity scores
     print("Lowest 10 similarity scores:", flush=True)
