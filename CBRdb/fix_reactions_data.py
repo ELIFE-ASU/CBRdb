@@ -344,10 +344,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     return df_final
 
 
-def balance_simple_cases(R_main, C_main, f_log=None):
+def balance_simple_cases(R_main, C_main, f_log=None, data_c=None, formula_table=None):
     R_main = id_indexed(R_main)
     C_main = id_indexed(C_main)
-    data_c, formula_table = compound_lookup_tables(C_main)
+    if data_c is None or formula_table is None:
+        data_c, formula_table = compound_lookup_tables(C_main)
     dfs = filter_reactions_pandas(data_r=R_main, data_c=data_c, formula_table=formula_table, f_log=f_log)
 
     injections_1el = get_charge_balanced_injections_1el(data_c=data_c, dfs=dfs)
@@ -374,6 +375,20 @@ def balance_simple_cases(R_main, C_main, f_log=None):
 
 
 def compound_lookup_tables(data_c, f_log=None, dfs=None):
+    """ 
+    Generates lookup tables for fast access to compound info (cpd_data including 'formula_dict' col, formula_table). 
+    
+    Parameters:
+    data_c (pd.DataFrame): Compound dataframe
+    f_log (file object, optional): File object for logging.
+    dfs (dict, optional): Dictionary to store results in. If not None, updates dict in-place with entries 'cpd_data' and 'formula_table'.
+
+    Returns:
+    tuple: (cpd_data, formula_table) where:
+        cpd_data (pd.DataFrame): DataFrame of compound attributes relevant for balancing reactions
+        formula_table (pd.DataFrame): DataTable indicating, for each compound (column), the count (value) of each element (row).
+    If a dict is fed to dfs arg, it is updated in-place.
+    """
     # DataFrame of compound attributes relevant for balancing reactions
     print_and_log('making "cpd_data": DataFrame of compound attributes relevant for balancing reactions', f_log)
     cpd_data = data_c[['formula', 'formal_charge']].copy(deep=True).dropna().assign(
