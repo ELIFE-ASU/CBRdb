@@ -1,9 +1,9 @@
 # IDs which have been fixed manually
 C00028, *
 C00030, *([H])[H]
-C00174, *
+C00174, *C(=O)[O-]
 C00205, *
-C00215, *
+C00215, *C1O[C@H](COP(=O)(O)O)[C@@H](O)[C@H]1O
 C00282, [H][H]
 C00317, C([C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O[C@@H]2[C@H](O[C@@H]([C@@H]([C@H]2O)O)OC[C@@H]3[C@H]([C@@H]([C@H]([C@H](O3)O[C@@H]4[C@H](O[C@@H]([C@@H]([C@H]4O)O)O)CO)O)O)O[C@@H]5[C@@H]([C@H]([C@@H]([C@H](O5)CO)O)O)O)CO)O)O)O)O
 C00464, C([C@@H]1[C@H]([C@@H]([C@@H]([C@@H](O1)O[C@@H]2[C@H](O[C@H]([C@@H]([C@H]2O)O)O[C@@H]3[C@H](O[C@H]([C@H]([C@H]3O)O)O[C@H]4[C@H](O[C@H]([C@H]([C@H]4O)O)O)CO)CO)CO)O)O)O)O

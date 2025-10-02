@@ -1,5 +1,7 @@
 id, reason
 R00034, failed to balance
+R00313, failed to balance
+R00314, failed to balance
 R00914, failed to balance
 R00915, failed to balance
 R00916, failed to balance
@@ -20,6 +22,7 @@ R02189, failed to balance
 R02360, failed to balance
 R02361, failed to balance
 R02409, failed to balance
+R02460, failed to balance
 R02713, failed to balance
 R02721, failed to balance
 R02833, failed to balance
@@ -64,6 +67,7 @@ R05480, failed to balance
 R05539, failed to balance
 R05670, failed to balance
 R05675, failed to balance
+R05816, failed to balance
 R05840, failed to balance
 R05860, failed to balance
 R05867, failed to balance
@@ -389,6 +393,7 @@ R08812, failed to balance
 R08847, failed to balance
 R08866, failed to balance
 R08877, failed to balance
+R08881, failed to balance
 R08882, failed to balance
 R08883, failed to balance
 R08884, failed to balance
@@ -523,7 +528,6 @@ R11467, failed to balance
 R11470, failed to balance
 R11480, failed to balance
 R11481, failed to balance
-R11488, failed to balance
 R11606, failed to balance
 R11683, failed to balance
 R11750, failed to balance

@@ -52,10 +52,9 @@ if __name__ == "__main__":
     atlas_data_R = CBRdb.fix_halogen_reactions_without_existing_halogens(atlas_data_R, C_main, specific_halogens,
                                                                          out_file=atlas_reactions_data + '.csv')
 
-    print("Finding and removing suspect KEGG reactions + de-duping compound dataset for compounds and reactions...",
-          flush=True)
+    print("De-duping compound dataset for compounds and reactions...", flush=True)
     dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main,
-                                          to_quarantine="shortcut|structure_missing")
+                                          to_quarantine='')
 
     print("Fixing the reactions data...", flush=True)
     dbs['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_dedupedCs.csv",
