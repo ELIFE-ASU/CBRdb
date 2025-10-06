@@ -200,9 +200,14 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str, compression='infer'):
         first_entry = df[col].dropna().iloc[0]
         if type(first_entry) is str:
             df.loc[:, col] = df.loc[:, col].str.replace('  ', '__').str.split(' ')
-        if hasattr(first_entry, '__iter__'):
-            df.loc[:, col] = df.loc[:, col].map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')
+        first_entry = df[col].dropna().iloc[0]
+        if hasattr(first_entry, '__iter__') and not isinstance(first_entry, str):
+            df.loc[:, col] = df.loc[:, col].map(lambda x: ' '.join(sorted(set(x))), na_action='ignore')
 
+    if 'CBRdb_C_ids' in df.columns:
+        col_order.remove('CBRdb_C_ids')
+        col_order.append('CBRdb_C_ids')
+    
     df = df.sort_values(by='id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
     if not file_address.endswith('.zip'):
@@ -230,9 +235,12 @@ def compound_csv(df_C: pd.DataFrame, file_address: str, compression='infer'):
         df = df.reset_index(drop=False, names='compound_id')
 
     first_cols = ['compound_id', 'smiles', 'formula', 'molecular_weight', 'n_heavy_atoms', 'n_chiral_centers',
-                  'smiles_capped', 'inchi_capped', 'nickname', 'comment', 'CBRdb_R_ids']
+                  'smiles_capped', 'inchi_capped', 'nickname', 'comment']
     col_order = [i for i in first_cols if i in df.columns] + sorted(list(df.columns.difference(first_cols)),
                                                                     reverse=True)
+    if 'CBRdb_R_ids' in df.columns:
+        col_order.remove('CBRdb_R_ids')
+        col_order.append('CBRdb_R_ids')
 
     df = df.sort_values(by='compound_id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)

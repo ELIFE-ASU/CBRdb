@@ -1,4 +1,5 @@
 import pandas as pd
+from .tools_files import reaction_csv, compound_csv
 
 out_fmt = {'encoding': 'utf-8', 'index': False}
 
@@ -138,26 +139,23 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
 
 def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp='../CBRdb_R.csv'):
     """
-    Adds a column to the compound DataFrame indicating which reactions each compound is involved in.
+    Adds a column to the compound DataFrame indicating which reactions each compound is involved in, and vice-versa.
     Parameters:
     final_output_Cs_fp (str): File path for the final output compound DataFrame.
     final_output_Rs_fp (str): File path for the final output reaction DataFrame.  
     Returns:
-    None: The function modifies the compound DataFrame in place and saves it to the specified file  
+    None: The function modifies the compound and reaction DataFrames in place and saves them to the specified files. 
     """
-    final_output_Rs = pd.read_csv(final_output_Rs_fp, index_col=0, usecols=[0, 1, 2], dtype=object)
-    final_output_Cs = pd.read_csv(final_output_Cs_fp, index_col=0)
+    final_output_Rs = id_indexed(pd.read_csv(final_output_Rs_fp, index_col=0, dtype=object))
+    final_output_Cs = id_indexed(pd.read_csv(final_output_Cs_fp, index_col=0, dtype=object))
 
-    if 'id' in final_output_Rs.columns:
-        final_output_Rs = final_output_Rs.set_index('id')
-    if 'compound_id' in final_output_Cs.columns:
-        final_output_Cs = final_output_Cs.set_index('compound_id')
-    if 'CBRdb_R_ids' in final_output_Cs.columns:
-        final_output_Cs.drop(columns=['CBRdb_R_ids'], inplace=True)
+    rid2cid = final_output_Rs['reaction'].str.findall(r'C\d{5}').map(set).map(sorted).rename('compound_id')
+    cid2rid = rid2cid.explode().reset_index().groupby('compound_id')['id'].apply(sorted)
 
-    cid2rid = pd.Series(final_output_Rs.reaction.str.findall(r'C\d{5}').explode().to_frame().groupby('reaction').groups)
-    cid2rid_printable = cid2rid.map(lambda x: ' '.join(sorted(list(set(x)), reverse=True)))
+    final_output_Rs['CBRdb_C_ids'] = rid2cid.map(' '.join)
+    final_output_Cs['CBRdb_R_ids'] = cid2rid.map(' '.join)
 
-    final_output_Cs['CBRdb_R_ids'] = cid2rid_printable
-    final_output_Cs.to_csv(final_output_Cs_fp, index=True)
+    compound_csv(df_C=final_output_Cs, file_address=final_output_Cs_fp)
+    reaction_csv(df_R=final_output_Rs, file_address=final_output_Rs_fp)
+
     return None
