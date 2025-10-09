@@ -13,6 +13,7 @@ from .tools_eq import (convert_formula_to_dict,
                        rebalance_eq,
                        fix_imbalance_core,
                        get_eq_all_cids,
+                       generate_compound_dict
                        )
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
 from .tools_files import reaction_csv
@@ -205,7 +206,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     print_and_log("Filtering out unbalanced reactions", f_log)
 
     t0 = time.time()
-    bool_unbalanced = possibly_unbalanced['reaction'].apply(full_check_eq_unbalanced, args=(data_c,))
+    comp_dict = generate_compound_dict(data_c)
+    bool_unbalanced = possibly_unbalanced['reaction'].map(lambda x: full_check_eq_unbalanced(x, c_data=data_c, comp_dict=comp_dict))
     unbalanced_entries = bool_unbalanced[bool_unbalanced].index
     print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
 
@@ -332,7 +334,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     df_final['reaction'] = df_final['reaction'].map(standardise_eq)
 
     # Map each reaction to associated CIDs
-    df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids)
+    #df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids)
 
     # Write the data to a file
     reaction_csv(df_R=df_final, file_address=out_eq_file)

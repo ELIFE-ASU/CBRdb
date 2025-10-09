@@ -326,18 +326,20 @@ def strip_plus_x(input_string):
     return re.sub(r'\+\d+', '', input_string).replace('+', '') if '+' in input_string else input_string
 
 
-def get_ids_to_formulas(compound_dict, c_data):
+def get_ids_to_formulas(compound_dict, c_data, comp_dict=None):
     """
     Retrieves the chemical formulas corresponding to the compound IDs in the given dictionary.
 
     Parameters:
     compound_dict (dict): A dictionary where keys are compound IDs.
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from c_data.
 
     Returns:
     dict: A dictionary where keys are compound IDs and values are the corresponding chemical formulas with '+<number>' and '+' characters removed.
     """
-    comp_dict = generate_compound_dict(c_data)
+    if comp_dict is None:
+        comp_dict = generate_compound_dict(c_data)
     return {id: strip_plus_x(comp_dict[id]) for id in compound_dict.keys()}
 
 
@@ -436,7 +438,7 @@ def get_eq(old_eq, reactants, products, c_data):
     return " + ".join(eq_left) + " <=> " + " + ".join(eq_right)
 
 
-def get_formulas_from_eq(eq, c_data, strip_ionic=True):
+def get_formulas_from_eq(eq, c_data, strip_ionic=True, comp_dict=None):
     """
     Converts a chemical equation string into dictionaries of reactants and products with their chemical formulas.
 
@@ -444,6 +446,7 @@ def get_formulas_from_eq(eq, c_data, strip_ionic=True):
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
     strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from c_data.
 
     Returns:
     tuple: A tuple containing two dictionaries:
@@ -458,8 +461,8 @@ def get_formulas_from_eq(eq, c_data, strip_ionic=True):
         products = remove_electron_cid(products)
 
     # Get the conversion of the ids to formulas
-    react_id_form_key = get_ids_to_formulas(reactants, c_data)
-    prod_id_form_key = get_ids_to_formulas(products, c_data)
+    react_id_form_key = get_ids_to_formulas(reactants, c_data, comp_dict=comp_dict)
+    prod_id_form_key = get_ids_to_formulas(products, c_data, comp_dict=comp_dict)
 
     # Convert the reactants into formulas
     converted_reactants = convert_ids_to_formulas(reactants, react_id_form_key)
@@ -468,7 +471,7 @@ def get_formulas_from_eq(eq, c_data, strip_ionic=True):
     return converted_reactants, converted_products
 
 
-def get_elements_from_eq(eq, c_data, strip_ionic=True):
+def get_elements_from_eq(eq, c_data, strip_ionic=True, comp_dict=None):
     """
     Converts a chemical equation string into dictionaries of reactants and products,
     and then converts these dictionaries into dictionaries of elements and their counts.
@@ -477,6 +480,7 @@ def get_elements_from_eq(eq, c_data, strip_ionic=True):
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
     strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from c_data.
 
     Returns:
     tuple: A tuple containing four dictionaries:
@@ -486,7 +490,7 @@ def get_elements_from_eq(eq, c_data, strip_ionic=True):
            - The fourth dictionary contains the elements and their counts in the products.
     """
     # Convert the Eq into the formula dicts
-    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data, strip_ionic=strip_ionic)
+    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data, strip_ionic=strip_ionic, comp_dict=comp_dict)
 
     # Convert the formulas into reactants
     react_ele = convert_form_dict_to_elements(converted_reactants, strip_ionic=strip_ionic)
@@ -562,7 +566,7 @@ def check_missing_formulas(eq, c_data):
     return len(formulas) != len(set(ids))
 
 
-def full_check_eq_unbalanced(eq, c_data):
+def full_check_eq_unbalanced(eq, c_data, comp_dict=None):
     """
     Checks if a chemical equation is unbalanced by verifying if all element counts are positive and non-zero,
     and if the reactants and products have matching element counts.
@@ -570,11 +574,15 @@ def full_check_eq_unbalanced(eq, c_data):
     Parameters:
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from c_data.
 
     Returns:
     bool: True if the equation is unbalanced, False otherwise.
     """
-    _, _, react_ele, prod_ele = get_elements_from_eq(eq, c_data)
+    if comp_dict is None:
+        _, _, react_ele, prod_ele = get_elements_from_eq(eq, c_data)
+    elif isinstance(comp_dict, dict):
+        _, _, react_ele, prod_ele = get_elements_from_eq(eq, c_data, comp_dict=comp_dict)
     return check_eq_unbalanced(react_ele, prod_ele)
 
 
