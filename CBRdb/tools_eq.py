@@ -413,7 +413,7 @@ def convert_form_dict_to_elements(form_dict, strip_ionic=True):
     return elements
 
 
-def get_eq(old_eq, reactants, products, c_data):
+def get_eq(old_eq, reactants, products, c_data, comp_dict=None):
     """
     Generates a new chemical equation string by converting reactants and products from formulas to IDs.
 
@@ -422,13 +422,14 @@ def get_eq(old_eq, reactants, products, c_data):
     reactants (dict): A dictionary where keys are chemical formulas and values are their counts for reactants.
     products (dict): A dictionary where keys are chemical formulas and values are their counts for products.
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from c_data.
 
     Returns:
     str: A string representation of the new chemical equation in the format 'reactants <=> products'.
     """
     lhs, rhs = eq_to_dict(old_eq)
-    l_key = get_ids_to_formulas(lhs, c_data)
-    r_key = get_ids_to_formulas(rhs, c_data)
+    l_key = get_ids_to_formulas(lhs, c_data, comp_dict=comp_dict)
+    r_key = get_ids_to_formulas(rhs, c_data, comp_dict=comp_dict)
 
     reactants = convert_formulas_to_ids(reactants, l_key)
     products = convert_formulas_to_ids(products, r_key)
@@ -941,7 +942,7 @@ def compare_and_delete_keys(dict1, dict2):
     return dict1, dict2, dict1_del, dict2_del
 
 
-def rebalance_eq_core(eq, data_c):
+def rebalance_eq_core(eq, data_c, comp_dict=None):
     """
     Rebalances a chemical equation by converting reactants and products from formulas to IDs,
     checking for duplicate keys, and balancing the stoichiometry.
@@ -949,12 +950,13 @@ def rebalance_eq_core(eq, data_c):
     Parameters:
     eq (str): The original chemical equation string.
     data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from data_c.
 
     Returns:
     str: The rebalanced and standardized chemical equation.
     """
     # Get the reactants and products from the eq
-    reactants, products = get_formulas_from_eq(eq, data_c)
+    reactants, products = get_formulas_from_eq(eq, data_c, comp_dict=comp_dict)
 
     f_repeated = False
     reactants_del = {}
@@ -980,10 +982,10 @@ def rebalance_eq_core(eq, data_c):
         products = add_dicts(products, products_del)
 
     # Convert the dict back into eq form and standardise
-    return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c))
+    return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c, comp_dict=comp_dict))
 
 
-def rebalance_eq(eq, data_c):
+def rebalance_eq(eq, data_c, comp_dict=None):
     """
     Attempts to rebalance a chemical equation by calling the rebalance_eq_core function.
     If rebalancing fails due to a ValueError, it prints an error message and returns False.
@@ -991,12 +993,13 @@ def rebalance_eq(eq, data_c):
     Parameters:
     eq (str): The original chemical equation string.
     data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from data_c.
 
     Returns:
     str or bool: The rebalanced chemical equation string if successful, otherwise False.
     """
     try:
-        eq = rebalance_eq_core(eq, data_c)
+        eq = rebalance_eq_core(eq, data_c, comp_dict=comp_dict)
         return eq
     except ValueError as e:
         print(f"Could not find stoichiometry on first attempt: {e}", flush=True)

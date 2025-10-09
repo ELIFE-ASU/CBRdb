@@ -35,7 +35,7 @@ def print_and_log(statement, file=None):
     return None
 
 
-def kitchen_sink(eq, data_c, small_compounds, f_log):
+def kitchen_sink(eq, data_c, small_compounds, f_log, comp_dict=None):
     """
     Attempts to balance a chemical equation by injecting small compounds based on element differences.
 
@@ -43,11 +43,12 @@ def kitchen_sink(eq, data_c, small_compounds, f_log):
     eq (str): The original chemical equation.
     data_c (pd.DataFrame): The DataFrame containing compound data.
     small_compounds (list): A list of small compounds to be used for balancing.
+    comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from c_data.
 
     Returns:
     str: The balanced chemical equation if a solution is found, otherwise the original equation.
     """
-    reactants, products, react_ele, prod_ele = get_elements_from_eq(eq, data_c)
+    reactants, products, react_ele, prod_ele = get_elements_from_eq(eq, data_c, comp_dict=comp_dict)
     diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
 
     compounds = get_compounds_with_matching_elements(small_compounds, diff_ele_react, diff_ele_prod)
@@ -64,7 +65,7 @@ def kitchen_sink(eq, data_c, small_compounds, f_log):
         print_and_log(f"Attempt {attempt}, {compound}", f_log)
 
         # Get the elements
-        _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c)
+        _, _, react_ele, prod_ele = get_elements_from_eq(eq_new, data_c, comp_dict=comp_dict)
         # Check the difference
         diff_ele_react, diff_ele_prod = compare_dict_values(react_ele, prod_ele)
         print_and_log(f"Differences in reactants:    {diff_ele_react}", f_log)
@@ -264,7 +265,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
         print_and_log(f"\nProcessing {i}/{n_ids} {id}", f_log)
         print_and_log(f"Original equation line: {eq_line}", f_log)
-        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c)
+        reactants, products, react_ele, prod_ele = get_elements_from_eq(eq_line, data_c, comp_dict=comp_dict)
         print_and_log(f"Reactants: {reactants}", f_log)
         print_and_log(f"Products:  {products}", f_log)
 
@@ -273,11 +274,11 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
             continue
 
         # Check if the equation is balanced
-        eq_line_new = rebalance_eq(eq_line, data_c)
+        eq_line_new = rebalance_eq(eq_line, data_c, comp_dict=comp_dict)
         # Equation is not balance...
         if eq_line_new is False:
             # Attempt injecting methods with the c1 compounds
-            eq_line_new = kitchen_sink(eq_line, data_c, data_c_1, f_log)
+            eq_line_new = kitchen_sink(eq_line, data_c, data_c_1, f_log, comp_dict=comp_dict)
             if eq_line_new is False:
                 print_and_log(f"Could not fix the imbalance for eq {id} using c1 list!", f_log)
                 if rebalance_depth > 1:
@@ -334,7 +335,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     df_final['reaction'] = df_final['reaction'].map(standardise_eq)
 
     # Map each reaction to associated CIDs
-    #df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids)
+    df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids)
 
     # Write the data to a file
     reaction_csv(df_R=df_final, file_address=out_eq_file)
