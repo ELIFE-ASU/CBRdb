@@ -416,7 +416,7 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv", filter_star=True):
     pd.DataFrame: A DataFrame containing the sorted compound data.
     """
     # Get the data
-    data_c = pd.read_csv(os.path.abspath(c_path))
+    data_c = pd.read_csv(os.path.abspath(c_path), low_memory=False)
 
     # Filter out the star compounds or has * in the smiles
     if filter_star:
