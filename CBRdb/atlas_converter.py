@@ -61,8 +61,6 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     # Open the file.
     df = pd.read_table(in_file, header=None, sep=';', names=in_file_cols)
 
-    # Some 'most_sim_kegg' entries are a single placeholder character, replace w/NaN
-    df['most_sim_kegg'] = df['most_sim_kegg'].mask(lambda x: x.str.len().lt(2))
     # Remove known KEGG entries if requested
     if f_exclude_kegg:
         df = df.query('kegg_id.isna()').drop('kegg_id', axis=1)
@@ -98,6 +96,8 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     printable_df = df.copy(deep=True)
     for col in listlike_cols:
         printable_df[col] = printable_df[col].map(' '.join, na_action='ignore')
+    # Some 'most_sim_kegg' entries are a single placeholder character, replace w/NaN
+    df['most_sim_kegg'] = df['most_sim_kegg'].mask(lambda x: x.str.len().lt(2))
     # Write the data to a file
     reaction_csv(printable_df, out_file)
     print("data written to file", flush=True)
