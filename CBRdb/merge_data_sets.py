@@ -109,12 +109,14 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     combo_names = C_dupemap.join(C_main_copy).groupby('new_id').agg(name_funcs)
     # identify columns for which the value should reflect the union of values
     unify_col_options = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan',
+                         'PDB_CCD', 'ATC_code' , 'Drug_group', 'kegg_type', 'kegg_network',
                          'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
     cols2unify = C_main_copy.columns.intersection(unify_col_options)
     # consider only those columns
     to_combine = C_dupemap.join(C_main_copy[cols2unify])
     # format values appropriately - where present, should be strings
-    to_combine.update(to_combine['PubChem'].dropna().astype(int).astype(str))
+    to_combine['PubChem'] = to_combine['PubChem'].map(lambda x: str(x).replace(',0', ''), na_action='ignore')
+    C_main_copy['PubChem'] = C_main_copy['PubChem'].map(lambda x: str(x).replace(',0', ''), na_action='ignore')
     # combine each entry's (list of) values
     to_combine = to_combine.reset_index().groupby(by='new_id').agg(sum_entry_strs)
     # de-duplicate and sort each entry's (list of) values; cast as a string
