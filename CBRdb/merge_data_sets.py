@@ -26,34 +26,71 @@ def merge_duplicate_reactions(df, r_dupemap):
 
     Returns:
     pd.DataFrame: A DataFrame with merged duplicate reactions.
+    # TODO: add a check for any columns not yet handled here
     """
-    # Replace reaction IDs with the duplicate map
-    df['eqn_set'] = df['id'].replace(r_dupemap)
+    all_rns = id_indexed(df.copy(deep=True))
+    # Standardize CBRdb_C_ids column to space-separated strings
+    if 'CBRdb_C_ids' in all_rns.columns:
+        if not isinstance(all_rns['CBRdb_C_ids'].dropna().iloc[0], str):
+            all_rns.update(all_rns['CBRdb_C_ids'].map(lambda x: ' '.join(sorted(set(x)))))
+    # Focus on duplicate IDs
+    df = all_rns.loc[r_dupemap.index].assign(eqn_set=r_dupemap)
+    # Since bridgit scores are source-specific, tie to most_sim_kegg
+    str_scores = (df['bridgit_score'].map(lambda x: f'({x:.3f}) ', na_action='ignore'))
+    df['most_sim_kegg'] = (str_scores + df['most_sim_kegg']).dropna()
+    # Group by duplicate reaction IDs
+    dupes = df.groupby(by='eqn_set')
+    # Label cases where more than one value exists
+    to_combine = dupes.nunique().gt(1)
+    # First, for each entry, capture the properties that lack multiple values.
+    group_attrs = dupes.first(skipna=True).mask(to_combine)
 
-    # Define functions for aggregating data
-    unique_str_sep = lambda x: ' '.join(sorted(list(set([i for i in ' '.join(x).split()]))))
-    all_provided = lambda x: ' | '.join(sorted(list(x[x != ''].unique())))
+    # In some columns, no combinations occur.
+    single_val_cols = to_combine.columns[to_combine.any().eq(False)].to_list()
+    # In some columns, the values are structured as space-separated lists.
+    known_space_sep_cols = ['ec', 'orthology', 'pathway', 'rclass', 'rhea', 'kegg_id',
+                            'msk_ecs', 'msk_metacyc', 'msk_mnxr', 'msk_rhea', 'msk_rns', 'CBRdb_C_ids']
+    # For each dupe-group, concatenate its constituent lists.
+    space_sep_entries = (df[known_space_sep_cols]
+                         .apply(lambda x: x.str.split())
+                         .groupby(df['eqn_set'])
+                         .sum()[to_combine]
+                         .replace(0, float('NaN')))
+    # Now sort and dedupe those lists...
+    space_sep_entries = space_sep_entries.map(lambda x: ' '.join(sorted(set(x))), na_action='ignore')
+    # ... and update the group attributes with the non-nan values
+    group_attrs.update(space_sep_entries)
 
-    # Dictionary of aggregation functions for each column
-    func_dict = {
-        'reaction': lambda x: x.iloc[0],
-        'id': unique_str_sep,
-        'ec': unique_str_sep,
-        'pathway': unique_str_sep,
-        'orthology': unique_str_sep,
-        'rhea': unique_str_sep,
-        'module': unique_str_sep,
-        'name': all_provided,
-        'comment': all_provided,
-        'rclass': lambda x: ' '.join(sorted(list(set(x.str.findall(r'(RC\d{5}__C\d{5}_C\d{5})').sum())))),
-    }
+    # Next, isolate the remaining attributes w/multiple values.
+    cols = to_combine.columns.difference(single_val_cols + known_space_sep_cols)
+    rows = to_combine.index[to_combine[cols].any(axis=1)]
+    df_r = dupes.filter(lambda x: x.name in rows)[cols.union(['eqn_set'])]
+    # For the comment column, store its provenance to ease interpretation
+    df_r.update((df_r.index + ': ' + df_r['comment']).rename('comment'))
+    # For the comment + name columns, combine the entries
+    tilde_sep_cols = ['comment', 'name']
+    for col in tilde_sep_cols:
+        tilde_sep_entries = df_r.dropna(subset=col).groupby('eqn_set')[col].apply(
+            lambda x: ' ~ '.join(sorted(set(x))))
+        tilde_sep_entries = tilde_sep_entries[to_combine[col]]
+        group_attrs.update(tilde_sep_entries)
 
-    # Group by the new reaction IDs and aggregate the data
-    deduped_df = (df.fillna('').groupby(by='eqn_set').aggregate(func_dict)
-                  ).replace('', float('nan')).reset_index().rename(
-        columns={'id': 'id_orig', 'eqn_set': 'id'})
+    # For the most_sim_kegg column, if multiple values exist, label w/source and combine.
+    new_most_sim_kegg = ((df_r.index + ': ' + df_r['most_sim_kegg'])
+                         .rename(df_r['eqn_set']).dropna()
+                         .groupby(level=0).apply(' ~ '.join))
+    new_most_sim_kegg = new_most_sim_kegg.rename('most_sim_kegg')[to_combine['most_sim_kegg']]
+    group_attrs.update(new_most_sim_kegg)
+    # bridgit_score is NaN in group_attrs where multiple scores exist; keep it that way for now.
+    group_attrs['id_orig'] = {i: ' '.join(sorted(j)) for i,j in dupes.groups.items()}
+    # Add id_orig column for all entries.
+    all_rns['id_orig'] = all_rns.index
+    # Merge group_attrs into main reaction dataframe.
+    all_rns.drop(r_dupemap.index, inplace=True)
+    all_rns.drop(columns='eqn_set', inplace=True, errors='ignore')
+    all_rns = pd.concat([all_rns, group_attrs]).reset_index(names='id')
 
-    return deduped_df
+    return all_rns
 
 
 def identify_duplicate_compounds(C_main):
