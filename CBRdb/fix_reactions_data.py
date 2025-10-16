@@ -13,6 +13,7 @@ from .tools_eq import (convert_formula_to_dict,
                        rebalance_eq,
                        fix_imbalance_core,
                        get_eq_all_cids,
+                       to_smarts_rxn_line,
                        generate_compound_dict
                        )
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
