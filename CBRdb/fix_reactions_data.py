@@ -335,7 +335,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     df_final['reaction'] = df_final['reaction'].map(standardise_eq)
 
     # Map each reaction to associated CIDs
-    df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids)
+    df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids).map(lambda x: ' '.join(sorted(set(x))))
 
     # Write the data to a file
     reaction_csv(df_R=df_final, file_address=out_eq_file)
