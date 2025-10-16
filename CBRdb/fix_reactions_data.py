@@ -333,6 +333,9 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Standardise the equations one last time
     df_final['reaction'] = df_final['reaction'].map(standardise_eq)
+    c_id_indexed = id_indexed(data_c)
+    df_final['smarts'] = df_final.query('~bool_missing_data')['reaction'].map(
+        lambda x: to_smarts_rxn_line(x, c_id_indexed, add_stoich=False))
 
     # Map each reaction to associated CIDs
     df_final['CBRdb_C_ids'] = df_final['reaction'].map(get_eq_all_cids).map(lambda x: ' '.join(sorted(set(x))))
