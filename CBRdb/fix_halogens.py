@@ -8,7 +8,7 @@ lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
 from .tools_mols import standardize_mol, check_for_x_group, get_properties, check_for_r_group, replace_r_group
-from .tools_files import make_custom_id, reaction_csv, compound_csv
+from .tools_files import make_custom_id, reaction_csv, compound_csv, space_sep_str_cols_cps
 from .tools_mp import tp_calc
 from .tools_eq import convert_formula_to_dict, standardise_eq
 from .preprocessor import preprocess_kegg_c_metadata
@@ -154,6 +154,10 @@ def fix_halogen_compounds(
 
     # Get the compound metadata
     x_metadata = id_indexed(preprocess_kegg_c_metadata(valid_cids = cids_dict.keys()))
+    # Ensure proper formatting of string columns
+    for col in space_sep_str_cols_cps:
+        if col in x_metadata.columns:
+            x_metadata[col] = x_metadata[col].map(lambda x: str(x), na_action='ignore')
     # Tie each instantiated compound ID to its parent metadata
     specific_halogens['nickname'] = (specific_halogens['elem'] +  '-bearing ' 
                                     + specific_halogens['generic_id'].map(x_metadata['nickname']))
@@ -216,7 +220,8 @@ def merge_halogen_compounds(specific_halogens,
         compound_csv(df, int_file)
 
     # Load the compounds data
-    df_old = pd.read_csv(c_id_file, low_memory=False)
+    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
+    df_old = pd.read_csv(c_id_file, low_memory=False, dtype=str_cols_dict)
 
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)

@@ -12,7 +12,7 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
 
-from .tools_files import remove_filepath
+from .tools_files import remove_filepath, space_sep_str_cols_cps
 from .tools_complexity import capped_funcs, uncapped_funcs
 from .tools_mp import mp_calc
 
@@ -416,7 +416,8 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv", filter_star=True):
     pd.DataFrame: A DataFrame containing the sorted compound data.
     """
     # Get the data
-    data_c = pd.read_csv(os.path.abspath(c_path), low_memory=False)
+    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
+    data_c = pd.read_csv(os.path.abspath(c_path), dtype=str_cols_dict, low_memory=False)
 
     # Filter out the star compounds or has * in the smiles
     if filter_star:

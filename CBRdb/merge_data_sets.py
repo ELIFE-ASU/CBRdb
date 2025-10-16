@@ -1,5 +1,5 @@
 import pandas as pd
-from .tools_files import reaction_csv, compound_csv
+from .tools_files import reaction_csv, compound_csv, space_sep_str_cols_cps
 
 out_fmt = {'encoding': 'utf-8', 'index': False}
 
@@ -145,15 +145,9 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     # combine names for each duplicate compound group
     combo_names = C_dupemap.join(C_main_copy).groupby('new_id').agg(name_funcs)
     # identify columns for which the value should reflect the union of values
-    unify_col_options = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan',
-                         'PDB_CCD', 'ATC_code' , 'Drug_group', 'kegg_type', 'kegg_network',
-                         'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
-    cols2unify = C_main_copy.columns.intersection(unify_col_options)
+    cols2unify = C_main_copy.columns.intersection(space_sep_str_cols_cps)
     # consider only those columns
     to_combine = C_dupemap.join(C_main_copy[cols2unify])
-    # format values appropriately - where present, should be strings
-    to_combine['PubChem'] = to_combine['PubChem'].map(lambda x: str(x).replace('.0', ''), na_action='ignore')
-    C_main_copy['PubChem'] = C_main_copy['PubChem'].map(lambda x: str(x).replace('.0', ''), na_action='ignore')
     # combine each entry's (list of) values
     to_combine = to_combine.reset_index().groupby(by='new_id').agg(sum_entry_strs)
     # de-duplicate and sort each entry's (list of) values; cast as a string
@@ -185,8 +179,9 @@ def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp=
     Returns:
     None: The function modifies the compound and reaction DataFrames in place and saves them to the specified files. 
     """
-    final_output_Rs = id_indexed(pd.read_csv(final_output_Rs_fp, index_col=0, dtype=object))
-    final_output_Cs = id_indexed(pd.read_csv(final_output_Cs_fp, index_col=0, dtype=object))
+    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
+    final_output_Rs = id_indexed(pd.read_csv(final_output_Rs_fp, index_col=0, dtype=str_cols_dict, low_memory=False))
+    final_output_Cs = id_indexed(pd.read_csv(final_output_Cs_fp, index_col=0, dtype=str_cols_dict, low_memory=False))
 
     rid2cid = final_output_Rs['reaction'].str.findall(r'C\d{5}').map(set).map(sorted).rename('compound_id')
     cid2rid = rid2cid.explode().reset_index().groupby('compound_id')['id'].apply(sorted)

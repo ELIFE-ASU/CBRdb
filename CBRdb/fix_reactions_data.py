@@ -17,7 +17,7 @@ from .tools_eq import (convert_formula_to_dict,
                        generate_compound_dict
                        )
 from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
-from .tools_files import reaction_csv
+from .tools_files import reaction_csv, space_sep_str_cols_cps
 
 def print_and_log(statement, file=None):
     """
@@ -162,7 +162,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Load the processed compound data
     print_and_log("Loading the compound data...", f_log)
-    data_c = pd.read_csv(c_file, low_memory=False)
+    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
+    data_c = pd.read_csv(c_file, dtype=str_cols_dict, low_memory=False)
     print_and_log(f"Compound data shape: {data_c.shape}", f_log)
 
     # Load the small compounds
