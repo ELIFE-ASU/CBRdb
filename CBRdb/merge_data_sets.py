@@ -152,8 +152,8 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     # consider only those columns
     to_combine = C_dupemap.join(C_main_copy[cols2unify])
     # format values appropriately - where present, should be strings
-    to_combine['PubChem'] = to_combine['PubChem'].map(lambda x: str(x).replace(',0', ''), na_action='ignore')
-    C_main_copy['PubChem'] = C_main_copy['PubChem'].map(lambda x: str(x).replace(',0', ''), na_action='ignore')
+    to_combine['PubChem'] = to_combine['PubChem'].map(lambda x: str(x).replace('.0', ''), na_action='ignore')
+    C_main_copy['PubChem'] = C_main_copy['PubChem'].map(lambda x: str(x).replace('.0', ''), na_action='ignore')
     # combine each entry's (list of) values
     to_combine = to_combine.reset_index().groupby(by='new_id').agg(sum_entry_strs)
     # de-duplicate and sort each entry's (list of) values; cast as a string
