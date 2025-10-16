@@ -5,6 +5,7 @@ import re
 import chemparse
 import numpy as np
 import sympy as sp
+import pandas as pd
 from chempy import balance_stoichiometry
 from drfp import DrfpEncoder
 from rdkit import Chem
@@ -1108,18 +1109,29 @@ def to_smarts_rxn_line(eq, data_c, add_stoich=False):
 
     Parameters:
     eq (str): A string representing a chemical equation, with reactants and products separated by '<=>'.
-    data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'smiles' columns.
+    data_c (DataFrame): A pandas DataFrame of compound data including 'smiles' (as column) and 'compound_id' (as index or as a column).
     add_stoich (bool, optional): Flag to indicate whether to include stoichiometry in the SMARTS strings. Default is False.
 
     Returns:
     str: A SMARTS reaction line in the format 'reactants>>products'.
+
+    Notes:
+    - Indexing data_c on 'compound_id' before passing as an argument results in significant performance improvements on large datasets.
     """
     # Convert the equation into dictionaries of reactants and products
     reactants, products = eq_to_dict(eq)
 
-    # Get SMILES strings for reactants and products based on their compound IDs
-    reactants_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in reactants}
-    products_smiles = {k: data_c.loc[data_c['compound_id'] == k, 'smiles'].values[0] for k in products}
+    # Check if data_c is indexed on compound_id
+    not_id_indexed = (data_c.index.name != 'compound_id') & ('compound_id' in data_c.columns)
+    # If so, use .at to get SMILES strings directly and quickly
+    if not not_id_indexed:
+        reactants_smiles = {k: data_c.at[k, 'smiles'] for k in reactants}
+        products_smiles = {k: data_c.at[k, 'smiles'] for k in products}
+    # If not, create a Series for fast lookup based on compound IDs
+    if not_id_indexed:
+        smiles_Series = pd.Series(data_c['smiles'].values, index=data_c['compound_id'].values)
+        reactants_smiles = {k: smiles_Series.at[k] for k in reactants}
+        products_smiles = {k: smiles_Series.at[k] for k in products}
 
     if add_stoich:
         # Combine SMILES strings with stoichiometry into SMARTS strings
