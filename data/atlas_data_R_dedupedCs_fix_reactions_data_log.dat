@@ -1,12 +1,12 @@
 # This file contains a log of information on the rebalancer run
 Loading the compound data...
-Compound data shape: (18733, 49)
-Small compound size: 1:(64, 49), 2:(47, 49), 3:(60, 49)
+Compound data shape: (18733, 50)
+Small compound size: 1:(64, 50), 2:(47, 50), 3:(60, 50)
 Loading the reaction data...
 data loaded
-data columns: Index(['id', 'reaction', 'CBRdb_C_ids', 'ec', 'bridgit_score', 'kegg_id',
-       'most_sim_kegg', 'msk_ecs', 'msk_metacyc', 'msk_mnxr', 'msk_rhea',
-       'msk_rns'],
+data columns: Index(['id', 'reaction', 'ec', 'bridgit_score', 'kegg_id', 'most_sim_kegg',
+       'msk_ecs', 'msk_metacyc', 'msk_mnxr', 'msk_rhea', 'msk_rns',
+       'CBRdb_C_ids'],
       dtype='object')
 data shape: (149082, 12)
 making "rns": DataFrame of reaction attributes
@@ -17,7 +17,7 @@ Number of reactions balanced so far: 5974
 Filtering out bad ids
 Number of bad ids removed: 1341
 Filtering out unbalanced reactions
-Time to check if unbalanced: 783.6026940345764
+Time to check if unbalanced: 15.541991233825684
 Number of unbalanced reactions: 6215
 Assuming that starred-compound equations are correct, leaving them unchanged
 Assuming that var-list equations are correct, leaving them unchanged
