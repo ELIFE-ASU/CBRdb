@@ -384,6 +384,20 @@ def get_properties(mols):
             properties_df[name] = properties_df["mol_capped"].map(func)
         print(f'{(time() - start):.2f} s', flush=True)
 
+    smiles_funcs = {'ionization_states': enum_ionization_states}
+    for name, func in smiles_funcs.items():
+        nsps = (16 - len(name)) * ' '
+        print(f"    * {name}", flush=True, end=nsps)
+
+        start = time()
+        properties_df[name] = mp_calc(func, properties_df["smiles"].tolist())
+        print(f'{(time() - start):.2f} s', flush=True)
+    
+    space_sep_list_cols = ['ionization_states']
+    for name in space_sep_list_cols:
+        properties_df[name] = properties_df[name].map(
+            lambda x: ' '.join(sorted(set(x))) if x else float('nan'))
+
     print('Done getting properties', flush=True)
     properties_df.drop(columns=["mol_uncapped", "mol_capped"], inplace=True)
     result = properties_df.to_dict(orient='list')
