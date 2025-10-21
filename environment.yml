@@ -1,0 +1,23 @@
+name: cbrdb
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.13
+  - pip
+  - numpy
+  - sympy
+  - matplotlib
+  - networkx
+  - pandas
+  - rdkit
+  - chempy
+  - requests
+  - urllib3
+  - ase
+  - pymatgen
+  - pip:
+    - chemparse
+    - dimorphite_dl
+    - drfp
+    - mace
