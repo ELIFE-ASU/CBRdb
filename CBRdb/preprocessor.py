@@ -136,12 +136,8 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
         df['brite_full'] = df['brite'].copy(deep=True)
     if 'type' in df.columns:
         df['type'] = df['type'].str.lower()
-    if 'exact_mass' in df.columns:
-        df['exact_mass'] = df['mol_weight'].astype(float)
-    if 'mol_weight' in df.columns:
-        df['mol_weight'] = df['mol_weight'].astype(float)
     if 'name' in df.columns:
-        df['nickname'] = df['name'].fillna('').map(lambda x: x.split(';~')[0])
+        df['nickname'] = df['name'].str.partition(';~')[0]
 
     # Ease cross-referencing of databases by making database-specific fields
     for col in df.columns.intersection(['remark', 'dblinks']):
@@ -168,7 +164,8 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     for col, pat in col_pat_mapping.items():
         if col in df.columns:
             df[col] = df[col].str.findall(pat).map(string_of_ids, na_action='ignore')
-
+    col_dtype_assignments = {'exact_mass': 'float64', 'mol_weight': 'float64', 'PubChem': 'string'}
+    df = df.astype(col_dtype_assignments, errors='ignore')
     print('Formatting metadata labels...', flush=True)
     kegg_cols = ['mol_weight', 'exact_mass', 'brite_full', 'sequence', 'type', 'formula', 'gene', 'organism']
     col_name_mapping = {'index': 'compound_id'} | {i: 'kegg_' + i for i in kegg_cols}
