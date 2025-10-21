@@ -728,7 +728,7 @@ def get_all_mol_descriptors(mol, mol_uncapped):
         A dictionary containing molecular descriptors. The keys represent descriptor names, and
         the values are the corresponding calculated values. The descriptors include:
         - 'formula': Molecular formula. [*]
-        - 'molecular_weight': Exact molecular weight. [*]
+        - 'molecular_weight': Molecular weight. [*]
         - 'n_heavy_atoms': Number of heavy atoms. [*]
         - 'n_chiral_centers': Number of chiral centers. [*]
         - 'unique_bonds': Count of unique bonds. [*]
@@ -754,7 +754,7 @@ def get_all_mol_descriptors(mol, mol_uncapped):
         - Other descriptors calculated using `get_mol_descriptors`.
     """
     out_dict = {'formula': rdMolDescriptors.CalcMolFormula(mol_uncapped),
-                "molecular_weight": rdMolDescriptors.CalcExactMolWt(mol_uncapped),
+                "molecular_weight": molecular_weight(mol_uncapped),
                 "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms(mol_uncapped),
                 'n_chiral_centers': get_chirality(mol_uncapped),
                 'unique_bonds': count_unique_bonds(mol_uncapped),
@@ -788,7 +788,7 @@ capped_funcs = {'bertz': bertz,
                 'mc1': mc1,
                 'mc2': mc2}
 uncapped_funcs = {'formula': rdMolDescriptors.CalcMolFormula,
-                  "molecular_weight": rdMolDescriptors.CalcExactMolWt,
+                  "molecular_weight": molecular_weight,
                   "n_heavy_atoms": rdMolDescriptors.CalcNumHeavyAtoms,
                   'n_chiral_centers': get_chirality,
                   'unique_bonds': count_unique_bonds,
