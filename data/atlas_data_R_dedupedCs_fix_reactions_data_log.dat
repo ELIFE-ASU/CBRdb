@@ -17,7 +17,7 @@ Number of reactions balanced so far: 5974
 Filtering out bad ids
 Number of bad ids removed: 1341
 Filtering out unbalanced reactions
-Time to check if unbalanced: 15.541991233825684
+Time to check if unbalanced: 9.472624063491821
 Number of unbalanced reactions: 6215
 Assuming that starred-compound equations are correct, leaving them unchanged
 Assuming that var-list equations are correct, leaving them unchanged
