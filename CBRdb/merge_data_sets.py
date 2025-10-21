@@ -134,39 +134,68 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     pd.DataFrame: a copy of the main compound DataFrame, but with the duplicate compounds merged.
     """
     # define functions for combining entries
-    sum_entry_strs = lambda x: x.dropna().str.split(' ').sum()
-    sort_union_join = lambda x: ' '.join(sorted(set(x)))
     line_set_str = lambda x: '; '.join(sorted(set(x))) # unique strings, sorted
     lines_set_str = lambda x: ';~'.join(dict.fromkeys(x.str.split(';~').sum()).keys())
     name_funcs = {'name': lines_set_str, 'nickname': line_set_str}
+    tripleslash_join = lambda x: '///'.join(sorted(set(x.dropna()))) if not x.dropna().empty else None
+    list_unique = lambda x: ' '.join(sorted(set(x.dropna().str.split(' ').explode()))) if not x.dropna().empty else None
 
     # standardize data format
     C_main_copy = id_indexed(C_main.copy(deep=True))
-    # combine names for each duplicate compound group
-    combo_names = C_dupemap.join(C_main_copy).groupby('new_id').agg(name_funcs)
-    # identify columns for which the value should reflect the union of values
-    cols2unify = C_main_copy.columns.intersection(space_sep_str_cols_cps)
-    # consider only those columns
-    to_combine = C_dupemap.join(C_main_copy[cols2unify])
-    # combine each entry's (list of) values
-    to_combine = to_combine.reset_index().groupby(by='new_id').agg(sum_entry_strs)
-    # de-duplicate and sort each entry's (list of) values; cast as a string
-    to_combine = to_combine.replace(0, pd.NA).map(sort_union_join, na_action='ignore')
-    # rename the index
-    to_combine.rename_axis('compound_id', inplace=True)
-    # replace duplicate compound IDs with their new IDs
-    C_main_copy.rename(index=C_dupemap['new_id'], inplace=True)
+    # Assign new IDs to dupes
+    duped_compounds = C_main_copy.loc[C_dupemap.index].assign(compound_id=C_dupemap).reset_index()
+    # Flag presence/absence of repeated subunit indicator "n" in kegg_formula
+    duped_compounds['n'] = duped_compounds['kegg_formula'].str.contains('n', na=False, regex=False)
+    # Group by new IDs
+    dupes = duped_compounds.groupby('compound_id')
+    # Identify which fields do/don't have conflicting values
+    n_vals = dupes.nunique()
+    # Take the first non-NaN entry in fields/IDs without conflicting values
+    group_attrs = dupes.first()[n_vals < 2].drop(columns=['old_id', 'n'])
+    # For fields where values reflect space-separated lists...
+    sscol = group_attrs.columns.intersection(space_sep_str_cols_cps)
+    # Take the union of everything listed
+    dupes_ss = dupes[sscol].agg(list_unique)[n_vals>1]
+    group_attrs.fillna(dupes_ss, inplace=True)
+
+    # Procedurally combine nickname + name fields
+    group_attrs.fillna(dupes.agg(name_funcs), inplace=True)
+
+    # For the kegg_brite_full and comment columns...
+    label_and_merge = ['comment', 'kegg_brite_full']
+    for col in label_and_merge:
+        # Store provenance to ease interpretation
+        duped_compounds.update((duped_compounds['old_id'] + ': ' + duped_compounds[col]).rename(col))
+        # Then merge those fields
+        group_attrs.fillna(duped_compounds.groupby('compound_id')[col].apply(tripleslash_join), inplace=True)
+
+    # The only columns left w/conflicts should be 'kegg_mol_weight', 'kegg_exact_mass', and 'kegg_formula'
+    one_val = n_vals.columns[n_vals.lt(2).all()]
+    cols_done = sscol.union(label_and_merge).union(one_val).union(name_funcs.keys())
+    # Only one dupe group (C98917) has multiple values for mass/weight.
+    # For self-consistency WRT kegg_formula (also multiple values), get its first entry whole-cloth.
+    first_weight = id_indexed(dupes[['compound_id', 'kegg_mol_weight','kegg_exact_mass','kegg_formula']].head(1))[n_vals>1].dropna(how='any')
+    group_attrs.fillna(first_weight, inplace=True)
+
+    # Prioritize retaining kegg_formula values with "n" in them
+    sorted_formulas = duped_compounds.sort_values(by=['n', 'old_id'], ascending=[False, True]).groupby('compound_id')
+    sorted_formulas = sorted_formulas[['kegg_formula']].first().drop(first_weight.index)[n_vals>1].dropna()
+    group_attrs.fillna(sorted_formulas, inplace=True)
+
+    # Ensure no columns remain un-merged
+    unmerged = C_main_copy.columns.difference(cols_done.union(['n', 'old_id', 'kegg_formula', 'kegg_mol_weight', 'kegg_exact_mass']))
+    if len(unmerged) > 0:
+        print("Warning: The following columns were not merged:", unmerged.tolist())
+        print("Assuming first non-NaN entry is acceptable.")
+        group_attrs.fillna(dupes[unmerged].first(), inplace=True)
+
+    # Now, remove the duplicate entries from the main DataFrame and add the merged entries
+    C_main_copy = pd.concat([C_main_copy.drop(C_dupemap.index), group_attrs])
     # sort by compound ID
     C_main_copy.sort_index(inplace=True)
-    # update with combined values
-    C_main_copy.update(to_combine)
-    # update with combined names
-    C_main_copy.update(combo_names)
     # return index to initial state
     C_main_copy.reset_index(inplace=True)
-    # de-duplicate compound entries
-    C_main_copy.drop_duplicates(subset='compound_id', keep='first', inplace=True)
-
+    
     return C_main_copy
 
 
