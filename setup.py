@@ -32,6 +32,7 @@ setup(
         'pymatgen',
         'dimorphite_dl',
         'drfp',
+        'equilibrator-api',
         # 'rxnmapper',
     ],
     extras_require={

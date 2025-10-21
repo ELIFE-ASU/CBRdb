@@ -21,3 +21,4 @@ dependencies:
     - dimorphite_dl
     - drfp
     - mace
+    - equilibrator-api
