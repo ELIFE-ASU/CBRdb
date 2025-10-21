@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name='CBRdb',
     version='1.4.0',
-    author='Louie Slocombe, Camerian Millsaps, Kamesh Narasimhan, and Sara Walker',
+    author='Louie Slocombe, Camerian Millsaps, Reza Shahjahan, Kamesh Narasimhan, and Sara Walker',
     author_email='louies@hotmail.co.uk',
     description='A curated biochemical database that integrates and refines data from KEGG and ATLAS databases to support precise analyses of biochemical reaction data.',
     long_description=open('README.md').read(),
