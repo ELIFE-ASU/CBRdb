@@ -20,15 +20,19 @@ For further information, see the preprint
 on [ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/67c28c046dde43c908f7aa37).
 
 ## 📋 Features
+
 - Integration of KEGG and ATLAS biochemical reaction databases.
 - Curation of compounds and reactions.
 - Thermodynamic properties.
 - Reaction pruning based on reaction feasibility and similarity.
 
 ## 💡 Getting Started
-To get started with the data, you can download the compounds `CBRdb_C.csv` and reactions `CBRdb_R.csv` from the repository.
 
-To get started with deeper components of CBRdb, follow the installation instructions below. After installation, you can start using the
+To get started with the data, you can download the compounds `CBRdb_C.csv` and reactions `CBRdb_R.csv` from the
+repository.
+
+To get started with deeper components of CBRdb, follow the installation instructions below. After installation, you can
+start using the
 CBRdb package in your Python scripts or Jupyter notebooks.
 
 ## 🔧 Installation
@@ -149,6 +153,7 @@ pip3 install git+https://github.com/ELIFE-ASU/CBRdb.git
 </details>
 
 ## ⚠️ Issue Tracker
+
 Found a bug? Have an enhancement request? Head over to the [GitHub issue
 tracker](https://github.com/ELIFE-ASU/CBRdb/issues) if you need to report
 or ask something. If you are filing in on a bug, please include as much
@@ -156,9 +161,11 @@ information as possible about the issue, and try to recreate the same bug
 in a simple, easily reproducible situation.
 
 ## 👥 Contributors
+
 Louie Slocombe, Louie Slocombe, Camerian Millsaps, Reza Shahjahan, and Kamesh Narasimhan.
 
 ## ⚖️ License
+
 MIT License. We ask that you cite the relevant papers, please!
 
 ## 📚 References
