@@ -989,9 +989,8 @@ def rebalance_eq_core(eq, data_c, comp_dict=None):
     iproducts = dict(iproducts)
     
     # If nothing changed between input and output, just return the standardised eq
-    # TODO: add ability to handle case where multiple cps on one side have the same empirical formula
+    # TODO: add ability to handle case where multiple cps on one side of imbalanced rxn have the same empirical formula
     if ireactants == reactants and iproducts == products:
-        print('ok')
         return standardise_eq(eq)
     # If a count actually changed, use the new count
     else:
