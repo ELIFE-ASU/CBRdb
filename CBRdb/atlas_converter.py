@@ -95,7 +95,7 @@ def clean_atlas(in_file="../../data/atlas_reactions.dat",
     listlike_cols = ['ec', 'msk_rhea', 'msk_ecs', 'msk_rns', 'msk_metacyc', 'msk_mnxr']
     printable_df = df.copy(deep=True)
     for col in listlike_cols:
-        printable_df[col] = printable_df[col].map(' '.join, na_action='ignore')
+        printable_df[col] = printable_df[col].map(lambda x: ' '.join(sorted(x)), na_action='ignore')
     # Some 'most_sim_kegg' entries are a single placeholder character, replace w/NaN
     df['most_sim_kegg'] = df['most_sim_kegg'].mask(lambda x: x.str.len().lt(2))
     # Write the data to a file
