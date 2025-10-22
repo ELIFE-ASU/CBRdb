@@ -355,7 +355,19 @@ def convert_ids_to_formulas(in_dict, react_id_form):
     Returns:
     dict: A dictionary where keys are chemical formulas and values are their counts.
     """
-    return {react_id_form[id]: count for id, count in in_dict.items()}
+    if len(react_id_form) == len(set(react_id_form.values())):
+        formula_counts = {react_id_form[id]: count for id, count in in_dict.items()}
+
+    else:
+        counts = pd.Series(in_dict).rename(react_id_form)
+        if counts.astype(str).str.isnumeric().all():
+            formula_counts = counts.groupby(level=0).sum().to_dict()
+        else:
+            formula_counts = counts.astype(str).groupby(level=0).agg('+'.join)
+            formula_counts = formula_counts.map(lambda x: int(x) if x.isnumeric() else x).to_dict()
+
+    return formula_counts
+        
 
 
 def convert_formulas_to_ids(formulas_dict, react_id_form):
@@ -969,21 +981,29 @@ def rebalance_eq_core(eq, data_c, comp_dict=None):
         reactants, products, reactants_del, products_del = compare_and_delete_keys(reactants, products)
 
     # Balance the equation
-    reactants, products = balance_stoichiometry(set(reactants.keys()),
+    ireactants, iproducts = balance_stoichiometry(set(reactants.keys()),
                                                 set(products.keys()),
                                                 underdetermined=None)
     # Convert the formulas back to eq form
-    reactants = dict(reactants)
-    products = dict(products)
-
-    # Check if the reactants and products were the same
-    if f_repeated:
-        # In case of repeated compounds, add the deleted compounds back
-        reactants = add_dicts(reactants, reactants_del)
-        products = add_dicts(products, products_del)
-
-    # Convert the dict back into eq form and standardise
-    return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c, comp_dict=comp_dict))
+    ireactants = dict(ireactants)
+    iproducts = dict(iproducts)
+    
+    # If nothing changed between input and output, just return the standardised eq
+    # TODO: add ability to handle case where multiple cps on one side have the same empirical formula
+    if ireactants == reactants and iproducts == products:
+        print('ok')
+        return standardise_eq(eq)
+    # If a count actually changed, use the new count
+    else:
+        reactants = ireactants
+        products = iproducts
+        # Check if the reactants and products were the same
+        if f_repeated:
+            # In case of repeated compounds, add the deleted compounds back
+            reactants = add_dicts(reactants, reactants_del)
+            products = add_dicts(products, products_del)
+        # Convert the dict back into eq form and standardise
+        return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c, comp_dict=comp_dict))
 
 
 def rebalance_eq(eq, data_c, comp_dict=None):
