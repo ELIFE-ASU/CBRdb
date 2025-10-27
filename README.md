@@ -162,7 +162,7 @@ in a simple, easily reproducible situation.
 
 ## 👥 Contributors
 
-Louie Slocombe, Louie Slocombe, Camerian Millsaps, Reza Shahjahan, and Kamesh Narasimhan.
+Louie Slocombe, Camerian Millsaps, Reza Shahjahan, and Kamesh Narasimhan.
 
 ## ⚖️ License
 

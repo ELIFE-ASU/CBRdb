@@ -9,7 +9,16 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/ELIFE-ASU/CBRdb',
-    packages=find_packages(),
+    packages=find_packages(include=['CBRdb', 'CBRdb.*']),
+    package_data={
+        'CBRdb': [
+            # 'atom_tracking/*',
+            'data/*',
+            'examples/*',
+            # 'hpc/*',
+            'tests/*',
+        ],
+    },
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
@@ -28,7 +37,7 @@ setup(
         'urllib3',
         'chemparse',
         'ase',
-        'mace',
+        'mace-torch',
         'pymatgen',
         'dimorphite_dl',
         'drfp',

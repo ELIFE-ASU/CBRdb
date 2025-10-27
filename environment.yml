@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python>=3.13
+  - python>=3.9
   - pip
   - numpy
   - sympy
@@ -20,5 +20,5 @@ dependencies:
     - chemparse
     - dimorphite_dl
     - drfp
-    - mace
+    - mace-torch
     - equilibrator-api
