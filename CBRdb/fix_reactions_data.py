@@ -352,12 +352,12 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     return df_final
 
 
-def balance_simple_cases(R_main, C_main, f_log=None, data_c=None, formula_table=None):
+def balance_simple_cases(R_main, C_main, f_log=None, data_c=None, formula_table=None, dfs=None):
     R_main = id_indexed(R_main)
     C_main = id_indexed(C_main)
     if data_c is None or formula_table is None:
         data_c, formula_table = compound_lookup_tables(C_main)
-    dfs = filter_reactions_pandas(data_r=R_main, data_c=data_c, formula_table=formula_table, f_log=f_log)
+    dfs = filter_reactions_pandas(data_r=R_main, data_c=data_c, formula_table=formula_table, f_log=f_log, dfs=dfs)
 
     injections_1el = get_charge_balanced_injections_1el(data_c=data_c, dfs=dfs)
     injections_OH = get_charge_balanced_injections_OH(data_c=data_c, dfs=dfs)
