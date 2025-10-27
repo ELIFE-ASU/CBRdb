@@ -15,7 +15,9 @@ from .fix_reactions_data import (fix_reactions_data,
                                  compound_lookup_tables,
                                  get_stoichiometry,
                                  )
-from .lets_get_kegg import (download_data)
+from .lets_get_kegg import (download_data, 
+                            print_kegg_urls,
+                            )
 from .merge_data_sets import (merge_duplicate_reactions,
                               identify_duplicate_compounds,
                               merge_duplicate_compounds,

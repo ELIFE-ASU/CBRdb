@@ -344,3 +344,25 @@ def log_attributes_found(target_dir=r'../../data/kegg_data_C_full'):
 
     df.astype(int).to_csv(out_file)
     return df.assign(path=paths)
+
+
+def print_kegg_urls(ids):
+    """
+    Generates hyperlink(s) to KEGG entries for a list of KEGG IDs, in batches of 10.
+    Parameters:
+    ids (list, pd.Series, pd.DataFrame): A list or pandas Series/DataFrame. Index is used if indexed on 'compound_id' or 'id'.
+    Returns:
+    None: Prints the hyperlinks to the console. Hyperlinks are clickable in Jupyter notebooks.
+    """
+    base_url = 'https://www.kegg.jp/entry/'
+    lim = 10
+    if isinstance(ids, (pd.DataFrame, pd.Series)):
+        if ('compound_id' not in ids) and ('id' not in ids):
+            ids = ids.index.drop_duplicates()
+        else:
+            ids = ids.get('compound_id', ids.get('id'))
+    n = len(ids)
+    idxs = ['+'.join(ids[i:i+lim]) for i in range(0,n,lim)]
+    for idx in idxs:
+        print(f"{base_url}{idx}")
+    return None
