@@ -75,7 +75,3 @@ if __name__ == "__main__":
     plt.savefig('KEGG_R_sim_log_hist.png', dpi=300)
     plt.savefig('KEGG_R_sim_log_hist.pdf', dpi=300)
     plt.show()
-
-    # data_r_atlas.to_csv('ATLAS_R_sim.csv.gz', index=False, compression='gzip')
-    # print('Done.', flush=True)
-    # print(flush=True)

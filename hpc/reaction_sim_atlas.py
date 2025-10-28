@@ -11,6 +11,7 @@ plt.rcParams['axes.linewidth'] = 2.0
 if __name__ == "__main__":
     print(flush=True)
     method = 'drfp'
+    sample = False
     assert method in ['rdkit', 'drfp'], "Method must be 'rdkit' or 'drfp'"
 
     data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
@@ -19,8 +20,9 @@ if __name__ == "__main__":
     # Trim them down to only the necessary columns
     data_r = pd.DataFrame(data_r[['id', 'reaction']])
 
-    # randomly select X reactions from data_r for testing
-    # data_r = data_r.sample(n=10_000, random_state=1).reset_index(drop=True)
+    if sample:
+        # randomly select X reactions from data_r for testing
+        data_r = data_r.sample(n=10_000, random_state=1).reset_index(drop=True)
 
     # if the smarts column does not exist, create it
     if 'smarts' not in data_r.columns:
