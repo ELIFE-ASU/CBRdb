@@ -4,8 +4,9 @@ import shutil
 import pandas as pd
 
 space_sep_str_cols_cps = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan',
-                         'PDB_CCD', 'ATC_code' , 'Drug_group', 'kegg_type', 'kegg_network',
-                         'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
+                          'PDB_CCD', 'ATC_code', 'Drug_group', 'kegg_type', 'kegg_network',
+                          'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
+
 
 def file_list(mypath=None):
     """
@@ -210,11 +211,11 @@ def reaction_csv(df_R: pd.DataFrame, file_address: str, compression='infer'):
     if 'CBRdb_C_ids' in df.columns:
         col_order.remove('CBRdb_C_ids')
         col_order.append('CBRdb_C_ids')
-    
+
     df = df.sort_values(by='id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
     if not file_address.endswith('.zip'):
-        df.to_csv(file_address+'.zip', **params)
+        df.to_csv(file_address + '.zip', **params)
     return file_address
 
 
@@ -248,7 +249,7 @@ def compound_csv(df_C: pd.DataFrame, file_address: str, compression='infer'):
     df = df.sort_values(by='compound_id').reset_index(drop=True).loc[:, col_order]
     df.to_csv(file_address, **params)
     if not file_address.endswith('.zip'):
-        df.to_csv(file_address+'.zip', **params)
+        df.to_csv(file_address + '.zip', **params)
     return file_address
 
 

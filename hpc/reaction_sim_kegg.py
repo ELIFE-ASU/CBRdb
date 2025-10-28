@@ -30,8 +30,6 @@ if __name__ == "__main__":
         func_smarts = partial(CBRdb.to_smarts_rxn_line, data_c=data_c, add_stoich=False)
         data_r['smarts'] = CBRdb.mp_calc(func_smarts, data_r['reaction'].tolist())
 
-
-
     # Print the number of reactions
     print(f"Number of reactions : {len(data_r)}", flush=True)
     data_r_atlas = data_r.copy()

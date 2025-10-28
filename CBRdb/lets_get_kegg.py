@@ -362,7 +362,7 @@ def print_kegg_urls(ids):
         else:
             ids = ids.get('compound_id', ids.get('id'))
     n = len(ids)
-    idxs = ['+'.join(ids[i:i+lim]) for i in range(0,n,lim)]
+    idxs = ['+'.join(ids[i:i + lim]) for i in range(0, n, lim)]
     for idx in idxs:
         print(f"{base_url}{idx}")
     return None

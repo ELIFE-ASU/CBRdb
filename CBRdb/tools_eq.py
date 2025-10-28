@@ -4,8 +4,8 @@ import re
 
 import chemparse
 import numpy as np
-import sympy as sp
 import pandas as pd
+import sympy as sp
 from chempy import balance_stoichiometry
 from drfp import DrfpEncoder
 from rdkit import Chem
@@ -367,7 +367,6 @@ def convert_ids_to_formulas(in_dict, react_id_form):
             formula_counts = formula_counts.map(lambda x: int(x) if x.isnumeric() else x).to_dict()
 
     return formula_counts
-        
 
 
 def convert_formulas_to_ids(formulas_dict, react_id_form):
@@ -504,7 +503,8 @@ def get_elements_from_eq(eq, c_data, strip_ionic=True, comp_dict=None):
            - The fourth dictionary contains the elements and their counts in the products.
     """
     # Convert the Eq into the formula dicts
-    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data, strip_ionic=strip_ionic, comp_dict=comp_dict)
+    converted_reactants, converted_products = get_formulas_from_eq(eq, c_data, strip_ionic=strip_ionic,
+                                                                   comp_dict=comp_dict)
 
     # Convert the formulas into reactants
     react_ele = convert_form_dict_to_elements(converted_reactants, strip_ionic=strip_ionic)
@@ -982,12 +982,12 @@ def rebalance_eq_core(eq, data_c, comp_dict=None):
 
     # Balance the equation
     ireactants, iproducts = balance_stoichiometry(set(reactants.keys()),
-                                                set(products.keys()),
-                                                underdetermined=None)
+                                                  set(products.keys()),
+                                                  underdetermined=None)
     # Convert the formulas back to eq form
     ireactants = dict(ireactants)
     iproducts = dict(iproducts)
-    
+
     # If nothing changed between input and output, just return the standardised eq
     # TODO: add ability to handle case where multiple cps on one side of imbalanced rxn have the same empirical formula
     if ireactants == reactants and iproducts == products:

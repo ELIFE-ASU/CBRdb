@@ -81,7 +81,7 @@ if __name__ == "__main__":
     # print cases where smin_max is 0.0, nan, or inf
     print("Cases where similarity is 0.0, nan, or inf:", flush=True)
     print(data_r_atlas[(data_r_atlas['sim_max'] == 0.0) | (data_r_atlas['sim_max'].isna()) | (
-                data_r_atlas['sim_max'] == np.inf)][['id', 'sim_max', 'sim_max_id']], flush=True)
+            data_r_atlas['sim_max'] == np.inf)][['id', 'sim_max', 'sim_max_id']], flush=True)
     print(flush=True)
 
     # print cases where sim_max is 1.0

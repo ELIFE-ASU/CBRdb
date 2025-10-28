@@ -1,5 +1,5 @@
-import os
 import csv
+import os
 
 # Define the columns and their corresponding line prefixes
 columns = [
@@ -14,8 +14,8 @@ columns = [
     ("mapping_error", "mapping_error:")
 ]
 
-out_dir = "/home/mshahjah/AtomTracking/Logs/out" 
-output_dir = "."  
+out_dir = "/home/mshahjah/AtomTracking/Logs/out"
+output_dir = "."
 
 out_files = [f for f in os.listdir(out_dir) if f.endswith('.out')]
 rows = []

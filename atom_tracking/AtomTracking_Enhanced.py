@@ -25,10 +25,11 @@ TECHNICAL COMPONENTS:
 ============================================================================"""
 import argparse
 import os
-import sys
-import pandas as pd
 import re
+import sys
+
 import matplotlib.pyplot as plt
+import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import Draw
 from rxnmapper import RXNMapper
@@ -38,14 +39,18 @@ try:
     from filelock import FileLock
 except ImportError:
     import subprocess
+
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'filelock'])
     from filelock import FileLock
 # --- Import localmapper for fallback mapping ---
 try:
     from localmapper import localmapper
+
     LOCALMAPPER_AVAILABLE = True
 except ImportError:
     LOCALMAPPER_AVAILABLE = False
+
+
 # -------------------- Helper Functions --------------------
 def canonicalize_smiles(smiles):
     """Convert a SMILES string to its canonical form, removing all atom map numbers.
@@ -58,6 +63,8 @@ def canonicalize_smiles(smiles):
     for atom in mol.GetAtoms():
         atom.SetAtomMapNum(0)
     return Chem.MolToSmiles(mol, canonical=True, isomericSmiles=True)
+
+
 def smiles_to_mols(smiles):
     """Convert a dot-separated SMILES string into a list of RDKit Mol objects.
     Only valid fragments are returned as Mol objects."""
@@ -73,6 +80,8 @@ def smiles_to_mols(smiles):
         except Exception:
             pass
     return mols
+
+
 def label_atom(mol, atom_idx, map_num):
     """Label a specific atom in a molecule with a given atom map number.
     Returns a new RDKit Mol object with the label applied."""
@@ -80,6 +89,8 @@ def label_atom(mol, atom_idx, map_num):
     if 0 <= atom_idx < mol.GetNumAtoms():
         mol.GetAtomWithIdx(atom_idx).SetAtomMapNum(map_num)
     return mol
+
+
 def trace_atom(atom_map_num, mols):
     """Search a list of molecules for an atom with a specific atom map number.
     Returns the first molecule containing the atom, or None if not found."""
@@ -88,6 +99,8 @@ def trace_atom(atom_map_num, mols):
             if atom.GetAtomMapNum() == atom_map_num:
                 return mol
     return None
+
+
 def remove_atom_map_numbers(mol):
     """Remove all atom map numbers from a molecule and return its canonical SMILES.
     Returns None if input is None."""
@@ -96,6 +109,8 @@ def remove_atom_map_numbers(mol):
     for atom in mol.GetAtoms():
         atom.SetAtomMapNum(0)
     return Chem.MolToSmiles(mol, canonical=True, isomericSmiles=True)
+
+
 def visualize_mapped_rxn(mapped_rxns, reaction_id, save_images=False):
     """Visualize the mapped reaction SMILES. If save_images is True, saves the image
     in a folder named 'Reactions Visualizations' using the reaction ID as the filename."""
@@ -113,6 +128,8 @@ def visualize_mapped_rxn(mapped_rxns, reaction_id, save_images=False):
         plt.close()
     except Exception:
         pass
+
+
 def find_file(filename):
     """Search for a file in the current script directory and up to two parent directories.
     Returns the absolute path if found, otherwise raises FileNotFoundError."""
@@ -122,6 +139,8 @@ def find_file(filename):
         if os.path.exists(candidate):
             return candidate
     raise FileNotFoundError(f"{filename} not found in current or parent directories.")
+
+
 def get_or_build_canonical_index(df_molecules, output_file):
     """Load a canonical index from CSV if it exists, otherwise build it from the molecule DataFrame.
     Each fragment of each molecule is canonicalized and indexed."""
@@ -147,18 +166,22 @@ def get_or_build_canonical_index(df_molecules, output_file):
     df_index = pd.DataFrame(index)
     df_index.to_csv(output_file, index=False)
     return df_index
+
+
 def remove_coefficients(reaction_string):
     """Remove numeric or symbolic coefficients (e.g. 2, n, m+1, n-1+x) from reactions."""
     # Remove coefficient tokens before compounds
     reaction_string = re.sub(r'\b[0-9a-zA-Z+\-*/]+\s+(?=C\d{5})', '', reaction_string)
-    
+
     # Collapse multiple spaces and clean operators
     reaction_string = re.sub(r'\s+', ' ', reaction_string)
     reaction_string = re.sub(r'\+\s*\+', '+', reaction_string)
     reaction_string = re.sub(r'^\+\s*', '', reaction_string)
     reaction_string = re.sub(r'\s*\+$', '', reaction_string)
-    
+
     return reaction_string.strip()
+
+
 def replace_compounds_with_smiles(reaction_string, compound_mapping):
     """Replace compound IDs with their corresponding SMILES in a reaction string."""
     import re
@@ -173,13 +196,15 @@ def replace_compounds_with_smiles(reaction_string, compound_mapping):
     else:
         reactants = reaction_string
         products = ''
+
     def replace_in_side(side):
         if not side or not side.strip():
             return ""
         compounds = [comp.strip() for comp in side.split('+') if comp.strip()]
         smiles_list = []
         for compound in compounds:
-            if not compound or compound in ['n', 'm', 'x', 'm-1', 'n-x'] or re.match(r'^[nm](-\d+)?$|^[nm]-[xn]$|^x$', compound):
+            if not compound or compound in ['n', 'm', 'x', 'm-1', 'n-x'] or re.match(r'^[nm](-\d+)?$|^[nm]-[xn]$|^x$',
+                                                                                     compound):
                 continue
             compound = re.sub(r'^(\d+|[nm](-\d+)?|[nm]-[xn]|x)\s+', '', compound)
             if compound and compound in compound_mapping:
@@ -187,12 +212,15 @@ def replace_compounds_with_smiles(reaction_string, compound_mapping):
                 if smiles and smiles.strip():
                     smiles_list.append(smiles.strip())
         return '.'.join(smiles_list)
+
     reactants_smiles = replace_in_side(reactants)
     if products:
         products_smiles = replace_in_side(products)
         return f"{reactants_smiles}>>{products_smiles}"
     else:
         return reactants_smiles
+
+
 def save_error_reaction(error_output_file, error_lock_file, reaction_data):
     """Save error reaction data to the error CSV file with the same structure as the main output."""
     error_row = pd.DataFrame([reaction_data])
@@ -204,6 +232,8 @@ def save_error_reaction(error_output_file, error_lock_file, reaction_data):
             df_combined_errors.to_csv(error_output_file, index=False, quoting=1)
         else:
             error_row.to_csv(error_output_file, index=False, quoting=1)
+
+
 def log_and_exit_early(error_message, selected_id=None, reaction_no_stoich=None, reason=None):
     """Log error and exit script early."""
     output_data = {
@@ -223,6 +253,8 @@ def log_and_exit_early(error_message, selected_id=None, reaction_no_stoich=None,
     except Exception:
         pass
     sys.exit(1)
+
+
 def process_error_reactions_smiles(error_output_file, compound_mapping):
     """Process the Error Reactions CSV file and add reaction_smiles column."""
     if not os.path.exists(error_output_file):
@@ -252,10 +284,14 @@ def process_error_reactions_smiles(error_output_file, compound_mapping):
             reaction_smiles_list.append('')
     df_errors['reaction_smiles'] = reaction_smiles_list
     df_errors.to_csv(error_output_file, index=False, quoting=1)
+
+
 def count_chiral_centers(mol):
     """Count the number of chiral centers in a molecule."""
     chiral_centers = Chem.FindMolChiralCenters(mol, includeUnassigned=True)
     return len(chiral_centers)
+
+
 def perform_atom_mapping(reaction_smiles, reaction_id):
     """Perform atom mapping with RXNMapper first, fallback to localmapper if token limit exceeded.
     Returns tuple: (mapped_rxn, mapper_used, error_message)"""
@@ -278,6 +314,8 @@ def perform_atom_mapping(reaction_smiles, reaction_id):
                 return None, "rxnmapper_failed_no_fallback", f"RXNMapper: {error_msg}; localmapper not available"
         else:
             return None, "rxnmapper_failed_other", error_msg
+
+
 def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, selected_id, mapper_name=""):
     """Perform atom tracking for a given substrate molecule and atom.
     Returns tuple: (product_cid, atom_mapped_rxn, tracking_successful, mapper_used, mapping_error)"""
@@ -312,8 +350,8 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
                     matching_atoms = []
                     for atom in r_mol.GetAtoms():
                         if (atom.GetSymbol() == target_symbol and
-                            atom.GetDegree() == target_degree and
-                            atom.GetAtomMapNum() > 0):
+                                atom.GetDegree() == target_degree and
+                                atom.GetAtomMapNum() > 0):
                             matching_atoms.append(atom.GetAtomMapNum())
                     if matching_atoms:
                         target_map_num = matching_atoms[0]
@@ -350,20 +388,28 @@ def perform_atom_tracking(substrate_mols, product_smiles, mol_idx, atom_idx, sel
             return 'Error', 'Error', False, mapper_used, post_error
     else:
         return 'Error', 'Error', False, 'failed', mapping_error
+
+
 def selection_key_highest(i):
     """Selection key for substrate with highest chiral center count, then heavy atom count."""
     ccc = count_chiral_centers(substrate_mols[i])
     heavy = substrate_mols[i].GetNumHeavyAtoms()
     return (ccc, heavy)
+
+
 def selection_key_lowest(i):
     """Selection key for substrate with lowest chiral center count, then heavy atom count."""
     ccc = count_chiral_centers(substrate_mols[i])
     heavy = substrate_mols[i].GetNumHeavyAtoms()
     return (ccc, -heavy)
+
+
 def omit_shared_compounds(sub_ids, prod_ids):
     """Remove compounds present on both sides of the reaction."""
     shared = set(sub_ids) & set(prod_ids)
     return [cid for cid in sub_ids if cid not in shared], [cid for cid in prod_ids if cid not in shared]
+
+
 def get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids, remove_cofactors):
     """Return reaction string after removing cofactors if requested."""
     if not remove_cofactors:
@@ -375,6 +421,8 @@ def get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids, rem
     sub_names = [cid for cid in filtered_subs]
     prod_names = [cid for cid in filtered_prods]
     return ' + '.join(sub_names) + ' <=> ' + ' + '.join(prod_names)
+
+
 # -------------------- Main Script --------------------
 parser = argparse.ArgumentParser()
 parser.add_argument('--row_index', type=int, required=True)
@@ -405,12 +453,16 @@ except Exception as e:
 if args.row_index >= len(df_input_reactions):
     log_and_exit_early(f"Row index {args.row_index} out of bounds.")
 df_canonical_index = get_or_build_canonical_index(df_molecules, canonical_index_file)
+
+
 def lookup_compound_id(canonical_smiles):
     """Look up the compound ID for a given canonical SMILES string in the canonical index DataFrame."""
     match = df_canonical_index[df_canonical_index['canonical_smiles'] == canonical_smiles]
     if not match.empty:
         return match['compound_id'].values[0]
     return 'Unknown'
+
+
 selected_row = df_input_reactions.iloc[args.row_index]
 selected_id = selected_row['id']
 raw_reaction = selected_row['reaction']
@@ -434,8 +486,10 @@ if args.dynamic_cofactors:
         substrate_ids = orig_substrate_ids
         product_ids = orig_product_ids
         dynamic_skipped = True
-substrate_smiles_list = [compound_smiles_map[cid].strip() for cid in substrate_ids if cid in compound_smiles_map and compound_smiles_map[cid].strip()]
-product_smiles_list = [compound_smiles_map[cid].strip() for cid in product_ids if cid in compound_smiles_map and compound_smiles_map[cid].strip()]
+substrate_smiles_list = [compound_smiles_map[cid].strip() for cid in substrate_ids if
+                         cid in compound_smiles_map and compound_smiles_map[cid].strip()]
+product_smiles_list = [compound_smiles_map[cid].strip() for cid in product_ids if
+                       cid in compound_smiles_map and compound_smiles_map[cid].strip()]
 substrate_smiles = '.'.join(substrate_smiles_list)
 product_smiles = '.'.join(product_smiles_list)
 mapped_rxns = None
@@ -446,11 +500,15 @@ if substrate_smiles and product_smiles:
     mapped_rxns, mapper_used, mapping_error = perform_atom_mapping(raw_reaction_smiles, selected_id)
 static_cofactors = args.static_cofactors
 cofactor_ids = [
-    'C00002','C00003','C00004','C00005','C00006','C00008','C00010','C00016','C00018','C00019','C00020','C00032',
-    'C00034','C00038','C00051','C00053','C00061','C00063','C00068','C00072','C00076','C00101','C00113','C00120',
-    'C00143','C00175','C00194','C00272','C00305','C00415','C00828','C00862','C01217','C01352','C02059','C03576',
-    'C04628','C05924','C06453','C11378','C14818','C14819','C15670','C15672','C15817','C16241','C18237','C19153',
-    'C19609','C19610','C22424'
+    'C00002', 'C00003', 'C00004', 'C00005', 'C00006', 'C00008', 'C00010', 'C00016', 'C00018', 'C00019', 'C00020',
+    'C00032',
+    'C00034', 'C00038', 'C00051', 'C00053', 'C00061', 'C00063', 'C00068', 'C00072', 'C00076', 'C00101', 'C00113',
+    'C00120',
+    'C00143', 'C00175', 'C00194', 'C00272', 'C00305', 'C00415', 'C00828', 'C00862', 'C01217', 'C01352', 'C02059',
+    'C03576',
+    'C04628', 'C05924', 'C06453', 'C11378', 'C14818', 'C14819', 'C15670', 'C15672', 'C15817', 'C16241', 'C18237',
+    'C19153',
+    'C19609', 'C19610', 'C22424'
 ]
 reaction_no_stoich = remove_coefficients(raw_reaction)
 remove_cofactors_flag = args.static_cofactors or args.dynamic_cofactors
@@ -460,7 +518,8 @@ if args.dynamic_cofactors and not dynamic_skipped:
     cofactor_ids_for_filter = list(shared)
 else:
     cofactor_ids_for_filter = cofactor_ids if args.static_cofactors else []
-reaction_after_cofactor = get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids_for_filter, remove_cofactors_flag)
+reaction_after_cofactor = get_cofactor_filtered_reaction(substrate_ids, product_ids, cofactor_ids_for_filter,
+                                                         remove_cofactors_flag)
 if dynamic_skipped:
     reaction_after_cofactor = 'Dynamic filtering skipped - would empty side(s)'
 if static_cofactors:
@@ -470,6 +529,8 @@ if static_cofactors:
             canonical = canonicalize_smiles(compound_smiles_map[cid])
             if canonical:
                 cofactor_smiles.add(canonical)
+
+
     def filter_cofactors(smiles_string):
         if not smiles_string:
             return ""
@@ -477,12 +538,16 @@ if static_cofactors:
             smi for smi in smiles_string.strip().split('.')
             if canonicalize_smiles(smi) not in cofactor_smiles
         ])
+
+
     substrate_smiles = filter_cofactors(substrate_smiles)
     product_smiles = filter_cofactors(product_smiles)
 if not substrate_smiles or not substrate_smiles.strip():
-    log_and_exit_early(f"No valid substrate SMILES found for reaction {selected_id}.", selected_id=selected_id, reaction_no_stoich=raw_reaction)
+    log_and_exit_early(f"No valid substrate SMILES found for reaction {selected_id}.", selected_id=selected_id,
+                       reaction_no_stoich=raw_reaction)
 if not product_smiles or not product_smiles.strip():
-    log_and_exit_early(f"No valid product SMILES found for reaction {selected_id}.", selected_id=selected_id, reaction_no_stoich=raw_reaction)
+    log_and_exit_early(f"No valid product SMILES found for reaction {selected_id}.", selected_id=selected_id,
+                       reaction_no_stoich=raw_reaction)
 substrate_mols = smiles_to_mols(substrate_smiles)
 is_variable_coeff_reaction = any(var in raw_reaction.lower() for var in ['n', 'm', 'x'])
 if not substrate_mols:
@@ -520,9 +585,11 @@ if not substrate_mols:
                     pass
             sys.exit(0)
         else:
-            log_and_exit_early(f"No non-cofactor substrates found for reaction {selected_id}.", selected_id=selected_id, reaction_no_stoich=raw_reaction)
+            log_and_exit_early(f"No non-cofactor substrates found for reaction {selected_id}.", selected_id=selected_id,
+                               reaction_no_stoich=raw_reaction)
     else:
-        log_and_exit_early(f"No non-cofactor substrates found for reaction {selected_id}.", selected_id=selected_id, reaction_no_stoich=raw_reaction)
+        log_and_exit_early(f"No non-cofactor substrates found for reaction {selected_id}.", selected_id=selected_id,
+                           reaction_no_stoich=raw_reaction)
 if args.highest_CCC:
     mol_idx = max(range(len(substrate_mols)), key=selection_key_highest)
     reason = 'highest chiral center count'
@@ -539,7 +606,8 @@ product_cid, atom_mapped_rxn, tracking_successful, mapper_used, mapping_error = 
     substrate_mols, product_smiles, mol_idx, atom_idx, selected_id, "[INITIAL]"
 )
 if not tracking_successful and mapper_used == "localmapper_fallback":
-    degrees = [(i, substrate_mols[mol_idx].GetAtomWithIdx(i).GetDegree()) for i in range(substrate_mols[mol_idx].GetNumAtoms())]
+    degrees = [(i, substrate_mols[mol_idx].GetAtomWithIdx(i).GetDegree()) for i in
+               range(substrate_mols[mol_idx].GetNumAtoms())]
     degrees.sort(key=lambda x: x[1], reverse=True)
     if len(degrees) > 1:
         alt_atom_idx = degrees[1][0]

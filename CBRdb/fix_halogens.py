@@ -14,6 +14,7 @@ from .tools_eq import convert_formula_to_dict, standardise_eq
 from .preprocessor import preprocess_kegg_c_metadata
 from .merge_data_sets import id_indexed
 
+
 def load_bad_entries(target_dir_c):
     """
     Loads and filters bad entries from a target directory.
@@ -153,16 +154,16 @@ def fix_halogen_compounds(
                          .reset_index(names='generic_id'))
 
     # Get the compound metadata
-    x_metadata = id_indexed(preprocess_kegg_c_metadata(valid_cids = cids_dict.keys()))
+    x_metadata = id_indexed(preprocess_kegg_c_metadata(valid_cids=cids_dict.keys()))
     # Ensure proper formatting of string columns
     for col in space_sep_str_cols_cps:
         if col in x_metadata.columns:
             x_metadata[col] = x_metadata[col].map(lambda x: str(x), na_action='ignore')
     # Tie each instantiated compound ID to its parent metadata
-    specific_halogens['nickname'] = (specific_halogens['elem'] +  '-bearing ' 
-                                    + specific_halogens['generic_id'].map(x_metadata['nickname']))
+    specific_halogens['nickname'] = (specific_halogens['elem'] + '-bearing '
+                                     + specific_halogens['generic_id'].map(x_metadata['nickname']))
     specific_halogens['comment'] = 'From generic halogen ' + specific_halogens['generic_id']
-    
+
     if int_file is not None:
         meta_out = x_metadata.drop(columns=['comment', 'nickname'])
         int_out = specific_halogens.merge(meta_out, left_on='generic_id', right_index=True, how='left')
@@ -212,8 +213,8 @@ def merge_halogen_compounds(specific_halogens,
 
     # Create a dataframe
     df = pd.DataFrame(data=df_dict)
-    df = df.merge(new_halogens[['compound_id', 'nickname', 'comment']], 
-                  on='compound_id', 
+    df = df.merge(new_halogens[['compound_id', 'nickname', 'comment']],
+                  on='compound_id',
                   how='left')
 
     if int_file is not None:

@@ -16,8 +16,9 @@ from .tools_eq import (convert_formula_to_dict,
                        to_smarts_rxn_line,
                        generate_compound_dict
                        )
-from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
 from .tools_files import reaction_csv, space_sep_str_cols_cps
+from .tools_mols import (get_small_compounds, get_compounds_with_matching_elements)
+
 
 def print_and_log(statement, file=None):
     """
@@ -210,7 +211,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     t0 = time.time()
     comp_dict = generate_compound_dict(data_c)
-    bool_unbalanced = possibly_unbalanced['reaction'].map(lambda x: full_check_eq_unbalanced(x, c_data=data_c, comp_dict=comp_dict))
+    bool_unbalanced = possibly_unbalanced['reaction'].map(
+        lambda x: full_check_eq_unbalanced(x, c_data=data_c, comp_dict=comp_dict))
     unbalanced_entries = bool_unbalanced[bool_unbalanced].index
     print_and_log(f"Time to check if unbalanced: {time.time() - t0}", f_log)
 
@@ -427,7 +429,7 @@ def get_stoichiometry(data_r, formula_table=None, dfs=None):
         dfs = dict()
     elif formula_table is None and 'formula_table' in dfs.keys():
         formula_table = dfs['formula_table']
-    
+
     data_r = id_indexed(data_r)
     ft = formula_table.T
 
@@ -451,7 +453,7 @@ def get_stoichiometry(data_r, formula_table=None, dfs=None):
         columns='compound_id').set_index('id').convert_dtypes()
     rse = rsc.reset_index().merge(ft, left_on='compound_id', right_index=True, how='left').drop(
         columns='compound_id').set_index('id').convert_dtypes()
-    
+
     # Multiply element counts by compound coefficients
     lse.update(lse.iloc[:, 1:].apply(lambda x: x * lse['coeff'], axis=0))
     rse.update(rse.iloc[:, 1:].apply(lambda x: x * rse['coeff'], axis=0))
@@ -463,9 +465,9 @@ def get_stoichiometry(data_r, formula_table=None, dfs=None):
     dfs.update({'equations': equations, 'sides': sides, 'formula_table': formula_table,
                 'elements_L': lse, 'elements_R': rse, 'compounds_L': lsc, 'compounds_R': rsc})
     return dfs
-    
 
-def filter_reactions_pandas(data_r,  data_c=None, formula_table=None, f_log=None, dfs=None):
+
+def filter_reactions_pandas(data_r, data_c=None, formula_table=None, f_log=None, dfs=None):
     """
     Filters reactions data to identify those that can be balanced, and prepares data for stoichiometric calculations.
 
@@ -491,7 +493,7 @@ def filter_reactions_pandas(data_r,  data_c=None, formula_table=None, f_log=None
     if data_c is None or formula_table is None:
         raise ValueError('data_c and formula_table must both be provided, either directly or within dfs dict \
                           (as cpd_data and formula_table entries).')
-    
+
     # Set compound and reaction IDs as indices for faster subsetting
     cpd_data = id_indexed(data_c)
 

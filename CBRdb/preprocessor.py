@@ -6,7 +6,6 @@ from rdkit import Chem as Chem
 from rdkit import RDLogger
 
 from .tools_mols import compound_super_safe_load, get_properties
-from .merge_data_sets import id_indexed
 
 lg = RDLogger.logger()
 lg.setLevel(RDLogger.CRITICAL)
@@ -237,7 +236,8 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
     df['overall'] = df['overall'].replace('', float('nan'))
     df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme', 'equation'])
-          .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1)).sort_values(by='id').reset_index(drop=True)
+          .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1)).sort_values(by='id').reset_index(
+        drop=True)
     reaction_csv(df, outfile)
     print('Reaction info path: ' + outfile, flush=True)
     return df
@@ -327,13 +327,13 @@ def filter_missing_structures(df):
     """
     # Define the query to identify compounds prioritized for manual addition
     query_dict = {'kegg_sequence': 'kegg_sequence.isna()',
-                    'kegg_type': 'kegg_type.isna()',
-                    'remark': '~remark.str.count(r"Same as: 	G").eq(0)',
-                    'kegg_reaction': 'kegg_reaction.notna()',
-                    'name': '~name.str.lower().str.contains("protein|globin|doxin|glycan|lase|peptide|rna|dna|steroid|lipid|lignin", na=False)',
-                    'comment': '~comment.fillna("").str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False)',
-                    'kegg_formula': '~kegg_formula.str.contains("X", na=False)',
-                    'kegg_brite': '~kegg_brite.str.contains("08009|08005", na=False)'}
+                  'kegg_type': 'kegg_type.isna()',
+                  'remark': '~remark.str.count(r"Same as: 	G").eq(0)',
+                  'kegg_reaction': 'kegg_reaction.notna()',
+                  'name': '~name.str.lower().str.contains("protein|globin|doxin|glycan|lase|peptide|rna|dna|steroid|lipid|lignin", na=False)',
+                  'comment': '~comment.fillna("").str.lower().str.contains("peptide|protein|[KO:", na=False, regex=False)',
+                  'kegg_formula': '~kegg_formula.str.contains("X", na=False)',
+                  'kegg_brite': '~kegg_brite.str.contains("08009|08005", na=False)'}
 
     # Combine all eligible queries based on the fields present
     combined_query = ' & '.join([v for k, v in query_dict.items() if k in df.columns])

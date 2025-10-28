@@ -268,7 +268,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
         # standardize reaction format again
         dbs[db]['reaction'] = dbs[db]['reaction'].map(standardise_eq)
         dbs[db]['CBRdb_C_ids'] = dbs[db]['reaction'].map(get_eq_all_cids)
-    
+
     # identify suspect reactions and those matching them
     sus = df_of_suspect_reactions(dbs)
     sus = add_sus_reaction_dupes(sus, dbs)

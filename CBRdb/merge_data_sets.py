@@ -1,4 +1,5 @@
 import pandas as pd
+
 from .tools_files import reaction_csv, compound_csv, space_sep_str_cols_cps
 
 out_fmt = {'encoding': 'utf-8', 'index': False}
@@ -82,7 +83,7 @@ def merge_duplicate_reactions(df, r_dupemap):
     new_most_sim_kegg = new_most_sim_kegg.rename('most_sim_kegg')[to_combine['most_sim_kegg']]
     group_attrs.update(new_most_sim_kegg)
     # bridgit_score is NaN in group_attrs where multiple scores exist; keep it that way for now.
-    group_attrs['id_orig'] = {i: ' '.join(sorted(j)) for i,j in dupes.groups.items()}
+    group_attrs['id_orig'] = {i: ' '.join(sorted(j)) for i, j in dupes.groups.items()}
     # Add id_orig column for all entries.
     all_rns['id_orig'] = all_rns.index
     # Merge group_attrs into main reaction dataframe.
@@ -134,7 +135,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     pd.DataFrame: a copy of the main compound DataFrame, but with the duplicate compounds merged.
     """
     # define functions for combining entries
-    line_set_str = lambda x: '; '.join(sorted(set(x))) # unique strings, sorted
+    line_set_str = lambda x: '; '.join(sorted(set(x)))  # unique strings, sorted
     lines_set_str = lambda x: ';~'.join(dict.fromkeys(x.str.split(';~').sum()).keys())
     name_funcs = {'name': lines_set_str, 'nickname': line_set_str}
     tripleslash_join = lambda x: '///'.join(sorted(set(x.dropna()))) if not x.dropna().empty else None
@@ -155,7 +156,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     # For fields where values reflect space-separated lists...
     sscol = group_attrs.columns.intersection(space_sep_str_cols_cps)
     # Take the union of everything listed
-    dupes_ss = dupes[sscol].agg(list_unique)[n_vals>1]
+    dupes_ss = dupes[sscol].agg(list_unique)[n_vals > 1]
     group_attrs.fillna(dupes_ss, inplace=True)
 
     # Procedurally combine nickname + name fields
@@ -174,16 +175,18 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     cols_done = sscol.union(label_and_merge).union(one_val).union(name_funcs.keys())
     # Only one dupe group (C98917) has multiple values for mass/weight.
     # For self-consistency WRT kegg_formula (also multiple values), get its first entry whole-cloth.
-    first_weight = id_indexed(dupes[['compound_id', 'kegg_mol_weight','kegg_exact_mass','kegg_formula']].head(1))[n_vals>1].dropna(how='any')
+    first_weight = id_indexed(dupes[['compound_id', 'kegg_mol_weight', 'kegg_exact_mass', 'kegg_formula']].head(1))[
+        n_vals > 1].dropna(how='any')
     group_attrs.fillna(first_weight, inplace=True)
 
     # Prioritize retaining kegg_formula values with "n" in them
     sorted_formulas = duped_compounds.sort_values(by=['n', 'old_id'], ascending=[False, True]).groupby('compound_id')
-    sorted_formulas = sorted_formulas[['kegg_formula']].first().drop(first_weight.index)[n_vals>1].dropna()
+    sorted_formulas = sorted_formulas[['kegg_formula']].first().drop(first_weight.index)[n_vals > 1].dropna()
     group_attrs.fillna(sorted_formulas, inplace=True)
 
     # Ensure no columns remain un-merged
-    unmerged = C_main_copy.columns.difference(cols_done.union(['n', 'old_id', 'kegg_formula', 'kegg_mol_weight', 'kegg_exact_mass']))
+    unmerged = C_main_copy.columns.difference(
+        cols_done.union(['n', 'old_id', 'kegg_formula', 'kegg_mol_weight', 'kegg_exact_mass']))
     if len(unmerged) > 0:
         print("Warning: The following columns were not merged:", unmerged.tolist())
         print("Assuming first non-NaN entry is acceptable.")
@@ -195,7 +198,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     C_main_copy.sort_index(inplace=True)
     # return index to initial state
     C_main_copy.reset_index(inplace=True)
-    
+
     return C_main_copy
 
 

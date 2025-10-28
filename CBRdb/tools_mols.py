@@ -392,7 +392,7 @@ def get_properties(mols):
         start = time()
         properties_df[name] = mp_calc(func, properties_df["smiles"].tolist())
         print(f'{(time() - start):.2f} s', flush=True)
-    
+
     space_sep_list_cols = ['ionization_states']
     for name in space_sep_list_cols:
         properties_df[name] = properties_df[name].map(
