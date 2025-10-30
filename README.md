@@ -35,6 +35,66 @@ To get started with deeper components of CBRdb, follow the installation instruct
 start using the
 CBRdb package in your Python scripts or Jupyter notebooks.
 
+<details>
+<summary>CBRdb_C</summary>
+<br>
+
+| Syntax            | Description                                                |
+|-------------------|------------------------------------------------------------|
+| compound_id       | Unique identifier for each compound in the CBRdb database. |
+| smiles            | SMILES representation of the compound.                     |
+| formula           | Molecular formula of the compound.                         |
+| molecular_weight  | Molecular weight of the compound.                          |
+| n_heavy_atoms     | number of heavy atoms in the compound                      |
+| n_chiral_centers  | number of chiral centers in the compound.                  |
+| smiles_capped     | SMILES representation with hydrogen capped R groups.       |
+| inchi_capped      | InChI representation with hydrogen capped R groups.        |
+| nickname          | Common nickname or alias for the compound.                 |
+| comment           | Additional comments or notes about the compound.           |
+| wiener_index      | Wiener index of the compound.                              |
+| unique_bonds      | Number of unique bonds in the compound.                    |
+| spacial_score     | Spacial score of the compound.                             |
+| randic_index      | Randic index of the compound.                              |
+| proudfoot         | Proudfoot score of the compound.                           |
+| name              | Common name of the compound.                               |
+| mc2               | Molecular complexity score 2.                              |
+| mc1               | Molecular complexity score 1.                              |
+| kirchhoff_index   | Kirchhoff index of the compound.                           |
+| kegg_type         | KEGG type of the compound.                                 |
+| kegg_sequence     | KEGG sequences of the compound.                            |
+| kegg_reaction     | KEGG reactions associated with the compound.               |
+| kegg_pathway      | KEGG pathways associated with the compound.                |
+| kegg_organism     | KEGG organisms associated with the compound.               |
+| kegg_network      | KEGG networks associated with the compound.                |
+| kegg_mol_weight   | KEGG molecular weight of the compound.                     |
+| kegg_module       | KEGG modules associated with the compound.                 |
+| kegg_glycan       | KEGG glycans associated with the compound.                 |
+| kegg_gene         | KEGG genes associated with the compound.                   |
+| kegg_formula      | KEGG formula of the compound.                              |
+| kegg_exact_mass   | KEGG exact mass of the compound.                           |
+| kegg_enzyme       | KEGG enzymes associated with the compound.                 |
+| kegg_drug         | KEGG drugs associated with the compound.                   |
+| kegg_brite_full   | KEGG (full) brite information of the compound.             |
+| kegg_brite        | KEGG brite information of the compound.                    |
+| ionization_states | Ionization states of the compound.                         |
+| inchi             | InChI representation of the compound.                      |
+| formal_charge     | Formal charge of the compound.                             |
+| fcfp4             | FCFP4 fingerprint of the compound.                         |
+| bertz             | Bertz complexity of the compound.                          |
+| balaban_index     | Balaban index of the compound.                             |
+| PubChem           | PubChem identifier of the compound.                        |
+| PDB_CCD           | PDB CCD identifier of the compound.                        |
+| NIKKAJI           | NIKKAJI identifier of the compound.                        |
+| LIPIDMAPS         | LIPIDMAPS identifier of the compound.                      |
+| KNApSAcK          | KNApSAcK identifier of the compound.                       |
+| Drug_group        | Drug group of the compound.                                |
+| ChEBI             | ChEBI identifier of the compound.                          |
+| CAS               | CAS identifier of the compound.                            |
+| ATC_code          | ATC code of the compound.                                  |
+| CBRdb_R_ids       | List of reaction IDs in CBRdb that involve this compound.  |
+
+</details>
+
 ## 🔧 Installation
 
 <details>
