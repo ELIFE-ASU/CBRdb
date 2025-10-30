@@ -95,6 +95,45 @@ CBRdb package in your Python scripts or Jupyter notebooks.
 
 </details>
 
+
+<details>
+<summary>CBRdb_R</summary>
+<br>
+
+| Syntax                  | Description                        |
+|-------------------------|------------------------------------|
+| id                      | Reaction identifier.               |
+| reaction                | Reaction equation.                 |
+| ec                      | Enzyme Commission number.          |
+| module                  | Metabolic module.                  |
+| orthology               | Orthology identifiers.             |
+| pathway                 | Pathway information.               |
+| rclass                  | Reaction classification.           |
+| rhea                    | Rhea identifier.                   |
+| balancer_failed         | Balancer failed flag.              |
+| bool_missing_data       | Missing data flag.                 |
+| bool_var_list           | Variable list flag.                |
+| bridgit_score           | Bridgit score.                     |
+| comment                 | Comments.                          |
+| cpd_starred             | Starred compounds.                 |
+| flags                   | Flags.                             |
+| id_orig                 | Original reaction identifier.      |
+| is_balanced_except_star | Balanced except starred flag.      |
+| kegg_id                 | KEGG reaction identifier.          |
+| most_sim_kegg           | Most similar KEGG reaction.        |
+| msk_ecs                 | -                                  |
+| msk_metacyc             | -                                  |
+| msk_mnxr                | -                                  |
+| msk_rhea                | -                                  |
+| msk_rns                 | -                                  |
+| name                    | Reaction name.                     |
+| overall                 | Overall information.               |
+| remark                  | Remarks.                           |
+| smarts                  | SMARTS representation.             |
+| CBRdb_C_ids             | Corresponding CBRdb C identifiers. |
+
+</details>
+
 ## 🔧 Installation
 
 <details>
