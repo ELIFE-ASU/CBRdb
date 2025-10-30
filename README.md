@@ -29,11 +29,8 @@ on [ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/67c28c046dde4
 ## 💡 Getting Started
 
 To get started with the data, you can download the compounds `CBRdb_C.csv` and reactions `CBRdb_R.csv` from the
-repository.
-
-To get started with deeper components of CBRdb, follow the installation instructions below. After installation, you can
-start using the
-CBRdb package in your Python scripts or Jupyter notebooks.
+repository. For convenience, the files are also hosted on Zenodo and are stored as a compressed format to reduce
+download time.
 
 <details>
 <summary>CBRdb_C</summary>
@@ -133,6 +130,9 @@ CBRdb package in your Python scripts or Jupyter notebooks.
 | CBRdb_C_ids             | Corresponding CBRdb C identifiers. |
 
 </details>
+
+To get started with deeper components of CBRdb, follow the installation instructions below. After installation, you can
+start using the CBRdb package in your Python scripts or Jupyter notebooks.
 
 ## 🔧 Installation
 
