@@ -97,38 +97,39 @@ download time.
 <summary>CBRdb_R</summary>
 <br>
 
-| Syntax                  | Description                        |
-|-------------------------|------------------------------------|
-| id                      | Reaction identifier.               |
-| reaction                | Reaction equation.                 |
-| ec                      | Enzyme Commission number.          |
-| module                  | Metabolic module.                  |
-| orthology               | Orthology identifiers.             |
-| pathway                 | Pathway information.               |
-| rclass                  | Reaction classification.           |
-| rhea                    | Rhea identifier.                   |
-| balancer_failed         | Balancer failed flag.              |
-| bool_missing_data       | Missing data flag.                 |
-| bool_var_list           | Variable list flag.                |
-| bridgit_score           | Bridgit score.                     |
-| comment                 | Comments.                          |
-| cpd_starred             | Starred compounds.                 |
-| flags                   | Flags.                             |
-| id_orig                 | Original reaction identifier.      |
-| is_balanced_except_star | Balanced except starred flag.      |
-| kegg_id                 | KEGG reaction identifier.          |
-| most_sim_kegg           | Most similar KEGG reaction.        |
-| msk_ecs                 | -                                  |
-| msk_metacyc             | -                                  |
-| msk_mnxr                | -                                  |
-| msk_rhea                | -                                  |
-| msk_rns                 | -                                  |
-| name                    | Reaction name.                     |
-| overall                 | Overall information.               |
-| remark                  | Remarks.                           |
-| smarts                  | SMARTS representation.             |
-| CBRdb_C_ids             | Corresponding CBRdb C identifiers. |
+| Syntax                  | Description                          |
+|-------------------------|--------------------------------------|
+| id                      | Reaction identifier.                 |
+| reaction                | Reaction equation.                   |
+| ec                      | Enzyme Commission numbers.           |
+| module                  | KEGG MODULE identifiers.             |
+| orthology               | KEGG ORTHOLOGY identifiers.          |
+| pathway                 | KEGG PATHWAY identifiers.            |
+| rclass                  | KEGG RCLASS IDs & COMPOUND pairs.    |
+| rhea                    | Rhea identifiers if pro.             |
+| balancer_failed         | Flag: Balancer failed.               |
+| bool_missing_data       | Flag: Missing structure(s).          |
+| bool_var_list           | Flag: Variable in coefficients.      |
+| bridgit_score           | BridgIT score for most_sim_kegg. \*  |
+| comment                 | Unstructured KEGG comment field.     |
+| cpd_starred             | Flag: Has starred compounds.         |
+| flags                   | From CBRdb.df_of_suspect_reactions   |
+| id_orig                 | Original reaction identifier(s).     |
+| is_balanced_except_star | Flag: Elements balance, stars don't. |
+| kegg_id                 | KEGG reaction ID. \*                 |
+| most_sim_kegg           | Most similar KEGG reaction (MSK). \* |
+| msk_ecs                 | ECs referenced in MSK field. \*      |
+| msk_metacyc             | MetaCyc IDs in MSK field. \*         |
+| msk_mnxr                | MNXref IDs in MSK field. \*          |
+| msk_rhea                | RHEA IDs in MSK field. \*            |
+| msk_rns                 | KEGG REACTION IDs in MSK field. \*   |
+| name                    | Reaction name.                       |
+| overall                 | Flag: Overall reaction (br08210).    |
+| remark                  | KEGG remark.                         |
+| smarts                  | SMARTS representation.               |
+| CBRdb_C_ids             | Corresponding CBRdb C identifiers.   |
 
+\* Provided by ATLAS; see [ATLAS User Guide](https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf#page=6.00) for most_similar_kegg header details.
 </details>
 
 To get started with deeper components of CBRdb, follow the installation instructions below. After installation, you can
