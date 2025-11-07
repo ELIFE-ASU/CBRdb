@@ -23,6 +23,7 @@ from .merge_data_sets import (merge_duplicate_reactions,
                               merge_duplicate_compounds,
                               add_R_col_to_C_file,
                               id_indexed,
+                              merge_hpc_calculations,
                               )
 from .preprocessor import (preprocess,
                            log_missing_structures,
