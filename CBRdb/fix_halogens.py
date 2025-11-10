@@ -14,6 +14,18 @@ from .tools_eq import convert_formula_to_dict, standardise_eq
 from .preprocessor import preprocess_kegg_c_metadata
 from .merge_data_sets import id_indexed
 
+generic_halogen_cids = {
+                "C00462": {"F": "C16487", "Cl": "C01327", "Br": "C13645", "I": "C05590"},
+                "C01322": {"Cl": "C01334", "Br": "C00720", "I": "C01321"},  # full expansion required!
+                "C01365": {},  # No reaction data!
+                "C01706": {},  # No reaction data!
+                "C01812": {"F": "C06108", "Cl": "C06755"},
+                "C01813": {},  # No reaction data!
+                "C01872": {},  # full expansion required?
+                "C02103": {},  # full expansion required?
+                "C03122": {"F": "C11272", "Cl": "C06990", "Br": "C11036"},  # No reaction data!
+                "C15564": {},  # full expansion required?
+            }
 
 def load_bad_entries(target_dir_c):
     """
@@ -121,19 +133,7 @@ def fix_halogen_compounds(
                 smi = smi.replace('[H:0]', '*')
 
             # Determine the compound id from the ones already given
-            cid = {
-                "C00462": {"F": "C16487", "Cl": "C01327", "Br": "C13645", "I": "C05590"},
-                "C01322": {"Cl": "C01334", "Br": "C00720", "I": "C01321"},  # full expansion required!
-                "C01365": {},  # No reaction data!
-                "C01706": {},  # No reaction data!
-                "C01812": {"F": "C06108", "Cl": "C06755"},
-                "C01813": {},  # No reaction data!
-                "C01872": {},  # full expansion required?
-                "C02103": {},  # full expansion required?
-                "C03122": {"F": "C11272", "Cl": "C06990", "Br": "C11036"},  # No reaction data!
-                "C15564": {},  # full expansion required?
-
-            }.get(data_bad_id[i], {}).get(hal)
+            cid = generic_halogen_cids.get(data_bad_id[i], {}).get(hal)
 
             # Generate the compound id if not found
             if cid is None:
