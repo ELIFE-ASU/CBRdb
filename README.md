@@ -36,59 +36,70 @@ download time.
 <summary>CBRdb_C</summary>
 <br>
 
-| Syntax            | Description                                                |
-|-------------------|------------------------------------------------------------|
-| compound_id       | Unique identifier for each compound in the CBRdb database. |
-| smiles            | SMILES representation of the compound.                     |
-| formula           | Molecular formula of the compound.                         |
-| molecular_weight  | Molecular weight of the compound.                          |
-| n_heavy_atoms     | number of heavy atoms in the compound                      |
-| n_chiral_centers  | number of chiral centers in the compound.                  |
-| smiles_capped     | SMILES representation with hydrogen capped R groups.       |
-| inchi_capped      | InChI representation with hydrogen capped R groups.        |
-| nickname          | Common alias for the compound; first name in KEGG          |
-| comment           | KEGG's comments with context about the compound.           |
-| wiener_index      | Wiener index of the compound.                              |
-| unique_bonds      | Number of unique bonds in the compound.                    |
-| spacial_score     | Spacial score of the compound.                             |
-| randic_index      | Randic index of the compound.                              |
-| proudfoot         | Proudfoot score of the compound.                           |
-| name              | Common name of the compound.                               |
-| mc2               | Molecular complexity score 2.                              |
-| mc1               | Molecular complexity score 1.                              |
-| kirchhoff_index   | Kirchhoff index of the compound.                           |
-| kegg_type         | Type for peptide or polyketide entry.                      |
-| kegg_sequence     | Sequence for peptide or polyketide entry.                  |
-| kegg_reaction     | KEGG REACTION entries associated with the compound.        |
-| kegg_pathway      | KEGG PATHWAY entries associated with the compound.         |
-| kegg_organism     | For peptides or polyketides, KEGG organism with sequence.  |
-| kegg_network      | KEGG NETWORK entries associated with the compound.         |
-| kegg_mol_weight   | Molecular weight provided by KEGG.                         |
-| kegg_module       | KEGG MODULE entries associated with the compound.          |
-| kegg_glycan       | KEGG GLYCAN entries associated with the compound.          |
-| kegg_gene         | KEGG GENES entries associated with the compound.           |
-| kegg_formula      | Molecular formula provided by KEGG.                        |
-| kegg_exact_mass   | Exact (single-isotope) mass provided by KEGG.              |
-| kegg_enzyme       | KEGG ENZYME entries associated with the compound.          |
-| kegg_drug         | KEGG DRUG entries associated with the compound.            |
-| kegg_brite_full   | Full KEGG BRITE hierarchies with context, all levels.      |
-| kegg_brite        | KEGG BRITE hierarchy entries associated with the compound. |
-| ionization_states | Ionization states of the compound.                         |
-| inchi             | InChI representation of the compound.                      |
-| formal_charge     | Formal charge of the compound.                             |
-| fcfp4             | FCFP4 fingerprint of the compound.                         |
-| bertz             | Bertz complexity of the compound.                          |
-| balaban_index     | Balaban index of the compound.                             |
-| PubChem           | Linked PubChem identifiers for the compound.               |
-| PDB_CCD           | Linked PDB CCD identifiers for the compound.               |
-| NIKKAJI           | Linked NIKKAJI identifiers for the compound.               |
-| LIPIDMAPS         | Linked LIPIDMAPS identifiers for the compound.             |
-| KNApSAcK          | Linked KNApSAcK identifiers for the compound.              |
-| Drug_group        | Linked KEGG DGROUP entries for the compound.               |
-| ChEBI             | Linked ChEBI identifiers for the compound.                 |
-| CAS               | Linked CAS identifiers for the compound.                   |
-| ATC_code          | Linked ATC codes of the compound.                          |
-| CBRdb_R_ids       | List of reaction IDs in CBRdb that involve this compound.  |
+| Syntax             | Description                                                |
+|--------------------|------------------------------------------------------------|
+| compound_id        | Unique identifier for each compound in the CBRdb database. |
+| smiles             | SMILES representation of the compound.                     |
+| formula            | Molecular formula of the compound.                         |
+| molecular_weight   | Molecular weight of the compound.                          |
+| n_heavy_atoms      | number of heavy atoms in the compound                      |
+| n_chiral_centers   | number of chiral centers in the compound.                  |
+| smiles_capped      | SMILES representation with hydrogen capped R groups.       |
+| inchi_capped       | InChI representation with hydrogen capped R groups.        |
+| nickname           | Common alias for the compound; first name in KEGG          |
+| comment            | KEGG's comments with context about the compound.           |
+| wiener_index       | Wiener index of the compound.                              |
+| unique_bonds       | Number of unique bonds in the compound.                    |
+| spacial_score      | Spacial score of the compound.                             |
+| randic_index       | Randic index of the compound.                              |
+| proudfoot          | Proudfoot score of the compound.                           |
+| name               | Common name of the compound.                               |
+| mc2                | Molecular complexity score 2.                              |
+| mc1                | Molecular complexity score 1.                              |
+| kirchhoff_index    | Kirchhoff index of the compound.                           |
+| kegg_type          | Type for peptide or polyketide entry.                      |
+| kegg_sequence      | Sequence for peptide or polyketide entry.                  |
+| kegg_reaction      | KEGG REACTION entries associated with the compound.        |
+| kegg_pathway       | KEGG PATHWAY entries associated with the compound.         |
+| kegg_organism      | For peptides or polyketides, KEGG organism with sequence.  |
+| kegg_network       | KEGG NETWORK entries associated with the compound.         |
+| kegg_mol_weight    | Molecular weight provided by KEGG.                         |
+| kegg_module        | KEGG MODULE entries associated with the compound.          |
+| kegg_glycan        | KEGG GLYCAN entries associated with the compound.          |
+| kegg_gene          | KEGG GENES entries associated with the compound.           |
+| kegg_formula       | Molecular formula provided by KEGG.                        |
+| kegg_exact_mass    | Exact (single-isotope) mass provided by KEGG.              |
+| kegg_enzyme        | KEGG ENZYME entries associated with the compound.          |
+| kegg_drug          | KEGG DRUG entries associated with the compound.            |
+| kegg_brite_full    | Full KEGG BRITE hierarchies with context, all levels.      |
+| kegg_brite         | KEGG BRITE hierarchy entries associated with the compound. |
+| ionization_states  | Ionization states of the compound.                         |
+| inchi              | InChI representation of the compound.                      |
+| formal_charge      | Formal charge of the compound.                             |
+| fcfp4              | FCFP4 fingerprint of the compound.                         |
+| bertz              | Bertz complexity of the compound.                          |
+| balaban_index      | Balaban index of the compound.                             |
+| PubChem            | Linked PubChem identifiers for the compound.               |
+| PDB_CCD            | Linked PDB CCD identifiers for the compound.               |
+| NIKKAJI            | Linked NIKKAJI identifiers for the compound.               |
+| LIPIDMAPS          | Linked LIPIDMAPS identifiers for the compound.             |
+| KNApSAcK           | Linked KNApSAcK identifiers for the compound.              |
+| Drug_group         | Linked KEGG DGROUP entries for the compound.               |
+| ChEBI              | Linked ChEBI identifiers for the compound.                 |
+| CAS                | Linked CAS identifiers for the compound.                   |
+| ATC_code           | Linked ATC codes of the compound.                          |
+| std_dgf            | Free energy of formation.                                  |
+| std_dgf_error      | Error in the free energy of formation.                     |
+| std_dgf_p          | Free energy of formation at pressure.                      |
+| std_dgf_p_error    | Error in free energy of formation at pressure.             |
+| d_free             | Free energy of formation using quantum methods.            |
+| d_enthalpy         | Enthalpy of formation using quantum methods.               |
+| d_entropy          | Entropy of formation using quantum methods.                |
+| free               | Free energy using quantum methods.                         |
+| enthalpy           | Enthalpy using quantum methods.                            |
+| entropy            | Entropy energy using quantum methods.                      |
+| vib_energies       | List of vibration modes using quantum methods.             |
+| CBRdb_R_ids        | List of reaction IDs in CBRdb that involve this compound.  |
 
 </details>
 
@@ -127,6 +138,7 @@ download time.
 | overall                 | Flag: Overall reaction (br08210).    |
 | remark                  | KEGG remark.                         |
 | smarts                  | SMARTS representation.               |
+| reac_sim                | Closest reaction similarity.         |
 | CBRdb_C_ids             | Corresponding CBRdb C identifiers.   |
 
 \* Provided by ATLAS; see [ATLAS User Guide](https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf#page=6.00) for most_similar_kegg header details.
