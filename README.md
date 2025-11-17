@@ -46,7 +46,7 @@ download time.
 | n_chiral_centers   | number of chiral centers in the compound.                  |
 | smiles_capped      | SMILES representation with hydrogen capped R groups.       |
 | inchi_capped       | InChI representation with hydrogen capped R groups.        |
-| nickname           | Common alias for the compound; first name in KEGG          |
+| nickname           | Common alias for the compound; first name in KEGG.         |
 | comment            | KEGG's comments with context about the compound.           |
 | wiener_index       | Wiener index of the compound.                              |
 | unique_bonds       | Number of unique bonds in the compound.                    |
@@ -88,10 +88,10 @@ download time.
 | ChEBI              | Linked ChEBI identifiers for the compound.                 |
 | CAS                | Linked CAS identifiers for the compound.                   |
 | ATC_code           | Linked ATC codes of the compound.                          |
-| std_dgf            | Free energy of formation.                                  |
-| std_dgf_error      | Error in the free energy of formation.                     |
-| std_dgf_p          | Free energy of formation at pressure.                      |
-| std_dgf_p_error    | Error in free energy of formation at pressure.             |
+| std_dgf            | Free energy of formation using experimental values.        |
+| std_dgf_error      | Error in the free energy of formation using experimental values.                     |
+| std_dgf_p          | Free energy of formation at pressure using experimental values.                     |
+| std_dgf_p_error    | Error in free energy of formation at pressure using experimental values.             |
 | d_free             | Free energy of formation using quantum methods.            |
 | d_enthalpy         | Enthalpy of formation using quantum methods.               |
 | d_entropy          | Entropy of formation using quantum methods.                |
