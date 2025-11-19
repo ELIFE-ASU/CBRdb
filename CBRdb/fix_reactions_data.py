@@ -367,7 +367,7 @@ def balance_simple_cases(R_main, C_main, f_log=None, data_c=None, formula_table=
     inj_df = pd.concat([injections_1el.join(R_main[['reaction']]), injections_OH.join(R_main[['reaction']])])
     inj_df['compounds'] = inj_df['reaction'].str.findall(r'([C]\d{5})')
 
-    left_injections = inj_df.query('left_side').assign(
+    left_injections = inj_df.query('left_side.eq(True)').assign(
         reaction_inj=lambda x: (x['count'].astype(str) + ' ' + x['compound_id'] + ' + ' + x['reaction'])
         .map(standardise_eq))
     right_injections = inj_df.query('left_side.eq(False)').assign(
@@ -542,7 +542,7 @@ def filter_reactions_pandas(data_r, data_c=None, formula_table=None, f_log=None,
     print_and_log(
         'making "el_diff_groups": DataFrame assigning labels to reactions based on element-count diff (R - L).',
         f_log)
-    observed_el_diffs = (rse - lse).loc[rn_attrs.query('to_rebalance').index]
+    observed_el_diffs = (rse - lse).loc[rn_attrs['to_rebalance']]
     observed_el_diffs['group_num'] = (observed_el_diffs.astype(str) + ' ').groupby(
         by=list(observed_el_diffs.columns)).ngroup()
     observed_el_diffs['group_size'] = observed_el_diffs['group_num'].map(observed_el_diffs['group_num'].value_counts())
@@ -566,7 +566,7 @@ def get_charge_balanced_injections_1el(data_c, dfs):
         diffs[(diffs.abs().T == sum_all_atoms).any()]  # el diff = total diff necessarily means a one-element mismatch
         .reset_index(level=0).melt(id_vars='id', value_name='diff', var_name='el_sym')  # so only one diff per reaction
         .query('diff!=0').set_index('id').assign(
-            formal_charge=dfs['rns']['charge_R-L']))  # diffs are RE: element and charge.
+            formal_charge=dfs['rns']['charge_R-L'].astype(float)))  # diffs are RE: element and charge.
 
     cpd_pool = cpd_pool.query('el_sym in @single_el_diffs.el_sym')
     single_el_diffs = single_el_diffs.assign(compound_id=None, left_side=None, count=None)
