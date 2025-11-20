@@ -1,3 +1,64 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "CBRdb"
+version = "1.6.0"
+description = "A curated biochemical database that integrates and refines data from KEGG and ATLAS databases to support precise analyses of biochemical reaction data."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Louie Slocombe", email = "louies@hotmail.co.uk" },
+    { name = "Camerian Millsaps" },
+    { name = "Reza Shahjahan" },
+    { name = "Kamesh Narasimhan" },
+    { name = "Sara Walker" },
+]
+
+dependencies = [
+    "numpy",
+    "sympy",
+    "matplotlib",
+    "networkx",
+    "pandas",
+    "rdkit",
+    "chempy",
+    "requests",
+    "urllib3",
+    "chemparse",
+    "ase",
+    "mace-torch",
+    "pymatgen",
+    "dimorphite_dl",
+    "drfp",
+    "equilibrator-api",
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/ELIFE-ASU/CBRdb"
+Repository = "https://github.com/ELIFE-ASU/CBRdb"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["CBRdb", "CBRdb.*"]
+
+[tool.setuptools.package-data]
+"CBRdb" = ["data/*", "examples/*", "tests/*"]
