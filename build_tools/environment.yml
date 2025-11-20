@@ -17,8 +17,8 @@ dependencies:
   - ase
   - pymatgen
   - pip:
-    - chemparse
-    - dimorphite_dl
-    - drfp
-    - mace-torch
-    - equilibrator-api
+      - chemparse
+      - dimorphite_dl
+      - drfp
+      - mace-torch
+      - equilibrator-api
