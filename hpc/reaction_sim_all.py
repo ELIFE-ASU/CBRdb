@@ -10,7 +10,7 @@ plt.rcParams['axes.linewidth'] = 2.0
 
 if __name__ == "__main__":
     method = 'drfp'
-    sample = False
+    sample = True
     assert method in ['rdkit', 'drfp'], "Method must be 'rdkit' or 'drfp'"
 
     data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
