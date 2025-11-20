@@ -145,6 +145,7 @@ from .tools_mols import (sanitize_mol,
 from .tools_mp import (mp_calc,
                        mp_calc_star,
                        tp_calc,
+                       mp_calc_chunked,
                        write_to_shared_file,
                        )
 from .tools_plots import (ax_plot,

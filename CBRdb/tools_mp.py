@@ -1,58 +1,111 @@
 import fcntl
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Iterable, Any, Tuple
 
 
-def mp_calc(func, arg, n=mp.cpu_count()):
+def mp_calc(func: Callable[[Any], Any], arg: Iterable[Any], n: int = mp.cpu_count()) -> list[Any]:
     """
     Executes a function in parallel using a process pool.
 
-    Parameters:
-    func (callable): The function to execute.
-    arg (iterable): An iterable of arguments to pass to the function.
-    n (int, optional): The number of worker processes to use. Default is the number of CPU cores.
+    Parameters
+    ----------
+    func : Callable[[Any], Any]
+        The function to execute.
+    arg : Iterable[Any]
+        An iterable of arguments to pass to the function.
+    n : int, optional
+        The number of worker processes to use. Default is the number of CPU cores.
 
-    Returns:
-    list: A list of results from the function executions.
+    Returns
+    -------
+    list[Any]
+        A list of results from the function executions.
     """
     with mp.Pool(n) as pool:
         results = pool.map(func, arg)
     return results
 
 
-def mp_calc_star(func, args, n=mp.cpu_count()):
+def mp_calc_star(func: Callable[..., Any], args: Iterable[Tuple[Any, ...]], n: int = mp.cpu_count()) -> list[Any]:
     """
     Executes a function in parallel using a process pool with multiple arguments.
 
-    Parameters:
-    func (callable): The function to execute.
-    args (iterable): An iterable of argument tuples to pass to the function.
-    n (int, optional): The number of worker processes to use. Default is the number of CPU cores.
+    Parameters
+    ----------
+    func : Callable[..., Any]
+        The function to execute.
+    args : Iterable[Tuple[Any, ...]]
+        An iterable of argument tuples to pass to the function.
+    n : int, optional
+        The number of worker processes to use. Default is the number of CPU cores.
 
-    Returns:
-    list: A list of results from the function executions.
+    Returns
+    -------
+    list[Any]
+        A list of results from the function executions.
     """
     with mp.Pool(n) as pool:
         results = pool.starmap(func, args)
     return results
 
 
-def tp_calc(func, arg, n=mp.cpu_count()):
+def tp_calc(func: Callable[[Any], Any], arg: Iterable[Any], n: int = mp.cpu_count()) -> list[Any]:
     """
     Executes a function in parallel using a thread pool.
 
     Works best for I/O-bound tasks.
 
-    Parameters:
-    func (callable): The function to execute.
-    arg (iterable): An iterable of arguments to pass to the function.
-    n (int, optional): The number of worker threads to use. Default is the number of CPU cores.
+    Parameters
+    ----------
+    func : Callable[[Any], Any]
+        The function to execute.
+    arg : Iterable[Any]
+        An iterable of arguments to pass to the function.
+    n : int, optional
+        The number of worker threads to use. Default is the number of CPU cores.
 
-    Returns:
-    list: A list of results from the function executions.
+    Returns
+    -------
+    list[Any]
+        A list of results from the function executions.
     """
     with ThreadPoolExecutor(max_workers=n) as executor:
-        results = executor.map(func, arg)
+        results = list(executor.map(func, arg))
+    return results
+
+
+def mp_calc_chunked(
+        func: Callable[[Any], Any],
+        arg: Iterable[Any],
+        n: int | None = None,
+        chunksize: int | None = None,
+) -> list[Any]:
+    """
+    Executes a function in parallel using a process pool, with optional chunking.
+
+    Parameters
+    ----------
+    func : Callable[[Any], Any]
+        The function to execute (on a single element).
+    arg : Iterable[Any]
+        An iterable of arguments to pass to the function.
+    n : int, optional
+        Number of worker processes (default: mp.cpu_count()).
+    chunksize : int, optional
+        How many items each worker gets per batch. If None, multiprocessing
+        chooses a default based on len(arg).
+
+    Returns
+    -------
+    list[Any]
+        A list of results from the function executions.
+    """
+    if n is None:
+        n = mp.cpu_count()
+
+    with mp.Pool(n) as pool:
+        results = pool.map(func, arg, chunksize=chunksize or 1)
     return results
 
 
