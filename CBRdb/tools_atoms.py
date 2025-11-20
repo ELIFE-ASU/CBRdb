@@ -1255,6 +1255,50 @@ def _calculate_free_energy_batch(atoms,
                                  f_disp=False,
                                  n_procs=10,
                                  ccsd_energy=None):
+    """
+    Calculate Gibbs free energy for a single T/P point using a pre-computed Hessian.
+
+    This is a helper function designed for efficiently calculating thermochemical
+    properties at various temperatures and pressures without re-running the expensive
+    Hessian calculation each time. It takes a pre-computed Hessian file and runs
+    an ORCA thermochemistry analysis.
+
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object with the geometry corresponding to the Hessian.
+    hessian : str
+        Path to the pre-computed ORCA Hessian file (`.hess`).
+    temp : float
+        Temperature in Kelvin for the thermochemical analysis.
+    pressure : float
+        Pressure in atmospheres for the thermochemical analysis.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it is read from the environment.
+    xc : str, optional
+        Exchange-correlation functional. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set for the calculation. Default is 'def2-QZVP'.
+    f_solv : bool, optional
+        Whether to include solvent effects. Default is False.
+    f_disp : bool, optional
+        Whether to include dispersion corrections. Default is False.
+    n_procs : int, optional
+        Number of processors to use. Default is 10.
+    ccsd_energy : float, optional
+        A pre-computed CCSD energy in eV. If provided, it is used for a more
+        accurate electronic energy component in the final free energy.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the Gibbs free energy, enthalpy, and entropy
+        correction, all in eV.
+    """
     orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
 
     # Set up the %thermo block for this temperature and pressure
@@ -1320,6 +1364,53 @@ def calculate_free_energy_batch(atoms,
                                 f_disp=False,
                                 n_procs=10,
                                 ccsd_energy=None):
+    """
+    Calculate Gibbs free energy for a molecule at a specific T/P point using a pre-computed Hessian.
+
+    This function is designed for efficiently calculating thermochemical properties
+    at various temperatures and pressures by reusing a pre-computed Hessian matrix.
+    This avoids the need to re-run the expensive Hessian calculation for each T/P point.
+
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object with the geometry corresponding to the Hessian.
+    hessian : str
+        Path to the pre-computed ORCA Hessian file (`.hess`).
+    temp : float
+        Temperature in Kelvin for the thermochemical analysis.
+    pressure : float
+        Pressure in atmospheres for the thermochemical analysis.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    orca_path : str, optional
+        Path to the ORCA executable. If None, it is read from the environment.
+    xc : str, optional
+        Exchange-correlation functional. Default is 'r2SCAN-3c'.
+    basis_set : str, optional
+        Basis set for the calculation. Default is 'def2-QZVP'.
+    tight_opt : bool, optional
+        This parameter is not used as no optimization is performed.
+    tight_scf : bool, optional
+        This parameter is not used as no optimization is performed.
+    f_solv : bool, optional
+        Whether to include solvent effects. Default is False.
+    f_disp : bool, optional
+        Whether to include dispersion corrections. Default is False.
+    n_procs : int, optional
+        Number of processors to use. Default is 10.
+    ccsd_energy : float, optional
+        A pre-computed CCSD energy in eV. If provided, it is used for a more
+        accurate electronic energy component in the final free energy.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the Gibbs free energy, enthalpy, and entropy
+        correction, all in eV.
+    """
     orca_path = os.path.abspath(orca_path or os.getenv('ORCA_PATH', 'orca'))
 
     # Set up the %thermo block for this temperature and pressure
@@ -1904,9 +1995,30 @@ def multiplicity_to_total_spin(multiplicity, check_integer=True, tol=1e-8):
 
 
 def get_analytical_hessian_energies(calc, atoms):
-    hessian = calc.get_hessian(atoms=atoms)
-    n_atoms = len(atoms)
+    """
+    Compute vibrational energies from the analytical Hessian matrix.
+
+    This function retrieves the Hessian matrix for a given set of atoms from the
+    provided calculator, reshapes it into the appropriate 4D format, and calculates
+    the vibrational energies using the ASE `VibrationsData` class.
+
+    Parameters:
+    -----------
+    calc : ase.calculators.Calculator
+        The calculator object capable of providing the Hessian matrix.
+    atoms : ase.Atoms
+        The ASE `Atoms` object representing the molecular structure.
+
+    Returns:
+    --------
+    numpy.ndarray
+        An array of vibrational energies in eV.
+    """
+    hessian = calc.get_hessian(atoms=atoms)  # Retrieve the Hessian matrix from the calculator.
+    n_atoms = len(atoms)  # Get the number of atoms in the molecule.
+    # Reshape the Hessian into a 4D array with dimensions (n_atoms, 3, n_atoms, 3).
     hessian = hessian.reshape((n_atoms, 3, n_atoms, 3))
+    # Calculate and return the vibrational energies using VibrationsData.
     return VibrationsData(atoms, hessian).get_energies()
 
 
@@ -1920,6 +2032,51 @@ def free_energy_mace(atoms,
                      pressure=101_325.0,
                      calc_model='extra_large',
                      calc_device=None):
+    """
+    Calculate the Gibbs free energy of a molecule using a MACE model.
+
+    This function performs geometry optimization (optional) and vibrational analysis
+    to compute the Gibbs free energy, enthalpy, and entropy at specified
+    temperatures and pressures.
+
+    Parameters
+    ----------
+    atoms : ase.Atoms
+        An ASE `Atoms` object representing the molecule.
+    charge : int, optional
+        Total charge of the molecule. Default is 0.
+    multiplicity : int, optional
+        Spin multiplicity of the molecule. Default is 1.
+    optimise : bool, optional
+        If True, the geometry will be optimized before the vibrational analysis.
+        Default is True.
+    analytic : bool, optional
+        If True, use the analytical Hessian for vibrational analysis. If False,
+        a numerical Hessian will be computed. Default is True.
+    f_max : float, optional
+        The maximum force convergence criterion for geometry optimization in eV/Å.
+        Default is 0.01.
+    temperature : float or list of float, optional
+        Temperature(s) in Kelvin for the thermochemical analysis.
+        Default is 298.15.
+    pressure : float or list of float, optional
+        Pressure(s) in Pascals for the thermochemical analysis.
+        Default is 101325.0.
+    calc_model : str, optional
+        The MACE model to use for the calculation. Default is 'extra_large'.
+    calc_device : str, optional
+        The device to run the calculation on (e.g., 'cpu', 'cuda'). If None,
+        it will be automatically determined. Default is None.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the Gibbs free energy, enthalpy, and entropy.
+        If scalar temperature and pressure are provided, the values are floats.
+        If lists are provided, the values are lists of floats. All energies
+        are in eV.
+    """
+
     def _as_list(x):
         if isinstance(x, numbers.Real):
             return [float(x)], True
@@ -2013,6 +2170,50 @@ def calculate_free_energy_formation_mace(mol,
                                          pressure: Union[float, Iterable[float]] = 101_325.0,
                                          calc_model: str = 'extra_large',
                                          calc_device: str = None):
+    """
+    Calculate the Gibbs free energy of formation for a molecule using a MACE model.
+
+    This function computes the formation energy by calculating the Gibbs free energy
+    of the target molecule and subtracting the Gibbs free energies of its constituent
+    elements in their standard reference states. All energy calculations are
+    performed using the `free_energy_mace` function.
+
+    Parameters
+    ----------
+    mol : rdkit.Chem.Mol
+        An RDKit molecule object.
+    optimise : bool, optional
+        If True, the geometry of the molecule and its references will be optimized.
+        Default is True.
+    analytic : bool, optional
+        If True, use the analytical Hessian for vibrational analysis. Default is True.
+    f_max : float, optional
+        The maximum force convergence criterion for geometry optimization in eV/Å.
+        Default is 0.01.
+    temperature : Union[float, Iterable[float]], optional
+        Temperature(s) in Kelvin for the thermochemical analysis.
+        Default is 298.15.
+    pressure : Union[float, Iterable[float]], optional
+        Pressure(s) in Pascals for the thermochemical analysis.
+        Default is 101325.0.
+    calc_model : str, optional
+        The MACE model to use for the calculation. Default is 'extra_large'.
+    calc_device : str, optional
+        The device to run the calculation on (e.g., 'cpu', 'cuda'). If None,
+        it will be automatically determined. Default is None.
+
+    Returns
+    -------
+    tuple
+        A tuple containing the Gibbs free energy of formation, enthalpy of formation,
+        entropy of formation (all in eV), and the vibrational energies of the
+        target molecule (in eV).
+
+    Raises
+    ------
+    ValueError
+        If the molecule contains elements not supported by the reference set.
+    """
     if calc_device is None:
         import torch
         calc_device = 'cuda' if torch.cuda.is_available() else 'cpu'

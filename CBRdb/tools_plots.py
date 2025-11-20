@@ -4,6 +4,31 @@ from scipy.stats import gaussian_kde
 
 
 def ax_plot(fig: plt.Figure, ax: plt.Axes, xlab: str, ylab: str, xs: int = 14, ys: int = 14) -> None:
+    """
+    Configure the appearance of a Matplotlib Axes object.
+
+    This function customizes the ticks, labels, and layout of a Matplotlib Axes object
+    to improve the visual presentation of a plot.
+
+    Parameters:
+    -----------
+    fig : matplotlib.figure.Figure
+        The Matplotlib figure object containing the Axes.
+    ax : matplotlib.axes.Axes
+        The Matplotlib Axes object to be customized.
+    xlab : str
+        Label for the x-axis.
+    ylab : str
+        Label for the y-axis.
+    xs : int, optional
+        Font size for the x-axis label. Default is 14.
+    ys : int, optional
+        Font size for the y-axis label. Default is 14.
+
+    Returns:
+    --------
+    None
+    """
     ax.minorticks_on()
     ax.tick_params(axis='both', which='major', labelsize=ys - 2, direction='in', length=6, width=2)
     ax.tick_params(axis='both', which='minor', labelsize=ys - 2, direction='in', length=4, width=2)

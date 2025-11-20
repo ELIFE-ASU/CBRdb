@@ -131,6 +131,46 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
                        f_save_intermediate=False,
                        rebalance_depth=1,
                        bad_criterion='shortcut|structure_missing'):
+    """
+    Processes, cleans, and attempts to balance a set of chemical reactions.
+
+    This function reads reaction and compound data, identifies and filters out problematic
+    reactions, and attempts to balance the remaining unbalanced equations. It can handle
+    reactions with variable coefficients or starred compounds based on flags. The final
+    processed data, including SMARTS representations, is saved to a new CSV file.
+
+    Parameters
+    ----------
+    r_file : str, optional
+        Path to the input reaction data CSV file.
+    c_file : str, optional
+        Path to the input compound data CSV file.
+    bad_file : str, optional
+        Path to a file containing IDs of known bad reactions.
+    log_file : str, optional
+        Base name for the log file.
+    rebalance_file : str, optional
+        Base name for the file logging failed rebalancing attempts.
+    f_assume_var : bool, optional
+        If True, assumes reactions with variable coefficients (e.g., 'n') are correct and keeps them.
+        If False, they are removed. Defaults to True.
+    f_assume_star : bool, optional
+        If True, assumes reactions with starred/generic compounds ('*') are correct and keeps them.
+        If False, they are removed. Defaults to True.
+    f_save_intermediate : bool, optional
+        If True, saves an intermediate CSV file of unbalanced reactions. Defaults to False.
+    rebalance_depth : int, optional
+        The depth for the 'kitchen_sink' rebalancing attempt, corresponding to the size of
+        small compounds to try injecting (1, 2, or 3). Defaults to 1.
+    bad_criterion : str, optional
+        A regex pattern used to identify and filter out "bad" reactions based on their flags.
+        Defaults to 'shortcut|structure_missing'.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing the final, processed reaction data.
+    """
     # Get the absolute paths
     r_file = os.path.abspath(r_file)
     c_file = os.path.abspath(c_file)
@@ -355,6 +395,39 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
 
 def balance_simple_cases(R_main, C_main, f_log=None, data_c=None, formula_table=None, dfs=None):
+    """
+    Balances simple cases of chemical reactions by injecting single compounds.
+
+    This function identifies unbalanced reactions that can be fixed by adding a
+    single type of compound (e.g., H2O, H+, O2) to either the reactants or
+    products side. It first filters reactions to find candidates for this simple
+    balancing, then calculates the necessary injections for single-element
+    imbalances and common oxygen/hydrogen imbalances.
+
+    Parameters
+    ----------
+    R_main : pd.DataFrame
+        The main DataFrame containing reaction data.
+    C_main : pd.DataFrame
+        The main DataFrame containing compound data.
+    f_log : file object, optional
+        A file object for logging progress and information. Defaults to None.
+    data_c : pd.DataFrame, optional
+        Pre-processed compound data from `compound_lookup_tables`. If None, it
+        will be generated from `C_main`. Defaults to None.
+    formula_table : pd.DataFrame, optional
+        Pre-computed element matrix from `compound_lookup_tables`. If None, it
+        will be generated from `C_main`. Defaults to None.
+    dfs : dict, optional
+        A dictionary to store intermediate and final DataFrames. If provided,
+        it will be updated in-place. Defaults to None.
+
+    Returns
+    -------
+    dict
+        A dictionary containing various DataFrames produced during the process,
+        including 'now_balanced', which holds the newly balanced reactions.
+    """
     R_main = id_indexed(R_main)
     C_main = id_indexed(C_main)
     if data_c is None or formula_table is None:
@@ -554,6 +627,31 @@ def filter_reactions_pandas(data_r, data_c=None, formula_table=None, f_log=None,
 
 
 def get_charge_balanced_injections_1el(data_c, dfs):
+    """
+    Identifies single-compound injections to balance reactions with a single-element imbalance.
+
+    This function filters for reactions that are unbalanced by only one type of
+    element (excluding starred/generic compounds). It then attempts to find a
+    single-element compound from the provided compound pool that can resolve both
+    the elemental and charge imbalance of the reaction.
+
+    Parameters
+    ----------
+    data_c : pd.DataFrame
+        DataFrame of compound attributes, typically from `compound_lookup_tables`.
+        Must contain 'n_elements', 'starred', 'formula_dict', and 'formal_charge'.
+    dfs : dict
+        A dictionary of DataFrames from the reaction filtering process.
+        It must contain 'el_diff_groups' (element differences per reaction)
+        and 'rns' (reaction attributes, including 'charge_R-L').
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame detailing the necessary injections to balance the reactions.
+        Columns include 'compound_id', 'count', and 'left_side' (True if
+        injection is on the reactant side). The index is the reaction ID.
+    """
     cpd_pool = data_c.query('n_elements==1 & starred==False').copy(deep=True).assign(
         el_sym=lambda x: x.formula_dict.explode(),
         el_num=lambda x: x.formula_dict.map(lambda y: y.values()).explode()).reset_index()
@@ -587,6 +685,31 @@ def get_charge_balanced_injections_1el(data_c, dfs):
 
 
 def get_charge_balanced_injections_OH(data_c, dfs):
+    """
+    Identifies reactions that can be balanced by injecting H2O or H2O2.
+
+    This function filters for reactions where the elemental imbalance is confined
+    to only Hydrogen (H) and Oxygen (O). It then checks if these imbalances can
+    be resolved by adding water (H2O) or hydrogen peroxide (H2O2) while also
+    satisfying charge neutrality (i.e., the reaction has no net charge imbalance).
+
+    Parameters
+    ----------
+    data_c : pd.DataFrame
+        DataFrame of compound attributes. This parameter is not used directly
+        but is kept for API consistency with similar functions.
+    dfs : dict
+        A dictionary of DataFrames from the reaction filtering process.
+        It must contain 'el_diff_groups' (element differences per reaction)
+        and 'rns' (reaction attributes, including 'charge_R-L').
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame detailing the necessary H2O or H2O2 injections to balance
+        the reactions. Columns include 'compound_id', 'count', and 'left_side'.
+        The index is the reaction ID.
+    """
     solutions = pd.DataFrame(columns=['el_sym', 'diff', 'formal_charge', 'compound_id', 'left_side', 'count'])
     diffs = dfs['el_diff_groups'][dfs['el_diff_groups']['*'].eq(0)]
     sum_all_atoms = diffs.abs().sum(axis=1)

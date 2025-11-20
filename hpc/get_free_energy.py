@@ -8,6 +8,26 @@ import CBRdb
 
 
 def err_from_sig(sigma_fin, sigma_inf, rmse_inf=1e-5):
+    """
+    Calculate the error from sigma values.
+
+    This function computes the root mean square error (RMSE) based on the provided
+    sigma values and a specified RMSE for infinite sigma.
+
+    Parameters:
+    -----------
+    sigma_fin : array-like
+        The finite sigma values as an array or list.
+    sigma_inf : array-like
+        The infinite sigma values as an array or list. Only the first element is used.
+    rmse_inf : float, optional
+        The RMSE value for infinite sigma. Default is 1e-5.
+
+    Returns:
+    --------
+    float
+        The calculated root mean square error.
+    """
     term = np.sum(np.asarray(sigma_fin, float) ** 2)
     sigma_inf = np.asarray(sigma_inf[0], float)
     term += np.sum((rmse_inf * sigma_inf) ** 2)
@@ -15,6 +35,25 @@ def err_from_sig(sigma_fin, sigma_inf, rmse_inf=1e-5):
 
 
 def get_working_cids(data_c):
+    """
+    Process a DataFrame of compounds to retrieve valid ComponentContribution objects.
+
+    This function adds KEGG-formatted IDs to the input DataFrame, retrieves the corresponding
+    ComponentContribution objects, and filters out compounds that are not present in the
+    ComponentContribution database.
+
+    Parameters:
+    -----------
+    data_c : pandas.DataFrame
+        A DataFrame containing a 'compound_id' column with compound identifiers.
+
+    Returns:
+    --------
+    pandas.DataFrame
+        A filtered DataFrame with an additional 'kegg_id' column (KEGG-formatted IDs)
+        and 'cc_comp' column (ComponentContribution objects).
+        Only compounds present in the ComponentContribution database are retained.
+    """
     # Get the all compound ID lists and add KEGG-formatted IDs as a new column.
     data_c['kegg_id'] = data_c['compound_id'].apply(lambda cid: f'kegg:{cid}')
 
@@ -30,6 +69,33 @@ def get_energy_of_formation(in_file='../CBRdb_C.csv',
                             out_file='CBRdb_C_formation_energies.csv.gz',
                             compact_output=True,
                             run_physiological=True):
+    """
+    Calculate and save the Gibbs free energy of formation for compounds.
+
+    This function reads compound data from a specified input file, calculates the
+    standard Gibbs free energy of formation using the `equilibrator-api`, and
+    optionally calculates it under physiological conditions. The results, including
+    energies and errors, are saved to a gzipped CSV file.
+
+    Parameters
+    ----------
+    in_file : str, optional
+        Path to the input CSV file containing compound data (e.g., from CBRdb).
+        Default is '../CBRdb_C.csv'.
+    out_file : str, optional
+        Path to the output gzipped CSV file where formation energies will be saved.
+        Default is 'CBRdb_C_formation_energies.csv.gz'.
+    compact_output : bool, optional
+        If True, the output file will contain only the essential columns
+        (ID, energy, and error). Default is True.
+    run_physiological : bool, optional
+        If True, calculations will also be performed under physiological conditions
+        (pH 7.5, pMg 3.0) in addition to standard conditions. Default is True.
+
+    Returns
+    -------
+    None
+    """
     print('Reading CBRdb compound data...', flush=True)
     data_c = pd.read_csv(in_file, low_memory=False)
 
@@ -97,6 +163,26 @@ def get_energy_of_formation(in_file='../CBRdb_C.csv',
 
 
 def get_rev_index(cc, r):
+    """
+    Calculate the natural logarithm of the reversibility index for a reaction.
+
+    This function computes the natural logarithm of the reversibility index for a given
+    reaction using the ComponentContribution model. If an error occurs during the calculation,
+    it logs the error and returns None.
+
+    Parameters
+    ----------
+    cc : ComponentContribution
+        An instance of the ComponentContribution class used for the calculation.
+    r : equilibrator_api.Reaction
+        The reaction object for which the reversibility index is calculated.
+
+    Returns
+    -------
+    float or None
+        The natural logarithm of the reversibility index as a dimensionless value, or None
+        if an error occurs during the calculation.
+    """
     try:
         return cc.ln_reversibility_index(r).value.m_as("dimensionless")
     except Exception as e:
@@ -105,6 +191,27 @@ def get_rev_index(cc, r):
 
 
 def get_std_dg(cc, data_r):
+    """
+    Calculate the standard Gibbs free energy and its uncertainty for reactions.
+
+    This function computes the standard Gibbs free energy (ΔG°') and its associated
+    uncertainty for a set of reactions using the ComponentContribution model.
+
+    Parameters
+    ----------
+    cc : ComponentContribution
+        An instance of the ComponentContribution class used for the calculation.
+    data_r : pandas.DataFrame
+        A DataFrame containing a 'cc_reac' column with parsed reaction objects.
+
+    Returns
+    -------
+    tuple
+        A tuple containing:
+        - dg (float): The calculated standard Gibbs free energy (ΔG°') in kJ/mol.
+        - uncertainty (float): The uncertainty of the calculated ΔG°' in kJ/mol.
+        If an error occurs, both values will be None.
+    """
     try:
         dg, uc = cc.standard_dg_prime_multi(data_r['cc_reac'].tolist(), uncertainty_representation="cov")
         return dg.magnitude, np.sqrt(np.diag(uc.magnitude))
@@ -114,9 +221,31 @@ def get_std_dg(cc, data_r):
 
 
 def prepare_reaction_data(data_r, data_c):
+    """
+    Prepare and clean reaction data for further processing.
+
+    This function processes a DataFrame of reactions by:
+    - Filtering out reactions with compounds not in the working compound list.
+    - Removing reactions with unknown stoichiometry or invalid formatting.
+    - Ensuring reactions contain at least two compounds.
+    - Formatting reaction equations to KEGG-compatible format.
+
+    Parameters
+    ----------
+    data_r : pandas.DataFrame
+        A DataFrame containing reaction data with at least 'id' and 'reaction' columns.
+    data_c : pandas.DataFrame
+        A DataFrame containing compound data with a 'compound_id' column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A cleaned and formatted DataFrame of reactions with an additional 'kegg_reaction' column.
+    """
     # Trim them down to only the necessary columns
     data_r = pd.DataFrame(data_r[['id', 'reaction']])
 
+    # Create a set of working compound IDs
     working_compounds = set(data_c['compound_id'].tolist())
     print(f'We have {len(working_compounds)} working compounds.', flush=True)
 
@@ -143,7 +272,7 @@ def prepare_reaction_data(data_r, data_c):
     # Drop rows that do not contain a valid reaction arrow
     data_r = data_r[data_r['reaction'].str.contains(r'<=>')]
     data_r = data_r.reset_index(drop=True)
-    # count the number of 'C' in each reaction and drop rows with less than 2
+    # Count the number of 'C' in each reaction and drop rows with less than 2
     data_r = data_r[data_r['reaction'].str.count('C') >= 2]
     data_r = data_r.reset_index(drop=True)
 
@@ -157,6 +286,33 @@ def prepare_reaction_data(data_r, data_c):
 
 
 def _get_energy_of_reaction(data_r, run_physiological=True):
+    """
+    Calculate the Gibbs free energy and reversibility index for reactions.
+
+    This function computes the standard Gibbs free energy (ΔG°') and reversibility index
+    for a set of reactions under standard conditions. Optionally, it also calculates these
+    values under physiological conditions.
+
+    Parameters
+    ----------
+    data_r : pandas.DataFrame
+        A DataFrame containing reaction data with a 'kegg_reaction' column.
+    run_physiological : bool, optional
+        If True, the calculations are also performed under physiological conditions
+        (pH 7.5, pMg 3.0). Default is True.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The input DataFrame with additional columns:
+        - 'cc_reac': Parsed reaction objects.
+        - 'rev_index': Reversibility index under standard conditions.
+        - 'std_dg': Standard Gibbs free energy under standard conditions.
+        - 'std_dg_error': Uncertainty of the standard Gibbs free energy.
+        - 'rev_index_p' (if run_physiological=True): Reversibility index under physiological conditions.
+        - 'std_dg_p' (if run_physiological=True): Gibbs free energy under physiological conditions.
+        - 'std_dg_p_error' (if run_physiological=True): Uncertainty of the Gibbs free energy under physiological conditions.
+    """
     # Apply to get the eq cc format
     cc = ComponentContribution()
     cc.p_h = Q_(7.0)
@@ -193,19 +349,49 @@ def get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz',
                            out_file='CBRdb_R_reaction_energies.csv.gz',
                            compact_output=True,
                            run_physiological=True):
+    """
+    Calculate and save the Gibbs free energy and reversibility index for reactions.
+
+    This function reads compound and reaction data from specified input files, processes
+    the reactions in segments to avoid memory issues, and calculates the Gibbs free energy
+    and reversibility index for each reaction. The results are saved to a gzipped CSV file.
+
+    Parameters
+    ----------
+    in_file_c : str, optional
+        Path to the input gzipped CSV file containing compound formation energies.
+        Default is 'CBRdb_C_formation_energies.csv.gz'.
+    in_file_r : str, optional
+        Path to the input CSV file containing reaction data.
+        Default is '../CBRdb_R.csv'.
+    out_file : str, optional
+        Path to the output gzipped CSV file where reaction energies will be saved.
+        Default is 'CBRdb_R_reaction_energies.csv.gz'.
+    compact_output : bool, optional
+        If True, the output file will contain only the essential columns
+        (ID, energy, error, and reversibility index). Default is True.
+    run_physiological : bool, optional
+        If True, calculations will also be performed under physiological conditions
+        (pH 7.5, pMg 3.0) in addition to standard conditions. Default is True.
+
+    Returns
+    -------
+    None
+    """
     print('Reading CBRdb reaction data...', flush=True)
 
     # Load the compound and reaction data
     data_c = pd.read_csv(in_file_c, low_memory=False)
     data_r = pd.read_csv(in_file_r, low_memory=False)
 
+    # Prepare and clean the reaction data
     data_r_full = prepare_reaction_data(data_r, data_c)
     total_reactions = len(data_r_full)
-    total_segments = 10
-    segment_size = total_reactions // total_segments
+    total_segments = 10  # Number of segments to divide the data into
+    segment_size = total_reactions // total_segments  # Size of each segment
     print(segment_size)
 
-    # Process each segment sequentially otherwise we run out of memory
+    # Process each segment sequentially to avoid memory issues
     all_results = []
     for i in range(total_segments):
         print(f"Processing segment {i + 1}/{total_segments}", flush=True)
@@ -219,7 +405,7 @@ def get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz',
         all_results.append(segment_results)
         print(flush=True)
 
-    # Join the data
+    # Combine the results from all segments
     data_r = pd.concat(all_results, ignore_index=True)
 
     if compact_output:
@@ -229,7 +415,7 @@ def get_energy_of_reaction(in_file_c='CBRdb_C_formation_energies.csv.gz',
             cols_to_keep += ['std_dg_p', 'std_dg_p_error', 'rev_index_p']
         data_r = data_r[cols_to_keep]
 
-    # Save the results to a CSV file
+    # Save the results to a gzipped CSV file
     print(f'Saving results to {out_file}', flush=True)
     print(f'Calculated reaction energies for {len(data_r)} reactions.', flush=True)
     data_r.to_csv(out_file, index=False, compression='gzip')

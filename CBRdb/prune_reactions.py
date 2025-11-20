@@ -283,6 +283,30 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
 
 
 def add_sus_reaction_dupes(sus, dbs):
+    """
+    Identifies and adds duplicate reactions of suspect reactions to the suspect list.
+
+    This function finds reactions in the KEGG and Atlas databases that have the
+    exact same chemical equation as reactions already marked as suspect. The
+    comparison ignores reaction directionality by sorting the reactant and product
+    sides of the equation string. These newly found duplicates are then added to
+    the suspect DataFrame.
+
+    Parameters
+    ----------
+    sus : pd.DataFrame
+        A DataFrame of initial suspect reactions, indexed by reaction ID, with a
+        'reason' column.
+    dbs : dict
+        A dictionary containing the primary DataFrames, including 'kegg_data_R'
+        and 'atlas_data_R'.
+
+    Returns
+    -------
+    pd.DataFrame
+        The updated suspect DataFrame, now including reactions that are
+        duplicates of the original suspect reactions.
+    """
     sort_sides = lambda df: df['reaction'].str.split(' <=> ').map(lambda x: ' <=> '.join(sorted(x)))
 
     # Add equations for suspect Atlas reactions (above func only checks for missing structures))
