@@ -15,8 +15,7 @@ if __name__ == "__main__":
 
     data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
     data_r = pd.read_csv('../CBRdb_R.csv', low_memory=False)[['id', 'reaction', 'smarts']]
-    sel = data_r['id'].str.startswith('R')
-    data_r = data_r[sel]
+
     if sample:
         data_r = data_r.sample(n=10_000, random_state=1).reset_index(drop=True)
 
@@ -29,12 +28,12 @@ if __name__ == "__main__":
     sim = sim[~np.isnan(sim)]
 
     CBRdb.plot_histogram(sim, xlab='Similarity score')
-    plt.savefig('KEGG_R_sim_hist.png', dpi=300)
-    plt.savefig('KEGG_R_sim_hist.pdf', dpi=300)
+    plt.savefig('CBRdb_R_sim_hist.png', dpi=300)
+    plt.savefig('CBRdb_R_sim_hist.pdf', dpi=300)
     plt.show()
 
     CBRdb.plot_histogram(sim, xlab='Similarity score')
     plt.yscale('log')
-    plt.savefig('KEGG_R_sim_log_hist.png', dpi=300)
-    plt.savefig('KEGG_R_sim_log_hist.pdf', dpi=300)
+    plt.savefig('CBRdb_R_sim_log_hist.png', dpi=300)
+    plt.savefig('CBRdb_R_sim_log_hist.pdf', dpi=300)
     plt.show()

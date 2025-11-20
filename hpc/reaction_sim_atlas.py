@@ -15,32 +15,15 @@ if __name__ == "__main__":
     assert method in ['rdkit', 'drfp'], "Method must be 'rdkit' or 'drfp'"
 
     data_c = pd.read_csv('../CBRdb_C.csv', low_memory=False)
-    data_r = pd.read_csv('../CBRdb_R.csv', low_memory=False)
-
-    # Trim them down to only the necessary columns
-    data_r = pd.DataFrame(data_r[['id', 'reaction']])
+    data_r = pd.read_csv('../CBRdb_R.csv', low_memory=False)[['id', 'reaction', 'smarts']]
 
     if sample:
-        # randomly select X reactions from data_r for testing
         data_r = data_r.sample(n=10_000, random_state=1).reset_index(drop=True)
 
-    # if the smarts column does not exist, create it
-    if 'smarts' not in data_r.columns:
-        print("Generating SMARTS for reactions...", flush=True)
-        func_smarts = partial(CBRdb.to_smarts_rxn_line, data_c=data_c, add_stoich=False)
-        data_r['smarts'] = CBRdb.mp_calc(func_smarts, data_r['reaction'].tolist())
-
-    # Only select the reactions where the id starts with 'R'
     sel = data_r['id'].str.startswith('R')
-    # Split the data into KEGG and ATLAS reactions
     data_r_atlas = data_r[~sel].copy()
     data_r_kegg = data_r[sel].copy()
 
-    # Print the number of reactions
-    print(f"Number of reactions (KEGG) : {len(data_r_kegg)}", flush=True)
-    print(f"Number of reactions (ATLAS): {len(data_r_atlas)}", flush=True)
-
-    print("Generating fingerprints for reactions...", flush=True)
     if method == 'rdkit':
         fp_kegg = CBRdb.mp_calc(CBRdb.get_rxn_fingerprint, data_r_kegg['smarts'].tolist())
         fp_atlas = CBRdb.mp_calc(CBRdb.get_rxn_fingerprint, data_r_atlas['smarts'].tolist())
@@ -54,17 +37,12 @@ if __name__ == "__main__":
         fp_kegg = fp_kegg.reshape((len(fp_kegg), -1))
         fp_atlas = fp_atlas.reshape((len(fp_atlas), -1))
 
-    print("KEGG fingerprints shape:", np.shape(fp_kegg), flush=True)
-    print("ATLAS fingerprints shape:", np.shape(fp_atlas), flush=True)
-
-    print("Calculating similarities...", flush=True)
     if method == 'rdkit':
         func_sim = partial(CBRdb.find_max_similar_rxn, rxn_db=fp_kegg)
         sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim, fp_atlas))
     else:
         func_sim_drfp = partial(CBRdb.find_max_similar_rxn_drfp, rxn_db=fp_kegg, replace_unity=True)
         sim_max, sim_max_idx = zip(*CBRdb.mp_calc(func_sim_drfp, fp_atlas))
-    print("Similarities calculated.", flush=True)
 
     # convert the idx into the corresponding reaction id
     sim_max_id = [data_r_kegg.iloc[idx]['id'] for idx in sim_max_idx]
