@@ -160,7 +160,7 @@ Database cross-references:
 | name        | Reaction name.                     |
 | smarts      | SMARTS representation.             |
 | reac_sim    | Closest reaction similarity.       |
-| rhea        | Rhea identifiers if pro.           |
+| rhea        | Rhea identifiers if provided.      |
 | CBRdb_C_ids | Corresponding CBRdb C identifiers. |
 | id_orig     | Original reaction identifier(s).   |
 
@@ -173,8 +173,6 @@ KEGG specific information:
 | pathway   | KEGG PATHWAY identifiers.          |
 | rclass    | KEGG RCLASS IDs & COMPOUND pairs.  |
 | remark    | KEGG remark.                       |
-| kegg_id   | KEGG reaction ID. \*               |
-| msk_rns   | KEGG REACTION IDs in MSK field. \* |
 | comment   | Unstructured KEGG comment field.   |
 | overall   | Flag: Overall reaction (br08210).  |
 
@@ -182,12 +180,8 @@ ATLAS specific information:
 
 | Syntax        | Description                          |
 |---------------|--------------------------------------|
-| bridgit_score | BridgIT score for most_sim_kegg. \*  |
 | most_sim_kegg | Most similar KEGG reaction (MSK). \* |
-| msk_ecs       | ECs referenced in MSK field. \*      |
-| msk_metacyc   | MetaCyc IDs in MSK field. \*         |
-| msk_mnxr      | MNXref IDs in MSK field. \*          |
-| msk_rhea      | RHEA IDs in MSK field. \*            |
+| bridgit_score | BridgIT score for most_sim_kegg. \*  |
 
 Data flags:
 
