@@ -267,3 +267,28 @@ def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
     print("HPC calculation merger complete", flush=True)
 
     return None
+
+
+def merge_hpc_thermo_params(final_output_Rs_fp='../CBRdb_R.csv',
+                             thermo_params_fp='../hpc/CBRdb_R_reaction_energies.csv.gz'):
+    """ 
+    Merges reaction thermodynamic parameters into the main reactions data file, overwriting it.
+
+    """
+    print("Merging HPC thermodynamic parameters into reaction file", flush=True)
+
+    # Import the datasets
+    reactions = pd.read_csv(final_output_Rs_fp, index_col=0, low_memory=False)
+    thermo_params = pd.read_csv(thermo_params_fp, index_col=0, compression='gzip')
+
+    # Merge the datasets
+    reactions = reactions.join(thermo_params.add_prefix('thermo_'), how='left')
+
+    # Save the updated reactions file (note that floats are not rounded unlike in CBRdb.reaction_csv)
+    reactions.to_csv(final_output_Rs_fp)
+    reactions.to_csv(final_output_Rs_fp + '.zip', compression='zip')
+
+    print("HPC thermodynamic parameter merger complete", flush=True)
+
+    return None
+

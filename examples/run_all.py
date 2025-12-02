@@ -70,5 +70,6 @@ if __name__ == "__main__":
     CBRdb.reaction_csv(dbs['CBRdb_R'], "../CBRdb_R.csv")
     CBRdb.add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp='../CBRdb_R.csv')
     CBRdb.merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv')
+    CBRdb.merge_hpc_thermo_params(final_output_Rs_fp = '../CBRdb_R.csv')
 
     print("Program finished", flush=True)
