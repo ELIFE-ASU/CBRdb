@@ -26,6 +26,9 @@ on [ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/67c28c046dde4
 - Thermodynamic properties.
 - Reaction pruning based on reaction feasibility and similarity.
 
+Example fixes and receipts of changes can be found in the data directory. See for example `C_IDs_bad.dat`
+for a list of KEGG compounds that were removed or adjusted.
+
 ## 💡 Getting Started
 
 To get started with the data, you can download the compounds `CBRdb_C.csv` and reactions `CBRdb_R.csv` from the
@@ -166,15 +169,15 @@ Database cross-references:
 
 KEGG specific information:
 
-| Syntax    | Description                        |
-|-----------|------------------------------------|
-| module    | KEGG MODULE identifiers.           |
-| orthology | KEGG ORTHOLOGY identifiers.        |
-| pathway   | KEGG PATHWAY identifiers.          |
-| rclass    | KEGG RCLASS IDs & COMPOUND pairs.  |
-| remark    | KEGG remark.                       |
-| comment   | Unstructured KEGG comment field.   |
-| overall   | Flag: Overall reaction (br08210).  |
+| Syntax    | Description                       |
+|-----------|-----------------------------------|
+| module    | KEGG MODULE identifiers.          |
+| orthology | KEGG ORTHOLOGY identifiers.       |
+| pathway   | KEGG PATHWAY identifiers.         |
+| rclass    | KEGG RCLASS IDs & COMPOUND pairs. |
+| remark    | KEGG remark.                      |
+| comment   | Unstructured KEGG comment field.  |
+| overall   | Flag: Overall reaction (br08210). |
 
 ATLAS specific information:
 
