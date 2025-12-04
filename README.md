@@ -81,37 +81,37 @@ General information:
 
 Complexity scores and indices:
 
-| Syntax          | Description                             | Reference |
-|-----------------|-----------------------------------------|-----------|
-| wiener_index    | Wiener index of the compound.           | REF       |    
-| unique_bonds    | Number of unique bonds in the compound. | N/A       |
-| spacial_score   | Spacial score of the compound.          |           |
-| randic_index    | Randic index of the compound.           |           |
-| proudfoot       | Proudfoot score of the compound.        | REF       |                                                                                                                
-| name            | Common name of the compound.            |           |
-| mc2             | Molecular complexity score 2.           |           |
-| mc1             | Molecular complexity score 1.           |           |
-| kirchhoff_index | Kirchhoff index of the compound.        |           |
-| fcfp4           | FCFP4 fingerprint of the compound.      |           |
-| bertz           | Bertz complexity of the compound.       |           |
-| balaban_index   | Balaban index of the compound.          |           |
+| Syntax          | Description                             |
+|-----------------|-----------------------------------------|
+| assembly_index  | Assembly index of the compound.         |
+| wiener_index    | Wiener index of the compound.           | 
+| unique_bonds    | Number of unique bonds in the compound. |
+| spacial_score   | Spacial score of the compound.          |
+| randic_index    | Randic index of the compound.           |
+| proudfoot       | Proudfoot score of the compound.        |                                                                                                               
+| mc2             | Molecular complexity score 2.           |
+| mc1             | Molecular complexity score 1.           |
+| kirchhoff_index | Kirchhoff index of the compound.        |
+| fcfp4           | FCFP4 fingerprint of the compound.      |
+| bertz           | Bertz complexity of the compound.       |
+| balaban_index   | Balaban index of the compound.          |
 
 Properties
 
-| Syntax            | Description                                                              | Reference |
-|-------------------|--------------------------------------------------------------------------|-----------|
-| ionization_states | Ionization states of the compound. For a pH range of 4 to 10.            |           |
-| std_dgf           | Free energy of formation using experimental values.                      |           |
-| std_dgf_error     | Error in the free energy of formation using experimental values.         |           |
-| std_dgf_p         | Free energy of formation at pressure using experimental values.          |           |
-| std_dgf_p_error   | Error in free energy of formation at pressure using experimental values. |           |
-| d_free            | Free energy of formation using quantum methods.                          |           |
-| d_enthalpy        | Enthalpy of formation using quantum methods.                             |           |
-| d_entropy         | Entropy of formation using quantum methods.                              |           |
-| free              | Free energy using quantum methods.                                       |           |
-| enthalpy          | Enthalpy using quantum methods.                                          |           |
-| entropy           | Entropy energy using quantum methods.                                    |           |
-| vib_energies      | List of vibration modes using quantum methods.                           |           |
+| Syntax            | Description                                                              |
+|-------------------|--------------------------------------------------------------------------|
+| ionization_states | Ionization states of the compound. For a pH range of 4 to 10.            |
+| std_dgf           | Free energy of formation using experimental values.                      |
+| std_dgf_error     | Error in the free energy of formation using experimental values.         |
+| std_dgf_p         | Free energy of formation at pressure using experimental values.          |
+| std_dgf_p_error   | Error in free energy of formation at pressure using experimental values. |
+| d_free            | Free energy of formation using quantum methods.                          |
+| d_enthalpy        | Enthalpy of formation using quantum methods.                             |
+| d_entropy         | Entropy of formation using quantum methods.                              |
+| free              | Free energy using quantum methods.                                       |
+| enthalpy          | Enthalpy using quantum methods.                                          |
+| entropy           | Entropy energy using quantum methods.                                    |
+| vib_energies      | List of vibration modes using quantum methods.                           |
 
 KEGG specific information:
 
