@@ -14,7 +14,7 @@ CBR-db is designed to be continuously updated, incorporating the latest releases
 Furthermore, it provides a framework so the network can be extended and further issues can be addressed.
 
 To start everything locally, you can look at run_all.py, which will take you through the whole data pipeline. Otherwise,
-you can run each part by itself.
+you can run each part by itself. To sidestep installation checkout [Binder](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD).
 
 For further information, see the preprint
 on [ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/67c28c046dde43c908f7aa37).
@@ -206,12 +206,13 @@ To get started with deeper components of CBRdb, follow the installation instruct
 start using the CBRdb package in your Python scripts or Jupyter notebooks.
 
 ## 🔧 Installation
+Here you can find the full installation instructions. See also [Binder](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD).
 
 <details>
 <summary>Using conda env</summary>
 <br>
 
-Using conda is the recommended way to install the required packages.
+Using conda is the recommended way to install the required packages to help with dependencies. First, lets clone the repo so that we have a local copy.
 
 ```
 git clone https://github.com/ELIFE-ASU/CBRdb.git
@@ -221,6 +222,12 @@ Change into the CBRdb directory.
 
 ```
 cd CBRdb
+```
+
+Change into the build tools directory.
+
+```
+cd build_tools
 ```
 
 Create the conda environment.
@@ -233,6 +240,12 @@ Activate the conda environment.
 
 ```
 conda activate cbrdb
+```
+
+Lets leave the build tools directory.
+
+```
+cd ..
 ```
 
 Install CBRdb.
