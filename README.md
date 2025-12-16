@@ -1,4 +1,5 @@
 # CBRdb: A Curated Biochemical Reaction database for precise Biochemical Reaction Analysis
+
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17459478.svg)](https://doi.org/10.5281/zenodo.17459478)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD)
 
@@ -14,7 +15,8 @@ CBR-db is designed to be continuously updated, incorporating the latest releases
 Furthermore, it provides a framework so the network can be extended and further issues can be addressed.
 
 To start everything locally, you can look at run_all.py, which will take you through the whole data pipeline. Otherwise,
-you can run each part by itself. To sidestep installation checkout [Binder](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD).
+you can run each part by itself. To sidestep installation
+checkout [Binder](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD).
 
 For further information, see the preprint
 on [ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/67c28c046dde43c908f7aa37).
@@ -55,15 +57,16 @@ reactions.head()
 ```
 
 Below is a breakdown description of the columns in each of the data files. Each description table is collapsible for
-easier
-viewing, but the subcategories are shown for clarity.
+easier viewing, but the subcategories are shown for clarity. In the tables below, the `Entry Title` column corresponds
+to the column headers
+in the CSV files and the `Description` column provides a brief explanation of each entry.
 <details>
 <summary>CBRdb_C</summary>
 <br>
 
 General information:
 
-| Syntax           | Description                                                |
+| Entry Title      | Description                                                |
 |------------------|------------------------------------------------------------|
 | compound_id      | Unique identifier for each compound in the CBRdb database. |
 | smiles           | SMILES representation of the compound.                     |
@@ -81,7 +84,7 @@ General information:
 
 Complexity scores and indices:
 
-| Syntax          | Description                             |
+| Entry Title     | Description                             |
 |-----------------|-----------------------------------------|
 | assembly_index  | Assembly index of the compound.         |
 | wiener_index    | Wiener index of the compound.           | 
@@ -96,9 +99,9 @@ Complexity scores and indices:
 | bertz           | Bertz complexity of the compound.       |
 | balaban_index   | Balaban index of the compound.          |
 
-Properties
+Properties:
 
-| Syntax            | Description                                                              |
+| Entry Title       | Description                                                              |
 |-------------------|--------------------------------------------------------------------------|
 | ionization_states | Ionization states of the compound. For a pH range of 4 to 10.            |
 | std_dgf           | Free energy of formation using experimental values.                      |
@@ -115,7 +118,7 @@ Properties
 
 KEGG specific information:
 
-| Syntax          | Description                                                |
+| Entry Title     | Description                                                |
 |-----------------|------------------------------------------------------------|
 | kegg_type       | Type for peptide or polyketide entry.                      |
 | kegg_sequence   | Sequence for peptide or polyketide entry.                  |
@@ -136,17 +139,17 @@ KEGG specific information:
 
 Database cross-references:
 
-| Syntax     | Description                                    |
-|------------|------------------------------------------------|
-| PubChem    | Linked PubChem identifiers for the compound.   |
-| PDB_CCD    | Linked PDB CCD identifiers for the compound.   |
-| NIKKAJI    | Linked NIKKAJI identifiers for the compound.   |
-| LIPIDMAPS  | Linked LIPIDMAPS identifiers for the compound. |
-| KNApSAcK   | Linked KNApSAcK identifiers for the compound.  |
-| Drug_group | Linked KEGG DGROUP entries for the compound.   |
-| ChEBI      | Linked ChEBI identifiers for the compound.     |
-| CAS        | Linked CAS identifiers for the compound.       |
-| ATC_code   | Linked ATC codes of the compound.              |
+| Entry Title | Description                                    |
+|-------------|------------------------------------------------|
+| PubChem     | Linked PubChem identifiers for the compound.   |
+| PDB_CCD     | Linked PDB CCD identifiers for the compound.   |
+| NIKKAJI     | Linked NIKKAJI identifiers for the compound.   |
+| LIPIDMAPS   | Linked LIPIDMAPS identifiers for the compound. |
+| KNApSAcK    | Linked KNApSAcK identifiers for the compound.  |
+| Drug_group  | Linked KEGG DGROUP entries for the compound.   |
+| ChEBI       | Linked ChEBI identifiers for the compound.     |
+| CAS         | Linked CAS identifiers for the compound.       |
+| ATC_code    | Linked ATC codes of the compound.              |
 
 </details>
 
@@ -155,7 +158,9 @@ Database cross-references:
 <summary>CBRdb_R</summary>
 <br>
 
-| Syntax      | Description                        |
+General information:
+
+| Entry Title | Description                        |
 |-------------|------------------------------------|
 | id          | Reaction identifier.               |
 | reaction    | Reaction equation.                 |
@@ -169,26 +174,26 @@ Database cross-references:
 
 KEGG specific information:
 
-| Syntax    | Description                       |
-|-----------|-----------------------------------|
-| module    | KEGG MODULE identifiers.          |
-| orthology | KEGG ORTHOLOGY identifiers.       |
-| pathway   | KEGG PATHWAY identifiers.         |
-| rclass    | KEGG RCLASS IDs & COMPOUND pairs. |
-| remark    | KEGG remark.                      |
-| comment   | Unstructured KEGG comment field.  |
-| overall   | Flag: Overall reaction (br08210). |
+| Entry Title | Description                       |
+|-------------|-----------------------------------|
+| module      | KEGG MODULE identifiers.          |
+| orthology   | KEGG ORTHOLOGY identifiers.       |
+| pathway     | KEGG PATHWAY identifiers.         |
+| rclass      | KEGG RCLASS IDs & COMPOUND pairs. |
+| remark      | KEGG remark.                      |
+| comment     | Unstructured KEGG comment field.  |
+| overall     | Flag: Overall reaction (br08210). |
 
 ATLAS specific information:
 
-| Syntax        | Description                          |
+| Entry Title   | Description                          |
 |---------------|--------------------------------------|
 | most_sim_kegg | Most similar KEGG reaction (MSK). \* |
 | bridgit_score | BridgIT score for most_sim_kegg. \*  |
 
 Data flags:
 
-| Syntax                  | Description                          |
+| Entry Title             | Description                          |
 |-------------------------|--------------------------------------|
 | flags                   | From CBRdb.df_of_suspect_reactions   |
 | balancer_failed         | Flag: Balancer failed.               |
@@ -206,13 +211,16 @@ To get started with deeper components of CBRdb, follow the installation instruct
 start using the CBRdb package in your Python scripts or Jupyter notebooks.
 
 ## 🔧 Installation
-Here you can find the full installation instructions. See also [Binder](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD).
+
+Here you can find the full installation instructions. See
+also [Binder](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD).
 
 <details>
 <summary>Using conda env</summary>
 <br>
 
-Using conda is the recommended way to install the required packages to help with dependencies. First, lets clone the repo so that we have a local copy.
+Using conda is the recommended way to install the required packages to help with dependencies. First, lets clone the
+repo so that we have a local copy.
 
 ```
 git clone https://github.com/ELIFE-ASU/CBRdb.git
