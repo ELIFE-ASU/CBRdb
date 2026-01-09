@@ -417,7 +417,7 @@ def optimise_atoms(atoms,
                    multiplicity=1,
                    orca_path=None,
                    xc='r2SCAN-3c',
-                   basis_set='def2-QZVP',
+                   basis_set='def2-mTZVPP',
                    tight_opt=False,
                    tight_scf=False,
                    f_solv=False,
@@ -443,7 +443,7 @@ def optimise_atoms(atoms,
     xc : str, optional
         Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
     basis_set : str, optional
-        Basis set to use for the calculation. Default is 'def2-QZVP'.
+        Basis set to use for the calculation. Default is 'def2-mTZVPP'.
     tight_opt : bool, optional
         Whether to use tight geometry optimisation. Default is False.
     tight_scf : bool, optional
@@ -696,7 +696,7 @@ def calculate_vib_spectrum(atoms,
                            multiplicity=1,
                            orca_path=None,
                            xc='r2SCAN-3c',
-                           basis_set='def2-QZVP',
+                           basis_set='def2-mTZVPP',
                            tight_opt=False,
                            tight_scf=False,
                            f_solv=False,
@@ -721,7 +721,7 @@ def calculate_vib_spectrum(atoms,
     xc : str, optional
         Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
     basis_set : str, optional
-        Basis set to use for the calculation. Default is 'def2-QZVP'.
+        Basis set to use for the calculation. Default is 'def2-mTZVPP'.
     tight_opt : bool, optional
         Whether to use tight geometry optimisation. Default is False.
     tight_scf : bool, optional
@@ -970,7 +970,7 @@ def calculate_free_energy(atoms,
                           pressure=None,
                           orca_path=None,
                           xc='r2SCAN-3c',
-                          basis_set='def2-QZVP',
+                          basis_set='def2-mTZVPP',
                           tight_opt=False,
                           tight_scf=False,
                           f_solv=False,
@@ -1002,7 +1002,7 @@ def calculate_free_energy(atoms,
     xc : str, optional
         Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
     basis_set : str, optional
-        Basis set to use for the calculation. Default is 'def2-QZVP'.
+        Basis set to use for the calculation. Default is 'def2-mTZVPP'.
     tight_opt : bool, optional
         Whether to use tight geometry optimization. Default is False.
     tight_scf : bool, optional
@@ -1141,7 +1141,7 @@ def calculate_hessian(atoms,
                       multiplicity=1,
                       orca_path=None,
                       xc='r2SCAN-3c',
-                      basis_set='def2-QZVP',
+                      basis_set='def2-mTZVPP',
                       tight_opt=False,
                       tight_scf=False,
                       f_solv=False,
@@ -1167,7 +1167,7 @@ def calculate_hessian(atoms,
     xc : str, optional
         Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
     basis_set : str, optional
-        Basis set to use for the calculation. Default is 'def2-QZVP'.
+        Basis set to use for the calculation. Default is 'def2-mTZVPP'.
     tight_opt : bool, optional
         Whether to use tight geometry optimization. Default is False.
     tight_scf : bool, optional
@@ -1250,7 +1250,7 @@ def _calculate_free_energy_batch(atoms,
                                  multiplicity=1,
                                  orca_path=None,
                                  xc='r2SCAN-3c',
-                                 basis_set='def2-QZVP',
+                                 basis_set='def2-mTZVPP',
                                  f_solv=False,
                                  f_disp=False,
                                  n_procs=10,
@@ -1282,7 +1282,7 @@ def _calculate_free_energy_batch(atoms,
     xc : str, optional
         Exchange-correlation functional. Default is 'r2SCAN-3c'.
     basis_set : str, optional
-        Basis set for the calculation. Default is 'def2-QZVP'.
+        Basis set for the calculation. Default is 'def2-mTZVPP'.
     f_solv : bool, optional
         Whether to include solvent effects. Default is False.
     f_disp : bool, optional
@@ -1357,7 +1357,7 @@ def calculate_free_energy_batch(atoms,
                                 multiplicity=1,
                                 orca_path=None,
                                 xc='r2SCAN-3c',
-                                basis_set='def2-QZVP',
+                                basis_set='def2-mTZVPP',
                                 tight_opt=False,
                                 tight_scf=False,
                                 f_solv=False,
@@ -1390,7 +1390,7 @@ def calculate_free_energy_batch(atoms,
     xc : str, optional
         Exchange-correlation functional. Default is 'r2SCAN-3c'.
     basis_set : str, optional
-        Basis set for the calculation. Default is 'def2-QZVP'.
+        Basis set for the calculation. Default is 'def2-mTZVPP'.
     tight_opt : bool, optional
         This parameter is not used as no optimization is performed.
     tight_scf : bool, optional
@@ -1536,7 +1536,7 @@ def get_formation_references(mol):
 def calculate_free_energy_formation(mol,
                                     orca_path=None,
                                     xc='r2SCAN-3c',
-                                    basis_set='def2-QZVP',
+                                    basis_set='def2-mTZVPP',
                                     tight_opt=False,
                                     tight_scf=False,
                                     f_solv=False,
@@ -1561,7 +1561,7 @@ def calculate_free_energy_formation(mol,
     xc : str, optional
         Exchange-correlation functional to use. Default is 'r2SCAN-3c'.
     basis_set : str, optional
-        Basis set to use for the calculation. Default is 'def2-QZVP'.
+        Basis set to use for the calculation. Default is 'def2-mTZVPP'.
     tight_opt : bool, optional
         Whether to use tight geometry optimisation. Default is False.
     tight_scf : bool, optional
