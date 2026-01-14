@@ -51,8 +51,10 @@ def merge_duplicate_reactions(df, r_dupemap):
     # In some columns, the values are structured as space-separated lists.
     known_space_sep_cols = ['ec', 'orthology', 'pathway', 'rclass', 'rhea', 'kegg_id',
                             'msk_ecs', 'msk_metacyc', 'msk_mnxr', 'msk_rhea', 'msk_rns', 'CBRdb_C_ids']
+    # Check if any of these cols are in the actual DataFrame.
+    found_space_sep_cols = df.columns.intersection(known_space_sep_cols)
     # For each dupe-group, concatenate its constituent lists.
-    space_sep_entries = (df[known_space_sep_cols]
+    space_sep_entries = (df[found_space_sep_cols]
                          .apply(lambda x: x.str.split())
                          .groupby(df['eqn_set'])
                          .sum()[to_combine]
