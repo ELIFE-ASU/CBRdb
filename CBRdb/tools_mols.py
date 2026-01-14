@@ -15,6 +15,7 @@ lg.setLevel(RDLogger.CRITICAL)
 from .tools_files import remove_filepath, space_sep_str_cols_cps
 from .tools_complexity import capped_funcs, uncapped_funcs
 from .tools_mp import mp_calc
+from .tools_eq import convert_formula_to_dict
 
 
 def sanitize_mol(mol):
@@ -436,8 +437,13 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv", filter_star=True):
     if filter_star:
         data_c = filter_compounds_without_star(data_c)
 
-    # Sort by the smile size
-    return data_c.sort_values(by="smiles", key=lambda x: x.str.len())
+    els = data_c['formula'].map(convert_formula_to_dict).map(set)
+    data_c = data_c.assign(els_set = els,
+                           els_len = els.map(len),
+                           smi_len = data_c['smiles'].str.len())
+
+    # Sort by the smile size and number of elements
+    return data_c.sort_values(by=['els_len', 'smi_len'])
 
 
 def get_small_compounds(c_path="../data/kegg_data_C.csv", filter_star=True, n=1):
@@ -513,7 +519,6 @@ def get_compounds_with_matching_elements(data_c_1, diff_ele_react, diff_ele_prod
     # Filter the DataFrame to get compounds that contain all the element symbols
     filtered_compounds = data_c_1[data_c_1['formula'].apply(lambda x: contains_all_elements(x, element_symbols))]
 
-    # Get the number of 
     # Sort by the number of heavy atoms
     filtered_compounds = filtered_compounds.sort_values(by='n_heavy_atoms')
 
