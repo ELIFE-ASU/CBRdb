@@ -320,18 +320,25 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
         eq_line_new = rebalance_eq(eq_line, data_c, comp_dict=comp_dict)
         # Equation is not balance...
         if eq_line_new is False:
+
+            # Limit potential injections to those with *only* elements in the equation
+            els_allowed = react_ele.keys() | prod_ele.keys()
+            data_c_1_allowed = data_c_1.loc[(data_c_1['els_set'] - els_allowed).map(len) == 0].copy()
+            data_c_2_allowed = data_c_2.loc[(data_c_2['els_set'] - els_allowed).map(len) == 0].copy()
+            data_c_3_allowed = data_c_3.loc[(data_c_3['els_set'] - els_allowed).map(len) == 0].copy()
+
             # Attempt injecting methods with the c1 compounds
-            eq_line_new = kitchen_sink(eq_line, data_c, data_c_1, f_log, comp_dict=comp_dict)
+            eq_line_new = kitchen_sink(eq_line, data_c, data_c_1_allowed, f_log, comp_dict=comp_dict)
             if eq_line_new is False:
                 print_and_log(f"Could not fix the imbalance for eq {id} using c1 list!", f_log)
                 if rebalance_depth > 1:
                     # Attempt with the c2 compounds
-                    eq_line_new = kitchen_sink(eq_line, data_c, data_c_2, f_log)
+                    eq_line_new = kitchen_sink(eq_line, data_c, data_c_2_allowed, f_log, comp_dict=comp_dict)
                     if eq_line_new is False:
                         print_and_log(f"Could not fix the imbalance for eq {id} using c2 list!", f_log)
                         if rebalance_depth > 2:
                             # Attempt with the c3 compounds
-                            eq_line_new = kitchen_sink(eq_line, data_c, data_c_3, f_log)
+                            eq_line_new = kitchen_sink(eq_line, data_c, data_c_3_allowed, f_log, comp_dict=comp_dict)
                             if eq_line_new is False:
                                 print_and_log(f"Could not fix the imbalance for eq {id} using c3 list!", f_log)
                                 ids_failed.append(id)
