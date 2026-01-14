@@ -157,7 +157,7 @@ def fix_halogen_compounds(
     # Get the compound metadata
     x_metadata = id_indexed(preprocess_kegg_c_metadata(valid_cids=cids_dict.keys()))
     # Ensure proper formatting of string columns
-    for col in space_sep_str_cols_cps:
+    for col in space_sep_str_cols_cps.keys():
         if col in x_metadata.columns:
             x_metadata[col] = x_metadata[col].map(lambda x: str(x), na_action='ignore')
     # Tie each instantiated compound ID to its parent metadata
@@ -222,8 +222,7 @@ def merge_halogen_compounds(specific_halogens,
         compound_csv(df, int_file)
 
     # Load the compounds data
-    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
-    df_old = pd.read_csv(c_id_file, low_memory=False, dtype=str_cols_dict)
+    df_old = pd.read_csv(c_id_file, low_memory=False, dtype=space_sep_str_cols_cps)
 
     # Merge the dataframes
     df = pd.concat([df_old, df], ignore_index=True)

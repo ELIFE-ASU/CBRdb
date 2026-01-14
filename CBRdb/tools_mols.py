@@ -430,8 +430,7 @@ def get_sorted_compounds(c_path="../data/kegg_data_C.csv", filter_star=True):
     pd.DataFrame: A DataFrame containing the sorted compound data.
     """
     # Get the data
-    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
-    data_c = pd.read_csv(os.path.abspath(c_path), dtype=str_cols_dict, low_memory=False)
+    data_c = pd.read_csv(os.path.abspath(c_path), dtype=space_sep_str_cols_cps, low_memory=False)
 
     # Filter out the star compounds or has * in the smiles
     if filter_star:
@@ -514,6 +513,7 @@ def get_compounds_with_matching_elements(data_c_1, diff_ele_react, diff_ele_prod
     # Filter the DataFrame to get compounds that contain all the element symbols
     filtered_compounds = data_c_1[data_c_1['formula'].apply(lambda x: contains_all_elements(x, element_symbols))]
 
+    # Get the number of 
     # Sort by the number of heavy atoms
     filtered_compounds = filtered_compounds.sort_values(by='n_heavy_atoms')
 

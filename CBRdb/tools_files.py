@@ -3,10 +3,10 @@ import shutil
 
 import pandas as pd
 
-space_sep_str_cols_cps = ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan',
+space_sep_str_cols_cps = {k: str for k in
+                          ['kegg_reaction', 'kegg_enzyme', 'kegg_pathway', 'kegg_brite', 'kegg_module', 'kegg_glycan',
                           'PDB_CCD', 'ATC_code', 'Drug_group', 'kegg_type', 'kegg_network',
-                          'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']
-
+                          'kegg_drug', 'PubChem', 'ChEBI', 'CAS', 'NIKKAJI', 'KNApSAcK', 'LIPIDMAPS']}
 
 def file_list(mypath=None):
     """

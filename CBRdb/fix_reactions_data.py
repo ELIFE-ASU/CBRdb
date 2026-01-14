@@ -203,8 +203,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Load the processed compound data
     print_and_log("Loading the compound data...", f_log)
-    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
-    data_c = pd.read_csv(c_file, dtype=str_cols_dict, low_memory=False)
+    data_c = pd.read_csv(c_file, dtype=space_sep_str_cols_cps, low_memory=False)
     print_and_log(f"Compound data shape: {data_c.shape}", f_log)
 
     # Load the small compounds

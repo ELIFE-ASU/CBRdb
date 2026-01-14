@@ -154,7 +154,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     # Take the first non-NaN entry in fields/IDs without conflicting values
     group_attrs = dupes.first()[n_vals < 2].drop(columns=['old_id', 'n'])
     # For fields where values reflect space-separated lists...
-    sscol = group_attrs.columns.intersection(space_sep_str_cols_cps)
+    sscol = group_attrs.columns.intersection(set(space_sep_str_cols_cps.keys()))
     # Take the union of everything listed
     dupes_ss = dupes[sscol].agg(list_unique)[n_vals > 1]
     group_attrs.fillna(dupes_ss, inplace=True)
@@ -211,9 +211,8 @@ def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp=
     Returns:
     None: The function modifies the compound and reaction DataFrames in place and saves them to the specified files. 
     """
-    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
-    final_output_Rs = id_indexed(pd.read_csv(final_output_Rs_fp, index_col=0, dtype=str_cols_dict, low_memory=False))
-    final_output_Cs = id_indexed(pd.read_csv(final_output_Cs_fp, index_col=0, dtype=str_cols_dict, low_memory=False))
+    final_output_Rs = id_indexed(pd.read_csv(final_output_Rs_fp, index_col=0, dtype=space_sep_str_cols_cps, low_memory=False))
+    final_output_Cs = id_indexed(pd.read_csv(final_output_Cs_fp, index_col=0, dtype=space_sep_str_cols_cps, low_memory=False))
 
     rid2cid = final_output_Rs['reaction'].str.findall(r'C\d{5}').map(set).map(sorted).rename('compound_id')
     cid2rid = rid2cid.explode().reset_index().groupby('compound_id')['id'].apply(sorted)
@@ -237,10 +236,8 @@ def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
     """
     print("Merging HPC calculations into compound file", flush=True)
 
-    str_cols_dict = {k: str for k in space_sep_str_cols_cps}
-
     # Import the datasets
-    compounds = pd.read_csv(final_output_Cs_fp, index_col=0, low_memory=False, dtype=str_cols_dict)
+    compounds = pd.read_csv(final_output_Cs_fp, index_col=0, low_memory=False, dtype=space_sep_str_cols_cps)
     C_mace_spectrum = pd.read_csv(mace_spectrum_fp, index_col=0, compression='gzip')
     C_formation_energies = pd.read_csv(formation_energies_fp, index_col=0, compression='gzip')
     C_dupes = pd.read_csv(c_dupemap_fp, index_col=0)['new_id']
