@@ -230,7 +230,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     data_r['reaction'] = data_r['reaction'].map(standardise_eq)
 
     # Tag reactions with common issues
-    flag_cols = ['bool_missing_data', 'bool_var_list', 'cpd_starred', 'is_balanced_except_star']
+    flag_cols = ['bool_missing_data', 'bool_var_list', 'cpd_starred']
     data_r = data_r.join(dfs['rns'][flag_cols]).join(bad_ids)
     data_r[bad_criterion] = data_r['flags'].str.contains(bad_criterion, na=False)
 
