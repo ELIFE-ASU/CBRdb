@@ -488,6 +488,13 @@ def compound_lookup_tables(data_c, f_log=None, dfs=None):
     # DataTable indicating, for each compound (column), the count (value) of each element (row)
     print_and_log('making "formula_table": matrix-like DataFrame of element counts for each compound', f_log)
     formula_table = cpd_data['formula_dict'].apply(pd.Series).fillna(0).astype(int).T
+    # impose electron having -1 formal charge and zero mass, for balancing purposes
+    if 'C05359' in cpd_data.index:
+        cpd_data.at['C05359', 'formal_charge'] = -1
+        formula_table.loc[:, 'C05359'] = 0
+    # update photon to reflect zero mass
+    if 'C00205' in formula_table.columns:
+        formula_table.loc[:, 'C00205'] = 0
     if dfs is not None:
         dfs.update({'cpd_data': cpd_data, 'formula_table': formula_table})
     return cpd_data, formula_table
