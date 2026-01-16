@@ -480,6 +480,7 @@ def compound_lookup_tables(data_c, f_log=None, dfs=None):
     """
     # DataFrame of compound attributes relevant for balancing reactions
     print_and_log('making "cpd_data": DataFrame of compound attributes relevant for balancing reactions', f_log)
+    data_c = id_indexed(data_c)
     cpd_data = data_c[['formula', 'formal_charge']].copy(deep=True).dropna().assign(
         formula_dict=lambda x: x.formula.map(convert_formula_to_dict),
         starred=lambda x: x.formula_dict.map(lambda y: '*' in y),
