@@ -492,7 +492,7 @@ def compound_lookup_tables(data_c, f_log=None, dfs=None):
     return cpd_data, formula_table
 
 
-def get_stoichiometry(data_r, formula_table=None, dfs=None):
+def get_stoichiometry(data_r, formula_table=None, dfs=None, data_c=None):
     """
     Computes stoichiometric data for reactions, including element counts and compound coefficients.
 
@@ -500,14 +500,19 @@ def get_stoichiometry(data_r, formula_table=None, dfs=None):
     data_r (pd.DataFrame): DataFrame containing reaction data.
     formula_table (pd.DataFrame, optional): Precomputed DataFrame of element counts for compounds from CBRdb.compound_lookup_tables.
     dfs (dict, optional): Dictionary to store results. If formula_table is None, dfs is checked for key 'formula_table'.
+    data_c (pd.DataFrame, optional): Compound DataFrame from which to generate formula_table if not in other 
 
     Returns:
     dict: Dictionary containing processed DataFrames. If a dict is fed to dfs arg, it is updated inplace and also returned here.
     """
     if dfs is None:
         dfs = dict()
-    elif formula_table is None and 'formula_table' in dfs.keys():
+    if formula_table is None and 'formula_table' in dfs.keys():
         formula_table = dfs['formula_table']
+    elif isinstance(data_c, pd.DataFrame):
+        _, formula_table = compound_lookup_tables(id_indexed(data_c))
+    else:
+        print('Please provide formula_table or compound dataframe from which to generate it.')
 
     data_r = id_indexed(data_r)
     ft = formula_table.T
