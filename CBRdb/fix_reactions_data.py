@@ -249,7 +249,7 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
     print_and_log("Filtering out unbalanced reactions", f_log)
 
     t0 = time.time()
-    comp_dict = generate_compound_dict(data_c)
+    comp_dict = generate_compound_dict(data_c, strip_ionic=True)
     bool_unbalanced = possibly_unbalanced['reaction'].map(
         lambda x: full_check_eq_unbalanced(x, c_data=data_c, comp_dict=comp_dict))
     unbalanced_entries = bool_unbalanced[bool_unbalanced].index
