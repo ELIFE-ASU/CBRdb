@@ -703,10 +703,10 @@ def sync_reaction_dupemap(df, prefix="T"):
     # Find the largest assigned dupe-group ID number
     largest_id = dupemap['grp_num'].str.strip(prefix).astype(int).max()
     # Start one up from there
-    to_assign['grp_num'] = to_assign['reaction'].factorize()[0] + (largest_id + 1)
+    to_assign.loc[:,'grp_num'] = to_assign['reaction'].factorize()[0] + (largest_id + 1)
     # Format by the same scheme as before
     zfill_len = list(set(dupemap['grp_num'].map(len)))[0] - len(prefix)
-    to_assign['grp_num'] = prefix + to_assign['grp_num'].astype(str).str.zfill(zfill_len)
+    to_assign.loc[:,'grp_num'] = prefix + to_assign['grp_num'].astype(str).str.zfill(zfill_len)
     # Update dupemap
     dupemap = pd.concat([dupemap, to_assign], axis=0)
     # Sort again by ID 
