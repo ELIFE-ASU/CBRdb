@@ -171,17 +171,22 @@ def get_formulas_from_ids(ids, c_data):
     return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
 
 
-def generate_compound_dict(c_data):
+def generate_compound_dict(c_data, strip_ionic=False):
     """
     Generates a dictionary from the compound_id, with compound_id as the key and formula as the value.
 
     Parameters:
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
+    strip_ionic (bool): (default False) Whether to strip charges off elements and compounds. 
 
     Returns:
     dict: A dictionary with compound_id as keys and formulas as values.
     """
-    return dict(zip(c_data['compound_id'], c_data['formula']))
+    if strip_ionic:
+        formulas = c_data['formula'].map(strip_ionic_states)
+    else:
+        formulas = c_data['formula']
+    return dict(zip(c_data['compound_id'], formulas))
 
 
 def clean_up_eq(eq):
