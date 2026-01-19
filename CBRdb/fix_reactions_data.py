@@ -93,7 +93,7 @@ def kitchen_sink(eq, data_c, small_compounds, f_log, comp_dict=None):
             return eq_new
 
         # Try to rebalance the equation
-        eq_new = rebalance_eq(eq_new, data_c)
+        eq_new = rebalance_eq(eq_new, data_c, comp_dict=comp_dict)
         if eq_new is False:
             # Revert to the original equation and try the next compound
             eq_new = eq
