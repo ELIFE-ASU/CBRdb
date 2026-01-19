@@ -171,13 +171,13 @@ def get_formulas_from_ids(ids, c_data):
     return c_data.loc[c_data["compound_id"].isin(ids), "formula"].tolist()
 
 
-def generate_compound_dict(c_data, strip_ionic=False):
+def generate_compound_dict(c_data, strip_ionic=True):
     """
     Generates a dictionary from the compound_id, with compound_id as the key and formula as the value.
 
     Parameters:
     c_data (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
-    strip_ionic (bool): (default False) Whether to strip charges off elements and compounds. 
+    strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
 
     Returns:
     dict: A dictionary with compound_id as keys and formulas as values.
@@ -1024,7 +1024,7 @@ def compare_and_delete_keys(dict1, dict2):
     return dict1, dict2, dict1_del, dict2_del
 
 
-def rebalance_eq_core(eq, data_c, comp_dict=None):
+def rebalance_eq_core(eq, data_c, comp_dict=None, strip_ionic=True):
     """
     Rebalances a chemical equation by converting reactants and products from formulas to IDs,
     checking for duplicate keys, and balancing the stoichiometry.
@@ -1033,12 +1033,15 @@ def rebalance_eq_core(eq, data_c, comp_dict=None):
     eq (str): The original chemical equation string.
     data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
     comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from data_c.
+    strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
 
     Returns:
     str: The rebalanced and standardized chemical equation.
     """
+    if comp_dict is None:
+        comp_dict = generate_compound_dict(data_c, strip_ionic=strip_ionic)
     # Get the reactants and products from the eq
-    reactants, products = get_formulas_from_eq(eq, data_c, comp_dict=comp_dict)
+    reactants, products = get_formulas_from_eq(eq, data_c, strip_ionic=strip_ionic, comp_dict=comp_dict)
 
     f_repeated = False
     reactants_del = {}
@@ -1074,7 +1077,7 @@ def rebalance_eq_core(eq, data_c, comp_dict=None):
         return standardise_eq(get_eq(eq, dict(reactants), dict(products), data_c, comp_dict=comp_dict))
 
 
-def rebalance_eq(eq, data_c, comp_dict=None):
+def rebalance_eq(eq, data_c, comp_dict=None, strip_ionic=True):
     """
     Attempts to rebalance a chemical equation by calling the rebalance_eq_core function.
     If rebalancing fails due to a ValueError, it prints an error message and returns False.
@@ -1083,12 +1086,13 @@ def rebalance_eq(eq, data_c, comp_dict=None):
     eq (str): The original chemical equation string.
     data_c (DataFrame): A pandas DataFrame containing compound data with 'compound_id' and 'formula' columns.
     comp_dict (dict, optional): A dictionary mapping compound IDs to chemical formulas. If not given, this is generated from data_c.
+    strip_ionic (bool, optional): Flag to indicate whether to remove ionic states from the formulas. Default is True.
 
     Returns:
     str or bool: The rebalanced chemical equation string if successful, otherwise False.
     """
     try:
-        eq = rebalance_eq_core(eq, data_c, comp_dict=comp_dict)
+        eq = rebalance_eq_core(eq, data_c, comp_dict=comp_dict, strip_ionic=strip_ionic)
         return eq
     except ValueError as e:
         print(f"Could not find stoichiometry on first attempt: {e}", flush=True)
