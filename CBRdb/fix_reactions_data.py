@@ -377,8 +377,8 @@ def fix_reactions_data(r_file="../data/kegg_data_R.csv",
 
     # Log whether all elements and stars appear balanced
     dfs_check = get_stoichiometry(df_final, data_c=id_indexed(data_c))
-    data_r.loc[:,'els_and_stars_balance'] = (dfs_check['elements_L'] == dfs_check['elements_R']).all(axis=1)
-    data_r.loc[:,'els_and_stars_balance'] = data_r['els_and_stars_balance'].fillna(False) #Only var coeffs have NaNs
+    df_final.loc[:,'els_and_stars_balance'] = (dfs_check['elements_L'] == dfs_check['elements_R']).all(axis=1)
+    df_final.loc[:,'els_and_stars_balance'] = df_final['els_and_stars_balance'].fillna(False) #Only var coeffs have NaNs
 
     # Get the final length of the data
     print_and_log(f"Final data shape: {df_final.shape}", f_log)
