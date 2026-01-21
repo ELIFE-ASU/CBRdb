@@ -2368,6 +2368,15 @@ def calculate_free_energy_formation_cc(kegg_C_ids=None,
     calc_cols = [col_name, 'sigma_fin', 'sigma_inf']
     df = df.join(pd.DataFrame(calc_vals, index=df.index, columns=calc_cols))
 
+    # Apply Legendre transform for pH-adjusted formation energy (std_dgf_p)
+    if run_physiological:
+        def get_transform_delta(cpd):
+            if cpd is None:
+                return None
+            return cpd.transform(cc.p_h, cc.ionic_strength, cc.temperature, cc.p_mg).m_as("kJ/mol")
+        delta_dgf = df['cc_obj'].map(get_transform_delta)
+        df[col_name] = df[col_name] + delta_dgf
+
     # Calculate errors
     rmse_inf = 1e-5
     df['sigma_fin_sq'] = df['sigma_fin'].map(lambda x: np.sum(x**2), na_action='ignore')
