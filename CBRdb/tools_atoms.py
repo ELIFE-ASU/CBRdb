@@ -2326,6 +2326,10 @@ def calculate_free_energy_formation_cc(kegg_C_ids=None,
                                        run_physiological=True,
                                        keep_raw=False):
 
+    # Make sure run_physiological is one of accepted data types
+    if not isinstance(run_physiological, (bool, dict, pd.Series)):
+        raise KeyError('run_physiological must be one of (bool, dict, pd.Series)')
+
     # ascertain data type of kegg_C_ids (MUST be KEGG, not CBRdb)
     if kegg_C_ids is None:
         ids = pd.read_csv(in_file, index_col=0, usecols=[0]).index
@@ -2339,45 +2343,40 @@ def calculate_free_energy_formation_cc(kegg_C_ids=None,
         print('kegg_C_ids not accepted: defaulting to those in '+in_file)
         ids = pd.read_csv(in_file, index_col=0, usecols=[0]).index
 
-    # Update physiological params dict
-    rp = {'p_h': 7.5, 'p_mg': 3.0, 'ionic_strength': 0.25, 'temperature': 298.15}
-    if not isinstance(run_physiological, (bool, dict, pd.Series)):
-        raise KeyError('run_physiological must be one of (bool, dict, pd.Series)')
-    elif isinstance(run_physiological, bool):
-        if run_physiological == False:
-            rp.update({'p_h': 7.0, 'p_mg': 10.0})
-        else:
-            pass
-    else:
-        rp.update(run_physiological)
-
+    # Impose ids index name
+    ids.rename('compound_id', inplace=True)
     # Import compound entries
     cc = ComponentContribution()
-
-    # Set parameters
-    cc.p_h = Q_(rp['p_h'])
-    cc.p_mg = Q_(rp['p_mg'])
-    cc.ionic_strength = Q_(rp['ionic_strength'], 'M')
-    cc.temperature = Q_(rp['temperature'], "K")
-    
-    # Get dG values
-    cc_objs = ('kegg:'+ids).map(cc.get_compound)
-    df = pd.Series(dict(zip(ids, cc_objs))).to_frame(name='cc_obj').dropna()
-    calc_vals = df['cc_obj'].map(cc.standard_dg_formation).tolist()
-    col_name = 'std_dgf' + (run_physiological==True) * '_p'
-    calc_cols = [col_name, 'sigma_fin', 'sigma_inf']
-    df = df.join(pd.DataFrame(calc_vals, index=df.index, columns=calc_cols))
-
-    # Calculate errors
-    rmse_inf = 1e-5
-    df['sigma_fin_sq'] = df['sigma_fin'].map(lambda x: np.sum(x**2), na_action='ignore')
-    df['sigma_inf_sq'] = df['sigma_inf'].map(lambda x: (rmse_inf * x[0])**2, na_action='ignore')
-    err_col_name = col_name + '_error'
-    df[err_col_name] = (df['sigma_fin_sq'] + df['sigma_inf_sq']).map(np.sqrt, na_action='ignore')
-
-    # Return outputs
+    # Get compound objects
+    cps = ids.to_frame()['compound_id'].map(cc.get_compound)
+    # Entries with no inchi_key are not calculatable
+    valid = cps.map(lambda x: x.inchi_key != None)
+    # Get standard gibbs energy of formation
+    dgf_start = cps.map(cc.predictor.standard_dgf)
+    # Means and errors here match what we maually calculated before using cc.standard_dg_formation
+    df = pd.DataFrame({'std_dgf': dgf_start.map(lambda x: x.m.n),
+                       'std_dgf_error': dgf_start.map(lambda x: x.m.std_dev)})
+    df = df.where(valid)
     if keep_raw is True:
+        df = df.assign(cc_objs=cps)
+    # If run_physiological is False, this is all we need
+    if run_physiological is False:
         return df
-    else:
-        return df.filter(like='dg').dropna(how='all')
+    # If it isn't, set default physiological parameters
+    rp = {'p_h': 7.5, 'p_mg': 3.0, 'ionic_strength': 0.25, 'temperature': 298.15}
+    units = dict(zip(list(rp.keys()), ['', '', 'M', 'K']))
+    # If run_physiological is dict-like, update default parameters accordingly
+    if isinstance(run_physiological, (dict, pd.Series)):
+        rp.update(run_physiological)
+    # Impose quantity dtype on physiological parameters
+    rp = {p: Q_(rp[p], units[p]) for p in rp.keys()}
+    # Calculate transform associated with those parameters
+    transform = cps.where(valid).map(lambda x: x.transform(**rp).m, na_action='ignore')
+    # Get dgf from those parameters; matches output of cc.predictor.standard_dgf_prime
+    df['std_dgf_p'] = df['std_dgf'] + transform
+    if keep_raw is True:
+        df = df.assign(transform=transform)
+    # Error is the same for standard_dgf_prime and standard_dgf
+    
+    return df
     
