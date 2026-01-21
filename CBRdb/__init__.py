@@ -54,7 +54,9 @@ from .tools_atoms import (smi_to_atoms,
                           multiplicity_to_total_spin,
                           get_analytical_hessian_energies,
                           free_energy_mace,
-                          calculate_free_energy_formation_mace)
+                          calculate_free_energy_formation_mace,
+                          calculate_free_energy_formation_cc,
+                          )
 from .tools_complexity import (count_unique_bonds,
                                molecular_weight,
                                bertz,
