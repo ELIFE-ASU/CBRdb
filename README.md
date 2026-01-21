@@ -353,7 +353,7 @@ in a simple, easily reproducible situation.
 
 ## 👥 Contributors
 
-Louie Slocombe, Camerian Millsaps, M.Reza Shahjahan, and Kamesh Narasimhan.
+Louie Slocombe, Camerian Millsaps, M.Reza Shahjahan, Kamesh Narasimhan, and Sara Walker.
 
 ## ⚖️ License
 
