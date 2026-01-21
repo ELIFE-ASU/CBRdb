@@ -244,6 +244,9 @@ def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
     C_formation_energies = pd.read_csv(formation_energies_fp, index_col=0, compression='gzip')
     C_dupes = pd.read_csv(c_dupemap_fp, index_col=0)['new_id']
 
+    # Merge MACE spectrum calculations on SMILES field
+    compounds = id_indexed(compounds.reset_index().merge(C_mace_spectrum, on='smiles', how='left'))
+
     # Convert KEGG IDs to current CBRdb IDs
     C_formation_energies = C_formation_energies.rename(index=C_dupes)
 
@@ -254,7 +257,6 @@ def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
 
     # Merge the datasets
     compounds = compounds.join(C_formation_energies, how='left')
-    compounds = compounds.join(C_mace_spectrum.drop(columns='smiles'), how='left')
 
     # Reattach reaction ID cols at the end
     compounds = compounds.join(end_cap)
