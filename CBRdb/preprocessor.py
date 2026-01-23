@@ -235,6 +235,12 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
     df['overall'] = df['overall'].replace('', float('nan'))
+    
+    # Transfer the overall column info to the comment field
+    df.update('Overall Reaction ' + df.query('overall.notna()')['comment'])
+    df.drop(columns='overall', inplace=True)
+    
+    # Reorder columns where appropriate
     df = (df.loc[:, df.count().sort_values(ascending=False).index].drop(columns=['enzyme', 'equation'])
           .reset_index().rename({'index': 'id'}, axis=1).rename_axis(None, axis=1)).sort_values(by='id').reset_index(
         drop=True)
