@@ -54,8 +54,6 @@ General information:
 | smiles_capped    | SMILES representation with hydrogen capped R groups.       |
 | inchi_capped     | InChI representation with hydrogen capped R groups.        |
 | nickname         | Common alias for the compound; first name in KEGG.         |
-| comment          | KEGG's comments with context about the compound.           |
-| CBRdb_R_ids      | List of reaction IDs in CBRdb that involve this compound.  |
 
 Properties:
 
@@ -83,17 +81,14 @@ Properties:
 
 General information:
 
-| Entry Title | Description                        |
-|-------------|------------------------------------|
-| id          | Reaction identifier.               |
-| reaction    | Reaction equation.                 |
-| ec          | Enzyme Commission numbers.         |
-| name        | Reaction name.                     |
-| smarts      | SMARTS representation.             |
-| reac_sim    | Closest reaction similarity.       |
-| rhea        | Rhea identifiers if provided.      |
-| CBRdb_C_ids | Corresponding CBRdb C identifiers. |
-| id_orig     | Original reaction identifier(s).   |
+| Entry Title | Description                  |
+|-------------|------------------------------|
+| id          | Reaction identifier.         |
+| reaction    | Reaction equation.           |
+| ec          | Enzyme Commission numbers.   |
+| name        | Reaction name.               |
+| smarts      | SMARTS representation.       |
+| reac_sim    | Closest reaction similarity. |
 
 </details>
 
@@ -106,6 +101,8 @@ General information:
 | Entry Title | Description                                                |
 |-------------|------------------------------------------------------------|
 | compound_id | Unique identifier for each compound in the CBRdb database. |
+| comment     | KEGG's comments with context about the compound.           |
+| CBRdb_R_ids | List of reaction IDs in CBRdb that involve this compound.  |
 
 KEGG specific information:
 
@@ -150,9 +147,12 @@ Database cross-references:
 
 General information:
 
-| Entry Title | Description          |
-|-------------|----------------------|
-| id          | Reaction identifier. |
+| Entry Title | Description                        |
+|-------------|------------------------------------|
+| id          | Reaction identifier.               |
+| rhea        | Rhea identifiers if provided.      |
+| CBRdb_C_ids | Corresponding CBRdb C identifiers. |
+| id_orig     | Original reaction identifier(s).   |
 
 KEGG specific information:
 
