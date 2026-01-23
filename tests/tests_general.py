@@ -1112,3 +1112,196 @@ def test_rxn_fingerprint():
     tmp = [TanimotoSimilarity(fps_query, r) for r in fps_db]
     print(tmp)
     assert np.allclose([1.0, 0.9622641509433962, 0.05319148936170213], tmp)
+
+
+def test_data_split_patcher():
+    print(flush=True)
+    print(flush=True)
+    # load the compounds data
+    data_c = pd.read_csv(os.path.abspath("CBRdb_C.csv"))
+    col_data_c = data_c.columns.tolist()
+    print('data_c')
+    print(col_data_c)
+    print()
+
+    data_c_ai = pd.read_csv(os.path.abspath("hpc/CBRdb_C_assembly_index.csv.zip"))
+    col_data_c_ai = data_c_ai.columns.tolist()
+    print('data_c_ai')
+    print(col_data_c_ai)
+    data_c_ai = data_c_ai[['compound_id',
+                           'assembly_index']]
+    col_data_c_ai = data_c_ai.columns.tolist()
+    print(col_data_c_ai)
+    print()
+
+    print('data_c_formation')
+    data_c_formation = pd.read_csv(os.path.abspath("hpc/CBRdb_C_formation_energies.csv.gz"))
+    col_data_c_formation = data_c_formation.columns.tolist()
+    print(col_data_c_formation)
+    print()
+
+    print('data_c_mace')
+    data_c_mace = pd.read_csv(os.path.abspath("hpc/CBRdb_C_mace_spectrum.csv.gz"))
+    col_data_c_mace = data_c_mace.columns.tolist()
+    print(col_data_c_mace)
+    data_c_mace = data_c_mace[['compound_id',
+                               'd_free',
+                               'd_enthalpy',
+                               'd_entropy',
+                               'free',
+                               'enthalpy',
+                               'entropy',
+                               'vib_energies']]
+    col_data_c_mace = data_c_mace.columns.tolist()
+    print(col_data_c_mace)
+    print()
+
+    # Drop columns from data_c that are in data_c_ai, data_c_formation, data_c_mace except for 'compound_id'
+    data_c = data_c.drop(columns=[col for col in col_data_c_ai[1:] if col in col_data_c])
+    data_c = data_c.drop(columns=[col for col in col_data_c_formation[1:] if col in col_data_c])
+    data_c = data_c.drop(columns=[col for col in col_data_c_mace[1:] if col in col_data_c])
+    col_data_c = data_c.columns.tolist()
+    print('data_c')
+    print(col_data_c)
+    print()
+
+    # Merge the two dataframes on compound_id
+    data_c = pd.merge(data_c, data_c_ai, on='compound_id', how='left')
+    data_c = pd.merge(data_c, data_c_formation, on='compound_id', how='left')
+    data_c = pd.merge(data_c, data_c_mace, on='compound_id', how='left')
+    col_data_c = data_c.columns.tolist()
+    print('data_c after merge')
+    print(col_data_c)
+    print()
+
+    # Now load the reactions data
+    data_r = pd.read_csv(os.path.abspath("CBRdb_R.csv"))
+    col_data_r = data_r.columns.tolist()
+    print('data_r')
+    print(col_data_r)
+    print()
+
+    data_r_energies = pd.read_csv(os.path.abspath("hpc/CBRdb_R_reaction_energies.csv.gz"))
+    col_data_r_energies = data_r_energies.columns.tolist()
+    print('data_r_energies')
+    print(col_data_r_energies)
+    print()
+
+    data_r_sim = pd.read_csv(os.path.abspath("hpc/ATLAS_R_sim.csv.gz"))
+    col_data_r_sim = data_r_sim.columns.tolist()
+    print('data_r_sim')
+    print(col_data_r_sim)
+    data_r_sim = data_r_sim[['id',
+                             'sim_max',
+                             'sim_max_id']]
+    col_data_r_sim = data_r_sim.columns.tolist()
+    print(col_data_r_sim)
+    print()
+
+    data_r = data_r.drop(columns=[col for col in col_data_r_sim[1:] if col in col_data_r])
+    data_r = pd.merge(data_r, data_r_sim, on='id', how='left')
+    col_data_r = data_r.columns.tolist()
+    print('data_r after merge')
+    print(col_data_r)
+    print()
+
+    selection = ['compound_id',
+                 'smiles',
+                 'inchi',
+                 'formula',
+                 'molecular_weight',
+                 'n_heavy_atoms',
+                 'n_chiral_centers',
+                 'formal_charge',
+                 'smiles_capped',
+                 'inchi_capped',
+                 'nickname',
+                 'assembly_index']
+
+    # Save a new csv with only the selected columns
+    data_c_selected = data_c[selection]
+    print('data_c_selected')
+    print(data_c_selected.columns)
+    print()
+    data_c_selected.to_csv(os.path.abspath("CBRdb_C1.csv"), index=False)
+    data_c_selected.to_csv(os.path.abspath("CBRdb_C1.csv.zip"), index=False)
+
+    meta_data_selection = ['compound_id',
+                           'comment',
+                           'CBRdb_R_ids',
+                           'kegg_type',
+                           'kegg_sequence',
+                           'kegg_reaction',
+                           'kegg_pathway',
+                           'kegg_organism',
+                           'kegg_network',
+                           'kegg_mol_weight',
+                           'kegg_module',
+                           'kegg_glycan',
+                           'kegg_gene',
+                           'kegg_formula',
+                           'kegg_exact_mass',
+                           'kegg_enzyme',
+                           'kegg_drug',
+                           'kegg_brite_full',
+                           'kegg_brite',
+                           'PubChem',
+                           'PDB_CCD',
+                           'NIKKAJI',
+                           'LIPIDMAPS',
+                           'KNApSAcK',
+                           'Drug_group',
+                           'ChEBI',
+                           'CAS',
+                           'ATC_code']
+
+    # Save a new csv with only the selected columns
+    data_c_metadata_selected = data_c[meta_data_selection]
+    print('data_c_metadata_selected')
+    print(data_c_metadata_selected.columns)
+    print()
+    data_c_metadata_selected.to_csv(os.path.abspath("CBRdb_C_metadata.csv"), index=False)
+    data_c_metadata_selected.to_csv(os.path.abspath("CBRdb_C_metadata.csv.zip"), index=False)
+
+    selection = ['id',
+                 'reaction',
+                 'ec',
+                 'name',
+                 'smarts',
+                 'sim_max',
+                 'sim_max_id']
+
+    data_r_selected = data_r[selection]
+    data_r_selected.to_csv(os.path.abspath("CBRdb_R1.csv"), index=False)
+    data_r_selected.to_csv(os.path.abspath("CBRdb_R1.csv.zip"), index=False)
+
+    meta_data_selection = ['id',
+                           'rhea',
+                           'CBRdb_C_ids',
+                           'id_orig',
+                           'module',
+                           'orthology',
+                           'pathway',
+                           'rclass',
+                           'remark',
+                           'comment',
+                           'overall',
+                           'kegg_id',
+                           'most_sim_kegg',
+                           'bridgit_score',
+                           'flags',
+                           'balancer_failed',
+                           'bool_missing_data',
+                           'bool_var_list',
+                           'cpd_starred',
+                           'is_balanced_except_star',
+                           'msk_ecs',
+                           'msk_metacyc',
+                           'msk_mnxr',
+                           'msk_rhea',
+                           'msk_rns']
+
+    # Save a new csv with only the selected columns
+    data_r_selected = data_r[meta_data_selection]
+    data_r_selected.to_csv(os.path.abspath("CBRdb_R_metadata.csv"), index=False)
+    data_r_selected.to_csv(os.path.abspath("CBRdb_R_metadata.csv.zip"), index=False)
