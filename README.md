@@ -82,27 +82,11 @@ General information:
 | comment          | KEGG's comments with context about the compound.           |
 | CBRdb_R_ids      | List of reaction IDs in CBRdb that involve this compound.  |
 
-Complexity scores and indices:
-
-| Entry Title     | Description                             |
-|-----------------|-----------------------------------------|
-| assembly_index  | Assembly index of the compound.         |
-| wiener_index    | Wiener index of the compound.           | 
-| unique_bonds    | Number of unique bonds in the compound. |
-| spacial_score   | Spacial score of the compound.          |
-| randic_index    | Randic index of the compound.           |
-| proudfoot       | Proudfoot score of the compound.        |                                                                                                               
-| mc2             | Molecular complexity score 2.           |
-| mc1             | Molecular complexity score 1.           |
-| kirchhoff_index | Kirchhoff index of the compound.        |
-| fcfp4           | FCFP4 fingerprint of the compound.      |
-| bertz           | Bertz complexity of the compound.       |
-| balaban_index   | Balaban index of the compound.          |
-
 Properties:
 
 | Entry Title       | Description                                                              |
 |-------------------|--------------------------------------------------------------------------|
+| assembly_index    | Assembly index of the compound.                                          |
 | ionization_states | Ionization states of the compound. For a pH range of 4 to 10.            |
 | std_dgf           | Free energy of formation using experimental values.                      |
 | std_dgf_error     | Error in the free energy of formation using experimental values.         |
@@ -115,6 +99,38 @@ Properties:
 | enthalpy          | Enthalpy using quantum methods.                                          |
 | entropy           | Entropy energy using quantum methods.                                    |
 | vib_energies      | List of vibration modes using quantum methods.                           |
+
+</details>
+
+<details>
+<summary>CBRdb_R</summary>
+<br>
+
+General information:
+
+| Entry Title | Description                        |
+|-------------|------------------------------------|
+| id          | Reaction identifier.               |
+| reaction    | Reaction equation.                 |
+| ec          | Enzyme Commission numbers.         |
+| name        | Reaction name.                     |
+| smarts      | SMARTS representation.             |
+| reac_sim    | Closest reaction similarity.       |
+| rhea        | Rhea identifiers if provided.      |
+| CBRdb_C_ids | Corresponding CBRdb C identifiers. |
+| id_orig     | Original reaction identifier(s).   |
+
+</details>
+
+<details>
+<summary>CBRdb_C_metadata</summary>
+<br>
+
+General information:
+
+| Entry Title | Description                                                |
+|-------------|------------------------------------------------------------|
+| compound_id | Unique identifier for each compound in the CBRdb database. |
 
 KEGG specific information:
 
@@ -153,24 +169,15 @@ Database cross-references:
 
 </details>
 
-
 <details>
-<summary>CBRdb_R</summary>
+<summary>CBRdb_R_metadata</summary>
 <br>
 
 General information:
 
-| Entry Title | Description                        |
-|-------------|------------------------------------|
-| id          | Reaction identifier.               |
-| reaction    | Reaction equation.                 |
-| ec          | Enzyme Commission numbers.         |
-| name        | Reaction name.                     |
-| smarts      | SMARTS representation.             |
-| reac_sim    | Closest reaction similarity.       |
-| rhea        | Rhea identifiers if provided.      |
-| CBRdb_C_ids | Corresponding CBRdb C identifiers. |
-| id_orig     | Original reaction identifier(s).   |
+| Entry Title | Description          |
+|-------------|----------------------|
+| id          | Reaction identifier. |
 
 KEGG specific information:
 
@@ -193,18 +200,19 @@ ATLAS specific information:
 
 Data flags:
 
-| Entry Title             | Description                          |
-|-------------------------|--------------------------------------|
-| flags                   | From CBRdb.df_of_suspect_reactions   |
-| balancer_failed         | Flag: Balancer failed.               |
-| bool_missing_data       | Flag: Missing structure(s).          |
-| bool_var_list           | Flag: Variable in coefficients.      |
-| cpd_starred             | Flag: Has starred compounds.         |
-| els_and_stars_balance   | Flag: Elements & stars are balanced  |
+| Entry Title           | Description                         |
+|-----------------------|-------------------------------------|
+| flags                 | From CBRdb.df_of_suspect_reactions  |
+| balancer_failed       | Flag: Balancer failed.              |
+| bool_missing_data     | Flag: Missing structure(s).         |
+| bool_var_list         | Flag: Variable in coefficients.     |
+| cpd_starred           | Flag: Has starred compounds.        |
+| els_and_stars_balance | Flag: Elements & stars are balanced |
 
 \* Provided by ATLAS;
 see [ATLAS User Guide](https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf#page=6.00) for
 most_similar_kegg header details.
+
 </details>
 
 To get started with deeper components of CBRdb, follow the installation instructions below. After installation, you can
