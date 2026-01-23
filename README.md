@@ -31,31 +31,6 @@ on [ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/67c28c046dde4
 Example fixes and receipts of changes can be found in the data directory. See for example `C_IDs_bad.dat`
 for a list of KEGG compounds that were removed or adjusted.
 
-## 💡 Getting Started
-
-To get started with the data, you can download the compounds `CBRdb_C.csv` and reactions `CBRdb_R.csv` from the
-repository. For convenience, the files are also hosted on Zenodo and are stored as a compressed format to reduce
-download time.
-
-```
-import pandas as pd
-import os
-
-# Download CBRdb compounds
-os.system('wget https://github.com/ELIFE-ASU/CBRdb/blob/main/CBRdb_C.csv.zip')
-
-# Load CBRdb compounds
-compounds = pd.read_csv('CBRdb_C.csv.zip')
-compounds.head()
-
-# Download CBRdb reactions
-os.system('wget https://github.com/ELIFE-ASU/CBRdb/blob/main/CBRdb_R.csv.zip')
-
-# Load CBRdb reactions
-reactions = pd.read_csv('CBRdb_R.csv.zip')
-reactions.head()
-```
-
 Below is a breakdown description of the columns in each of the data files. Each description table is collapsible for
 easier viewing, but the subcategories are shown for clarity. In the tables below, the `Entry Title` column corresponds
 to the column headers
@@ -214,6 +189,31 @@ see [ATLAS User Guide](https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS
 most_similar_kegg header details.
 
 </details>
+
+## 💡 Getting Started
+
+To get started with the data, you can download the compounds `CBRdb_C.csv` and reactions `CBRdb_R.csv` from the
+repository. For convenience, the files are also hosted on Zenodo and are stored as a compressed format to reduce
+download time.
+
+```
+import pandas as pd
+import os
+
+# Download CBRdb compounds
+os.system('wget https://github.com/ELIFE-ASU/CBRdb/blob/main/CBRdb_C.csv.zip')
+
+# Load CBRdb compounds
+compounds = pd.read_csv('CBRdb_C.csv.zip')
+compounds.head()
+
+# Download CBRdb reactions
+os.system('wget https://github.com/ELIFE-ASU/CBRdb/blob/main/CBRdb_R.csv.zip')
+
+# Load CBRdb reactions
+reactions = pd.read_csv('CBRdb_R.csv.zip')
+reactions.head()
+```
 
 To get started with deeper components of CBRdb, follow the installation instructions below. After installation, you can
 start using the CBRdb package in your Python scripts or Jupyter notebooks.
