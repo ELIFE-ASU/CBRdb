@@ -1294,12 +1294,7 @@ def test_data_split_patcher():
                            'bool_missing_data',
                            'bool_var_list',
                            'cpd_starred',
-                           'is_balanced_except_star',
-                           'msk_ecs',
-                           'msk_metacyc',
-                           'msk_mnxr',
-                           'msk_rhea',
-                           'msk_rns']
+                           'is_balanced_except_star']
 
     # Save a new csv with only the selected columns
     data_r_selected = data_r[meta_data_selection]

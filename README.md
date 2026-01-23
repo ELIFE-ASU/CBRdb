@@ -176,14 +176,14 @@ ATLAS specific information:
 
 Data flags:
 
-| Entry Title           | Description                         |
-|-----------------------|-------------------------------------|
-| flags                 | From CBRdb.df_of_suspect_reactions  |
-| balancer_failed       | Flag: Balancer failed.              |
-| bool_missing_data     | Flag: Missing structure(s).         |
-| bool_var_list         | Flag: Variable in coefficients.     |
-| cpd_starred           | Flag: Has starred compounds.        |
-| els_and_stars_balance | Flag: Elements & stars are balanced |
+| Entry Title             | Description                                  |
+|-------------------------|----------------------------------------------|
+| flags                   | From CBRdb.df_of_suspect_reactions           |
+| balancer_failed         | Flag: Balancer failed.                       |
+| bool_missing_data       | Flag: Missing structure(s).                  |
+| bool_var_list           | Flag: Variable in coefficients.              |
+| cpd_starred             | Flag: Has starred compounds.                 |
+| is_balanced_except_star | Flag: Elements are balanced excluding stars. |
 
 \* Provided by ATLAS;
 see [ATLAS User Guide](https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf#page=6.00) for
