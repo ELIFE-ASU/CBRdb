@@ -131,7 +131,6 @@ def list_multistep_enumerated(dbs, verbose=False):
     """
     if dbs['kegg_data_R'].index.name == 'id':
         dbs['kegg_data_R'].reset_index(inplace=True)
-    #reactions_overall = dbs['kegg_data_R'].set_index('id')['overall'].dropna().index
     reactions_multistep_parts = list_multistep_parts(dbs)  # KEEP THESE 
     rns = all_kegg_comments(dbs).drop(reactions_multistep_parts).query(
         'rn_refs.str.len()>1 & comment.str.contains("step") & ~comment.str.contains("possibl|probabl|similar|Overall Reaction")')

@@ -236,7 +236,7 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
     df['overall'] = df['overall'].replace('', float('nan'))
     
-    # Transfer the overall column info to the comment field
+    # Transfer the overall column info to the comment field (see genome.jp/kegg/tables/br08210.html)
     df.update('Overall Reaction ' + df.query('overall.notna()')['comment'])
     df.drop(columns='overall', inplace=True)
     

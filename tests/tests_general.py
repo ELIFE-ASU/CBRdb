@@ -1285,7 +1285,6 @@ def test_data_split_patcher():
                            'rclass',
                            'remark',
                            'comment',
-                           'overall',
                            'kegg_id',
                            'most_sim_kegg',
                            'bridgit_score',

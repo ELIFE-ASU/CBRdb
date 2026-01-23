@@ -165,7 +165,6 @@ KEGG specific information:
 | rclass      | KEGG RCLASS IDs & COMPOUND pairs. |
 | remark      | KEGG remark.                      |
 | comment     | Unstructured KEGG comment field.  |
-| overall     | Flag: Overall reaction (br08210). |
 
 ATLAS specific information:
 
