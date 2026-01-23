@@ -81,14 +81,15 @@ Properties:
 
 General information:
 
-| Entry Title | Description                  |
-|-------------|------------------------------|
-| id          | Reaction identifier.         |
-| reaction    | Reaction equation.           |
-| ec          | Enzyme Commission numbers.   |
-| name        | Reaction name.               |
-| smarts      | SMARTS representation.       |
-| reac_sim    | Closest reaction similarity. |
+| Entry Title | Description                                                   |
+|-------------|---------------------------------------------------------------|
+| id          | Reaction identifier.                                          |
+| reaction    | Reaction equation.                                            |
+| ec          | Enzyme Commission numbers.                                    |
+| name        | Reaction name.                                                |
+| smarts      | SMARTS representation.                                        |
+| sim_max     | Closest maximum reaction similarity.                          |
+| sim_max_id  | Closest reaction ID that has the maximum reaction similarity. |
 
 </details>
 
