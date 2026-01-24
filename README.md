@@ -129,16 +129,16 @@ KEGG specific information:
 
 Database cross-references:
 
-| Entry Title | Description                                    |
-|-------------|------------------------------------------------|
-| PubChem     | Linked PubChem identifiers for the compound.   |
-| PDB_CCD     | Linked PDB CCD identifiers for the compound.   |
-| NIKKAJI     | Linked NIKKAJI identifiers for the compound.   |
-| LIPIDMAPS   | Linked LIPIDMAPS identifiers for the compound. |
-| KNApSAcK    | Linked KNApSAcK identifiers for the compound.  |
-| ChEBI       | Linked ChEBI identifiers for the compound.     |
-| CAS         | Linked CAS identifiers for the compound.       |
-| ATC_code    | Linked ATC codes of the compound.              |
+| Entry Title      | Description                                    |
+|------------------|------------------------------------------------|
+| xref_PubChem     | Linked PubChem identifiers for the compound.   |
+| xref_PDB_CCD     | Linked PDB CCD identifiers for the compound.   |
+| xref_NIKKAJI     | Linked NIKKAJI identifiers for the compound.   |
+| xref_LIPIDMAPS   | Linked LIPIDMAPS identifiers for the compound. |
+| xref_KNApSAcK    | Linked KNApSAcK identifiers for the compound.  |
+| xref_ChEBI       | Linked ChEBI identifiers for the compound.     |
+| xref_CAS         | Linked CAS identifiers for the compound.       |
+| xref_ATC_code    | Linked ATC codes of the compound.              |
 
 </details>
 
