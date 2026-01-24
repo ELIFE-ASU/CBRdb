@@ -25,6 +25,7 @@ from .merge_data_sets import (merge_duplicate_reactions,
                               id_indexed,
                               merge_hpc_calculations,
                               merge_hpc_thermo_params,
+                              separate_compound_metadata,
                               )
 from .preprocessor import (preprocess,
                            log_missing_structures,

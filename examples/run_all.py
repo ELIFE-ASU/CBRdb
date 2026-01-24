@@ -8,9 +8,11 @@ except ImportError:
     import CBRdb
 
 import pandas as pd
+import time
 
 if __name__ == "__main__":
     print("Program started", flush=True)
+    start_time = time.time()
     f_man = False
     f_download = False
     kegg_reactions_data = "../data/kegg_data_R"
@@ -56,11 +58,13 @@ if __name__ == "__main__":
     dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main,
                                           to_quarantine='')
 
+    final_output_Cs_fp = '../CBRdb_C.csv'
+
     print("Fixing the reactions data...", flush=True)
     dbs['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_dedupedCs.csv",
-                                                            rebalance_depth=2, c_file="../CBRdb_C.csv")
+                                                            rebalance_depth=2, c_file=final_output_Cs_fp)
     dbs['atlas_data_R_processed'] = CBRdb.fix_reactions_data(r_file=atlas_reactions_data + "_dedupedCs.csv",
-                                                             rebalance_depth=2, c_file="../CBRdb_C.csv")
+                                                             rebalance_depth=2, c_file=final_output_Cs_fp)
 
     print("Combining and deduplicating the reactions data...", flush=True)
     dbs['reactions_joined'] = pd.concat(objs=[dbs['kegg_data_R_processed'], dbs['atlas_data_R_processed']],
@@ -68,8 +72,12 @@ if __name__ == "__main__":
     dbs['r_dupemap'] = CBRdb.tools_eq.sync_reaction_dupemap(dbs['reactions_joined'], prefix='T')
     dbs['CBRdb_R'] = CBRdb.merge_duplicate_reactions(dbs['reactions_joined'], dbs['r_dupemap'])
     CBRdb.reaction_csv(dbs['CBRdb_R'], "../CBRdb_R.csv")
-    CBRdb.add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp='../CBRdb_R.csv')
-    CBRdb.merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv')
-    CBRdb.merge_hpc_thermo_params(final_output_Rs_fp = '../CBRdb_R.csv')
 
+    CBRdb.add_R_col_to_C_file(final_output_Cs_fp=final_output_Cs_fp, final_output_Rs_fp='../CBRdb_R.csv')
+    CBRdb.merge_hpc_calculations(final_output_Cs_fp=final_output_Cs_fp)
+    CBRdb.merge_hpc_thermo_params(final_output_Rs_fp='../CBRdb_R.csv')
+    CBRdb.separate_compound_metadata(final_output_Cs_fp=final_output_Cs_fp)
+    
     print("Program finished", flush=True)
+    elapsed = (time.time() - start_time)/60.
+    print('Time elapsed: '+f"{elapsed:.2f} mins")
