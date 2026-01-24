@@ -65,7 +65,8 @@ def get_working_cids(data_c):
     return data_c
 
 
-def get_energy_of_formation(in_file='../CBRdb_C.csv',
+def get_energy_of_formation(in_file='../data/kegg_data_C.csv',
+                            dupe_file='../data/kegg_data_C_dupemap.csv',
                             out_file='CBRdb_C_formation_energies.csv.gz',
                             compact_output=True,
                             run_physiological=True):
@@ -152,6 +153,13 @@ def get_energy_of_formation(in_file='../CBRdb_C.csv',
         if run_physiological:
             cols_to_keep += ['std_dgf_p', 'std_dgf_p_error']
         data_c = data_c[cols_to_keep]
+
+    # Convert to current CBRdb_C IDs
+    dupes = pd.read_csv(dupe_file, index_col=0).iloc[:,0]
+    data_c['compound_id'] = data_c['compound_id'].replace(dupes)
+    # Drop duplicates
+    data_c.drop_duplicates(subset='compound_id', inplace=True)
+    # TODO: Remove (?) reported dG for dupe-groups returning multiple nonzero dG values
 
     # Save the results to a CSV file
     print(f'Saving results to {out_file}', flush=True)
