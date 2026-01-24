@@ -125,6 +125,7 @@ KEGG specific information:
 | kegg_drug       | KEGG DRUG entries associated with the compound.            |
 | kegg_brite_full | Full KEGG BRITE hierarchies with context, all levels.      |
 | kegg_brite      | KEGG BRITE hierarchy entries associated with the compound. |
+| kegg_Drug_group | KEGG DGROUP entries associated with the compound.          |
 
 Database cross-references:
 
@@ -135,7 +136,6 @@ Database cross-references:
 | NIKKAJI     | Linked NIKKAJI identifiers for the compound.   |
 | LIPIDMAPS   | Linked LIPIDMAPS identifiers for the compound. |
 | KNApSAcK    | Linked KNApSAcK identifiers for the compound.  |
-| Drug_group  | Linked KEGG DGROUP entries for the compound.   |
 | ChEBI       | Linked ChEBI identifiers for the compound.     |
 | CAS         | Linked CAS identifiers for the compound.       |
 | ATC_code    | Linked ATC codes of the compound.              |
