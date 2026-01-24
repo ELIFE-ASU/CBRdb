@@ -142,9 +142,8 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     for col in df.columns.intersection(['remark', 'dblinks']):
         icol = df[col].dropna().str.split('~').explode()
         col_df = pd.pivot(icol.str.split(': ', expand=True), columns=0, values=1)
-        if col == 'dblinks':
-            col_df.columns = 'xref_' + col_df.columns
-            col_df = col_df.rename(columns={'xref_Drug_group': 'Drug_group'})
+        for icol in col_df.columns.difference(['Drug group', 'Same as']):
+            col_df.rename(columns={icol: 'xref_' + icol}, inplace=True)
         df = df.join(col_df, how='left')
         df.drop(columns=col, inplace=True)
 
@@ -166,10 +165,10 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     for col, pat in col_pat_mapping.items():
         if col in df.columns:
             df[col] = df[col].str.findall(pat).map(string_of_ids, na_action='ignore')
-    col_dtype_assignments = {'exact_mass': 'float64', 'mol_weight': 'float64', 'PubChem': 'string'}
+    col_dtype_assignments = {'exact_mass': 'float64', 'mol_weight': 'float64', 'xref_PubChem': 'string'}
     df = df.astype(col_dtype_assignments, errors='ignore')
     print('Formatting metadata labels...', flush=True)
-    kegg_cols = ['mol_weight', 'exact_mass', 'brite_full', 'sequence', 'type', 'formula', 'gene', 'organism', 'Drug_group']
+    kegg_cols = ['mol_weight', 'exact_mass', 'brite_full', 'sequence', 'type', 'formula', 'gene', 'organism', 'Drug group']
     col_name_mapping = {'index': 'compound_id'} | {i: 'kegg_' + i for i in kegg_cols}
     col_name_mapping = col_name_mapping | {i: 'kegg_' + i for i in col_pat_mapping.keys()}
     df = df.sort_index().reset_index().rename(columns=col_name_mapping).rename_axis(None, axis=1)
