@@ -81,15 +81,16 @@ Properties:
 
 General information:
 
-| Entry Title | Description                                                   |
-|-------------|---------------------------------------------------------------|
-| id          | Reaction identifier.                                          |
-| reaction    | Reaction equation.                                            |
-| ec          | Enzyme Commission numbers.                                    |
-| name        | Reaction name.                                                |
-| smarts      | SMARTS representation.                                        |
-| sim_max     | Closest maximum reaction similarity.                          |
-| sim_max_id  | Closest reaction ID that has the maximum reaction similarity. |
+| Entry Title        | Description                                                   |
+|--------------------|---------------------------------------------------------------|
+| id                 | Reaction identifier.                                          |
+| reaction           | Reaction equation.                                            |
+| balanced_els_stars | Flag: Reaction is balanced if stars have the same identity.   |
+| ec                 | Enzyme Commission numbers.                                    |
+| name               | Reaction name.                                                |
+| smarts             | SMARTS representation.                                        |
+| sim_max            | Closest maximum reaction similarity.                          |
+| sim_max_id         | Closest reaction ID that has the maximum reaction similarity. |
 
 </details>
 
