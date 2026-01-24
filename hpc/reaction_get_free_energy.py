@@ -69,6 +69,7 @@ def get_energy_of_formation(in_file='../data/kegg_data_C.csv',
                             dupe_file='../data/kegg_data_C_dupemap.csv',
                             out_file='CBRdb_C_formation_energies.csv.gz',
                             compact_output=True,
+                            rmse_inf=1e-5,
                             run_physiological=True):
     """
     Calculate and save the Gibbs free energy of formation for compounds.
@@ -96,67 +97,83 @@ def get_energy_of_formation(in_file='../data/kegg_data_C.csv',
     Returns
     -------
     None
-    """
-    print('Reading CBRdb compound data...', flush=True)
-    data_c = pd.read_csv(in_file, low_memory=False)
-
-    # Make a new dataframe with only the compound_id and name columns
-    data_c = pd.DataFrame(data_c['compound_id'])
+    """        
+    print('Reading compound data...', flush=True)
+    data_c = pd.read_csv(in_file, usecols=[0], index_col=0)
+    # Only KEGG compound IDs are findable; format them
+    cids = 'kegg:' + data_c.index.to_series(name='kegg_id')
+    # Make ComponentContribution instance
+    cc = ComponentContribution(rmse_inf = Q_(rmse_inf,'kJ/mol'))
+    
     # Get the working compound list
-    data_c = get_working_cids(data_c)
-    print(f'Calculating formation energies for {len(data_c)} compounds...', flush=True)
-    cc = ComponentContribution()
+    cc_comp = cids.map(cc.ccache.get_compound).rename('cc_comp').dropna()
+    print(f'Calculating formation energies for {len(cc_comp)} compounds...', flush=True)
+
     cc.p_h = Q_(7.0)
     cc.p_mg = Q_(10.0)
     cc.ionic_strength = Q_(0.25, "M")
     cc.temperature = Q_(298.15, "K")
-    # Extract lists from dataframe and calculate standard Gibbs free energy and sigmas
-    data_c[['std_dgf', 'sigma_fin', 'sigma_inf']] = pd.DataFrame(
-        map(cc.standard_dg_formation, data_c['cc_comp'].tolist())
-    )
-    # Drop None values
-    data_c = data_c.dropna(subset=['std_dgf'])
-    data_c = data_c.reset_index(drop=True)
 
-    # Calculate the standard error from the sigmas
-    data_c['std_dgf_error'] = data_c.apply(lambda row: err_from_sig(row['sigma_fin'], row['sigma_inf']), axis=1)
+    # Get standard Gibbs energy of formation
+    cc_qs = cc_comp.map(cc.predictor.standard_dgf)
+    # Extract the values and errors from this quantity
+    data_c = pd.DataFrame(cc_qs.map(lambda x: [x.m.n, x.m.s]).tolist(),
+                         index=cc_qs.index, columns=['std_dgf', 'std_dgf_error'])
+    # Drop None values
+    data_c.dropna(subset=['std_dgf'], inplace=True)
+    cc_comp.drop(cc_comp.index.difference(data_c.index), inplace=True)
+    cc_qs.drop(cc_qs.index.difference(data_c.index), inplace=True)
+
     print('First 10 formation energies:', flush=True)
-    for i in range(10):
-        print(
-            f"{data_c['compound_id'][i]}: {data_c['std_dgf'][i]:.2f} ± {data_c['std_dgf_error'][i]:.2f} kJ/mol")
+    print(cc_qs.iloc[:10])
 
     if run_physiological:
         print('Calculating formation energies under physiological conditions...', flush=True)
         cc = ComponentContribution()
+        
+        # Impose physiological parameters
         cc.p_h = Q_(7.5)
         cc.p_mg = Q_(3.0)
         cc.ionic_strength = Q_(0.25, "M")
         cc.temperature = Q_(298.15, "K")
-        # Extract lists from dataframe and calculate standard Gibbs free energy and sigmas
-        data_c[['std_dgf_p', 'sigma_fin_p', 'sigma_inf_p']] = pd.DataFrame(
-            map(cc.standard_dg_formation, data_c['cc_comp'].tolist())
-        )
-        # Drop None values
-        data_c = data_c.dropna(subset=['std_dgf_p'])
-        data_c = data_c.reset_index(drop=True)
-        # Calculate the standard error from the sigmas
-        data_c['std_dgf_p_error'] = data_c.apply(lambda row: err_from_sig(row['sigma_fin_p'], row['sigma_inf_p']),
-                                                 axis=1)
-        print('First 10 formation energies:', flush=True)
-        for i in range(10):
-            print(
-                f"{data_c['compound_id'][i]}: {data_c['std_dgf_p'][i]:.2f} ± {data_c['std_dgf_p_error'][i]:.2f} kJ/mol")
 
+        # Prepare to pass physiological parameters to dG calculation
+        rp = {'p_h': 7.5, 'p_mg': 3.0, 'ionic_strength': 0.25, 'temperature': 298.15}
+        units = dict(zip(list(rp.keys()), ['', '', 'M', 'K']))
+        rp = {p: Q_(rp[p], units[p]) for p in rp.keys()}
+
+        # Make non-lambda functions for faster calculation
+        def _get_physiological_std_dgf(cc_comp_i):
+            if cc_comp_i.can_be_transformed():
+                return cc.predictor.standard_dgf_prime(cc_comp_i, **rp)
+            else:
+                return None
+        def _quantity_components(x):
+            try:
+                return [x.m.n, x.m.s]
+            except:
+                return [None, None]
+        
+        # Get physiological standard gibbs free energy
+        cc_qs = cc_comp.map(_get_physiological_std_dgf, na_action='ignore')
+        # Extract standard Gibbs free energy and sigmas
+        data_c_2 = pd.DataFrame(cc_qs.map(_quantity_components).tolist(),
+                         index=cc_qs.index, columns=['std_dgf_p', 'std_dgf_p_error'])
+        data_c = data_c.join(data_c_2)
+
+        print('First 10 formation energies:', flush=True)
+        print(cc_qs.iloc[:10])
+        
     if compact_output:
         # Keep only relevant columns
-        cols_to_keep = ['compound_id', 'std_dgf', 'std_dgf_error']
-        if run_physiological:
-            cols_to_keep += ['std_dgf_p', 'std_dgf_p_error']
-        data_c = data_c[cols_to_keep]
+        data_c = data_c.filter(like='std')
 
-    # Convert to current CBRdb_C IDs
+    # Get current KEGG-to-CBRdb_C mapping
     dupes = pd.read_csv(dupe_file, index_col=0).iloc[:,0]
-    data_c['compound_id'] = data_c['compound_id'].replace(dupes)
+    # Update IDs accordingly
+    data_c.rename(index=dupes, inplace=True)
+    # Turn compound_id into a column again
+    data_c.reset_index(drop=False, inplace=True)
     # Drop duplicates
     data_c.drop_duplicates(subset='compound_id', inplace=True)
     # TODO: Remove (?) reported dG for dupe-groups returning multiple nonzero dG values
