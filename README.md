@@ -182,7 +182,6 @@ Data flags:
 | bool_missing_data       | Flag: Missing structure(s).                  |
 | bool_var_list           | Flag: Variable in coefficients.              |
 | cpd_starred             | Flag: Has starred compounds.                 |
-| is_balanced_except_star | Flag: Elements are balanced excluding stars. |
 
 \* Provided by ATLAS;
 see [ATLAS User Guide](https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf#page=6.00) for
