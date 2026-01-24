@@ -142,6 +142,9 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     for col in df.columns.intersection(['remark', 'dblinks']):
         icol = df[col].dropna().str.split('~').explode()
         col_df = pd.pivot(icol.str.split(': ', expand=True), columns=0, values=1)
+        if col == 'dblinks':
+            col_df.columns = 'xref_' + col_df.columns
+            col_df = col_df.rename(columns={'xref_Drug_group': 'Drug_group'})
         df = df.join(col_df, how='left')
         df.drop(columns=col, inplace=True)
 
