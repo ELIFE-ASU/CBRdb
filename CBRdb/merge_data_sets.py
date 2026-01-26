@@ -283,7 +283,7 @@ def merge_hpc_calculations(final_output_Cs: str|pd.DataFrame = '../CBRdb_C.csv',
 
     print("HPC calculation merger complete", flush=True)
 
-    if isinstance(final_output_Cs, pd.DataFrame):
+    if isinstance(final_output_Cs_fp, pd.DataFrame):
         if not_id_indexed:
             return data_c.reset_index()
         else:
