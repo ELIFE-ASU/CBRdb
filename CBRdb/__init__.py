@@ -123,6 +123,7 @@ from .tools_eq import (convert_formula_to_dict,
                        get_rxn_fingerprint_drfp,
                        tanimoto_batch_drfp,
                        find_max_similar_rxn_drfp,
+                       sync_reaction_dupemap,
                        )
 from .tools_files import (file_list,
                           file_list_all,
