@@ -162,4 +162,4 @@ from .tools_plots import (ax_plot,
                           plot_kde,
                           plot_histogram)
 
-__version__ = "1.7.0"
+__version__ = "1.8.0"
