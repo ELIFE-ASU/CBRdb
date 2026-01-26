@@ -1118,7 +1118,7 @@ def test_data_split_patcher():
     print(flush=True)
     print(flush=True)
     # load the compounds data
-    data_c = pd.read_csv(os.path.abspath("CBRdb_C.csv"))
+    data_c = pd.read_csv(os.path.abspath("CBRdb_C.csv.zip"))
     col_data_c = data_c.columns.tolist()
     print('data_c')
     print(col_data_c)
@@ -1175,7 +1175,7 @@ def test_data_split_patcher():
     print()
 
     # Now load the reactions data
-    data_r = pd.read_csv(os.path.abspath("CBRdb_R.csv"))
+    data_r = pd.read_csv(os.path.abspath("CBRdb_R.csv.zip"))
     col_data_r = data_r.columns.tolist()
     print('data_r')
     print(col_data_r)
@@ -1223,7 +1223,6 @@ def test_data_split_patcher():
     print('data_c_selected')
     print(data_c_selected.columns)
     print()
-    data_c_selected.to_csv(os.path.abspath("CBRdb_C1.csv"), index=False)
     data_c_selected.to_csv(os.path.abspath("CBRdb_C1.csv.zip"), index=False)
 
     meta_data_selection = ['compound_id',
@@ -1260,7 +1259,6 @@ def test_data_split_patcher():
     print('data_c_metadata_selected')
     print(data_c_metadata_selected.columns)
     print()
-    data_c_metadata_selected.to_csv(os.path.abspath("CBRdb_C_metadata.csv"), index=False)
     data_c_metadata_selected.to_csv(os.path.abspath("CBRdb_C_metadata.csv.zip"), index=False)
 
     selection = ['id',
@@ -1272,7 +1270,6 @@ def test_data_split_patcher():
                  'sim_max_id']
 
     data_r_selected = data_r[selection]
-    data_r_selected.to_csv(os.path.abspath("CBRdb_R1.csv"), index=False)
     data_r_selected.to_csv(os.path.abspath("CBRdb_R1.csv.zip"), index=False)
 
     meta_data_selection = ['id',
@@ -1297,7 +1294,6 @@ def test_data_split_patcher():
 
     # Save a new csv with only the selected columns
     data_r_selected = data_r[meta_data_selection]
-    data_r_selected.to_csv(os.path.abspath("CBRdb_R_metadata.csv"), index=False)
     data_r_selected.to_csv(os.path.abspath("CBRdb_R_metadata.csv.zip"), index=False)
 
 
@@ -1326,7 +1322,6 @@ def test_data_atom_mapping_patcher():
     print(col_data_r)
     print()
 
-    data_r.to_csv(os.path.abspath("CBRdb_R1.csv"), index=False)
     data_r.to_csv(os.path.abspath("CBRdb_R1.csv.zip"), index=False)
 
 
