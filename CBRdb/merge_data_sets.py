@@ -2,6 +2,7 @@ import pandas as pd
 import os
 
 from .tools_files import reaction_csv, compound_csv, space_sep_str_cols_cps
+from .tools_eq import sync_reaction_dupemap
 
 out_fmt = {'encoding': 'utf-8', 'index': False}
 
@@ -330,3 +331,11 @@ def separate_compound_metadata(final_output_Cs_fp="../CBRdb_C.csv",
 
     return None
 
+
+def combine_and_deduplicate_reactions(datasets=list):
+    # TODO: Add handling for the case where there are no dupes.
+    tomerge = [i for i in datasets]
+    rs_joined = pd.concat(tomerge, ignore_index=True)
+    r_dupemap = sync_reaction_dupemap(rs_joined, prefix='T')
+    rs_deduped = merge_duplicate_reactions(rs_joined, r_dupemap)
+    return rs_deduped

@@ -67,10 +67,8 @@ if __name__ == "__main__":
                                                              rebalance_depth=2, c_file=final_output_Cs_fp)
 
     print("Combining and deduplicating the reactions data...", flush=True)
-    dbs['reactions_joined'] = pd.concat(objs=[dbs['kegg_data_R_processed'], dbs['atlas_data_R_processed']],
-                                        ignore_index=True)
-    dbs['r_dupemap'] = CBRdb.tools_eq.sync_reaction_dupemap(dbs['reactions_joined'], prefix='T')
-    dbs['CBRdb_R'] = CBRdb.merge_duplicate_reactions(dbs['reactions_joined'], dbs['r_dupemap'])
+    dbs['CBRdb_R'] = CBRdb.combine_and_deduplicate_reactions([dbs['kegg_data_R_processed'], 
+                                                             dbs['atlas_data_R_processed']])
     CBRdb.reaction_csv(dbs['CBRdb_R'], "../CBRdb_R.csv")
 
     CBRdb.add_R_col_to_C_file(final_output_Cs_fp=final_output_Cs_fp, final_output_Rs_fp='../CBRdb_R.csv')
