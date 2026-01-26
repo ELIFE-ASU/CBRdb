@@ -1,6 +1,6 @@
 # CBRdb: A Curated Biochemical Reaction database for precise Biochemical Reaction Analysis
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18380124.svg)](https://doi.org/10.5281/zenodo.18380124)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14948472.svg)](https://doi.org/10.5281/zenodo.14948472)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD)
 
 ## 🗺️ Overview
@@ -91,6 +91,7 @@ General information:
 | smarts             | SMARTS representation.                                        |
 | sim_max            | Closest maximum reaction similarity.                          |
 | sim_max_id         | Closest reaction ID that has the maximum reaction similarity. |
+| atom_mapping       | Atom mapped SMARTS reaction.                                  |
 
 </details>
 
@@ -130,16 +131,16 @@ KEGG specific information:
 
 Database cross-references:
 
-| Entry Title      | Description                                    |
-|------------------|------------------------------------------------|
-| xref_PubChem     | Linked PubChem identifiers for the compound.   |
-| xref_PDB_CCD     | Linked PDB CCD identifiers for the compound.   |
-| xref_NIKKAJI     | Linked NIKKAJI identifiers for the compound.   |
-| xref_LIPIDMAPS   | Linked LIPIDMAPS identifiers for the compound. |
-| xref_KNApSAcK    | Linked KNApSAcK identifiers for the compound.  |
-| xref_ChEBI       | Linked ChEBI identifiers for the compound.     |
-| xref_CAS         | Linked CAS identifiers for the compound.       |
-| xref_ATC_code    | Linked ATC codes of the compound.              |
+| Entry Title    | Description                                    |
+|----------------|------------------------------------------------|
+| xref_PubChem   | Linked PubChem identifiers for the compound.   |
+| xref_PDB_CCD   | Linked PDB CCD identifiers for the compound.   |
+| xref_NIKKAJI   | Linked NIKKAJI identifiers for the compound.   |
+| xref_LIPIDMAPS | Linked LIPIDMAPS identifiers for the compound. |
+| xref_KNApSAcK  | Linked KNApSAcK identifiers for the compound.  |
+| xref_ChEBI     | Linked ChEBI identifiers for the compound.     |
+| xref_CAS       | Linked CAS identifiers for the compound.       |
+| xref_ATC_code  | Linked ATC codes of the compound.              |
 
 </details>
 
@@ -176,13 +177,13 @@ ATLAS specific information:
 
 Data flags:
 
-| Entry Title             | Description                                  |
-|-------------------------|----------------------------------------------|
-| flags                   | From CBRdb.df_of_suspect_reactions           |
-| balancer_failed         | Flag: Balancer failed.                       |
-| bool_missing_data       | Flag: Missing structure(s).                  |
-| bool_var_list           | Flag: Variable in coefficients.              |
-| cpd_starred             | Flag: Has starred compounds.                 |
+| Entry Title       | Description                        |
+|-------------------|------------------------------------|
+| flags             | From CBRdb.df_of_suspect_reactions |
+| balancer_failed   | Flag: Balancer failed.             |
+| bool_missing_data | Flag: Missing structure(s).        |
+| bool_var_list     | Flag: Variable in coefficients.    |
+| cpd_starred       | Flag: Has starred compounds.       |
 
 \* Provided by ATLAS;
 see [ATLAS User Guide](https://lcsb-databases.epfl.ch/pathways/atlas/files/ATLAS_UserGuide.pdf#page=6.00) for
@@ -192,7 +193,7 @@ most_similar_kegg header details.
 
 ## 💡 Getting Started
 
-To get started with the data, you can download the compounds `CBRdb_C.csv` and reactions `CBRdb_R.csv` from the
+To get started with the data, you can download the compounds `CBRdb_C.csv.zip` and reactions `CBRdb_R.csv.zip` from the
 repository. For convenience, the files are also hosted on Zenodo and are stored as a compressed format to reduce
 download time.
 
@@ -382,5 +383,6 @@ If you use this code in your work, you must reference the following:
 
 Please take a look at the .bib file.
 
-## Funding 
+## Funding
+
 This project was supported by Schmidt Sciences and NASA grant number 80NSSC21K1402.
