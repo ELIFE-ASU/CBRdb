@@ -230,13 +230,13 @@ def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp=
     return None
 
 
-def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
+def merge_hpc_calculations(final_output_Cs: str|pd.DataFrame = '../CBRdb_C.csv',
                            formation_energies_fp='../hpc/CBRdb_C_formation_energies.csv.gz',
                            mace_spectrum_fp='../hpc/CBRdb_C_mace_spectrum.csv.gz',
                            assembly_index_fp='../hpc/CBRdb_C_assembly_index.csv.zip',
                            c_dupemap_fp='../data/kegg_data_C_dupemap.csv'):
     """ 
-    Merges HPC calculations into the main compounds data file, overwriting those columns if present.
+    Merges HPC calculations into the main compounds data, overwriting those columns if present.
 
     """
     print("Merging HPC calculations into compound file", flush=True)
@@ -246,7 +246,14 @@ def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
     f_params_out = dict(encoding='utf-8', index=True, compression='infer')
 
     # Import the datasets
-    data_c = pd.read_csv(os.path.abspath(final_output_Cs_fp), **f_params_in)
+    if not isinstance(final_output_Cs, (str, pd.DataFrame)):
+        raise ValueError("final_output_Cs must be one of (str, pd.DataFrame)")
+    elif isinstance(final_output_Cs, str):
+        data_c = pd.read_csv(os.path.abspath(final_output_Cs), **f_params_in)
+    else:
+        not_id_indexed = final_output_Cs.index.astype(str).str.isnumeric.all()
+        data_c = id_indexed(final_output_Cs)
+
     data_c_dupes = pd.read_csv(os.path.abspath(c_dupemap_fp), **f_params_in)
     data_c_formation = pd.read_csv(os.path.abspath(formation_energies_fp), **f_params_in)
     data_c_mace = pd.read_csv(os.path.abspath(mace_spectrum_fp), **f_params_in)
@@ -276,7 +283,13 @@ def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
 
     print("HPC calculation merger complete", flush=True)
 
-    return None
+    if isinstance(final_output_Cs, pd.DataFrame):
+        if not_id_indexed:
+            return data_c.reset_index()
+        else:
+            return data_c
+    else:
+        return None
 
 
 def merge_hpc_thermo_params(final_output_Rs_fp='../CBRdb_R.csv',
