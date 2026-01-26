@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from ase.build import molecule
-from ase.io import read
+from ase.io import read, write
 from ase.optimize import BFGS
 from ase.vibrations import Vibrations
 from ase.visualize import view
@@ -1299,3 +1299,40 @@ def test_data_split_patcher():
     data_r_selected = data_r[meta_data_selection]
     data_r_selected.to_csv(os.path.abspath("CBRdb_R_metadata.csv"), index=False)
     data_r_selected.to_csv(os.path.abspath("CBRdb_R_metadata.csv.zip"), index=False)
+
+
+def test_ir_generate():
+    print(flush=True)
+    broad_func = CBRdb.gaussian_function
+    sigma = 20.0
+    smi = 'NC(=O)NC([O-])=O'
+    atoms, charge, multi = CBRdb.smi_to_atoms(smi)
+
+    # Get the atoms to view.
+    atoms = CBRdb.optimise_atoms(atoms,
+                                 charge=charge,
+                                 multiplicity=multi,
+                                 n_procs=1)
+
+    write('optimized_structure.xyz', atoms)
+
+    view(atoms)
+
+    data_ir, data_raman, data_vib = CBRdb.calculate_vib_spectrum(atoms,
+                                                                 charge=charge,
+                                                                 multiplicity=multi,
+                                                                 n_procs=1)
+    freq = data_ir['Frequency (cm^-1)']
+    intensity = data_ir['Intensity (km/mol)']
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    CBRdb.ax_plot(fig, ax, xlab=r'Wavenumber (cm$^{-1}$)', ylab='Intensity', xs=16, ys=16)
+    x, y = CBRdb.expand_spectrum(freq, intensity, broad_func, spec_params={'sigma': sigma})
+
+    # Reverse the x-axis for IR spectra
+    ax.invert_xaxis()
+    ax.plot(x, y, linewidth=4.0, alpha=0.6)
+    ax.set_xlim(3500.0, 500.0)
+    plt.savefig('individual_spectra.png', dpi=300, bbox_inches='tight')
+    plt.savefig('individual_spectra.pdf', bbox_inches='tight')
+    plt.show()
