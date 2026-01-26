@@ -1301,6 +1301,35 @@ def test_data_split_patcher():
     data_r_selected.to_csv(os.path.abspath("CBRdb_R_metadata.csv.zip"), index=False)
 
 
+def test_data_atom_mapping_patcher():
+    print(flush=True)
+    data_r = pd.read_csv(os.path.abspath("CBRdb_R.csv.zip"))
+    col_data_r = data_r.columns.tolist()
+    print('data_r')
+    print(col_data_r)
+    print()
+
+    data_r_mapping = pd.read_csv(os.path.abspath("atom_tracking/mapped_rxns.csv.gz"))
+    # relabel columns
+    data_r_mapping = data_r_mapping.rename(columns={'reaction_id': 'id',
+                                                    'mapped_rxns': 'atom_mapping'})
+
+    col_data_r_mapping = data_r_mapping.columns.tolist()
+    print('data_r_mapping')
+    print(col_data_r_mapping)
+    print()
+
+    data_r = data_r.drop(columns=[col for col in col_data_r_mapping[1:] if col in col_data_r])
+    data_r = pd.merge(data_r, data_r_mapping, on='id', how='left')
+    col_data_r = data_r.columns.tolist()
+    print('data_r after merge')
+    print(col_data_r)
+    print()
+
+    data_r.to_csv(os.path.abspath("CBRdb_R1.csv"), index=False)
+    data_r.to_csv(os.path.abspath("CBRdb_R1.csv.zip"), index=False)
+
+
 def test_ir_generate():
     print(flush=True)
     broad_func = CBRdb.gaussian_function
