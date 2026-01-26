@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 from .tools_files import reaction_csv, compound_csv, space_sep_str_cols_cps
 
@@ -231,39 +232,46 @@ def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp=
 def merge_hpc_calculations(final_output_Cs_fp='../CBRdb_C.csv',
                            formation_energies_fp='../hpc/CBRdb_C_formation_energies.csv.gz',
                            mace_spectrum_fp='../hpc/CBRdb_C_mace_spectrum.csv.gz',
+                           assembly_index_fp='../hpc/CBRdb_C_assembly_index.csv.zip',
                            c_dupemap_fp='../data/kegg_data_C_dupemap.csv'):
     """ 
-    Merges formation energies and MACE spectra into the main compounds data file, overwriting it.
+    Merges HPC calculations into the main compounds data file, overwriting those columns if present.
 
     """
     print("Merging HPC calculations into compound file", flush=True)
 
+    # Specify file reading and writing parameters
+    f_params_in = dict(index_col=0, low_memory=False, dtype=space_sep_str_cols_cps)
+    f_params_out = dict(encoding='utf-8', index=True, compression='infer')
+
     # Import the datasets
-    compounds = pd.read_csv(final_output_Cs_fp, index_col=0, low_memory=False, dtype=space_sep_str_cols_cps)
-    C_mace_spectrum = pd.read_csv(mace_spectrum_fp, index_col=0, compression='gzip')
-    C_formation_energies = pd.read_csv(formation_energies_fp, index_col=0, compression='gzip')
-    C_dupes = pd.read_csv(c_dupemap_fp, index_col=0)['new_id']
+    data_c = pd.read_csv(os.path.abspath(final_output_Cs_fp), **f_params_in)
+    data_c_dupes = pd.read_csv(os.path.abspath(c_dupemap_fp), **f_params_in)
+    data_c_formation = pd.read_csv(os.path.abspath(formation_energies_fp), **f_params_in)
+    data_c_mace = pd.read_csv(os.path.abspath(mace_spectrum_fp), **f_params_in)
+    data_c_aix = pd.read_csv(os.path.abspath(assembly_index_fp), **f_params_in)
 
-    # Merge MACE spectrum calculations on SMILES field
-    compounds = id_indexed(compounds.reset_index().merge(C_mace_spectrum, on='smiles', how='left'))
+    # For MACE and AI, prepare to merge on SMILES string.
+    smi2cp = {v: k for k,v in data_c['smiles'].items()}
+    data_c_mace.set_index('smiles', inplace=True)
+    data_c_aix.set_index('smiles', inplace=True)
+    mace_eligible = data_c_mace.filter(items=data_c['smiles'], axis=0).rename(smi2cp)
+    aix_eligible = data_c_aix[['assembly_index']].filter(items=data_c['smiles'], axis=0).rename(smi2cp)
+    data_c_to_add = mace_eligible.join(aix_eligible, how='outer').rename_axis('compound_id')
 
-    # Convert KEGG IDs to current CBRdb IDs
-    C_formation_energies = C_formation_energies.rename(index=C_dupes)
+    # For formation energies, prepare to merge on ID by syncing IDs.
+    data_c_formation.rename(index=data_c_dupes.iloc[:,0], inplace=True)
 
-    # Set aside reaction ID cols to put at the end
-    place_at_end = ['kegg_reaction', 'CBRdb_R_ids']
-    end_cap = compounds.loc[:, place_at_end]
-    compounds.drop(columns=place_at_end, inplace=True)
+    # Remove previous compound calculations, if present.
+    data_c.drop(columns=data_c_to_add.columns, errors='ignore', inplace=True)
+    data_c.drop(columns=data_c_formation.columns, errors='ignore', inplace=True)
 
     # Merge the datasets
-    compounds = compounds.join(C_formation_energies, how='left')
-
-    # Reattach reaction ID cols at the end
-    compounds = compounds.join(end_cap)
+    data_c = data_c.join(data_c_to_add, how='left').join(data_c_formation, how='left')
 
     # Save the updated compounds file (note that floats are not rounded unlike in CBRdb.reaction_csv)
-    compounds.to_csv(final_output_Cs_fp)
-    compounds.to_csv(final_output_Cs_fp + '.zip', compression='zip')
+    data_c.to_csv('../CBRdb_C.csv', **f_params_out)
+    data_c.to_csv('../CBRdb_C.csv.zip', **f_params_out)
 
     print("HPC calculation merger complete", flush=True)
 
