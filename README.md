@@ -1,6 +1,6 @@
 # CBRdb: A Curated Biochemical Reaction database for precise Biochemical Reaction Analysis
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17459478.svg)](https://doi.org/10.5281/zenodo.17459478)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18380124.svg)](https://doi.org/10.5281/zenodo.18380124)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD)
 
 ## 🗺️ Overview
