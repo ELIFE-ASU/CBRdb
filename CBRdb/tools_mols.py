@@ -343,7 +343,7 @@ def _define_structures(mol):
     return store_dict
 
 
-def get_properties(mols):
+def get_properties(mols, complexity: bool = False):
     """
     Calculates molecular properties for a list of molecules.
 
@@ -356,6 +356,7 @@ def get_properties(mols):
     -----------
     mols : list of rdkit.Chem.Mol
         A list of RDKit molecule objects for which properties are to be calculated.
+    complexity (bool) : If True, calculates complexity measures in uncapped_funcs. Default is False.
 
     Returns:
     --------
@@ -373,17 +374,18 @@ def get_properties(mols):
         print(f"    * {name}", flush=True)
         properties_df[name] = properties_df["mol_uncapped"].map(func)
 
-    faster_parallelized = ['bertz', 'wiener_index', 'randic_index', 'spacial_score']
-    for name, func in capped_funcs.items():
-        nsps = (16 - len(name)) * ' '
-        print(f"    * {name}", flush=True, end=nsps)
+    if complexity is True:
+        faster_parallelized = ['bertz', 'wiener_index', 'randic_index', 'spacial_score']
+        for name, func in capped_funcs.items():
+            nsps = (16 - len(name)) * ' '
+            print(f"    * {name}", flush=True, end=nsps)
 
-        start = time()
-        if name in faster_parallelized:
-            properties_df[name] = mp_calc(func, properties_df["mol_capped"].tolist())
-        else:
-            properties_df[name] = properties_df["mol_capped"].map(func)
-        print(f'{(time() - start):.2f} s', flush=True)
+            start = time()
+            if name in faster_parallelized:
+                properties_df[name] = mp_calc(func, properties_df["mol_capped"].tolist())
+            else:
+                properties_df[name] = properties_df["mol_capped"].map(func)
+            print(f'{(time() - start):.2f} s', flush=True)
 
     smiles_funcs = {'ionization_states': enum_ionization_states}
     for name, func in smiles_funcs.items():
