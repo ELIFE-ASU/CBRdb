@@ -55,8 +55,7 @@ if __name__ == "__main__":
                                                                          out_file=atlas_reactions_data + '.csv')
 
     print("De-duping compound dataset for compounds and reactions...", flush=True)
-    dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main,
-                                          to_quarantine='')
+    dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main)
 
     final_output_Cs_fp = '../CBRdb_C.csv'
 

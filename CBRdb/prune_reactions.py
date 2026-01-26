@@ -238,7 +238,7 @@ def quarantine_suspect_reactions_matching(dbs, sus, matching="shortcut|structure
     return dbs
 
 
-def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="shortcut|structure_missing"):
+def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main):
     """
     Prunes reactions before attempting to dedupe compounds.
 
@@ -246,10 +246,9 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main, to_quarantine="
     kegg_data_R (pd.DataFrame): A pandas DataFrame with KEGG reaction data.
     atlas_data_R (pd.DataFrame): A pandas DataFrame with Atlas reaction data.
     C_main (pd.DataFrame): A pandas DataFrame with main compound data.
-    to_quarantine (str): A regex pattern to match against the 'reason' column for quarantining reactions. Default is "shortcut|structure_missing".
 
     Returns:
-    dict: The updated databases dictionary with pruned and deduplicated entries.
+    dict: The updated databases dictionary with pruned and deduplicated compound entries.
     """
     # turn datasets into a dictionary
     dbs = {'kegg_data_R': kegg_data_R, 'atlas_data_R': atlas_data_R, 'kegg_data_C': C_main}
