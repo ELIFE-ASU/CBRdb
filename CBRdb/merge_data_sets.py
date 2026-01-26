@@ -277,7 +277,7 @@ def merge_hpc_calculations(final_output_Cs: str|pd.DataFrame = '../CBRdb_C.csv',
     # Merge the datasets
     data_c = data_c.join(data_c_to_add, how='left').join(data_c_formation, how='left')
 
-    # Save the updated compounds file (note that floats are not rounded unlike in CBRdb.reaction_csv)
+    # Save the updated compounds file (note that floats are not rounded unlike in CBRdb.compound_csv)
     data_c.to_csv('../CBRdb_C.csv', **f_params_out)
     data_c.to_csv('../CBRdb_C.csv.zip', **f_params_out)
 
