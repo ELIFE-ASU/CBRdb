@@ -19,12 +19,13 @@ from ase.thermochemistry import IdealGasThermo
 from ase.units import Hartree
 from ase.vibrations import Vibrations
 from ase.vibrations import VibrationsData
+from equilibrator_api import ComponentContribution, Q_
 from pymatgen.io.ase import AseAtomsAdaptor
 from pymatgen.symmetry.analyzer import PointGroupAnalyzer
 from rdkit import Chem as Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.rdchem import Mol
-from equilibrator_api import ComponentContribution, Q_
+from scipy.special import voigt_profile
 
 from .tools_mols import standardize_mol
 
@@ -2325,7 +2326,6 @@ def calculate_free_energy_formation_cc(kegg_C_ids=None,
                                        in_file='../data/kegg_data_C.csv',
                                        run_physiological=True,
                                        keep_raw=False):
-
     # Make sure run_physiological is one of accepted data types
     if not isinstance(run_physiological, (bool, dict, pd.Series)):
         raise KeyError('run_physiological must be one of (bool, dict, pd.Series)')
@@ -2340,7 +2340,7 @@ def calculate_free_energy_formation_cc(kegg_C_ids=None,
     elif isinstance(kegg_C_ids, pd.Index):
         ids = kegg_C_ids
     else:
-        print('kegg_C_ids not accepted: defaulting to those in '+in_file)
+        print('kegg_C_ids not accepted: defaulting to those in ' + in_file)
         ids = pd.read_csv(in_file, index_col=0, usecols=[0]).index
 
     # Impose ids index name
@@ -2377,6 +2377,121 @@ def calculate_free_energy_formation_cc(kegg_C_ids=None,
     if keep_raw is True:
         df = df.assign(transform=transform)
     # Error is the same for standard_dgf_prime and standard_dgf
-    
+
     return df
-    
+
+
+def gaussian_function(x, x0, sigma, amplitude=1.0):
+    """
+    Calculate the Gaussian line shape function.
+
+    Parameters:
+    -----------
+    x : array-like
+        Independent variable (e.g. frequency or wavenumber)
+    x0 : float
+        Center position (peak position)
+    sigma : float
+        Standard deviation of the Gaussian distribution
+    amplitude : float, optional
+        Amplitude of the peak, default is 1.0
+
+    Returns:
+    --------
+    array-like
+        Gaussian function values at positions x
+    """
+    return amplitude * np.exp(-np.square(x - x0) / (2 * np.square(sigma)))
+
+
+def lorentzian_function(x, x0, gamma, amplitude=1.0):
+    """
+    Calculate the Lorentzian line shape function.
+
+    Parameters:
+    -----------
+    x : array-like
+        Independent variable (e.g. frequency or wavenumber)
+    x0 : float
+        Center position (peak position)
+    gamma : float
+        Half-width at half-maximum (HWHM)
+    amplitude : float, optional
+        Amplitude of the peak, default is 1.0
+
+    Returns:
+    --------
+    array-like
+        Lorentzian function values at positions x
+    """
+    return amplitude * (np.square(gamma) / (np.square(x - x0) + np.square(gamma)))
+
+
+def voigt_function(x, x0, sigma, gamma, amplitude=1.0):
+    """
+    Calculate the Voigt profile, a convolution of Gaussian and Lorentzian profiles.
+
+    Parameters:
+    -----------
+    x : array-like
+        Independent variable (e.g. frequency or wavenumber)
+    x0 : float
+        Center position (peak position)
+    sigma : float
+        Standard deviation of the Gaussian component
+    gamma : float
+        Half-width at half-maximum of the Lorentzian component
+    amplitude : float, optional
+        Amplitude of the peak, default is 1.0
+
+    Returns:
+    --------
+    array-like
+        Voigt function values at positions x
+    """
+    y = voigt_profile((x - x0), sigma, gamma)
+    # Get the maximum value of the voigt profile and normalise it
+    return amplitude * np.divide(y, np.max(y))
+
+
+def expand_spectrum(freq, intensity, spec_func, spec_params, n_points=60000, x_min=0.0, x_max=6000.0):
+    """
+    Expand and process spectral data using a specified spectral function.
+
+    This function generates a spectrum by applying a spectral function to
+    frequency and intensity pairs, within a specified range and resolution.
+
+    Parameters:
+    -----------
+    freq : list or numpy.ndarray
+        A list or array of frequency values.
+    intensity : list or numpy.ndarray
+        A list or array of intensity values corresponding to the frequencies.
+    spec_func : callable
+        A function that calculates the spectral profile (e.g., Gaussian, Lorentzian).
+    spec_params : dict
+        A dictionary of parameters to be passed to the spectral function.
+    n_points : int, optional
+        The number of points in the generated spectrum. Default is 60000.
+    x_min : float, optional
+        The minimum frequency value for the spectrum. Default is 0.0.
+    x_max : float, optional
+        The maximum frequency value for the spectrum. Default is 6000.0.
+
+    Returns:
+    --------
+    tuple:
+        - numpy.ndarray: The x-axis values (frequencies) of the spectrum.
+        - numpy.ndarray: The y-axis values (intensities) of the spectrum.
+    """
+    # Generate x-axis values and initialize y-axis with zeros
+    x = np.linspace(x_min, x_max, n_points)
+    y = np.zeros(n_points)
+
+    # Process valid frequency and intensity pairs
+    for f, i in zip(freq, intensity):
+        if i > 0 and x_min <= f <= x_max:
+            spec_params['amplitude'], spec_params['x0'] = i, f
+            y += spec_func(x, **spec_params)
+
+    return x, y
