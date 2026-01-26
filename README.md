@@ -14,7 +14,9 @@ to metabolic network expansion. Altogether, CBR-db features a high number of hig
 CBR-db is designed to be continuously updated, incorporating the latest releases from the KEGG and ATLAS databases.
 Furthermore, it provides a framework so the network can be extended and further issues can be addressed.
 
-To start everything locally, you can look at run_all.py, which will take you through the whole data pipeline. Otherwise,
+To get started with the data, you can download the compounds `CBRdb_C.csv.zip` and reactions `CBRdb_R.csv.zip` from the
+repository. To start everything locally, you can look at run_all.py, which will take you through the whole data
+pipeline. Otherwise,
 you can run each part by itself. To sidestep installation
 checkout [Binder](https://mybinder.org/v2/gh/ELIFE-ASU/CBRdb/HEAD).
 
