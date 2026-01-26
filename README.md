@@ -381,3 +381,6 @@ If you use this code in your work, you must reference the following:
 - Kanehisa, M., & Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic acids research, 28(1), 27-30.
 
 Please take a look at the .bib file.
+
+## Funding 
+This project was supported by Schmidt Sciences and NASA grant number 80NSSC21K1402.
