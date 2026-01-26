@@ -230,7 +230,7 @@ def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp=
     return None
 
 
-def merge_hpc_calculations(final_output_Cs: str|pd.DataFrame = '../CBRdb_C.csv',
+def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.csv',
                            formation_energies_fp='../hpc/CBRdb_C_formation_energies.csv.gz',
                            mace_spectrum_fp='../hpc/CBRdb_C_mace_spectrum.csv.gz',
                            assembly_index_fp='../hpc/CBRdb_C_assembly_index.csv.zip',
@@ -246,13 +246,13 @@ def merge_hpc_calculations(final_output_Cs: str|pd.DataFrame = '../CBRdb_C.csv',
     f_params_out = dict(encoding='utf-8', index=True, compression='infer')
 
     # Import the datasets
-    if not isinstance(final_output_Cs, (str, pd.DataFrame)):
+    if not isinstance(final_output_Cs_fp, (str, pd.DataFrame)):
         raise ValueError("final_output_Cs must be one of (str, pd.DataFrame)")
-    elif isinstance(final_output_Cs, str):
-        data_c = pd.read_csv(os.path.abspath(final_output_Cs), **f_params_in)
+    elif isinstance(final_output_Cs_fp, str):
+        data_c = pd.read_csv(os.path.abspath(final_output_Cs_fp), **f_params_in)
     else:
-        not_id_indexed = final_output_Cs.index.astype(str).str.isnumeric.all()
-        data_c = id_indexed(final_output_Cs)
+        not_id_indexed = final_output_Cs_fp.index.astype(str).str.isnumeric.all()
+        data_c = id_indexed(final_output_Cs_fp)
 
     data_c_dupes = pd.read_csv(os.path.abspath(c_dupemap_fp), **f_params_in)
     data_c_formation = pd.read_csv(os.path.abspath(formation_energies_fp), **f_params_in)
