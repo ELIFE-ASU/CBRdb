@@ -343,7 +343,7 @@ def _define_structures(mol):
     return store_dict
 
 
-def get_properties(mols, complexity: bool = False):
+def get_properties(mols, complexity: bool = False, ionization_states: bool = False):
     """
     Calculates molecular properties for a list of molecules.
 
@@ -357,7 +357,7 @@ def get_properties(mols, complexity: bool = False):
     mols : list of rdkit.Chem.Mol
         A list of RDKit molecule objects for which properties are to be calculated.
     complexity (bool) : If True, calculates complexity measures in uncapped_funcs. Default is False.
-
+    ionization_states (bool) : If True, calculates protonation states for compound. Default is False.
     Returns:
     --------
     dict
@@ -387,19 +387,21 @@ def get_properties(mols, complexity: bool = False):
                 properties_df[name] = properties_df["mol_capped"].map(func)
             print(f'{(time() - start):.2f} s', flush=True)
 
-    smiles_funcs = {'ionization_states': enum_ionization_states}
-    for name, func in smiles_funcs.items():
-        nsps = (16 - len(name)) * ' '
-        print(f"    * {name}", flush=True, end=nsps)
+    if ionization_states is True:
+        smiles_funcs = {'ionization_states': enum_ionization_states}
+        for name, func in smiles_funcs.items():
+            nsps = (16 - len(name)) * ' '
+            print(f"    * {name}", flush=True, end=nsps)
 
-        start = time()
-        properties_df[name] = mp_calc(func, properties_df["smiles"].tolist())
-        print(f'{(time() - start):.2f} s', flush=True)
-
-    space_sep_list_cols = ['ionization_states']
-    for name in space_sep_list_cols:
-        properties_df[name] = properties_df[name].map(
-            lambda x: ' '.join(sorted(set(x))) if x else float('nan'))
+            start = time()
+            properties_df[name] = mp_calc(func, properties_df["smiles"].tolist())
+            print(f'{(time() - start):.2f} s', flush=True)
+        order_matters = True
+        if order_matters == False:
+            space_sep_list_cols = ['ionization_states']
+            for name in space_sep_list_cols:
+                properties_df[name] = properties_df[name].map(
+                    lambda x: ' '.join(sorted(set(x))) if x else float('nan'))
 
     print('Done getting properties', flush=True)
     properties_df.drop(columns=["mol_uncapped", "mol_capped"], inplace=True)
