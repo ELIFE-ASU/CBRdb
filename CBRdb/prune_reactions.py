@@ -274,7 +274,16 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main):
     # write CSV output files for the reaction balancer to read in.
     for k in ['kegg_data_R', 'atlas_data_R']:
         reaction_csv(dbs[k], f'../data/{k}_dedupedCs.csv')
-    compound_csv(dbs['CBRdb_C'], '../CBRdb_C.csv')
+
+    # Separate compound data from metadata
+    kegg_meta, xref_meta = dbs['CBRdb_C'].filter(like='kegg_'), dbs['CBRdb_C'].filter(like='xref_')
+    dbs['CBRdb_C_metadata'] = dbs['CBRdb_C'][['comment']].join(kegg_meta).join(xref_meta).copy(deep=True)
+    dbs['CBRdb_C'].drop(columns=dbs['CBRdb_C_metadata'].columns, inplace=True)
+    dbs['CBRdb_C_metadata'].loc[:,'compound_id'] = dbs['CBRdb_C'].loc[:,'compound_id']
+
+    # Write preliminary compound data and metadata files
+    compound_csv(dbs['CBRdb_C'], '../CBRdb_C.csv.zip')
+    compound_csv(dbs['CBRdb_C_metadata'], '../CBRdb_C_metadata.csv.zip')
 
     return dbs
 
