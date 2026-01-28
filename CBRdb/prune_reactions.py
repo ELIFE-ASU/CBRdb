@@ -266,7 +266,7 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main):
         dbs[db]['reaction'] = dbs[db]['reaction'].map(standardise_eq)
         dbs[db]['CBRdb_C_ids'] = dbs[db]['reaction'].map(get_eq_all_cids)
 
-    # identify suspect reactions and those matching them
+    # identify suspect reactions and those matching them after compound de-duping
     sus = df_of_suspect_reactions(dbs)
     sus = add_sus_reaction_dupes(sus, dbs)
     sus = add_suspect_reactions_to_existing_bad_file(sus)
