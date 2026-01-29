@@ -230,7 +230,7 @@ def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp=
     return None
 
 
-def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.csv',
+def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.csv.zip',
                            formation_energies_fp='../hpc/CBRdb_C_formation_energies.csv.gz',
                            mace_spectrum_fp='../hpc/CBRdb_C_mace_spectrum.csv.gz',
                            assembly_index_fp='../hpc/CBRdb_C_assembly_index.csv.zip',
@@ -278,7 +278,6 @@ def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.cs
     data_c = data_c.join(data_c_to_add, how='left').join(data_c_formation, how='left')
 
     # Save the updated compounds file (note that floats are not rounded unlike in CBRdb.compound_csv)
-    data_c.to_csv('../CBRdb_C.csv', **f_params_out)
     data_c.to_csv('../CBRdb_C.csv.zip', **f_params_out)
 
     print("HPC calculation merger complete", flush=True)
