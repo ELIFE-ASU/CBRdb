@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .merge_data_sets import identify_duplicate_compounds, merge_duplicate_compounds
+from .merge_data_sets import identify_duplicate_compounds, merge_duplicate_compounds, merge_hpc_calculations, id_indexed
 from .tools_eq import standardise_eq, get_eq_all_cids
 from .tools_files import reaction_csv, compound_csv
 
