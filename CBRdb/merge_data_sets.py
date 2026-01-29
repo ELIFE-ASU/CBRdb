@@ -141,7 +141,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     # define functions for combining entries
     line_set_str = lambda x: '; '.join(sorted(set(x)))  # unique strings, sorted
     lines_set_str = lambda x: ';~'.join(dict.fromkeys(x.str.split(';~').sum()).keys())
-    name_funcs = {'name': lines_set_str, 'nickname': line_set_str}
+    name_funcs = {'kegg_name': lines_set_str, 'nickname': line_set_str}
     tripleslash_join = lambda x: '///'.join(sorted(set(x.dropna()))) if not x.dropna().empty else None
     list_unique = lambda x: ' '.join(sorted(set(x.dropna().str.split(' ').explode()))) if not x.dropna().empty else None
 

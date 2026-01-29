@@ -168,7 +168,7 @@ def preprocess_kegg_c_metadata(target_dir='../../data/kegg_data_C_full',
     col_dtype_assignments = {'exact_mass': 'float64', 'mol_weight': 'float64', 'xref_PubChem': 'string'}
     df = df.astype(col_dtype_assignments, errors='ignore')
     print('Formatting metadata labels...', flush=True)
-    kegg_cols = ['mol_weight', 'exact_mass', 'brite_full', 'sequence', 'type', 'formula', 'gene', 'organism', 'Drug group']
+    kegg_cols = ['mol_weight', 'exact_mass', 'brite_full', 'sequence', 'type', 'formula', 'gene', 'organism', 'Drug group', 'name']
     col_name_mapping = {'index': 'compound_id'} | {i: 'kegg_' + i for i in kegg_cols}
     col_name_mapping = col_name_mapping | {i: 'kegg_' + i for i in col_pat_mapping.keys()}
     df = df.sort_index().reset_index().rename(columns=col_name_mapping).rename_axis(None, axis=1)
