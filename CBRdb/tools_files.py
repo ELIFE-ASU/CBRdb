@@ -270,3 +270,33 @@ def count_df_entries(dict_of_dbs, pipeline_stage):
         {i: len(j[j.columns.intersection(id_cols)].drop_duplicates().index) for i, j in dbs.items()}).to_frame(
         name=pipeline_stage)
     return dbs
+
+
+def join_col_to_csv(col : pd.Series,
+                    file : str,
+                    col_name: str|None = None,
+                    write_params=None):
+    
+    df = pd.read_csv(file, index_col=0, low_memory=False)
+
+    icol = col.copy(deep=True)
+    if isinstance(col_name, str):
+        icol.rename(col_name, inplace=True)
+
+    df.drop(columns=icol.name, inplace=True, errors='ignore')
+
+    if df.index.intersection(icol.index).any():
+        df = df.join(icol, how='left')
+    elif len(df.index) == len(icol.index):
+        df.loc[:,icol.name] = icol.tolist()
+    else:
+        raise ValueError('column and destination file must share indices or index length')
+        return None
+
+    if write_params is None:
+        write_params = {'encoding': 'utf-8'}
+
+    df.to_csv(file, index=True, **write_params)
+    
+    return None
+
