@@ -291,7 +291,7 @@ def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.cs
         return None
 
 
-def merge_hpc_thermo_params(final_output_Rs_fp='../CBRdb_R.csv',
+def merge_hpc_thermo_params(final_output_Rs_fp='../CBRdb_R.csv.zip',
                              thermo_params_fp='../hpc/CBRdb_R_reaction_energies.csv.gz'):
     """ 
     Merges reaction thermodynamic parameters into the main reactions data file, overwriting it.

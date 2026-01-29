@@ -57,7 +57,8 @@ if __name__ == "__main__":
     print("De-duping compound dataset for compounds and reactions...", flush=True)
     dbs = CBRdb.iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main)
 
-    final_output_Cs_fp = '../CBRdb_C.csv'
+    final_output_Cs_fp = '../CBRdb_C.csv.zip'
+    final_output_Rs_fp = '../CBRdb_R.csv.zip'
 
     print("Fixing the reactions data...", flush=True)
     dbs['kegg_data_R_processed'] = CBRdb.fix_reactions_data(r_file=kegg_reactions_data + "_dedupedCs.csv",
