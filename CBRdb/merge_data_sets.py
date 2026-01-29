@@ -247,11 +247,11 @@ def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.cs
 
     # Import the datasets
     if not isinstance(final_output_Cs_fp, (str, pd.DataFrame)):
-        raise ValueError("final_output_Cs must be one of (str, pd.DataFrame)")
+        raise ValueError("final_output_Cs_fp must be one of (str, pd.DataFrame)")
     elif isinstance(final_output_Cs_fp, str):
         data_c = pd.read_csv(os.path.abspath(final_output_Cs_fp), **f_params_in)
     else:
-        not_id_indexed = final_output_Cs_fp.index.astype(str).str.isnumeric.all()
+        not_id_indexed = final_output_Cs_fp.index.astype(str).str.isnumeric().all()
         data_c = id_indexed(final_output_Cs_fp)
 
     data_c_dupes = pd.read_csv(os.path.abspath(c_dupemap_fp), **f_params_in)
