@@ -351,3 +351,17 @@ def combine_and_deduplicate_reactions(datasets=list):
     r_dupemap = sync_reaction_dupemap(rs_joined, prefix='T')
     rs_deduped = merge_duplicate_reactions(rs_joined, r_dupemap)
     return rs_deduped
+
+
+def list_reactions_per_compound(data_r : pd.DataFrame):
+    cps = list_compounds_per_reaction(data_r)
+    r2c = cps.explode().reset_index(name=0)
+    c2r = r2c.groupby(0)[r2c.columns[0]].apply(set).map(sorted)
+    return c2r
+
+
+def list_compounds_per_reaction(data_r : pd.DataFrame):
+    cps = id_indexed(data_r)['reaction'].str.findall(r'(C\d+)')
+    r2c = cps.map(set).map(sorted)
+    return r2c
+
