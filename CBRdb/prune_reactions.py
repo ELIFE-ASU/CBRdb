@@ -281,6 +281,9 @@ def iteratively_prune_entries(kegg_data_R, atlas_data_R, C_main):
     dbs['CBRdb_C'].drop(columns=dbs['CBRdb_C_metadata'].columns, inplace=True)
     dbs['CBRdb_C_metadata'].loc[:,'compound_id'] = dbs['CBRdb_C'].loc[:,'compound_id']
 
+    # Merge in compound property calculations from HPC
+    dbs['CBRdb_C'] = merge_hpc_calculations(id_indexed(dbs['CBRdb_C'])).reset_index()
+
     # Write preliminary compound data and metadata files
     compound_csv(dbs['CBRdb_C'], '../CBRdb_C.csv.zip')
     compound_csv(dbs['CBRdb_C_metadata'], '../CBRdb_C_metadata.csv.zip')
