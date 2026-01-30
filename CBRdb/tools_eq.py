@@ -13,7 +13,6 @@ from rdkit.Chem import Draw
 from rdkit.Chem import rdChemReactions
 from rdkit.DataStructs import TanimotoSimilarity
 
-from .merge_data_sets import id_indexed
 
 def strip_ionic_states(formula):
     """
@@ -656,97 +655,6 @@ def ordered_reaction_series(reaction_series):
     return (reaction_series.str.split(' <=> ', expand=True)
             .map(lambda x: [' + '.join(sorted(x.split(' + ')))])
             .sum(axis=1).apply(lambda x: ' <=> '.join(sorted(x))))
-
-
-def sync_reaction_dupemap(df, prefix="T"):
-
-    dupemap_filename = f'../data/{prefix}_reaction_dupemap.csv'
-    try:
-        existing_dupemap = pd.read_csv(dupemap_filename, index_col=0)
-    except:
-        existing_dupemap = generate_reaction_dupemap(df, prefix=prefix)
-        return existing_dupemap
-    
-    # Standardize the formatting of current reaction equations
-    grps = ordered_reaction_series(id_indexed(df)['reaction'])
-
-    # Identify the reactions that are currently duplicated
-    grps = grps[grps.duplicated(keep=False)].to_frame(name='reaction')
-
-    # At least some reactions have previously been assigned a dupe-group ID
-    grps = grps.join(existing_dupemap)
-
-    # Flag newly-identified dupes (i.e. those lacking a pre-existing dupe-group ID)
-    dupe_is_new = grps['grp_num'].isna()
-
-    # Flag members of internally inconsistent dupe-groups (where group and eqn are not a 1:1 mapping)
-    eqs_per_grp = grps.groupby('grp_num')['reaction'].nunique()
-    grps_per_eq = grps.groupby('reaction')['grp_num'].nunique()
-    gt1_eq_per_grp = grps['grp_num'].map(eqs_per_grp).gt(1)
-    gt1_grp_per_eq = grps['reaction'].map(grps_per_eq).gt(1)
-
-    # Dupe-groups with a 1:1 mapping should be assigned the same dupe-group ID as before
-    dupes_known = ~(gt1_eq_per_grp | gt1_grp_per_eq | dupe_is_new)
-
-    # Use this information to start making the new mapping scheme
-    dupemap = grps.loc[dupes_known].copy(deep=True)
-    eqn_to_grp = dict(zip(dupemap['reaction'], dupemap['grp_num']))
-    
-    # Check the unknown subset to see if any of their reactions correspond with a known dupe-group
-    to_assign = grps.loc[~dupes_known].copy(deep=True)
-    to_assign.update({'grp_num': to_assign['reaction'].map(eqn_to_grp)}, overwrite=True)
-
-    # Define each mixed dupe-group ID by its most common eqn, ensuring each eqn only points to one group
-    largest_mixed_groups = (to_assign.groupby(by='grp_num', as_index=False)['reaction']
-                            .value_counts().sort_values(by='count', ascending=False)
-                            .drop_duplicates(subset='reaction')
-                            .set_index('reaction')['grp_num'])
-    to_assign.update({'grp_num': to_assign['reaction'].map(largest_mixed_groups)}, overwrite=True)
-    # Everything that can be assigned to an existing group number now has been. So update known entries 
-    dupemap = pd.concat([to_assign.dropna(subset='grp_num'), dupemap], axis=0)
-    # Now focus on remaining unknowns (i.e. equations without an existing group)
-    to_assign = to_assign.query('grp_num.isna()')
-    # Find the largest assigned dupe-group ID number
-    largest_id = dupemap['grp_num'].str.strip(prefix).astype(int).max()
-    # Start one up from there
-    to_assign.loc[:,'grp_num'] = to_assign['reaction'].factorize()[0] + (largest_id + 1)
-    # Format by the same scheme as before
-    zfill_len = list(set(dupemap['grp_num'].map(len)))[0] - len(prefix)
-    to_assign.loc[:,'grp_num'] = prefix + to_assign['grp_num'].astype(str).str.zfill(zfill_len)
-    # Update dupemap
-    dupemap = pd.concat([dupemap, to_assign], axis=0)
-    # Sort again by ID 
-    dupemap = dupemap.sort_index()['grp_num']
-    # Save as a CSV
-    dupemap.to_csv(dupemap_filename, encoding='utf-8')
-    return dupemap
-
-
-def generate_reaction_dupemap(df, prefix="T"):
-    """
-    Transforms the 'reaction' column of a DataFrame to identify duplicate reactions and returns a map of oldID to newID with a user-specified prefix.
-
-    Parameters:
-    df (pd.DataFrame): The DataFrame containing reaction data with an 'id' column and a 'reaction' column.
-    prefix (str): The prefix to use for the new IDs. Defaults to "T".
-
-    Returns:
-    pd.Series: A Series mapping old IDs to new IDs with the specified prefix.
-    """
-    # Group the reactions by sorting and standardizing them
-    equation_groups = ordered_reaction_series(df.set_index('id')['reaction']).to_frame(name='eq_grp')
-
-    # Identify duplicated groups and assign a group number
-    duped_groups = equation_groups.query('eq_grp.duplicated(keep=False)').assign(
-        grp_num=lambda x: x.eq_grp.factorize()[0])
-
-    # Create a map of old IDs to new IDs with the specified prefix
-    dupemap = prefix + duped_groups['grp_num'].astype(str).str.zfill(5)
-
-    # Save the map to a CSV file
-    dupemap.sort_index().to_csv(f'../data/{prefix}_reaction_dupemap.csv', encoding='utf-8')
-
-    return dupemap
 
 
 def standardise_eq(eq):

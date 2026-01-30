@@ -2,7 +2,6 @@ import pandas as pd
 import os
 
 from .tools_files import reaction_csv, compound_csv, space_sep_str_cols_cps
-from .tools_eq import sync_reaction_dupemap
 
 out_fmt = {'encoding': 'utf-8', 'index': False}
 
