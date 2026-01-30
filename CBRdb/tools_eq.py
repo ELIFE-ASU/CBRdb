@@ -13,6 +13,7 @@ from rdkit.Chem import Draw
 from rdkit.Chem import rdChemReactions
 from rdkit.DataStructs import TanimotoSimilarity
 
+from .merge_data_sets import id_indexed
 
 def strip_ionic_states(formula):
     """
@@ -667,7 +668,7 @@ def sync_reaction_dupemap(df, prefix="T"):
         return existing_dupemap
     
     # Standardize the formatting of current reaction equations
-    grps = ordered_reaction_series(df.set_index('id')['reaction'])
+    grps = ordered_reaction_series(id_indexed(df)['reaction'])
 
     # Identify the reactions that are currently duplicated
     grps = grps[grps.duplicated(keep=False)].to_frame(name='reaction')
