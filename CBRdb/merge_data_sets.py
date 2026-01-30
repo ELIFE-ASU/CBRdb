@@ -203,28 +203,39 @@ def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.cs
         return None
 
 
-def merge_hpc_thermo_params(final_output_Rs_fp='../CBRdb_R.csv.zip',
+def merge_hpc_thermo_params(final_output_Rs_fp : str|pd.DataFrame = '../CBRdb_R.csv.zip',
                              thermo_params_fp='../hpc/CBRdb_R_reaction_energies.csv.gz'):
     """ 
-    Merges reaction thermodynamic parameters into the main reactions data file, overwriting it.
+    Merges reaction thermodynamic parameters into the reactions data file or DataFrame, overwriting it.
 
     """
     print("Merging HPC thermodynamic parameters into reaction file", flush=True)
-
+    f_params_in = dict(index_col=0, low_memory=False)
+    f_params_out = dict(encoding='utf-8', index=True, compression='infer')
+    
     # Import the datasets
-    reactions = pd.read_csv(final_output_Rs_fp, index_col=0, low_memory=False)
-    thermo_params = pd.read_csv(thermo_params_fp, index_col=0, compression='gzip')
-
+    if not isinstance(final_output_Rs_fp, (str, pd.DataFrame)):
+        raise ValueError("final_output_Rs_fp must be one of (str, pd.DataFrame)")
+    elif isinstance(final_output_Rs_fp, str):
+        reactions = id_indexed(pd.read_csv(os.path.abspath(final_output_Rs_fp), **f_params_in))
+    else:
+        not_id_indexed = final_output_Rs_fp.index.astype(str).str.isnumeric().all()
+        reactions = id_indexed(final_output_Rs_fp)
+        
+    thermo_params = id_indexed(pd.read_csv(thermo_params_fp, **f_params_in))
+    
     # Merge the datasets
     reactions = reactions.join(thermo_params.add_prefix('thermo_'), how='left')
-
-    # Save the updated reactions file (note that floats are not rounded unlike in CBRdb.reaction_csv)
-    reactions.to_csv(final_output_Rs_fp)
-    reactions.to_csv(final_output_Rs_fp + '.zip', compression='zip')
-
     print("HPC thermodynamic parameter merger complete", flush=True)
-
-    return None
+                     
+    if isinstance(final_output_Rs_fp, pd.DataFrame):
+        if not_id_indexed:
+            return reactions.reset_index()
+        else:
+            return reactions
+    else:
+        reactions.to_csv('../CBRdb_R.csv.zip', **f_params_out)
+        return None
 
 
 def separate_compound_metadata(final_output_Cs_fp="../CBRdb_C.csv",
