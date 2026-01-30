@@ -335,13 +335,23 @@ def separate_compound_metadata(final_output_Cs_fp="../CBRdb_C.csv",
     return None
 
 
-def combine_and_deduplicate_reactions(datasets=list):
-    # TODO: Add handling for the case where there are no dupes.
-    tomerge = [i for i in datasets]
+def combine_and_deduplicate_reactions(datasets : list, prefix='T'):
+    tomerge = list()
+    for i in datasets:
+        if isinstance(i, str) and os.path.exists(i):
+            df = pd.read_csv(i, low_memory=False)
+            tomerge.append(df)
+        elif isinstance(i, pd.DataFrame):
+            tomerge.append(id_indexed(i).reset_index(drop=False))
+        else:
+            raise ValueError(f"{i.__str__} must be a DataFrame or valid file path")
     rs_joined = pd.concat(tomerge, ignore_index=True)
     r_dupemap = sync_reaction_dupemap(rs_joined, prefix='T')
-    rs_deduped = merge_duplicate_reactions(rs_joined, r_dupemap)
-    return rs_deduped
+    if r_dupemap.filter(items=rs_joined['id']).duplicated(keep=False).any():
+        rs_deduped = merge_duplicate_reactions(rs_joined, r_dupemap)
+        return rs_deduped
+    else:
+        return rs_joined
 
 
 def list_reactions_per_compound(data_r : pd.DataFrame):
