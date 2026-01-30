@@ -27,6 +27,7 @@ from .merge_data_sets import (merge_duplicate_reactions,
                               merge_hpc_thermo_params,
                               separate_compound_metadata,
                               combine_and_deduplicate_reactions,
+                              join_col_to_csv,
                               )
 from .preprocessor import (preprocess,
                            log_missing_structures,
