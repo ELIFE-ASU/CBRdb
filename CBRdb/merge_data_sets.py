@@ -205,27 +205,19 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     return C_main_copy
 
 
-def add_R_col_to_C_file(final_output_Cs_fp='../CBRdb_C.csv', final_output_Rs_fp='../CBRdb_R.csv'):
+def add_R_col_to_C_file(reaction_df : pd.DataFrame, C_file='../CBRdb_C_metadata.csv.zip'):
     """
-    Adds a column to the compound DataFrame indicating which reactions each compound is involved in, and vice-versa.
+    Adds a column to the compound metadata indicating which reactions each compound is involved in.
     Parameters:
-    final_output_Cs_fp (str): File path for the final output compound DataFrame.
-    final_output_Rs_fp (str): File path for the final output reaction DataFrame.  
+    reaction_df (pd.DataFrame): Reaction DataFrame.
+    C_file (str): File path for the compound metadata DataFrame.
     Returns:
     None: The function modifies the compound and reaction DataFrames in place and saves them to the specified files. 
     """
-    final_output_Rs = id_indexed(pd.read_csv(final_output_Rs_fp, index_col=0, dtype=space_sep_str_cols_cps, low_memory=False))
-    final_output_Cs = id_indexed(pd.read_csv(final_output_Cs_fp, index_col=0, dtype=space_sep_str_cols_cps, low_memory=False))
-
-    rid2cid = final_output_Rs['reaction'].str.findall(r'C\d{5}').map(set).map(sorted).rename('compound_id')
-    cid2rid = rid2cid.explode().reset_index().groupby('compound_id')['id'].apply(sorted)
-
-    final_output_Rs['CBRdb_C_ids'] = rid2cid.map(' '.join)
-    final_output_Cs['CBRdb_R_ids'] = cid2rid.map(' '.join)
-
-    compound_csv(df_C=final_output_Cs, file_address=final_output_Cs_fp)
-    reaction_csv(df_R=final_output_Rs, file_address=final_output_Rs_fp)
-
+    print("Adding column in compound metadata to indicate associated reactions", flush=True)
+    c2r = list_reactions_per_compound(reaction_df).map(' '.join)
+    join_col_to_csv(col=c2r, file=C_file, col_name='CBRdb_R_ids')
+    print("Finished appending reaction lists to compound metadata", flush=True)
     return None
 
 
