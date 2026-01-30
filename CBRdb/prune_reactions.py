@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 from .merge_data_sets import identify_duplicate_compounds, merge_duplicate_compounds, merge_hpc_calculations, id_indexed
 from .tools_eq import standardise_eq, get_eq_all_cids, ordered_reaction_series
@@ -432,3 +433,100 @@ def sync_reaction_dupemap(df, prefix="T"):
     dupemap.to_csv(dupemap_filename, encoding='utf-8')
     return dupemap
 
+
+def merge_duplicate_reactions(df, r_dupemap):
+    """
+    Merges duplicate reactions in a DataFrame based on a user-provided duplicate map.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame containing reaction data with KEGG fields.
+    r_dupemap (pd.Series): A Series mapping old reaction IDs to new unique reaction IDs.
+
+    Returns:
+    pd.DataFrame: A DataFrame with merged duplicate reactions.
+    # TODO: add a check for any columns not yet handled here
+    """
+    all_rns = id_indexed(df.copy(deep=True))
+    # Standardize CBRdb_C_ids column to space-separated strings
+    if 'CBRdb_C_ids' in all_rns.columns:
+        if not isinstance(all_rns['CBRdb_C_ids'].dropna().iloc[0], str):
+            all_rns.update(all_rns['CBRdb_C_ids'].map(lambda x: ' '.join(sorted(set(x)))))
+    # Focus on duplicate IDs
+    df = all_rns.loc[r_dupemap.index].assign(eqn_set=r_dupemap)
+    # Since bridgit scores are source-specific, tie to most_sim_kegg
+    str_scores = (df['bridgit_score'].map(lambda x: f'({x:.3f}) ', na_action='ignore'))
+    df['most_sim_kegg'] = (str_scores + df['most_sim_kegg']).dropna()
+    # Group by duplicate reaction IDs
+    dupes = df.groupby(by='eqn_set')
+    # Label cases where more than one value exists
+    to_combine = dupes.nunique().gt(1)
+    # First, for each entry, capture the properties that lack multiple values.
+    group_attrs = dupes.first(skipna=True).mask(to_combine)
+
+    # In some columns, no combinations occur.
+    single_val_cols = to_combine.columns[to_combine.any().eq(False)].to_list()
+    # In some columns, the values are structured as space-separated lists.
+    known_space_sep_cols = ['ec', 'orthology', 'pathway', 'rclass', 'rhea', 'kegg_id',
+                            'msk_ecs', 'msk_metacyc', 'msk_mnxr', 'msk_rhea', 'msk_rns', 'CBRdb_C_ids']
+    # Check if any of these cols are in the actual DataFrame.
+    found_space_sep_cols = df.columns.intersection(known_space_sep_cols)
+    # For each dupe-group, concatenate its constituent lists.
+    space_sep_entries = (df[found_space_sep_cols]
+                         .apply(lambda x: x.str.split())
+                         .groupby(df['eqn_set'])
+                         .sum()[to_combine]
+                         .replace(0, float('NaN')))
+    # Now sort and dedupe those lists...
+    space_sep_entries = space_sep_entries.map(lambda x: ' '.join(sorted(set(x))), na_action='ignore')
+    # ... and update the group attributes with the non-nan values
+    group_attrs.update(space_sep_entries)
+
+    # Next, isolate the remaining attributes w/multiple values.
+    cols = to_combine.columns.difference(single_val_cols + known_space_sep_cols)
+    rows = to_combine.index[to_combine[cols].any(axis=1)]
+    df_r = dupes.filter(lambda x: x.name in rows)[cols.union(['eqn_set'])]
+    # For the comment column, store its provenance to ease interpretation
+    df_r.update((df_r.index + ': ' + df_r['comment']).rename('comment'))
+    # For the comment + name columns, combine the entries
+    tilde_sep_cols = ['comment', 'name']
+    for col in tilde_sep_cols:
+        tilde_sep_entries = df_r.dropna(subset=col).groupby('eqn_set')[col].apply(
+            lambda x: ' ~ '.join(sorted(set(x))))
+        tilde_sep_entries = tilde_sep_entries[to_combine[col]]
+        group_attrs.update(tilde_sep_entries)
+
+    # For the most_sim_kegg column, if multiple values exist, label w/source and combine.
+    new_most_sim_kegg = ((df_r.index + ': ' + df_r['most_sim_kegg'])
+                         .rename(df_r['eqn_set']).dropna()
+                         .groupby(level=0).apply(' ~ '.join))
+    new_most_sim_kegg = new_most_sim_kegg.rename('most_sim_kegg')[to_combine['most_sim_kegg']]
+    group_attrs.update(new_most_sim_kegg)
+    # bridgit_score is NaN in group_attrs where multiple scores exist; keep it that way for now.
+    group_attrs['id_orig'] = {i: ' '.join(sorted(j)) for i, j in dupes.groups.items()}
+    # Add id_orig column for all entries.
+    all_rns['id_orig'] = all_rns.index
+    # Merge group_attrs into main reaction dataframe.
+    all_rns.drop(r_dupemap.index, inplace=True)
+    all_rns.drop(columns='eqn_set', inplace=True, errors='ignore')
+    all_rns = pd.concat([all_rns, group_attrs]).reset_index(names='id')
+
+    return all_rns
+
+
+def combine_and_deduplicate_reactions(datasets : list, prefix='T'):
+    tomerge = list()
+    for i in datasets:
+        if isinstance(i, str) and os.path.exists(i):
+            df = pd.read_csv(i, low_memory=False)
+            tomerge.append(df)
+        elif isinstance(i, pd.DataFrame):
+            tomerge.append(id_indexed(i).reset_index(drop=False))
+        else:
+            raise ValueError(f"{i.__str__} must be a DataFrame or valid file path")
+    rs_joined = pd.concat(tomerge, ignore_index=True)
+    r_dupemap = sync_reaction_dupemap(rs_joined, prefix='T')
+    if r_dupemap.filter(items=rs_joined['id']).duplicated(keep=False).any():
+        rs_deduped = merge_duplicate_reactions(rs_joined, r_dupemap)
+        return rs_deduped
+    else:
+        return rs_joined
