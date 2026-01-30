@@ -239,7 +239,7 @@ def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.cs
     Merges HPC calculations into the main compounds data, overwriting those columns if present.
 
     """
-    print("Merging HPC calculations into compound file", flush=True)
+    print("Merging HPC calculations into compound file or DataFrame", flush=True)
 
     # Specify file reading and writing parameters
     f_params_in = dict(index_col=0, low_memory=False, dtype=space_sep_str_cols_cps)
