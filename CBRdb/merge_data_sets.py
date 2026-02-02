@@ -318,6 +318,9 @@ def export_reaction_metadata(main_fp : str | pd.DataFrame = '../CBRdb_R.csv.zip'
         not_id_indexed = main_fp.index.astype(str).str.isnumeric().all()
         reactions = id_indexed(main_fp)
 
+    drop_cols = reactions.columns[reactions.nunique() <= 1]
+    reactions.drop(columns=drop_cols, inplace=True, errors='ignore')
+
     data_cols = ['reaction', 'ec', 'smarts', 'sim_max', 'sim_max_id', 'atom_mapping', 'balanced_els_stars']
     preserve = [i for i in data_cols if i in reactions.columns]
 
