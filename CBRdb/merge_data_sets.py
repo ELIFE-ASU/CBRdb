@@ -240,6 +240,42 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
     else:
         reactions.to_csv(final_output_Rs_fp **f_params_out)
         return None
+
+
+def export_reaction_metadata(main_fp : str | pd.DataFrame = '../CBRdb_R.csv.zip',
+                              meta_fp = '../CBRdb_R_metadata.csv.zip'):
+    
+    print("Organizing reaction data and metadata", flush=True)
+
+    f_params_in = dict(index_col=0, low_memory=False)
+    f_params_out = dict(encoding='utf-8', index=True, compression='infer')
+    
+    # Import the datasets
+    if not isinstance(main_fp, (str, pd.DataFrame)):
+        raise ValueError("main_fp must be one of (str, pd.DataFrame)")
+    elif isinstance(main_fp, str):
+        reactions = id_indexed(pd.read_csv(os.path.abspath(main_fp), **f_params_in))
+    else:
+        not_id_indexed = main_fp.index.astype(str).str.isnumeric().all()
+        reactions = id_indexed(main_fp)
+
+    data_cols = ['reaction', 'ec', 'smarts', 'sim_max', 'sim_max_id', 'atom_mapping', 'balanced_els_stars']
+    preserve = [i for i in data_cols if i in reactions.columns]
+
+    R_meta = reactions.drop(columns=preserve)
+    R_meta.to_csv(meta_fp, **f_params_out)
+    print(f'Metadata file written to: {meta_fp}')
+
+    reactions.drop(columns=R_meta.columns, inplace=True)
+    reactions = reactions[preserve]
+
+    if isinstance(main_fp, pd.DataFrame):
+        if not_id_indexed:
+            return reactions.reset_index()
+        else:
+            return reactions
+    else:
+        reactions.to_csv(main_fp, **f_params_out)
         return None
 
 

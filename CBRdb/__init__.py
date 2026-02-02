@@ -27,6 +27,7 @@ from .merge_data_sets import (id_indexed,
                               list_reactions_per_compound,
                               list_compounds_per_reaction,
                               join_col_to_csv,
+                              export_reaction_metadata,
                               )
 from .preprocessor import (preprocess,
                            log_missing_structures,
