@@ -228,6 +228,10 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
     similarity_params = id_indexed(pd.read_csv(similarity_fp, **f_params_in))
     hpc_calcs = similarity_params.join(thermo_params, how='outer')
 
+    # Remove the field we're about to add, if present
+    merging_on = ['reaction', 'smarts']
+    reactions.drop(columns=hpc_calcs.columns.difference(merging_on), inplace=True, errors='ignore')
+
     # Merge the datasets
     reactions = id_indexed(reactions.reset_index().merge(hpc_calcs, on=['reaction', 'smarts'], how='left'))
     print("HPC reaction calculation merger complete", flush=True)
