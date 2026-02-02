@@ -131,13 +131,13 @@ def add_R_col_to_C_file(reaction_df : pd.DataFrame, c_file='../CBRdb_C_metadata.
     Adds a column to the compound metadata indicating which reactions each compound is involved in.
     Parameters:
     reaction_df (pd.DataFrame): Reaction DataFrame.
-    C_file (str): File path for the compound metadata DataFrame.
+    c_file (str): File path for the compound metadata DataFrame.
     Returns:
     None: The function modifies the compound and reaction DataFrames in place and saves them to the specified files. 
     """
     print("Adding column in compound metadata to indicate associated reactions", flush=True)
     c2r = list_reactions_per_compound(reaction_df).map(' '.join)
-    join_col_to_csv(col=c2r, file=C_file, col_name='CBRdb_R_ids')
+    join_col_to_csv(col=c2r, file=c_file, col_name='CBRdb_R_ids')
     print("Finished appending reaction lists to compound metadata", flush=True)
     return None
 
