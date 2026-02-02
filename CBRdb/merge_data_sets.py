@@ -126,7 +126,7 @@ def merge_duplicate_compounds(C_main: pd.DataFrame, C_dupemap: pd.DataFrame) -> 
     return C_main_copy
 
 
-def add_R_col_to_C_file(reaction_df : pd.DataFrame, C_file='../CBRdb_C_metadata.csv.zip'):
+def add_R_col_to_C_file(reaction_df : pd.DataFrame, c_file='../CBRdb_C_metadata.csv.zip'):
     """
     Adds a column to the compound metadata indicating which reactions each compound is involved in.
     Parameters:
