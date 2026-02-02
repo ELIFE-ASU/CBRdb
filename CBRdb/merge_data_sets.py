@@ -210,7 +210,7 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
     Merges reaction thermodynamic parameters into the reactions data file or DataFrame, overwriting it.
 
     """
-    print("Merging HPC thermodynamic parameters into reaction file", flush=True)
+    print("Merging HPC reaction calculations into reaction file", flush=True)
     f_params_in = dict(index_col=0, low_memory=False)
     f_params_out = dict(encoding='utf-8', index=True, compression='infer')
     
@@ -230,7 +230,7 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
 
     # Merge the datasets
     reactions = id_indexed(reactions.reset_index().merge(hpc_calcs, on=['reaction', 'smarts'], how='left'))
-    print("HPC thermodynamic parameter merger complete", flush=True)
+    print("HPC reaction calculation merger complete", flush=True)
                      
     if isinstance(final_output_Rs_fp, pd.DataFrame):
         if not_id_indexed:
@@ -238,7 +238,8 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
         else:
             return reactions
     else:
-        reactions.to_csv('../CBRdb_R.csv.zip', **f_params_out)
+        reactions.to_csv(final_output_Rs_fp **f_params_out)
+        return None
         return None
 
 
