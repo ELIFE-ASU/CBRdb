@@ -70,9 +70,9 @@ if __name__ == "__main__":
     dbs['CBRdb_R'] = CBRdb.combine_and_deduplicate_reactions([dbs['kegg_data_R_processed'], 
                                                              dbs['atlas_data_R_processed']])
     dbs['CBRdb_R'] = CBRdb.merge_hpc_reaction_calculations(dbs['CBRdb_R'])
+    dbs['CBRdb_R'] = CBRdb.merge_atom_mapping_calculations(dbs['CBRdb_R'])
     dbs['CBRdb_R'] = CBRdb.export_reaction_metadata(dbs['CBRdb_R'])
-
-    CBRdb.reaction_csv(dbs['CBRdb_R'], final_output_Rs_fp)
+    dbs['CBRdb_R'].to_csv(final_output_Rs_fp)
     CBRdb.add_R_col_to_C_file(dbs['CBRdb_R'], c_file='../CBRdb_C_metadata.csv.zip')
     print("Program finished", flush=True)
     elapsed = (time.time() - start_time)/60.

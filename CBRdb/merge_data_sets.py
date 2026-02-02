@@ -242,6 +242,61 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
         return None
 
 
+def merge_atom_mapping_calculations(final_output_Rs_fp : str|pd.DataFrame = '../CBRdb_R.csv.zip',
+                                    atom_tracking_fp='../atom_tracking/combined_output_all.csv.gz'):
+    """ 
+    Merges atom mapping into the reactions data file or DataFrame, overwriting existing columns if present.
+
+    """
+    print("Merging atom-mapping calculations into reaction file", flush=True)
+    f_params_in = dict(index_col=0, low_memory=False)
+    f_params_out = dict(encoding='utf-8', index=True, compression='infer')
+    
+    # Import the datasets
+    if not isinstance(final_output_Rs_fp, (str, pd.DataFrame)):
+        raise ValueError("final_output_Rs_fp must be one of (str, pd.DataFrame)")
+    elif isinstance(final_output_Rs_fp, str):
+        reactions = id_indexed(pd.read_csv(os.path.abspath(final_output_Rs_fp), **f_params_in))
+    else:
+        not_id_indexed = final_output_Rs_fp.index.astype(str).str.isnumeric().all()
+        reactions = id_indexed(final_output_Rs_fp)
+
+    # Import the atom-mapped reactions
+    usecols = ['reaction_id', 'mapped_rxns', 'reaction_no_stoich']
+    calc_df = pd.read_csv(atom_tracking_fp, usecols=usecols, **f_params_in)
+    calc_df.rename(columns={'mapped_rxns': 'atom_mapping'}, inplace=True)
+
+    # Make the field we're merging on
+    calc_df['sorted_no_stoich'] = calc_df['reaction_no_stoich'].str.split(' <=> ').map(sorted).map(' <=> '.join)
+    reactions['sorted_no_stoich'] = (reactions['reaction'].str.split(' <=> ', expand=True)
+                          .apply(lambda x: x.str.findall(r'(C\d+)'))
+                          .map(' + '.join)
+                          .map(lambda x: [x])
+                          .sum(axis=1)
+                          .map(sorted)
+                          .map(' <=> '.join))
+    
+    # Remove the field we're about to add, if present
+    if 'atom_mapping' in reactions.columns:
+        reactions.drop(columns='atom_mapping', inplace=True)
+
+    # Merge datasets
+    reactions = id_indexed(reactions.reset_index().merge(calc_df, on='sorted_no_stoich', how='left'))
+    reactions.drop(columns=['sorted_no_stoich', 'reaction_no_stoich'], inplace=True)
+
+    print("Atom-mapping calculation merger complete", flush=True)
+                     
+    if isinstance(final_output_Rs_fp, pd.DataFrame):
+        if not_id_indexed:
+            return reactions.reset_index()
+        else:
+            return reactions
+    else:
+        reactions.to_csv(final_output_Rs_fp **f_params_out)
+        return None
+    
+
+
 def export_reaction_metadata(main_fp : str | pd.DataFrame = '../CBRdb_R.csv.zip',
                               meta_fp = '../CBRdb_R_metadata.csv.zip'):
     
