@@ -233,7 +233,7 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
     reactions.drop(columns=hpc_calcs.columns.difference(merging_on), inplace=True, errors='ignore')
 
     # Merge the datasets
-    reactions = id_indexed(reactions.reset_index().merge(hpc_calcs, on=['reaction', 'smarts'], how='left'))
+    reactions = id_indexed(reactions.reset_index().merge(hpc_calcs, on=merging_on, how='left'))
     print("HPC reaction calculation merger complete", flush=True)
                      
     if isinstance(final_output_Rs_fp, pd.DataFrame):
