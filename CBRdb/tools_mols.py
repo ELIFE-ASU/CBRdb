@@ -522,12 +522,15 @@ def get_compounds_with_matching_elements(data_c_1, diff_ele_react, diff_ele_prod
 
     # Filter the DataFrame to get compounds that contain all the element symbols
     filtered_compounds = data_c_1[data_c_1['formula'].apply(lambda x: contains_all_elements(x, element_symbols))]
-
-    # Sort by the number of heavy atoms
-    filtered_compounds = filtered_compounds.sort_values(by='n_heavy_atoms')
-
+    
+    try:
+        # Sort by the number of heavy atoms
+        filtered_compounds = filtered_compounds.sort_values(by='n_heavy_atoms')
+        return filtered_compounds['compound_id'].tolist()
+    except:
+        return list()
     # Return the list of compound IDs
-    return filtered_compounds['compound_id'].tolist()
+    # return filtered_compounds['compound_id'].tolist()
 
 
 def enum_ionization_states(smi, ph_min=4.0, ph_max=10.0, precision=1.0, label=True, max_n=15):
