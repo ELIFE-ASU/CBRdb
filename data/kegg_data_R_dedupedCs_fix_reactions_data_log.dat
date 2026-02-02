@@ -1,7 +1,7 @@
 # This file contains a log of information on the rebalancer run
 Loading the compound data...
-Compound data shape: (18865, 50)
-Small compound size: 1:(64, 53), 2:(47, 53), 3:(60, 53)
+Compound data shape: (18865, 23)
+Small compound size: 1:(64, 26), 2:(47, 26), 3:(60, 26)
 Loading the reaction data...
 data loaded
 data columns: Index(['id', 'reaction', 'ec', 'module', 'orthology', 'pathway', 'rclass',
@@ -16,7 +16,7 @@ Number of reactions balanced so far: 487
 Filtering out bad ids
 Number of bad ids removed: 1228
 Filtering out unbalanced reactions
-Time to check if unbalanced: 0.666208028793335
+Time to check if unbalanced: 0.7434449195861816
 Number of unbalanced reactions: 1044
 Assuming that starred-compound equations are correct, leaving them unchanged
 Assuming that var-list equations are correct, leaving them unchanged
