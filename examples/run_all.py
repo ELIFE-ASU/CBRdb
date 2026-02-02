@@ -69,13 +69,9 @@ if __name__ == "__main__":
     print("Combining and deduplicating the reactions data...", flush=True)
     dbs['CBRdb_R'] = CBRdb.combine_and_deduplicate_reactions([dbs['kegg_data_R_processed'], 
                                                              dbs['atlas_data_R_processed']])
-    CBRdb.reaction_csv(dbs['CBRdb_R'], "../CBRdb_R.csv")
-
-    CBRdb.add_R_col_to_C_file(final_output_Cs_fp=final_output_Cs_fp, final_output_Rs_fp='../CBRdb_R.csv')
-    CBRdb.merge_hpc_calculations(final_output_Cs_fp=final_output_Cs_fp)
-    CBRdb.merge_hpc_thermo_params(final_output_Rs_fp='../CBRdb_R.csv')
-    CBRdb.separate_compound_metadata(final_output_Cs_fp=final_output_Cs_fp)
-    
+    dbs['CBRdb_R'] = CBRdb.merge_hpc_reaction_calculations(dbs['CBRdb_R'])
+    CBRdb.reaction_csv(dbs['CBRdb_R'], final_output_Rs_fp)
+    CBRdb.add_R_col_to_C_file(dbs['CBRdb_R'], c_file='../CBRdb_C_metadata.csv.zip')
     print("Program finished", flush=True)
     elapsed = (time.time() - start_time)/60.
     print('Time elapsed: '+f"{elapsed:.2f} mins")

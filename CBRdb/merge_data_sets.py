@@ -203,8 +203,9 @@ def merge_hpc_calculations(final_output_Cs_fp: str|pd.DataFrame = '../CBRdb_C.cs
         return None
 
 
-def merge_hpc_thermo_params(final_output_Rs_fp : str|pd.DataFrame = '../CBRdb_R.csv.zip',
-                             thermo_params_fp='../hpc/CBRdb_R_reaction_energies.csv.gz'):
+def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../CBRdb_R.csv.zip',
+                                    similarity_fp='../hpc/ATLAS_R_sim.csv.gz',
+                                    thermo_params_fp='../hpc/CBRdb_R_reaction_energies.csv.gz'):
     """ 
     Merges reaction thermodynamic parameters into the reactions data file or DataFrame, overwriting it.
 
@@ -221,11 +222,14 @@ def merge_hpc_thermo_params(final_output_Rs_fp : str|pd.DataFrame = '../CBRdb_R.
     else:
         not_id_indexed = final_output_Rs_fp.index.astype(str).str.isnumeric().all()
         reactions = id_indexed(final_output_Rs_fp)
-        
+
+    # Assume thermodynamic and similarity calculations were performed on the same CBRdb version
     thermo_params = id_indexed(pd.read_csv(thermo_params_fp, **f_params_in))
-    
+    similarity_params = id_indexed(pd.read_csv(similarity_fp, **f_params_in))
+    hpc_calcs = similarity_params.join(thermo_params, how='outer')
+
     # Merge the datasets
-    reactions = reactions.join(thermo_params.add_prefix('thermo_'), how='left')
+    reactions = id_indexed(reactions.reset_index().merge(hpc_calcs, on=['reaction', 'smarts'], how='left'))
     print("HPC thermodynamic parameter merger complete", flush=True)
                      
     if isinstance(final_output_Rs_fp, pd.DataFrame):
