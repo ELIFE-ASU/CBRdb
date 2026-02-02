@@ -242,37 +242,6 @@ def merge_hpc_reaction_calculations(final_output_Rs_fp : str|pd.DataFrame = '../
         return None
 
 
-def separate_compound_metadata(final_output_Cs_fp="../CBRdb_C.csv",
-                               Cs_metadata_fp="../CBRdb_C_metadata.csv",
-                               union=False):
-    """ Gets metadata from compound file, places it in a separate metadata file, removes from original. """
-    params = {'encoding': 'utf-8', 'index': True, 'float_format': '%.3f'}
-    C_main = pd.read_csv(final_output_Cs_fp, index_col=0, low_memory=False)
-    general = ["comment", "CBRdb_R_ids"]
-    metadata = (C_main.filter(like='xref_')
-                .join(C_main.filter(like='kegg_'))
-                .join(C_main.filter(items=general))
-                .copy(deep=True))
-    C_main.drop(columns=metadata.columns, inplace=True)
-
-    if union:
-        try:
-            metadata_orig = pd.read_csv(Cs_metadata_fp, index_col=0, low_memory=False)
-            metadata_orig.drop(columns=metadata.columns, inplace=True)
-            metadata = metadata.join(metadata_orig, how='left')
-        except Exception as e:
-            pass
-
-    metadata.to_csv(Cs_metadata_fp, **params)
-    metadata.to_csv(Cs_metadata_fp+'.zip', **params)
-    C_main.to_csv(final_output_Cs_fp, **params)
-    C_main.to_csv(final_output_Cs_fp+'.zip', **params)
-
-    return None
-
-
-
-
 def list_reactions_per_compound(data_r : pd.DataFrame):
     cps = list_compounds_per_reaction(data_r)
     r2c = cps.explode().reset_index(name=0)
