@@ -229,10 +229,22 @@ def preprocess_kegg_r(target_dir, outfile, rm_gly=True):
         lambda x: ' '.join(sorted(list(x))))  # combine all ECs, including partials
 
     patterns = {'orthology': r"(\bK\d{5}\b)", 'pathway': r"(\brn\d{5}\b)", 'module': r"(\bM\d{5}\b)",
-                'rclass': r"(\bRC\d{5}\b  \bC\d{5}_C\d{5})", 'dblinks': r"( \d{5})", 'entry': 'Overall'}
+                'dblinks': r"( \d{5})", 'entry': 'Overall'}
     [df.update(df[k].str.findall(v).map(lambda x: ' '.join(sorted(list(x))), na_action='ignore')) for k, v in
      patterns.items()]
-    df.loc[:, 'rclass'] = df.loc[:, 'rclass'].str.replace('  ', '__')
+
+    # isolate each RC number in the reaction class field
+    rcs = df['rclass'].str.split(';').explode().str.strip().str.split(n=1, expand=True)
+    # some (~300) reactions involve multiple RPAIRs in a single line
+    rcs[1] = rcs[1].str.split()
+    # ensure each RPAIR in an RCLASS gets its own line
+    rcs = rcs.explode(column=1)
+    # reconnect these RCLASS-RPAIR combinations
+    rcs = rcs[0]+'__'+rcs[1]
+    # and list them in space-separated format
+    rcs = rcs.groupby(level=0).apply(sorted).apply(' '.join)
+    # now update the rclass field accordingly
+    df.loc[rcs.index, 'rclass'] = rcs
 
     # Rename columns where appropriate
     df.rename(columns={'dblinks': 'rhea', 'entry': 'overall'}, inplace=True)
