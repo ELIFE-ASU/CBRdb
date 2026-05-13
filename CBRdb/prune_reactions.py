@@ -121,20 +121,20 @@ def list_multistep_parts(dbs):
 
 def list_multistep_enumerated(dbs, verbose=False):
     """
-    Identifies reactions that are part of multistep processes and enumerates them.
+    Identifies reactions that are multistep processes and lists their consstituent parts
 
     Parameters:
     dbs (dict): A dictionary containing the following key:
                 - 'kegg_data_R': A pandas DataFrame with KEGG reaction data.
     verbose (bool): If True, saves a file enumerating each reaction's constituent steps. Default is False.
     Returns:
-    pd.Index: An index of reaction IDs that are part of multistep processes.
+    pd.Index: An index of reaction IDs that represent multistep processes.
     """
     if dbs['kegg_data_R'].index.name == 'id':
         dbs['kegg_data_R'].reset_index(inplace=True)
     reactions_multistep_parts = list_multistep_parts(dbs)  # KEEP THESE 
     rns = all_kegg_comments(dbs).drop(reactions_multistep_parts).query(
-        'rn_refs.str.len()>1 & comment.str.contains("step") & ~comment.str.contains("possibl|probabl|similar|Overall Reaction")')
+        '(rn_refs.str.len()>1 & comment.str.contains("step") & ~comment.str.contains("possibl|probabl|similar")) or comment.str.contains("Overall Reaction")')
     if verbose:
         multistep_enum = pd.concat([dbs['kegg_data_R'].set_index('id').loc[['R10671'], ['comment']],
                                     rns])
